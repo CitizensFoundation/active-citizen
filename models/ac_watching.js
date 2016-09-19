@@ -32,8 +32,9 @@ module.exports = function(sequelize, DataTypes) {
       },
 
       watchCommunity: function(community, user) {
-
       }
+
+
     }
   });
 

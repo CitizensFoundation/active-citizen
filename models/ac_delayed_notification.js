@@ -40,7 +40,7 @@ module.exports = function(sequelize, DataTypes) {
     classMethods: {
 
       associate: function(models) {
-        AcDelayedNotification.belongsToMany(models.AcNotification, { as: 'AcDelayedNotifications', through: 'delayed_notifications' });
+        AcDelayedNotification.belongsToMany(models.AcNotification, { as: 'AcNotifications', through: 'delayed_notifications' });
         AcDelayedNotification.belongsTo(models.User);
       }
     }

@@ -1,3 +1,41 @@
-<h1>Notification header</h1>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <title>Your Priorities email</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+</head>
+<body style="margin: 0 auto;font-family: Helvetica, Arial, sans-serif;font-size: 16px;line-height: 1.5em;color: #656565;background-color: #edeeef;">
+  <div id="wrapper" style="margin: 30px;">
+    <div id="header" style="height: 91px;padding: 0 10px 0 10px;background: #edeeef !important;">
+      <div id="left-top" style="float: left;">
+        <% if (domain.domain_name == 'betrireykjavik.is') { %>
+           <img style="margin: 0;padding-bottom: 10px;padding-top: 16px;" alt="Betri Reykjavík" src="https://s3.amazonaws.com/yrpri-direct-asset/yrpri6_emails/BR_email.png" />
+        <% } %>
+        <% if (domain.domain_name == 'betraisland.is') { %>
+         <img style="margin: 0;padding-bottom: 10px;padding-top: 16px;" alt="Betra Ísland" src="https://s3.amazonaws.com/yrpri-direct-asset/yrpri6_emails/bi_email.png" />
+        <% } %>
+        <% if (domain.domain_name  == 'yrpri.org') { %>
+          <img style="margin: 0;padding-bottom: 10px;padding-top: 16px;" alt="Your Priorities" src="https://s3.amazonaws.com/yrpri-direct-asset/yrpri6_emails/yp_email.png" />
+        <% } %>
+      </div>
 
-<%= t('notification.email.dear') %> <%= user.name %>
+      <div id="right-top" style="float: right;text-align: right;font-size: 10pt;vertical-align: bottom;">
+        <p class="br" style="margin-top: 5px;text-align: center;font-size: 12pt;margin: 10px;margin-right: -10px;line-height: 90%;vertical-align: bottom;position: relative;top: 30px;">
+          <% if (community.name) { %>
+           <%= community.name %>
+          <% } %>
+          <% if (!community.name) { %>
+            <%= domain.name %>
+          <% } %>
+        </p>
+      </div>
+    </div>
+
+    <div id="header-image" style="display: none;">
+      <img src="<%= headerImageUrl %>" style="margin: 0;width: 100% !important;"/>
+    </div>
+
+    <div id="content" style="padding: 10px;">
+
+      <%= t('notification.email.dear') %> <%= user.name %>

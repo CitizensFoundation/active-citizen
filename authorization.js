@@ -32,7 +32,7 @@ auth.isLoggedIn = function (req, res, next) {
     return next();
   } else {
     log.info('User is Not Logged in', { context: 'isLoggedInAuth', user: req.user, errorStatus: 401});
-    res.send(401, 'Unauthorized');
+    res.status(401).send('Unauthorized');
   }
 };
 
@@ -44,7 +44,8 @@ auth.role('user.admin', function (user, req, done) {
     done(null, false);
   } else {
     models.User.findOne({
-      where: { id: user.id }
+      where: { id: user.id },
+      attributes: ['id']
     }).then(function (user) {
       if (user.id === req.user.id) {
         done(null, true);
@@ -56,7 +57,7 @@ auth.role('user.admin', function (user, req, done) {
 });
 
 auth.entity('user', function(req, done) {
-  var match = req.originalUrl.match(/^\/api\/users\/(\w+)/);
+  var match = req.originalUrl.match(/users\/(\w+)/);
   if (!match) {
     done(new Error('Expected url like /users/:userId'));
   } else {
@@ -79,7 +80,7 @@ auth.role('domain.admin', function (domain, req, done) {
       } else if (req.user.email==='robert@citizens.is' || req.user.email==='gunnar@citizens.is') {
         done(null, true);
       } else {
-        domain.hasDomainAdmin(req.user).then(function (result) {
+        domain.hasDomainAdmins(req.user).then(function (result) {
           if (result) {
             done(null, true);
           } else {
@@ -114,9 +115,9 @@ auth.role('domain.viewUser', function (domain, req, done) {
 });
 
 auth.entity('domain', function(req, done) {
-  var match = req.originalUrl.match(/^\/api\/domains\/(\w+)/);
+  var match = req.originalUrl.match(/domains\/(\w+)/);
   if (!match) {
-    done(new Error('Expected url like /domains/:domainId'));
+    done(new Error('Expected url like /domasssins/:domainId'));
   } else {
     var domain = { id: match[1] };
     done(null, domain)
@@ -134,7 +135,7 @@ auth.role('community.admin', function (community, req, done) {
       if (community.user_id === req.user.id) {
         done(null, true);
       } else {
-        community.hasCommunityAdmin(req.user).then(function (result) {
+        community.hasCommunityAdmins(req.user).then(function (result) {
           if (result) {
             done(null, true);
           } else {
@@ -169,7 +170,7 @@ auth.role('community.viewUser', function (community, req, done) {
 });
 
 auth.entity('community', function(req, done) {
-  var match = req.originalUrl.match(/^\/api\/communities\/(\w+)/);
+  var match = req.originalUrl.match(/communities\/(\w+)/);
   if (!match) {
     done(new Error('Expected url like /communities/:communityId'));
   } else {
@@ -189,7 +190,7 @@ auth.role('group.admin', function (group, req, done) {
       if (group.user_id === req.user.id) {
         done(null, true);
       } else {
-        group.hasGroupAdmin(req.user).then(function (result) {
+        group.hasGroupAdmins(req.user).then(function (result) {
           if (result) {
             done(null, true);
           } else {
@@ -224,7 +225,7 @@ auth.role('group.viewUser', function (group, req, done) {
 });
 
 auth.entity('group', function(req, done) {
-  var match = req.originalUrl.match(/^\/api\/groups\/(\w+)/);
+  var match = req.originalUrl.match(/groups\/(\w+)/);
   if (!match) {
     done(new Error('Expected url like /groups/:groupId'));
   } else {
@@ -251,7 +252,7 @@ auth.role('post.admin', function (post, req, done) {
       } else if (post.user_id === req.user.id) {
         done(null, true);
       } else {
-        group.hasGroupAdmin(req.user).then(function (result) {
+        group.hasGroupAdmins(req.user).then(function (result) {
           if (result) {
             done(null, true);
           } else {
@@ -316,7 +317,7 @@ auth.role('post.vote', function (post, req, done) {
 });
 
 auth.entity('post', function(req, done) {
-  var match = req.originalUrl.match(/^\/api\/posts\/(\w+)/);
+  var match = req.originalUrl.match(/posts\/(\w+)/);
   if (!match) {
     done(new Error('Expected url like /posts/:postId'));
   } else {
@@ -339,7 +340,7 @@ auth.role('point.admin', function (point, req, done) {
       } else if (point.user_id === req.user.id) {
         done(null, true);
       } else {
-        group.hasGroupAdmin(req.user).then(function (result) {
+        group.hasGroupAdmins(req.user).then(function (result) {
           if (result) {
             done(null, true);
           } else {
@@ -414,7 +415,7 @@ auth.role('point.vote', function (point, req, done) {
 });
 
 auth.entity('point', function(req, done) {
-  var match = req.originalUrl.match(/^\/api\/points\/(\w+)/);
+  var match = req.originalUrl.match(/points\/(\w+)/);
   if (!match) {
     done(new Error('Expected url like /points/:pointId'));
   } else {
@@ -438,7 +439,7 @@ auth.role('category.admin', function (category, req, done) {
       } else if (category.user_id === req.user.id) {
         done(null, true);
       } else {
-        group.hasGroupAdmin(req.user).then(function (result) {
+        group.hasGroupAdmins(req.user).then(function (result) {
           if (result) {
             done(null, true);
           } else {
@@ -477,7 +478,7 @@ auth.role('category.viewUser', function (category, req, done) {
 });
 
 auth.entity('category', function(req, done) {
-  var match = req.originalUrl.match(/^\/api\/categories\/(\w+)/);
+  var match = req.originalUrl.match(/categories\/(\w+)/);
   if (!match) {
     done(new Error('Expected url like /categories/:categoryId'));
   } else {
@@ -495,7 +496,7 @@ auth.role('createGroupCategory.createCategory', function (group, req, done) {
 });
 
 auth.entity('createGroupCategory', function(req, done) {
-  var match = req.originalUrl.match(/^\/api\/categories\/(\w+)/);
+  var match = req.originalUrl.match(/categories\/(\w+)/);
   if (!match) {
     done(new Error('Expected url like /categories/:groupId'));
   } else {
@@ -511,7 +512,7 @@ auth.role('createGroupPost.createPost', function (group, req, done) {
 });
 
 auth.entity('createGroupPost', function(req, done) {
-  var match = req.originalUrl.match(/^\/api\/posts\/(\w+)/);
+  var match = req.originalUrl.match(/posts\/(\w+)/);
   if (!match) {
     done(new Error('Expected url like /posts/:groupId'));
   } else {
@@ -527,7 +528,7 @@ auth.role('createGroupPoint.createPoint', function (group, req, done) {
 });
 
 auth.entity('createGroupPoint', function(req, done) {
-  var match = req.originalUrl.match(/^\/api\/points\/(\w+)/);
+  var match = req.originalUrl.match(/points\/(\w+)/);
   if (!match) {
     done(new Error('Expected url like /points/:groupId'));
   } else {
@@ -561,7 +562,7 @@ auth.role('createCommunityGroup.createGroup', function (community, req, done) {
 });
 
 auth.entity('createCommunityGroup', function(req, done) {
-  var match = req.originalUrl.match(/^\/api\/groups\/(\w+)/);
+  var match = req.originalUrl.match(/groups\/(\w+)/);
   if (!match) {
     done(new Error('Expected url like /groups/:communityId'));
   } else {
@@ -595,7 +596,7 @@ auth.role('createDomainCommunity.createCommunity', function (domain, req, done) 
 });
 
 auth.entity('createDomainCommunity', function(req, done) {
-  var match = req.originalUrl.match(/^\/api\/communities\/(\w+)/);
+  var match = req.originalUrl.match(/communities\/(\w+)/);
   if (!match) {
     done(new Error('Expected url like /communities/:domainId'));
   } else {

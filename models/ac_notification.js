@@ -9,11 +9,12 @@ module.exports = function(sequelize, DataTypes) {
   var AcNotification = sequelize.define("AcNotification", {
     priority: { type: DataTypes.INTEGER, allowNull: false },
     type: { type: DataTypes.STRING, allowNull: false },
-    status: { type: DataTypes.STRING, allowNull: false },
+    status: { type: DataTypes.STRING, allowNull: false, defaultValue: 'active' },
     sent_email: { type: DataTypes.INTEGER, default: false },
     sent_push: { type: DataTypes.INTEGER, default: false },
     processed_at: DataTypes.DATE,
     user_interaction_profile: DataTypes.JSONB,
+    from_notification_setting: DataTypes.STRING,
     viewed: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     deleted: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false }
   }, {
@@ -86,49 +87,110 @@ module.exports = function(sequelize, DataTypes) {
       FREQUENCY_BI_WEEKLY: 4,
       FREQUENCY_MONTHLY: 5,
 
+      defaultNotificationSettings: {
+        my_posts: {
+          method: 2,
+          frequency: 0
+        },
+        my_posts_endorsements: {
+          method: 2,
+          frequency: 2
+        },
+        my_points: {
+          method: 2,
+          frequency: 1
+        },
+        my_points_endorsements: {
+          method: 2,
+          frequency: 2
+        },
+        all_community: {
+          method: 0,
+          frequency: 3
+        },
+        all_group: {
+          method: 0,
+          frequency: 3
+        },
+        newsletter: {
+          method: 2,
+          frequency: 4
+        }
+      },
+
       ENDORSEMENT_GROUPING_TTL: 6 * 60 * 60 * 1000, // milliseconds
 
       associate: function(models) {
         AcNotification.belongsToMany(models.AcActivity, { as: 'AcActivities', through: 'notification_activities' });
-        AcNotification.belongsToMany(models.AcActivity, { as: 'AcDelayedNotifications', through: 'delayed_notifications' });
+        AcNotification.belongsToMany(models.AcDelayedNotification, { as: 'AcDelayedNotifications', through: 'delayed_notifications' });
         AcNotification.belongsTo(models.User);
       },
 
-      processNotification: function (notification, activity) {
+      processNotification: function (notification, user, activity, callback) {
         var notificationJson = notification.toJSON();
-        notificationJson['activity'] = activity;
-        queue.create('process-notification', notificationJson).priority('critical').removeOnComplete(true).save();
+        notificationJson['activity'] = activity.toJSON();
+
+        var queuePriority;
+        if (user.last_login_at && ((new Date().getDate()-5)<user.last_login_at)) {
+          queuePriority = 'high';
+        } else {
+          queuePriority = 'medium';
+        }
+
+        queue.create('process-notification-delivery', notificationJson).priority(queuePriority).removeOnComplete(true).save();
+        queue.create('process-notification-news-feed', notificationJson).priority(queuePriority).removeOnComplete(true).save();
+
+        // Its being updated and is not new
+        if (callback) {
+          notification.viewed = false;
+          notification.changed('updated_at', true);
+          notification.save().then(function (notificationIn) {
+            callback();
+          }).catch(function (error) {
+            callback(error);
+          });
+        }
       },
 
-      createNotificationFromActivity: function(user, activity, type, priority, callback) {
+      createNotificationFromActivity: function(user, activity, type, notification_setting_type, priority, callback) {
         log.info('AcNotification Notification', {type: type, priority: priority });
 
+        if (user==null) {
+          user = { id: null };
+        }
+
+        if (typeof user == "number") {
+          user = { id: user };
+        }
         var domain = activity.object.domain;
         var community = activity.object.community;
+
+        //TODO: Check AcMute and mute if needed
 
        sequelize.models.AcNotification.build({
          type: type,
          priority: priority,
          status: 'active',
          ac_activity_id: activity.id,
+         from_notification_setting: notification_setting_type,
          user_id: user.id
        }).save().then(function(notification) {
           if (notification) {
             notification.addAcActivities(activity).then(function (results) {
               if (results) {
-                sequelize.models.AcNotification.processNotification(notification, activity);
-                log.info('Notification Created', { notification: toJson(notification), user: user });
+                sequelize.models.AcNotification.processNotification(notification, user, activity);
+                log.info('Notification Created', { notification: toJson(notification), userId: user.id});
                 callback();
               } else {
                 callback("Notification Error Can't add activity");
               }
             });
           } else {
-            log.error('Notification Creation Error', { err: "No notification", user: user });
+            log.error('Notification Creation Error', { err: "No notification", user: user.id});
             callback();
           }
         }).catch(function (error) {
-         log.error('Notification Creation Error', { err: error, user: user });
+         log.error('Notification Creation Error', { err: error, user: user.id});
        });
       }
     }

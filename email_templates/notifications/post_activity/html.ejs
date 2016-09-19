@@ -1,13 +1,15 @@
 <% include ../header.html.ejs %>
 
 <% if (activity.type == 'activity.post.new') { %>
-  <p><%= post.id == user.id ? t('notification.email.post.new') : t('notification.email.new_post_self') %></p>
+  <h1 style="font-weight: 600;line-height: 1.1em;margin: 0;font-size: 14pt;padding-top: 8px;"><%= post.id == user.id ? t('notification.email.postNewsSelf') : t('notification.email.postNew') %></h1>
 <% } if (activity.type == 'activity.post.endorsement.new') { %>
-  <p><%= post.id == user.id ? t('notification.email.post.endorsement') : t('notification.email.post.endorsement_self') %></p>
+  <h1 style="font-weight: 600;line-height: 1.1em;margin: 0;font-size: 14pt;padding-top: 8px;"><%= post.id == user.id ? t('notification.email.postEndorsementSelf') : t('notification.email.postEndorsement') %></h1>
 <% } if (activity.type == 'activity.post.opposition.new') { %>
-  <p><%= post.id == user.id ? t('notification.email.post.opposition') : t('notification.email.post.opposition_self') %></p>
+  <h1 style="font-weight: 600;line-height: 1.1em;margin: 0;font-size: 14pt;padding-top: 8px;"><%= post.id == user.id ? t('notification.email.postOppositionSelf') : t('notification.email.postOpposition') %></h1>
 <% } %>
 
-<%= "https://"+community.hostname+"."+domain.domain_name+"/#!/post/"+post.id %>
+<br>
+
+<%- linkTo("https://"+community.hostname+"."+domain.domain_name+"/post/"+post.id) %>
 
 <% include ../footer.html.ejs %>

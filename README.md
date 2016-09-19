@@ -7,8 +7,8 @@ This is the first public developer release of Active Citizen. It is an open sour
 streams and notifications using machine learning to recommend content to users.
 
 ## Technology Stack
-Active Citizen is by most parts a Javascript library using Nodejs, Express, Passport, Sequelize (Postgres), Redis,
-Web Components, Polymer and Tensorflow (Google's AI library).
+Active Citizen is by most parts a Javascript library using 
+<a href="https://github.com/nodejs/node" target="_blank">Nodejs</a>, <a href="https://github.com/caolan/async" target="_blank">Async</a>, <a href="https://github.com/expressjs/express" target="_blank">Express</a>, <a href="https://github.com/jaredhanson/passport" target="_blank">Passport</a>, <a href="https://github.com/sequelize/sequelize" target="_blank">Sequelize</a>, <a href="https://github.com/Polymer/polymer" target="_blank">Polymer (Web Components)</a>, <a href="https://github.com/Automattic/kue" target="_blank">Kue</a>, <a href="https://github.com/antirez/redis" target="_blank">Redis</a>, <a href="https://github.com/tensorflow/tensorflow" target="_blank">Tensorflow</a> and <a href="https://github.com/PredictionIO/PredictionIO" target="_blank">PredictionIO</a>
 
 ## Current features
 - Activity stream engine based on the W3C Activity Stream standards specification
@@ -22,8 +22,9 @@ real life example of Active Citizen use. It is also open source and available he
 ## Work for next release
 *end of May 2016*
 
-- Integrate Tensorflow for recommending posts to users
-- Integrate Tensorflow for recommending groups to users
+- Integrate PredictionIO for recommending posts to users
+- Integrate PredictionIO for recommending groups to users
+- Integrate Tensorflow for classifying categories and point sentiment
 - Add more notification types
 
 ## Documentation

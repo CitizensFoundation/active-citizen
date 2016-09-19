@@ -1,7 +1,31 @@
 {
   "notification": {
+    "post": {
+      "statusChangeSubject": "Status of post changed"
+    },
     "email": {
-      "reset_password_1": "Someone has requested a link to change your password, and you can do this through the link below.",
+      "user_invite": "Invitation to participate",
+      "user_invite_1": "You have been invited to participate in...",
+      "user_invite_2": "Click on the link or paste it into a browser address bar to accept the invitation",
+      "user_invite_3": "You were invited by",
+      "postEndorsementNew": "Your idea has support",
+      "postNew": "New idea",
+      "postNewsSelf": "Your new idea",
+      "postEndorsementSelf": "Endorsement for your idea",
+      "postEndorsement": "Endorsement for an idea",
+      "postOppositionSelf": "Opposition for your idea",
+      "postOpposition": "Opposition for idea",
+      "pointNewSelf": "New point for your idea",
+      "pointNew'": "New point",
+      "pointUnhelpfulSelf": "Point marked unhelpful for my idea",
+      "pointUnhelpful": "Point marked unhelpful",
+      "pointHelpfulSelf": "Point marked helpful for my idea",
+      "pointHelpful": "Point marked helpful",
+      "newPointOnMyPoint": "New point",
+      "password_recovery": "Create a new password",
+      "password_changed": "Your password has been changed",
+      "dear": "Hi",
+      "reset_password_1": "Here is link to change your password.",
       "reset_password_2": "If you didn't request this, please ignore this email.",
       "reset_password_3": "Your password won't change until you access the link above and create a new one."
     }
