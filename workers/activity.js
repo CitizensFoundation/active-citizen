@@ -73,31 +73,37 @@ ActivityWorker.prototype.process = function (activityJson, callback) {
       try {
         switch (activity.type) {
           case "activity.user.invite":
-            models.AcNotification.createNotificationFromActivity(activity.actor.user_id, activity, "notification.user.invite", "priority", 70, function (error) {
+            models.AcNotification.createNotificationFromActivity(activity.actor.userId, activity, "notification.user.invite", "priority", 70, function (error) {
               log.info('Processing activity.user.invite Completed', {type: activity.type, err: error});
               seriesCallback(error);
             });
             break;
           case "activity.password.recovery":
-            models.AcNotification.createNotificationFromActivity(activity.actor.user, activity, "notification.password.recovery", "priority", 100, function (error) {
+            models.AcNotification.createNotificationFromActivity(activity.actor.userId, activity, "notification.password.recovery", "priority", 100, function (error) {
               log.info('Processing activity.password.recovery Completed', {type: activity.type, err: error});
               seriesCallback(error);
             });
             break;
           case "activity.password.changed":
-            models.AcNotification.createNotificationFromActivity(activity.actor.user, activity, "notification.password.changed", "priority", 100, function (error) {
+            models.AcNotification.createNotificationFromActivity(activity.actor.userId, activity, "notification.password.changed", "priority", 100, function (error) {
               log.info('Processing activity.password.changed Completed', {type: activity.type, err: error});
               seriesCallback(error);
             });
             break;
+          case "activity.system.generalUserNotification":
+            models.AcNotification.createNotificationFromActivity(activity.actor.userId, activity, "notification.generalUserNotification", "priority", 100, function (error) {
+              log.info('Processing activity.system.generalUserNotification', {type: activity.type, err: error});
+              seriesCallback(error);
+            });
+            break;
           case "activity.report.content":
-            models.AcNotification.createReportNotifications(activity.actor.user, activity, function (error) {
+            models.AcNotification.createReportNotifications(activity.actor.userId, activity, function (error) {
               log.info('Processing activity.report.content Completed', {type: activity.type, err: error});
               seriesCallback(error);
             });
             break;
           case "activity.bulk.status.update":
-            models.AcNotification.createNotificationFromActivity(activity.actor.user, activity, "notification.bulk.status.update", "priority", 100, function (error) {
+            models.AcNotification.createNotificationFromActivity(activity.actor.userId, activity, "notification.bulk.status.update", "priority", 100, function (error) {
               log.info('Processing activity.bulk.status.update Completed', {type: activity.type, err: error});
               seriesCallback(error);
             });

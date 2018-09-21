@@ -6,8 +6,8 @@ var activity = require('./activity');
 var notification_delivery = require('./notification_delivery');
 var notification_news_feed = require('./notification_news_feed');
 var bulk_status_update = require('./bulk_status_update');
-var deletions = require('./deletions').deletion;
-var anonymizations = require('./anonymizations').anonymization;
+var deletions = require('./deletions');
+var anonymizations = require('./anonymizations');
 var email = require('./email');
 var queue = require('./queue');
 

@@ -295,6 +295,10 @@ module.exports = function(sequelize, DataTypes) {
         var domain = activity.object.domain;
         var community = activity.object.community;
 
+        let userInteractionProfile = {};
+        if (activity.object && activity.object.forwardToUser===true) {
+          userInteractionProfile['activityObject'] = activity.object;
+        }
         //TODO: Check AcMute and mute if needed
 
        sequelize.models.AcNotification.build({
@@ -302,6 +306,7 @@ module.exports = function(sequelize, DataTypes) {
          priority: priority,
          status: 'active',
          ac_activity_id: activity.id,
+         user_interaction_profile: userInteractionProfile,
          from_notification_setting: notification_setting_type,
          user_id: user.id
        }).save().then(function(notification) {
