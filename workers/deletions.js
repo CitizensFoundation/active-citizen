@@ -15,13 +15,13 @@ const recountGroupFromPostId = (postId, callback) => {
   let postsCount = 0;
   let pointsCount = 0;
 
-  models.Post.find({
+  models.Post.unscoped().find({
     where: { id: postId },
     attributes: ['id', 'group_id']
   }).then((post) => {
     let groupId = post.group_id;
     async.series([
-      function (seriesCallback) {
+      (seriesCallback) => {
         models.Post.findAll({
           where: {
             group_id: groupId
@@ -29,9 +29,11 @@ const recountGroupFromPostId = (postId, callback) => {
         }).then(function (posts) {
           postsCount = posts.length;
           seriesCallback();
-        })
+        }).catch((error) => {
+          seriesCallback(error);
+        });
       },
-      function (seriesCallback) {
+      (seriesCallback) => {
         models.Point.findAll({
           include: [
             {
@@ -44,18 +46,30 @@ const recountGroupFromPostId = (postId, callback) => {
         }).then(function (posts) {
           pointsCount = posts.length;
           seriesCallback();
-        })
+        }).catch((error) => {
+          seriesCallback(error);
+        });
       }
     ], (error) => {
       if (error) {
         callback(error);
       } else {
-        models.Group.find({where: { id: groupId }}).then((group) => {
-          group.counter_posts = postsCount;
-          group.counter_points = pointsCount;
-          group.save().then(() => {
+        models.Group.find({
+          where: { id: groupId },
+          attributes: ['id', 'community_id', 'counter_posts', 'counter_points']
+        }).then((group) => {
+          if (group) {
+            group.counter_posts = postsCount;
+            group.counter_points = pointsCount;
+            group.save().then(() => {
+              callback();
+            }).catch((error) => {
+              callback(error);
+            });
+          } else {
+            log.warn("No group for update counters");
             callback();
-          });
+          }
         }).catch((error) => {
           callback(error);
         });
@@ -68,40 +82,44 @@ const recountGroupFromPostId = (postId, callback) => {
 
 const resetCountForCommunityForGroup = (groupId, callback) => {
   let totalPosts=0, totalPoints = 0;
-  models.Group.find({
+  models.Group.unscoped().find({
     where: { id: groupId },
     attributes: ['id', 'community_id']
   }).then((group) => {
-    let communityId = group.community_id;
-    async.series([
-      (seriesCallback) => {
-        models.Group.findAll({
-          where: { community_id: communityId },
-          attributes: ['id', 'community_id','counter_points','counter_posts']
-        }).then((groups) => {
-          groups.forEach((group) => {
-            if (group.counter_posts) {
-              totalPosts+=group.counter_posts;
-            }
-            if (group.counter_points) {
-              totalPoints+=group.counter_points;
-            }
-          });
-          models.Community.update(
-            { counter_posts:totalPosts, counter_points: totalPoints },
-            { where: { id: communityId} }
-          ).then(() => {
-            seriesCallback();
+    if (group) {
+      let communityId = group.community_id;
+      async.series([
+        (seriesCallback) => {
+          models.Group.findAll({
+            where: { community_id: communityId },
+            attributes: ['id', 'community_id','counter_points','counter_posts']
+          }).then((groups) => {
+            groups.forEach((group) => {
+              if (group.counter_posts) {
+                totalPosts+=group.counter_posts;
+              }
+              if (group.counter_points) {
+                totalPoints+=group.counter_points;
+              }
+            });
+            models.Community.update(
+              { counter_posts: totalPosts, counter_points: totalPoints },
+              { where: { id: communityId} }
+            ).then(() => {
+              seriesCallback();
+            }).catch((error) => {
+              seriesCallback(error)
+            });
           }).catch((error) => {
-            seriesCallback(error)
+            seriesCallback(error);
           });
-        }).catch((error) => {
-          callback(error);
-        });
-      }
-    ], (error) => {
-      callback(error);
-    });
+        }
+      ], (error) => {
+        callback(error);
+      });
+    } else {
+      callback();
+    }
   }).catch((error) => {
     callback(error)
   });
@@ -286,7 +304,7 @@ const deleteGroupContent = (workPackage, callback) => {
           where: { group_id: groupId }
         }).then(function (posts) {
           async.forEach(posts, function (post, innerCallback) {
-            deletePostContent(_.merge({postId: post.id, skipActivities: true, useNotification: false }, workPackage), innerCallback);
+            deletePostContent(_.merge({postId: post.id, skipActivities: true, useNotification: false, resetCounters: false }, workPackage), innerCallback);
           }, (error) => {
             seriesCallback(error);
           });
