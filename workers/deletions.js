@@ -19,62 +19,67 @@ const recountGroupFromPostId = (postId, callback) => {
     where: { id: postId },
     attributes: ['id', 'group_id']
   }).then((post) => {
-    let groupId = post.group_id;
-    async.series([
-      (seriesCallback) => {
-        models.Post.findAll({
-          where: {
-            group_id: groupId
-          }
-        }).then(function (posts) {
-          postsCount = posts.length;
-          seriesCallback();
-        }).catch((error) => {
-          seriesCallback(error);
-        });
-      },
-      (seriesCallback) => {
-        models.Point.findAll({
-          include: [
-            {
-              model: models.Post,
-              where: {
-                group_id: groupId
-              }
+    if (post) {
+      let groupId = post.group_id;
+      async.series([
+        (seriesCallback) => {
+          models.Post.findAll({
+            where: {
+              group_id: groupId
             }
-          ]
-        }).then(function (posts) {
-          pointsCount = posts.length;
-          seriesCallback();
-        }).catch((error) => {
-          seriesCallback(error);
-        });
-      }
-    ], (error) => {
-      if (error) {
-        callback(error);
-      } else {
-        models.Group.find({
-          where: { id: groupId },
-          attributes: ['id', 'community_id', 'counter_posts', 'counter_points']
-        }).then((group) => {
-          if (group) {
-            group.counter_posts = postsCount;
-            group.counter_points = pointsCount;
-            group.save().then(() => {
-              callback();
-            }).catch((error) => {
-              callback(error);
-            });
-          } else {
-            log.warn("No group for update counters");
-            callback();
-          }
-        }).catch((error) => {
+          }).then(function (posts) {
+            postsCount = posts.length;
+            seriesCallback();
+          }).catch((error) => {
+            seriesCallback(error);
+          });
+        },
+        (seriesCallback) => {
+          models.Point.findAll({
+            include: [
+              {
+                model: models.Post,
+                where: {
+                  group_id: groupId
+                }
+              }
+            ]
+          }).then(function (posts) {
+            pointsCount = posts.length;
+            seriesCallback();
+          }).catch((error) => {
+            seriesCallback(error);
+          });
+        }
+      ], (error) => {
+        if (error) {
           callback(error);
-        });
-      }
-    });
+        } else {
+          models.Group.find({
+            where: { id: groupId },
+            attributes: ['id', 'community_id', 'counter_posts', 'counter_points']
+          }).then((group) => {
+            if (group) {
+              group.counter_posts = postsCount;
+              group.counter_points = pointsCount;
+              group.save().then(() => {
+                callback();
+              }).catch((error) => {
+                callback(error);
+              });
+            } else {
+              log.warn("No group for update counters");
+              callback();
+            }
+          }).catch((error) => {
+            callback(error);
+          });
+        }
+      });
+    } else {
+      log.warn("No post for update counters");
+      callback();
+    }
   }).catch((error) => {
     callback(error);
   });
