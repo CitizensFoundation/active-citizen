@@ -11,8 +11,63 @@ if(process.env.AIRBRAKE_PROJECT_ID) {
   airbrake = require('../utils/airbrake');
 }
 
+const recountGroupFromPostId = (postId, callback) => {
+  let postsCount = 0;
+  let pointsCount = 0;
+
+  models.Post.find({
+    where: { id: postId },
+    attributes: ['id', 'group_id']
+  }).then((post) => {
+    let groupId = post.group_id;
+    async.series([
+      function (seriesCallback) {
+        models.Post.findAll({
+          where: {
+            group_id: groupId
+          }
+        }).then(function (posts) {
+          postsCount = posts.length;
+          seriesCallback();
+        })
+      },
+      function (seriesCallback) {
+        models.Point.findAll({
+          include: [
+            {
+              model: models.Post,
+              where: {
+                group_id: groupId
+              }
+            }
+          ]
+        }).then(function (posts) {
+          pointsCount = posts.length;
+          seriesCallback();
+        })
+      }
+    ], (error) => {
+      if (error) {
+        callback(error);
+      } else {
+        models.Group.find({where: { id: groupId }}).then((group) => {
+          group.counter_posts = postsCount;
+          group.counter_points = pointsCount;
+          group.save().then(() => {
+            callback();
+          });
+        }).catch((error) => {
+          callback(error);
+        });
+      }
+    });
+  }).catch((error) => {
+    callback(error);
+  });
+};
+
 const resetCountForCommunityForGroup = (groupId, callback) => {
-  let totalPosts=0, totalUsers=0, totalPoints = 0;
+  let totalPosts=0, totalPoints = 0;
   models.Group.find({
     where: { id: groupId },
     attributes: ['id', 'community_id']
@@ -22,7 +77,7 @@ const resetCountForCommunityForGroup = (groupId, callback) => {
       (seriesCallback) => {
         models.Group.findAll({
           where: { community_id: communityId },
-          attributes: ['id', 'community_id','counter_points','counter_posts','counter_users']
+          attributes: ['id', 'community_id','counter_points','counter_posts']
         }).then((groups) => {
           groups.forEach((group) => {
             if (group.counter_posts) {
@@ -31,12 +86,9 @@ const resetCountForCommunityForGroup = (groupId, callback) => {
             if (group.counter_points) {
               totalPoints+=group.counter_points;
             }
-            if (group.counter_users) {
-              totalUsers+=group.counter_users;
-            }
           });
           models.Community.update(
-            { counter_posts:totalPosts, counter_points: totalPoints, counter_users: totalUsers },
+            { counter_posts:totalPosts, counter_points: totalPoints },
             { where: { id: communityId} }
           ).then(() => {
             seriesCallback();
@@ -162,7 +214,9 @@ const deletePostContent = (workPackage, callback) => {
             { where: { id: postId } }
           ).then(function () {
             log.info("Post reset counters for post");
-            seriesCallback();
+            recountGroupFromPostId(postId, (error) => {
+              seriesCallback(error);
+            });
           }).catch((error) => {
             seriesCallback(error);
           });

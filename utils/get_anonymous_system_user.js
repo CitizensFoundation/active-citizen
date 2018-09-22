@@ -1,8 +1,9 @@
+const models = require("../../models");
+
 module.exports = (callback) => {
   models.User.findOrCreate({
     where: {
-      email: "system.anonymous.user72@citizens.is",
-      frequency: frequency
+      email: "system.anonymous.user72@citizens.is"
     },
     defaults: {
       profile_data: { isAnonymousUser: true },

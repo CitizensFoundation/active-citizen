@@ -25,7 +25,7 @@ const anonymizePointActivities = (workPackage, callback) => {
             { user_id: workPackage.anonymousUserId },
             { where: { point_id: pointId}}
           ).then(function (spread) {
-            log.info('Point Activities Anonymized', {pointId: pointId, numberDeleted: spread[0],context: 'ac-anonymize', userId: workPackage.userId});
+            log.info('Point Activities Anonymized', {pointId: pointId, numberAnonymized: spread[0],context: 'ac-anonymize', userId: workPackage.userId});
             seriesCallback();
           }).catch(function (error) {
             seriesCallback(error);
@@ -39,7 +39,7 @@ const anonymizePointActivities = (workPackage, callback) => {
           { user_id: workPackage.anonymousUserId },
           { where: { point_id: pointId}}
         ).then(function (spread) {
-          log.info('Point Quality Anonymized', {pointId: pointId, numberDeleted: spread[0],context: 'ac-anonymize', userId: workPackage.userId});
+          log.info('Point Quality Anonymized', {pointId: pointId, numberAnonymized: spread[0],context: 'ac-anonymize', userId: workPackage.userId});
           seriesCallback();
         }).catch(function (error) {
           seriesCallback(error);
@@ -64,7 +64,7 @@ const anonymizePostContent = (workPackage, callback) => {
             { user_id: workPackage.anonymousUserId },
             { where: { post_id: postId}}
           ).then((spread) => {
-            log.info('Post Activities Anonymized', {postId: postId, numberDeleted: spread[0],context: 'ac-anonymize', userId: workPackage.userId});
+            log.info('Post Activities Anonymized', {postId: postId, numberAnonymized: spread[0],context: 'ac-anonymize', userId: workPackage.userId});
             seriesCallback();
           }).catch((error) => {
             seriesCallback(error);
@@ -95,7 +95,7 @@ const anonymizePostContent = (workPackage, callback) => {
           { user_id: workPackage.anonymousUserId },
           { where: { post_id: postId } }
         ).then((spread) => {
-          log.info('Post Activities Points Anonymized', {postId: postId, numberDeleted: spread[0],context: 'ac-anonymize', userId: workPackage.userId});
+          log.info('Post Activities Points Anonymized', {postId: postId, numberAnonymized: spread[0],context: 'ac-anonymize', userId: workPackage.userId});
           seriesCallback();
         }).catch((error) => {
           seriesCallback(error);
@@ -106,7 +106,7 @@ const anonymizePostContent = (workPackage, callback) => {
           { user_id: workPackage.anonymousUserId },
           { where: { post_id: postId } }
         ).then((spread) => {
-          log.info('Post Endorsement Anonymized', { postId: postId, numberDeleted: spread[0],context: 'ac-anonymize', userId: workPackage.userId});
+          log.info('Post Endorsement Anonymized', { postId: postId, numberAnonymized: spread[0],context: 'ac-anonymize', userId: workPackage.userId});
           seriesCallback();
         }).catch((error) => {
           seriesCallback(error);
@@ -129,7 +129,7 @@ const anonymizePostContent = (workPackage, callback) => {
               }
             ]
           }).then((post) => {
-            let notificationType = error ? 'anonymizePostContentError' : 'anonymizePostContent';
+            const notificationType = error ? 'anonymizePostContentError' : 'anonymizePostContentDone';
             models.AcActivity.createActivity({
               type: 'activity.system.generalUserNotification',
               object: { type: notificationType, name: workPackage.postName, forwardToUser: true },
@@ -162,7 +162,7 @@ const anonymizeGroupContent = (workPackage, callback) => {
           { user_id: workPackage.anonymousUserId },
           { where: { group_id: groupId }}
         ).then((spread) => {
-          log.info('Group Activities Anonymized', {groupId: groupId, numberDeleted: spread[0],context: 'ac-anonymize', userId: workPackage.userId});
+          log.info('Group Activities Anonymized', {groupId: groupId, numberAnonymized: spread[0],context: 'ac-anonymize', userId: workPackage.userId});
           seriesCallback();
         }).catch((error) => {
           seriesCallback(error);
@@ -183,11 +183,96 @@ const anonymizeGroupContent = (workPackage, callback) => {
         })
       },
       (seriesCallback) => {
+        models.Point.update(
+          { user_id: workPackage.anonymousUserId },
+          { where: { group_id: groupId }}
+        ).then((spread) => {
+          log.info('Group Points Anonymized', {groupId: groupId, numberAnonymized: spread[0],context: 'ac-anonymize', userId: workPackage.userId});
+          seriesCallback();
+        }).catch((error) => {
+          seriesCallback(error);
+        });
+      },
+      (seriesCallback) => {
+        models.Point.findAll({
+          where: { group_id: groupId },
+          attributes: ['id', 'group_id'],
+          include: [
+            {
+              model: models.PointRevision,
+              required: true,
+              attributes: ['id','user_id']
+            }
+          ]
+        }).then((points) => {
+          var pointRevisionsIds = [];
+          points.forEach((point) => {
+            let newIds = _.map(point.PointRevisions, (revision) => {
+              return revision.id;
+            });
+            pointRevisionsIds = pointRevisionsIds.concat(newIds);
+          });
+          models.PointRevision.update(
+            { user_id: workPackage.anonymousUserId },
+            { where: {
+                id: {
+                  $in: pointRevisionsIds
+                }
+              }
+            }
+          ).then((spread) => {
+            log.info('Group PointRevisions Anonymized', {groupId: groupId, numberAnonymized: spread[0], context: 'ac-anonymize', userId: workPackage.userId});
+            seriesCallback();
+          }).catch((error) => {
+            seriesCallback(error);
+          });
+        }).catch((error) => {
+          seriesCallback(error);
+        });
+      },
+      (seriesCallback) => {
+        models.Point.findAll({
+          where: { group_id: groupId },
+          attributes: ['id', 'group_id'],
+          include: [
+            {
+              model: models.PointQuality,
+              required: true,
+              attributes: ['id','user_id']
+            }
+          ]
+        }).then((points) => {
+          var pointQualitiesIds = [];
+          points.forEach((point) => {
+            let newIds = _.map(point.PointQualities, (quality) => {
+              return quality.id;
+            });
+            pointQualitiesIds = pointQualitiesIds.concat(newIds);
+          });
+          models.PointQuality.update(
+            { user_id: workPackage.anonymousUserId },
+            { where: {
+                id: {
+                  $in: pointQualitiesIds
+                }
+              }
+            }
+          ).then((spread) => {
+            log.info('Group PointQuality Anonymized', {groupId: groupId, numberAnonymized: spread[0], context: 'ac-anonymize', userId: workPackage.userId});
+            seriesCallback();
+          }).catch((error) => {
+            seriesCallback(error);
+          });
+        }).catch((error) => {
+          seriesCallback(error);
+        });
+      },
+      (seriesCallback) => {
         models.Post.update(
           { user_id: workPackage.anonymousUserId},
           { where: { group_id: groupId } }
         ).then((spread) => {
-          log.info('Group Activities Post Anonymized', {groupId: groupId, numberDeleted: spread[0],context: 'ac-anonymize', userId: workPackage.userId});
+          log.info('Group Activities Post Anonymized', {groupId: groupId, numberAnonymized: spread[0],context: 'ac-anonymize', userId: workPackage.userId});
           seriesCallback();
         }).catch((error) => {
           seriesCallback(error);
@@ -204,7 +289,7 @@ const anonymizeGroupContent = (workPackage, callback) => {
                 }
               ]}
           ).then((group) => {
-            let notificationType = error ? 'anonymizeGroupContentError' : 'anonymizeGroupContent';
+            const notificationType = error ? 'anonymizeGroupContentError' : 'anonymizeGroupContentDone';
             models.AcActivity.createActivity({
               type: 'activity.system.generalUserNotification',
               object: { type: notificationType, name: workPackage.groupName, forwardToUser: true },
@@ -236,7 +321,7 @@ const anonymizeCommunityContent = (workPackage, callback) => {
           { user_id: workPackage.anonymousUserId },
           { where: { community_id: communityId }}
         ).then(function (spread) {
-          log.info('Community Activities Anonymized', {communityId: communityId, numberDeleted: spread[0],context: 'ac-anonymize', userId: workPackage.userId});
+          log.info('Community Activities Anonymized', {communityId: communityId, numberAnonymized: spread[0],context: 'ac-anonymize', userId: workPackage.userId});
           seriesCallback();
         }).catch(function (error) {
           seriesCallback(error);
@@ -256,7 +341,7 @@ const anonymizeCommunityContent = (workPackage, callback) => {
           seriesCallback(error);
         })
       }], (error) => {
-        const notificationType = error ? 'anonymizeCommunityContentError' : 'anonymizeCommunityContent';
+        const notificationType = error ? 'anonymizeCommunityContentError' : 'anonymizeCommunityContentDone';
         models.Community.find({
           where: { id: communityId },
           attributes: ['id','domain_id']
@@ -287,7 +372,7 @@ AnonymizationWorker.prototype.process = (workPackage, callback) => {
 
       switch(workPackage.type) {
         case 'anonymize-post-content':
-          anonymizePost(workPackage, callback);
+          anonymizePostContent(workPackage, callback);
           break;
         case 'anonymize-group-content':
           anonymizeGroupContent(workPackage, callback);
