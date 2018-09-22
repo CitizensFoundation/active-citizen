@@ -4,6 +4,7 @@ const log = require('../utils/logger');
 const queue = require('./queue');
 const i18n = require('../utils/i18n');
 const toJson = require('../utils/to_json');
+const getAnonymousUser = require('../utils/get_anonymous_system_user');
 const _ = require('lodash');
 
 let airbrake = null;
@@ -234,26 +235,6 @@ const anonymizeCommunityContent = (workPackage, callback) => {
   } else {
     callback("No communityId for anonymizeCommunityActivities");
   }
-};
-
-const getAnonymousUser = (callback) => {
-  models.User.findOrCreate({
-    where: {
-      email: "system.anonymous.user72@citizens.is",
-      frequency: frequency
-    },
-    defaults: {
-      profile_data: { isAnonymousUser: true },
-      email: "system.anonymous.user72@citizens.is",
-      name: "Anonymous",
-      notifications_settings: models.AcNotification.anonymousNotificationSettings,
-      status: 'active'
-    }
-  }).spread(function(user) {
-    callback(null, user);
-  }).catch(function (error) {
-    callback(error);
-  });
 };
 
 AnonymizationWorker.prototype.process = (workPackage, callback) => {

@@ -13,7 +13,7 @@ if(process.env.AIRBRAKE_PROJECT_ID) {
 
 let DeletionWorker = function () {};
 
-const deletePointActivities = (workPackage, callback) => {
+const deletePointContent = (workPackage, callback) => {
   const pointId = workPackage.pointId;
   log.info('Starting Point Activities Delete', {pointId: pointId, context: 'ac-delete', userId: workPackage.userId});
   if (pointId) {
@@ -48,7 +48,7 @@ const deletePointActivities = (workPackage, callback) => {
       callback(error);
     });
   } else {
-    callback("No pointId for deletePointActivities");
+    callback("No pointId for deletePointContent");
   }
 };
 
@@ -80,7 +80,7 @@ const deletePostContent = (workPackage, callback) => {
           }
         }).then((points) => {
           async.forEach(points, (point, innerCallback) => {
-            deletePointActivities(_.merge({pointId: point.id, skipActivities: true}, workPackage), innerCallback);
+            deletePointContent(_.merge({pointId: point.id, skipActivities: true}, workPackage), innerCallback);
           }, (error) => {
             seriesCallback(error);
           })
@@ -110,13 +110,27 @@ const deletePostContent = (workPackage, callback) => {
         }).catch((error) => {
           seriesCallback(error);
         })
-      }
-      ], (error) => {
+      },
+      (seriesCallback) => {
+        if (workPackage.resetCounters) {
+          models.Post.update(
+            { counter_endorsements_up: 0, counter_endorsements_down: 0, counter_points: 0, counter_users: 0 },
+            { where: { id: postId } }
+          ).then(function () {
+            log.info("Post reset counters for post");
+            seriesCallback();
+          }).catch((error) => {
+            seriesCallback(error);
+          });
+        } else {
+          seriesCallback();
+        }
+      }], (error) => {
         if (workPackage.useNotification) {
           const notificationType = error ? 'deletePostContentError' : 'deletePostContent';
           models.AcActivity.createActivity({
             type: 'activity.system.generalUserNotification',
-            object: { type: notificationType, name: workPackage.groupName, forwardToUser: true },
+            object: { type: notificationType, name: workPackage.groupName, forwardToUser: true, offerReload: true },
             userId: workPackage.userId
           }, (subError) => {
             callback(error || subError);
@@ -172,13 +186,27 @@ const deleteGroupContent = (workPackage, callback) => {
         }).catch((error) => {
           seriesCallback(error);
         })
-      }
-      ], (error) => {
+      },
+      (seriesCallback) => {
+        if (workPackage.resetCounters) {
+          models.Group.update(
+            { counter_posts: 0, counter_points: 0, counter_users: 0 },
+            { where: { id: groupId } }
+          ).then(function () {
+            log.info("Group reset counters for group");
+            seriesCallback();
+          }).catch((error) => {
+            seriesCallback(error);
+          });
+        } else {
+          seriesCallback();
+        }
+      }], (error) => {
         if (workPackage.useNotification) {
           const notificationType = error ? 'deleteCommunityContentError' : 'deleteCommunityContent';
           models.AcActivity.createActivity({
             type: 'activity.system.generalUserNotification',
-            object: { type: notificationType, name: workPackage.groupName, forwardToUser: true },
+            object: { type: notificationType, name: workPackage.groupName, forwardToUser: true, offerReload: true },
             userId: workPackage.userId
           }, (subError) => {
             callback(error || subError);
@@ -222,12 +250,27 @@ const deleteCommunityContent = (workPackage, callback) => {
         }).catch((error) => {
           seriesCallback(error);
         })
+      },
+      (seriesCallback) => {
+        if (workPackage.resetCounters) {
+          models.Community.update(
+            { counter_posts: 0, counter_points: 0, counter_groups: 0, counter_users: 0 },
+            { where: { id: communityId } }
+          ).then(function () {
+            log.info("Community reset counters for community");
+            seriesCallback();
+          }).catch((error) => {
+            seriesCallback(error);
+          })
+        } else {
+          seriesCallback();
+        }
       }], (error) => {
         if (workPackage.useNotification) {
           const notificationType = error ? 'deleteCommunityContentError' : 'deleteCommunityContent';
           models.AcActivity.createActivity({
             type: 'activity.system.generalUserNotification',
-            object: { type: notificationType, name: workPackage.communityName, forwardToUser: true },
+            object: { type: notificationType, name: workPackage.communityName, forwardToUser: true, offerReload: true },
             userId: workPackage.userId
           }, (subError) => {
             callback(error || subError);
@@ -244,10 +287,10 @@ const deleteCommunityContent = (workPackage, callback) => {
 
 DeletionWorker.prototype.process = (workPackage, callback) => {
   switch(workPackage.type) {
-    case 'delete-point-activities':
-      deletePointActivities(workPackage, callback);
+    case 'delete-point-content':
+      deletePointContent(workPackage, callback);
       break;
-    case 'delete-post-activities':
+    case 'delete-post-content':
       deletePostContent(workPackage, callback);
       break;
     case 'delete-group-content':
