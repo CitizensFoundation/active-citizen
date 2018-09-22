@@ -127,13 +127,33 @@ const deletePostContent = (workPackage, callback) => {
         }
       }], (error) => {
         if (workPackage.useNotification) {
-          const notificationType = error ? 'deletePostContentError' : 'deletePostContent';
-          models.AcActivity.createActivity({
-            type: 'activity.system.generalUserNotification',
-            object: { type: notificationType, name: workPackage.groupName, forwardToUser: true, offerReload: true },
-            userId: workPackage.userId
-          }, (subError) => {
-            callback(error || subError);
+          models.Post.find({
+            where: { id: postId },
+            attributes: ['id', 'group_id'],
+            include: [
+              {
+                model: models.Group,
+                attributes: ['id','community_id'],
+                include: [
+                  {
+                    model: models.Community,
+                    attributes: ['id', 'domain_id']
+                  }
+                ]
+              }
+            ]
+          }).then((post) => {
+            const notificationType = error ? 'deletePostContentError' : 'deletePostContentDone';
+            models.AcActivity.createActivity({
+              type: 'activity.system.generalUserNotification',
+              object: { type: notificationType, name: workPackage.postName, forwardToUser: true, offerReload: true },
+              userId: workPackage.userId, postId: postId, groupId: post.Group.id, communityId: post.Group.Community.id,
+              domainId: post.Group.Community.domain_id
+            }, (subError) => {
+              callback(error || subError);
+            });
+          }).catch((error) => {
+            callback(error);
           });
         } else {
           callback(error);
@@ -168,7 +188,7 @@ const deleteGroupContent = (workPackage, callback) => {
           where: { group_id: groupId }
         }).then(function (posts) {
           async.forEach(posts, function (post, innerCallback) {
-            deletePostContent(_.merge({postId: post.id, skipActivities: true}, workPackage), innerCallback);
+            deletePostContent(_.merge({postId: post.id, skipActivities: true, useNotification: false }, workPackage), innerCallback);
           }, (error) => {
             seriesCallback(error);
           });
@@ -203,13 +223,26 @@ const deleteGroupContent = (workPackage, callback) => {
         }
       }], (error) => {
         if (workPackage.useNotification) {
-          const notificationType = error ? 'deleteCommunityContentError' : 'deleteCommunityContent';
-          models.AcActivity.createActivity({
-            type: 'activity.system.generalUserNotification',
-            object: { type: notificationType, name: workPackage.groupName, forwardToUser: true, offerReload: true },
-            userId: workPackage.userId
-          }, (subError) => {
-            callback(error || subError);
+          models.Group.find({
+            where: { id: groupId },
+            attributes: ['id', 'community_id'],
+            include: [
+              {
+                model: models.Community,
+                attributes: ['id', 'domain_id']
+              }
+            ]
+          }).then((group) => {
+            const notificationType = error ? 'deleteCommunityContentError' : 'deleteCommunityContent';
+            models.AcActivity.createActivity({
+              type: 'activity.system.generalUserNotification',
+              object: { type: notificationType, name: workPackage.groupName, forwardToUser: true, offerReload: true },
+              userId: workPackage.userId, groupId: group.id, communityId: group.Community.id, domainId: group.Community.domain_id
+            }, (subError) => {
+              callback(error || subError);
+            });
+          }).catch((error) => {
+            callback(error);
           });
         } else {
           callback(error);
@@ -265,15 +298,33 @@ const deleteCommunityContent = (workPackage, callback) => {
         } else {
           seriesCallback();
         }
+      },
+      (seriesCallback) => {
+        models.Group.update(
+          { deleted: true },
+          { where: { community_id: communityId } }
+        ).then(function () {
+          log.info("Community groups deleted");
+          seriesCallback();
+        }).catch((error) => {
+          seriesCallback(error);
+        })
       }], (error) => {
         if (workPackage.useNotification) {
-          const notificationType = error ? 'deleteCommunityContentError' : 'deleteCommunityContent';
-          models.AcActivity.createActivity({
-            type: 'activity.system.generalUserNotification',
-            object: { type: notificationType, name: workPackage.communityName, forwardToUser: true, offerReload: true },
-            userId: workPackage.userId
-          }, (subError) => {
-            callback(error || subError);
+          models.Community.find({
+            where: { id: communityId },
+            attributes: ['id', 'domain_id']
+          }).then((community) => {
+            const notificationType = error ? 'deleteCommunityContentError' : 'deleteCommunityContent';
+            models.AcActivity.createActivity({
+              type: 'activity.system.generalUserNotification',
+              object: { type: notificationType, name: workPackage.communityName, forwardToUser: true, offerReload: true },
+              userId: workPackage.userId, communityId: community.id, domainId: community.domain_id
+            }, (subError) => {
+              callback(error || subError);
+            });
+          }).catch((error) => {
+            callback(error);
           });
         } else {
           callback(error);

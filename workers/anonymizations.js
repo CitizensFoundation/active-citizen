@@ -113,14 +113,34 @@ const anonymizePostContent = (workPackage, callback) => {
         })
       }], (error) => {
         if (!workPackage.skipNotification) {
-          let notificationType = error ? 'anonymizePostContentError' : 'anonymizePostContent';
-          models.AcActivity.createActivity({
-            type: 'activity.system.generalUserNotification',
-            object: { type: notificationType, name: workPackage.postTitle, forwardToUser: true },
-            userId: workPackage.userId
-          }, (subError) => {
-            callback(error || subError);
-          });
+          models.Post.find({
+            where: { id: postId },
+            attributes: ['id'],
+            include: [
+              {
+                model: models.Group,
+                attributes: ['id','community_id'],
+                include: [
+                  {
+                    model: models.Community,
+                    attribues: ['id', 'domain_id']
+                  }
+                ]
+              }
+            ]
+          }).then((post) => {
+            let notificationType = error ? 'anonymizePostContentError' : 'anonymizePostContent';
+            models.AcActivity.createActivity({
+              type: 'activity.system.generalUserNotification',
+              object: { type: notificationType, name: workPackage.postName, forwardToUser: true },
+              userId: workPackage.userId, postId: post.id, groupId: post.Group.id, communityId: post.Group.Community.id,
+              domainId: post.Group.Community.domain_id
+            }, (subError) => {
+              callback(error || subError);
+            });
+          }).catch((error) => {
+            callback(error);
+          })
         } else {
           callback(error);
         }
@@ -154,7 +174,7 @@ const anonymizeGroupContent = (workPackage, callback) => {
           where: { group_id: groupId }
         }).then(function (posts) {
           async.forEach(posts, function (post, innerCallback) {
-            anonymizePostContent(_.merge({postId: post.id, skipActivities: true, skipNotification: true}, workPackage), innerCallback);
+            anonymizePostContent(_.merge({postId: post.id, skipActivities: true, skipNotification: true, useNotification: false }, workPackage), innerCallback);
           }, (error) => {
             seriesCallback(error);
           });
@@ -174,13 +194,27 @@ const anonymizeGroupContent = (workPackage, callback) => {
         })
       }], (error) => {
         if (!workPackage.skipNotification) {
-          let notificationType = error ? 'anonymizeGroupContentError' : 'anonymizeGroupContent';
-          models.AcActivity.createActivity({
-            type: 'activity.system.generalUserNotification',
-            object: { type: notificationType, name: workPackage.groupName, forwardToUser: true },
-            userId: workPackage.userId
-          }, (subError) => {
-            callback(error || subError);
+          models.Group.find(
+            { where: { id: groupId },
+              attributes: ['id','community_id'],
+              include: [
+                {
+                  model: models.Community,
+                  attribues: ['id','domain_id']
+                }
+              ]}
+          ).then((group) => {
+            let notificationType = error ? 'anonymizeGroupContentError' : 'anonymizeGroupContent';
+            models.AcActivity.createActivity({
+              type: 'activity.system.generalUserNotification',
+              object: { type: notificationType, name: workPackage.groupName, forwardToUser: true },
+              userId: workPackage.userId, groupId: group.id, communityId: group.community_id,
+              domainId: group.Community.domain_id
+            }, (subError) => {
+              callback(error || subError);
+            });
+          }).catch((error) => {
+            callback(error);
           });
         } else {
           callback(error);
@@ -222,13 +256,20 @@ const anonymizeCommunityContent = (workPackage, callback) => {
           seriesCallback(error);
         })
       }], (error) => {
-      const notificationType = error ? 'anonymizeCommunityContentError' : 'anonymizeCommunityContent';
-      models.AcActivity.createActivity({
-          type: 'activity.system.generalUserNotification',
-          object: { type: notificationType, name: workPackage.communityName, forwardToUser: true },
-          userId: workPackage.userId
-        }, (subError) => {
-          callback(error || subError);
+        const notificationType = error ? 'anonymizeCommunityContentError' : 'anonymizeCommunityContent';
+        models.Community.find({
+          where: { id: communityId },
+          attributes: ['id','domain_id']
+        }).then(function (community) {
+          models.AcActivity.createActivity({
+            type: 'activity.system.generalUserNotification',
+            object: { type: notificationType, name: workPackage.communityName, forwardToUser: true },
+            userId: workPackage.userId, communityId: community.id, domainId: community.domain_id
+          }, (subError) => {
+            callback(error || subError);
+          });
+        }).catch((error) => {
+          callback(error);
         });
       }
     );
