@@ -11,6 +11,50 @@ if(process.env.AIRBRAKE_PROJECT_ID) {
   airbrake = require('../utils/airbrake');
 }
 
+const resetCountForCommunityForGroup = (groupId, callback) => {
+  let totalPosts=0, totalUsers=0, totalPoints = 0;
+  models.Group.find({
+    where: { id: groupId },
+    attributes: ['id', 'community_id']
+  }).then((group) => {
+    let communityId = group.community_id;
+    async.series([
+      (seriesCallback) => {
+        models.Group.findAll({
+          where: { community_id: communityId },
+          attributes: ['id', 'community_id','counter_points','counter_posts','counter_users']
+        }).then((groups) => {
+          groups.forEach((group) => {
+            if (group.counter_posts) {
+              totalPosts+=group.counter_posts;
+            }
+            if (group.counter_points) {
+              totalPoints+=group.counter_points;
+            }
+            if (group.counter_users) {
+              totalUsers+=group.counter_users;
+            }
+          });
+          models.Community.update(
+            { counter_posts:totalPosts, counter_points: totalPoints, counter_users: totalUsers },
+            { where: { id: communityId} }
+          ).then(() => {
+            seriesCallback();
+          }).catch((error) => {
+            seriesCallback(error)
+          });
+        }).catch((error) => {
+          callback(error);
+        });
+      }
+    ], (error) => {
+      callback(error);
+    });
+  }).catch((error) => {
+    callback(error)
+  });
+};
+
 let DeletionWorker = function () {};
 
 const deletePointContent = (workPackage, callback) => {
@@ -214,7 +258,7 @@ const deleteGroupContent = (workPackage, callback) => {
             { where: { id: groupId } }
           ).then(function () {
             log.info("Group reset counters for group");
-            seriesCallback();
+            resetCountForCommunityForGroup(groupId, seriesCallback);
           }).catch((error) => {
             seriesCallback(error);
           });
@@ -233,7 +277,7 @@ const deleteGroupContent = (workPackage, callback) => {
               }
             ]
           }).then((group) => {
-            const notificationType = error ? 'deleteCommunityContentError' : 'deleteCommunityContent';
+            const notificationType = error ? 'deleteGroupContentError' : 'deleteGroupContentDone';
             models.AcActivity.createActivity({
               type: 'activity.system.generalUserNotification',
               object: { type: notificationType, name: workPackage.groupName, forwardToUser: true, offerReload: true },
@@ -315,7 +359,7 @@ const deleteCommunityContent = (workPackage, callback) => {
             where: { id: communityId },
             attributes: ['id', 'domain_id']
           }).then((community) => {
-            const notificationType = error ? 'deleteCommunityContentError' : 'deleteCommunityContent';
+            const notificationType = error ? 'deleteCommunityContentError' : 'deleteCommunityContentDone';
             models.AcActivity.createActivity({
               type: 'activity.system.generalUserNotification',
               object: { type: notificationType, name: workPackage.communityName, forwardToUser: true, offerReload: true },
