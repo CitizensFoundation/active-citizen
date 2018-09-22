@@ -54,7 +54,7 @@ var getNotifications = function (req, res, options, callback) {
           {
             model: models.AcActivity,
             as: 'AcActivities',
-            attributes: ['id','type','domain_id'],
+            attributes: ['id','type','domain_id','object'],
             where: activityWhereOptions,
             required: true,
             include: [

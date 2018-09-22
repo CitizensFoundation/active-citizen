@@ -6,6 +6,8 @@ var activity = require('./activity');
 var notification_delivery = require('./notification_delivery');
 var notification_news_feed = require('./notification_news_feed');
 var bulk_status_update = require('./bulk_status_update');
+var deletions = require('./deletions');
+var anonymizations = require('./anonymizations');
 var email = require('./email');
 var queue = require('./queue');
 
@@ -52,6 +54,14 @@ i18n
 
     queue.process('process-bulk-status-update', 1, function(job, done) {
       bulk_status_update.process(job.data, done);
+    });
+
+    queue.process('process-deletion', 1, function(job, done) {
+      deletions.process(job.data, done);
+    });
+
+    queue.process('process-anonymization', 1, function(job, done) {
+      anonymizations.process(job.data, done);
     });
   });
 

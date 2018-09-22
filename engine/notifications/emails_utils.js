@@ -228,22 +228,29 @@ var sendOneEmail = function (emailLocals, callback) {
           var translatedSubject = translateSubject(emailLocals.subject);
 
           if (transport) {
-            transport.sendMail({
-              from: fromEmail, // emailLocals.community.admin_email,
-              to: emailLocals.user.email,
-              bcc: process.env.ADMIN_EMAIL_BCC ? process.env.ADMIN_EMAIL_BCC : null,
-              subject: translatedSubject,
-              html: results.html,
-              text: results.text
-            }, function (error, responseStatus) {
-              if (error) {
-                log.error('EmailWorker', { err: error, user: emailLocals.user });
-                seriesCallback(error);
-              } else {
-                log.info('EmailWorker Completed', { responseStatusMessage: responseStatus.message, email: emailLocals.user.email, userId: emailLocals.user.id });
-                seriesCallback();
-              }
-            })
+            if (emailLocals.user.profile_data &&
+                emailLocals.user.profile_data.isAnonymousUser &&
+                emailLocals.user.email.indexOf('anonymous') > -1) {
+              log.info("Not sending email for anonymous user", {email: emailLocals.user.email});
+              seriesCallback();
+            } else {
+              transport.sendMail({
+                from: fromEmail, // emailLocals.community.admin_email,
+                to: emailLocals.user.email,
+                bcc: process.env.ADMIN_EMAIL_BCC ? process.env.ADMIN_EMAIL_BCC : null,
+                subject: translatedSubject,
+                html: results.html,
+                text: results.text
+              }, function (error, responseStatus) {
+                if (error) {
+                  log.error('EmailWorker', { err: error, user: emailLocals.user });
+                  seriesCallback(error);
+                } else {
+                  log.info('EmailWorker Completed', { responseStatusMessage: responseStatus.message, email: emailLocals.user.email, userId: emailLocals.user.id });
+                  seriesCallback();
+                }
+              })
+            }
           } else {
             log.warn('EmailWorker no email configured.', { subject: translatedSubject, userId: emailLocals.user.id, resultsHtml: results.html , resultsText: results.text });
             if (DEBUG_EMAILS_TO_TEMP_FIlE) {
