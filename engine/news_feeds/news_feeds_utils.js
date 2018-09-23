@@ -416,7 +416,7 @@ var activitiesDefaultIncludes = function (options) {
 //  'activity.post.officialStatus.inProgress'];
 
 defaultKeyActivities = ['activity.post.status.change','activity.point.new','activity.post.new',
-                        'activity.post.userImage.new', 'activity.point.newsStory.new' ];
+                        'activity.point.newsStory.new' ]; // TODO: Add back user images
 
 excludeActivitiesFromFilter = ['activity.point.newsStory.new','activity.post.status.change'];
 
