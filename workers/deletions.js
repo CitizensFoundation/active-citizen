@@ -109,7 +109,7 @@ const resetCountForCommunityForGroup = (groupId, callback) => {
             });
             models.Community.update(
               { counter_posts: totalPosts, counter_points: totalPoints },
-              { where: { id: communityId} }
+              { where: { id: communityId } }
             ).then(() => {
               seriesCallback();
             }).catch((error) => {
@@ -138,24 +138,24 @@ const deletePointContent = (workPackage, callback) => {
   if (pointId) {
     async.series([
       (seriesCallback) => {
-      if (!workPackage.skipActivities) {
-        models.AcActivity.update(
-          { deleted: true },
-          { where: { point_id: pointId}}
-        ).then(function (spread) {
-          log.info('Point Activities Deleted', {pointId: pointId, numberDeleted: spread[0],context: 'ac-delete', userId: workPackage.userId});
+        if (!workPackage.skipActivities) {
+          models.AcActivity.update(
+            { deleted: true },
+            { where: { point_id: pointId}}
+          ).then(function (spread) {
+            log.info('Point Activities Deleted', {pointId: pointId, numberDeleted: spread[0],context: 'ac-delete', userId: workPackage.userId});
+            seriesCallback();
+          }).catch(function (error) {
+            seriesCallback(error);
+          });
+        } else {
           seriesCallback();
-        }).catch(function (error) {
-          seriesCallback(error);
-        });
-      } else {
-        seriesCallback();
-      }
+        }
       },
       (seriesCallback) => {
         models.PointQuality.update(
           { deleted: true },
-          { where: { point_id: pointId}}
+          { where: { point_id: pointId} }
         ).then(function (spread) {
           log.info('Point Quality Deleted', {pointId: pointId, numberDeleted: spread[0],context: 'ac-delete', userId: workPackage.userId});
           seriesCallback();
@@ -180,7 +180,7 @@ const deletePostContent = (workPackage, callback) => {
         if (!workPackage.skipActivities) {
           models.AcActivity.update(
             { deleted: true },
-            { where: { post_id: postId}}
+            { where: { post_id: postId} }
           ).then((spread) => {
             log.info('Post Activities Deleted', {postId: postId, numberDeleted: spread[0],context: 'ac-delete', userId: workPackage.userId});
             seriesCallback();
@@ -193,7 +193,7 @@ const deletePostContent = (workPackage, callback) => {
       },
       (seriesCallback) => {
         models.Point.findAll({
-          attributes: ['id'],
+          attributes: ['id','post_id'],
           where: {
             post_id: postId
           }
@@ -264,15 +264,19 @@ const deletePostContent = (workPackage, callback) => {
               }
             ]
           }).then((post) => {
-            const notificationType = error ? 'deletePostContentError' : 'deletePostContentDone';
-            models.AcActivity.createActivity({
-              type: 'activity.system.generalUserNotification',
-              object: { type: notificationType, name: workPackage.postName, forwardToUser: true, offerReload: true },
-              userId: workPackage.userId, postId: postId, groupId: post.Group.id, communityId: post.Group.Community.id,
-              domainId: post.Group.Community.domain_id
-            }, (subError) => {
-              callback(error || subError);
-            });
+            if (post) {
+              const notificationType = error ? 'deletePostContentError' : 'deletePostContentDone';
+              models.AcActivity.createActivity({
+                type: 'activity.system.generalUserNotification',
+                object: { type: notificationType, name: workPackage.postName, forwardToUser: true, offerReload: true },
+                userId: workPackage.userId, postId: postId, groupId: post.Group.id, communityId: post.Group.Community.id,
+                domainId: post.Group.Community.domain_id
+              }, (subError) => {
+                callback(error || subError);
+              });
+            } else {
+              callback("Could not find post for notification in deletions");
+            }
           }).catch((error) => {
             callback(error);
           });
@@ -295,7 +299,7 @@ const deleteGroupContent = (workPackage, callback) => {
       (seriesCallback) => {
         models.AcActivity.update(
           { deleted: true },
-          { where: { group_id: groupId }}
+          { where: { group_id: groupId } }
         ).then((spread) => {
           log.info('Group Activities Deleted', {groupId: groupId, numberDeleted: spread[0],context: 'ac-delete', userId: workPackage.userId});
           seriesCallback();
@@ -354,14 +358,19 @@ const deleteGroupContent = (workPackage, callback) => {
               }
             ]
           }).then((group) => {
-            const notificationType = error ? 'deleteGroupContentError' : 'deleteGroupContentDone';
-            models.AcActivity.createActivity({
-              type: 'activity.system.generalUserNotification',
-              object: { type: notificationType, name: workPackage.groupName, forwardToUser: true, offerReload: true },
-              userId: workPackage.userId, groupId: group.id, communityId: group.Community.id, domainId: group.Community.domain_id
-            }, (subError) => {
-              callback(error || subError);
-            });
+            if (group) {
+              const notificationType = error ? 'deleteGroupContentError' : 'deleteGroupContentDone';
+              models.AcActivity.createActivity({
+                type: 'activity.system.generalUserNotification',
+                object: { type: notificationType, name: workPackage.groupName, forwardToUser: true, offerReload: true },
+                userId: workPackage.userId, groupId: group.id, communityId: group.Community.id, domainId: group.Community.domain_id
+              }, (subError) => {
+                callback(error || subError);
+              });
+
+            } else {
+              callback("Could not find group for notification in deletions");
+            }
           }).catch((error) => {
             callback(error);
           });
@@ -436,14 +445,18 @@ const deleteCommunityContent = (workPackage, callback) => {
             where: { id: communityId },
             attributes: ['id', 'domain_id']
           }).then((community) => {
-            const notificationType = error ? 'deleteCommunityContentError' : 'deleteCommunityContentDone';
-            models.AcActivity.createActivity({
-              type: 'activity.system.generalUserNotification',
-              object: { type: notificationType, name: workPackage.communityName, forwardToUser: true, offerReload: true },
-              userId: workPackage.userId, communityId: community.id, domainId: community.domain_id
-            }, (subError) => {
-              callback(error || subError);
-            });
+            if (community) {
+              const notificationType = error ? 'deleteCommunityContentError' : 'deleteCommunityContentDone';
+              models.AcActivity.createActivity({
+                type: 'activity.system.generalUserNotification',
+                object: { type: notificationType, name: workPackage.communityName, forwardToUser: true, offerReload: true },
+                userId: workPackage.userId, communityId: community.id, domainId: community.domain_id
+              }, (subError) => {
+                callback(error || subError);
+              });
+            } else {
+              callback("Could not find community for notifications in deletions");
+            }
           }).catch((error) => {
             callback(error);
           });
