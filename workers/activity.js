@@ -91,7 +91,7 @@ ActivityWorker.prototype.process = function (activityJson, callback) {
             });
             break;
           case "activity.system.generalUserNotification":
-            models.AcNotification.createNotificationFromActivity(activity.actor.user, activity, "notification.generalUserNotification", "priority", 100, function (error) {
+            models.AcNotification.createNotificationFromActivity(activity.actor.userId, activity, "notification.generalUserNotification", "priority", 100, function (error) {
               log.info('Processing activity.system.generalUserNotification', {type: activity.type, err: error});
               seriesCallback(error);
             });
