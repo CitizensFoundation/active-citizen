@@ -102,6 +102,31 @@ const anonymizePostContent = (workPackage, callback) => {
         })
       },
       (seriesCallback) => {
+        models.Post.find({
+            where: {
+              id: postId,
+              data: {
+                $ne: null
+              }
+            },
+            attribute: ['id', 'data']
+          }
+        ).then((post) => {
+          if (post && post.data.contact) {
+            post.set("data.contact", {});
+            post.save().then(() => {
+              seriesCallback();
+            }).catch((error) => {
+              seriesCallback(error);
+            });
+          } else {
+            seriesCallback();
+          }
+        }).catch((error) => {
+          seriesCallback(error);
+        })
+      },
+      (seriesCallback) => {
         models.Endorsement.update(
           { user_id: workPackage.anonymousUserId },
           { where: { post_id: postId } }
