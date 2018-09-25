@@ -470,6 +470,124 @@ const deleteCommunityContent = (workPackage, callback) => {
   }
 };
 
+const deleteUserContent = (workPackage, callback) => {
+  if (workPackage.userId) {
+    async.series([
+      (seriesCallback) => {
+        models.Endorsement.findAll({
+          attributes: ['id', 'post_id', 'deleted'],
+          where: {
+            user_id: workPackage.userId
+          },
+          include: [
+            {
+              model: models.Post,
+              attributes: ['id', 'counter_endorsements_up', 'counter_endorsements_down']
+            }
+          ]
+        }).then(function (endorsements) {
+          async.forEach(endorsements, function (endorsement, forEachCallback) {
+            if (endorsement.value===1) {
+              endorsement.Post.decrement('counter_endorsements_up');
+            } else {
+              endorsement.Post.decrement('counter_endorsements_down');
+            }
+            endorsement.deleted = true;
+            endorsement.save().then(function () {
+              forEachCallback();
+            }).catch((error) => {
+              forEachCallback(error);
+            });
+          }, function (error) {
+            if (error) {
+              seriesCallback(error);
+            } else {
+              log.info('User Endorsements Deleted', { numberDeleted: spread[0],context: 'ac-delete', userId: workPackage.userId});
+              seriesCallback();
+            }
+          });
+        }).catch((error) => {
+          seriesCallback(error);
+        });
+      },
+      (seriesCallback) => {
+        models.PointQuality.findAll({
+          attributes: ['id', 'point_id', 'deleted'],
+          where: {
+            user_id: workPackage.userId
+          },
+          include: [
+            {
+              model: models.Point,
+              attributes: ['id', 'counter_quality_up', 'counter_quality_down']
+            }
+          ]
+        }).then(function (pointQualities) {
+          async.forEach(pointQualities, function (pointQuality, forEachCallback) {
+            if (pointQuality.value===1) {
+              pointQuality.Point.decrement('counter_quality_up');
+            } else {
+              pointQuality.Point.decrement('counter_quality_down');
+            }
+            pointQuality.deleted = true;
+            pointQuality.save().then(function () {
+              forEachCallback();
+            }).catch((error) => {
+              forEachCallback(error);
+            });
+          }, function (error) {
+            if (error) {
+              seriesCallback(error);
+            } else {
+              log.info('User PointQuality Deleted', { numberDeleted: spread[0],context: 'ac-delete', userId: workPackage.userId});
+              seriesCallback();
+            }
+          });
+        }).catch((error) => {
+          seriesCallback(error);
+        });
+      },
+      (seriesCallback) => {
+        models.Point.update(
+          { deleted: true },
+          { where: { user_id: workPackage.userId } }
+        ).then((spread) => {
+          log.info('User Points Deleted', { numberDeleted: spread[0],context: 'ac-delete', userId: workPackage.userId});
+          seriesCallback();
+        }).catch((error) => {
+          seriesCallback(error);
+        })
+      },
+      (seriesCallback) => {
+        models.AcActivities.update(
+          { deleted: true },
+          { where: { user_id: workPackage.userId } }
+        ).then((spread) => {
+          log.info('User AcActitivies Deleted', { numberDeleted: spread[0],context: 'ac-delete', userId: workPackage.userId});
+          seriesCallback();
+        }).catch((error) => {
+          seriesCallback(error);
+        })
+      },
+      (seriesCallback) => {
+        models.Post.update(
+          { deleted: true },
+          { where: { user_id: workPackage.userId } }
+        ).then((spread) => {
+          log.info('User Post Deleted', { numberDeleted: spread[0],context: 'ac-delete', userId: workPackage.userId});
+          seriesCallback();
+        }).catch((error) => {
+          seriesCallback(error);
+        })
+      }
+    ], (error) => {
+      callback(error);
+    });
+  } else {
+    callback("No userId");
+  }
+};
+
 DeletionWorker.prototype.process = (workPackage, callback) => {
   switch(workPackage.type) {
     case 'delete-point-content':
@@ -483,6 +601,9 @@ DeletionWorker.prototype.process = (workPackage, callback) => {
       break;
     case 'delete-community-content':
       deleteCommunityContent(workPackage, callback);
+      break;
+    case 'delete-user-content':
+      deleteUserContent(workPackage, callback);
       break;
     default:
       callback("Unknown type for workPackage");

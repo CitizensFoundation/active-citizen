@@ -400,6 +400,73 @@ const anonymizeCommunityContent = (workPackage, callback) => {
   }
 };
 
+const anonymizeUserContent = (workPackage, callback) => {
+  if (workPackage.userId && workPackage.anonymousUserId) {
+    async.series([
+      (seriesCallback) => {
+        models.Endorsement.update(
+          { user_id: workPackage.anonymousUserId },
+          { where: { user_id: workPackage.userId } }
+        ).then((spread) => {
+          log.info('User Endorsement Anonymized', { numberDeleted: spread[0],context: 'ac-anonymize', userId: workPackage.userId});
+          seriesCallback();
+        }).catch((error) => {
+          seriesCallback(error);
+        })
+      },
+      (seriesCallback) => {
+        models.PointQuality.update(
+          { user_id: workPackage.anonymousUserId },
+          { where: { user_id: workPackage.userId } }
+        ).then((spread) => {
+          log.info('User Points Anonymized', { numberDeleted: spread[0],context: 'ac-anonymize', userId: workPackage.userId});
+          seriesCallback();
+        }).catch((error) => {
+          seriesCallback(error);
+        })
+      },
+      (seriesCallback) => {
+        models.Point.update(
+          { user_id: workPackage.anonymousUserId },
+          { where: { user_id: workPackage.userId } }
+        ).then((spread) => {
+          log.info('User Points Anonymized', { numberDeleted: spread[0],context: 'ac-anonymize', userId: workPackage.userId});
+          seriesCallback();
+        }).catch((error) => {
+          seriesCallback(error);
+        })
+      },
+      (seriesCallback) => {
+        models.AcActivities.update(
+          { user_id: workPackage.anonymousUserId },
+          { where: { user_id: workPackage.userId } }
+        ).then((spread) => {
+          log.info('User AcActitivies Anonymized', { numberDeleted: spread[0],context: 'ac-anonymize', userId: workPackage.userId});
+          seriesCallback();
+        }).catch((error) => {
+          seriesCallback(error);
+        })
+      },
+      (seriesCallback) => {
+        models.Post.update(
+          { user_id: workPackage.anonymousUserId },
+          { where: { user_id: workPackage.userId } }
+        ).then((spread) => {
+          log.info('User Post Anonymized', { numberDeleted: spread[0],context: 'ac-anonymize', userId: workPackage.userId});
+          seriesCallback();
+        }).catch((error) => {
+          seriesCallback(error);
+        })
+      }
+    ], (error) => {
+      callback(error);
+    });
+  } else {
+    callback("No userId");
+  }
+};
+
+
 AnonymizationWorker.prototype.process = (workPackage, callback) => {
   getAnonymousUser((error, anonymousUser) => {
     if (error) {
@@ -417,11 +484,16 @@ AnonymizationWorker.prototype.process = (workPackage, callback) => {
         case 'anonymize-community-content':
           anonymizeCommunityContent(workPackage, callback);
           break;
+        case 'anonymize-user-content':
+          anonymizeUserContent(workPackage, callback);
+          break;
         default:
           callback("Unknown type for workPackage");
       }
     }
   });
 };
+
+
 
 module.exports = new AnonymizationWorker();
