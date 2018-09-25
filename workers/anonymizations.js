@@ -463,7 +463,7 @@ const anonymizeUserContent = (workPackage, callback) => {
           { user_id: workPackage.anonymousUserId },
           { where: { user_id: workPackage.userId } }
         ).then((spread) => {
-          log.info('User Groups Anonymized', { numberDeleted: spread[0],context: 'ac-delete', userId: workPackage.userId});
+          log.info('User Groups Anonymized', { numberDeleted: spread[0],context: 'ac-anonymize', userId: workPackage.userId});
           seriesCallback();
         }).catch((error) => {
           seriesCallback(error);
@@ -474,7 +474,7 @@ const anonymizeUserContent = (workPackage, callback) => {
           { user_id: workPackage.anonymousUserId },
           { where: { user_id: workPackage.userId } }
         ).then((spread) => {
-          log.info('User Communities Anonymized', { numberDeleted: spread[0],context: 'ac-delete', userId: workPackage.userId});
+          log.info('User Communities Anonymized', { numberDeleted: spread[0],context: 'ac-anonymize', userId: workPackage.userId});
           seriesCallback();
         }).catch((error) => {
           seriesCallback(error);
@@ -484,7 +484,7 @@ const anonymizeUserContent = (workPackage, callback) => {
       callback(error);
     });
   } else {
-    callback("No userId");
+    callback("No userId or workPackage.anonymousUserId");
   }
 };
 

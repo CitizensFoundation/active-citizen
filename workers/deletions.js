@@ -472,7 +472,7 @@ const deleteCommunityContent = (workPackage, callback) => {
 };
 
 const deleteUserContent = (workPackage, callback) => {
-  if (workPackage.userId) {
+  if (workPackage.userId && workPackage.anonymousUserId) {
     async.series([
       (seriesCallback) => {
         models.Endorsement.findAll({
@@ -607,7 +607,7 @@ const deleteUserContent = (workPackage, callback) => {
       callback(error);
     });
   } else {
-    callback("No userId");
+    callback("No userId or workPackage.anonymousUserId");
   }
 };
 
