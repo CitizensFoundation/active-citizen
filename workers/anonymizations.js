@@ -457,6 +457,28 @@ const anonymizeUserContent = (workPackage, callback) => {
         }).catch((error) => {
           seriesCallback(error);
         })
+      },
+      (seriesCallback) => {
+        models.Group.update(
+          { user_id: workPackage.anonymousUserId },
+          { where: { user_id: workPackage.userId } }
+        ).then((spread) => {
+          log.info('User Groups Anonymized', { numberDeleted: spread[0],context: 'ac-delete', userId: workPackage.userId});
+          seriesCallback();
+        }).catch((error) => {
+          seriesCallback(error);
+        })
+      },
+      (seriesCallback) => {
+        models.Community.update(
+          { user_id: workPackage.anonymousUserId },
+          { where: { user_id: workPackage.userId } }
+        ).then((spread) => {
+          log.info('User Communities Anonymized', { numberDeleted: spread[0],context: 'ac-delete', userId: workPackage.userId});
+          seriesCallback();
+        }).catch((error) => {
+          seriesCallback(error);
+        })
       }
     ], (error) => {
       callback(error);

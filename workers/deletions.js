@@ -5,6 +5,7 @@ const queue = require('./queue');
 const i18n = require('../utils/i18n');
 const toJson = require('../utils/to_json');
 const _ = require('lodash');
+const getAnonymousUser = require('../utils/get_anonymous_system_user');
 
 let airbrake = null;
 if(process.env.AIRBRAKE_PROJECT_ID) {
@@ -579,8 +580,30 @@ const deleteUserContent = (workPackage, callback) => {
         }).catch((error) => {
           seriesCallback(error);
         })
+      },
+      (seriesCallback) => {
+        models.Group.update(
+          { user_id: workPackage.anonymousUserId },
+          { where: { user_id: workPackage.userId } }
+        ).then((spread) => {
+          log.info('User Groups Anonymized', { numberDeleted: spread[0],context: 'ac-delete', userId: workPackage.userId});
+          seriesCallback();
+        }).catch((error) => {
+          seriesCallback(error);
+        })
+      },
+      (seriesCallback) => {
+        models.Community.update(
+          { user_id: workPackage.anonymousUserId },
+          { where: { user_id: workPackage.userId } }
+        ).then((spread) => {
+          log.info('User Communities Anonymized', { numberDeleted: spread[0],context: 'ac-delete', userId: workPackage.userId});
+          seriesCallback();
+        }).catch((error) => {
+          seriesCallback(error);
+        })
       }
-    ], (error) => {
+     ], (error) => {
       callback(error);
     });
   } else {
@@ -589,25 +612,31 @@ const deleteUserContent = (workPackage, callback) => {
 };
 
 DeletionWorker.prototype.process = (workPackage, callback) => {
-  switch(workPackage.type) {
-    case 'delete-point-content':
-      deletePointContent(workPackage, callback);
-      break;
-    case 'delete-post-content':
-      deletePostContent(workPackage, callback);
-      break;
-    case 'delete-group-content':
-      deleteGroupContent(workPackage, callback);
-      break;
-    case 'delete-community-content':
-      deleteCommunityContent(workPackage, callback);
-      break;
-    case 'delete-user-content':
-      deleteUserContent(workPackage, callback);
-      break;
-    default:
-      callback("Unknown type for workPackage");
-  }
+  getAnonymousUser((error, anonymousUser) => {
+    if (error) {
+      callback(error);
+    } else {
+      workPackage = _.merge({anonymousUserId: anonymousUser.id}, workPackage);
+      switch(workPackage.type) {
+        case 'delete-point-content':
+          deletePointContent(workPackage, callback);
+          break;
+        case 'delete-post-content':
+          deletePostContent(workPackage, callback);
+          break;
+        case 'delete-group-content':
+          deleteGroupContent(workPackage, callback);
+          break;
+        case 'delete-community-content':
+          deleteCommunityContent(workPackage, callback);
+          break;
+        case 'delete-user-content':
+          deleteUserContent(workPackage, callback);
+          break;
+        default:
+          callback("Unknown type for workPackage");
+    }
+  });
 };
 
 module.exports = new DeletionWorker();
