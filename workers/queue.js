@@ -27,8 +27,12 @@ queue.on('job enqueue', function(id, type){
   log.info('Job Enqueue', { id: id, type: type });
 }).on('job complete', function(id, result){
   log.info('Job Completed', { id: id });
-}).on( 'error', function( err ) {
-  log.error('Job Error', { err: err } );
+}).on('job failed', function(id, result){
+  log.error('Job Failed', { id: id, result: result});
+}).on('job removed', function(id, result){
+  log.info('Job Removed', { id: id, result: result});
+}).on( 'job error', function( err, result ) {
+  log.error('Job Error', { err: err, result: result } );
   if(airbrake) {
     airbrake.notify(err, function(airbrakeErr, url) {
       if (airbrakeErr) {

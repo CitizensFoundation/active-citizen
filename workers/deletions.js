@@ -503,7 +503,7 @@ const deleteUserContent = (workPackage, callback) => {
             if (error) {
               seriesCallback(error);
             } else {
-              log.info('User Endorsements Deleted', { numberDeleted: spread[0],context: 'ac-delete', userId: workPackage.userId});
+              log.info('User Endorsements Deleted', { context: 'ac-delete', userId: workPackage.userId});
               seriesCallback();
             }
           });
@@ -540,7 +540,7 @@ const deleteUserContent = (workPackage, callback) => {
             if (error) {
               seriesCallback(error);
             } else {
-              log.info('User PointQuality Deleted', { numberDeleted: spread[0],context: 'ac-delete', userId: workPackage.userId});
+              log.info('User PointQuality Deleted', { context: 'ac-delete', userId: workPackage.userId});
               seriesCallback();
             }
           });
@@ -560,7 +560,7 @@ const deleteUserContent = (workPackage, callback) => {
         })
       },
       (seriesCallback) => {
-        models.AcActivities.update(
+        models.AcActivity.update(
           { deleted: true },
           { where: { user_id: workPackage.userId } }
         ).then((spread) => {
@@ -594,7 +594,7 @@ const deleteUserContent = (workPackage, callback) => {
       },
       (seriesCallback) => {
         models.Community.update(
-          { user_id: workPackage.anonymousUserId },
+          { user_id: workPackage.anonymousUserId, ip_address: '127.0.0.1' },
           { where: { user_id: workPackage.userId } }
         ).then((spread) => {
           log.info('User Communities Anonymized', { numberDeleted: spread[0],context: 'ac-delete', userId: workPackage.userId});
@@ -617,7 +617,7 @@ DeletionWorker.prototype.process = (workPackage, callback) => {
       callback(error);
     } else {
       workPackage = _.merge({anonymousUserId: anonymousUser.id}, workPackage);
-      switch(workPackage.type) {
+      switch (workPackage.type) {
         case 'delete-point-content':
           deletePointContent(workPackage, callback);
           break;
@@ -634,7 +634,8 @@ DeletionWorker.prototype.process = (workPackage, callback) => {
           deleteUserContent(workPackage, callback);
           break;
         default:
-          callback("Unknown type for workPackage");
+          callback("Unknown type for workPackage: "+workPackage.type);
+      }
     }
   });
 };
