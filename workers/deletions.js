@@ -5,6 +5,7 @@ const queue = require('./queue');
 const i18n = require('../utils/i18n');
 const toJson = require('../utils/to_json');
 const _ = require('lodash');
+const getAnonymousUser = require('../utils/get_anonymous_system_user');
 
 let airbrake = null;
 if(process.env.AIRBRAKE_PROJECT_ID) {
@@ -470,23 +471,173 @@ const deleteCommunityContent = (workPackage, callback) => {
   }
 };
 
-DeletionWorker.prototype.process = (workPackage, callback) => {
-  switch(workPackage.type) {
-    case 'delete-point-content':
-      deletePointContent(workPackage, callback);
-      break;
-    case 'delete-post-content':
-      deletePostContent(workPackage, callback);
-      break;
-    case 'delete-group-content':
-      deleteGroupContent(workPackage, callback);
-      break;
-    case 'delete-community-content':
-      deleteCommunityContent(workPackage, callback);
-      break;
-    default:
-      callback("Unknown type for workPackage");
+const deleteUserContent = (workPackage, callback) => {
+  if (workPackage.userId && workPackage.anonymousUserId) {
+    async.series([
+      (seriesCallback) => {
+        models.Endorsement.findAll({
+          attributes: ['id', 'post_id', 'deleted'],
+          where: {
+            user_id: workPackage.userId
+          },
+          include: [
+            {
+              model: models.Post,
+              attributes: ['id', 'counter_endorsements_up', 'counter_endorsements_down']
+            }
+          ]
+        }).then(function (endorsements) {
+          async.forEach(endorsements, function (endorsement, forEachCallback) {
+            if (endorsement.value===1) {
+              endorsement.Post.decrement('counter_endorsements_up');
+            } else {
+              endorsement.Post.decrement('counter_endorsements_down');
+            }
+            endorsement.deleted = true;
+            endorsement.save().then(function () {
+              forEachCallback();
+            }).catch((error) => {
+              forEachCallback(error);
+            });
+          }, function (error) {
+            if (error) {
+              seriesCallback(error);
+            } else {
+              log.info('User Endorsements Deleted', { context: 'ac-delete', userId: workPackage.userId});
+              seriesCallback();
+            }
+          });
+        }).catch((error) => {
+          seriesCallback(error);
+        });
+      },
+      (seriesCallback) => {
+        models.PointQuality.findAll({
+          attributes: ['id', 'point_id', 'deleted'],
+          where: {
+            user_id: workPackage.userId
+          },
+          include: [
+            {
+              model: models.Point,
+              attributes: ['id', 'counter_quality_up', 'counter_quality_down']
+            }
+          ]
+        }).then(function (pointQualities) {
+          async.forEach(pointQualities, function (pointQuality, forEachCallback) {
+            if (pointQuality.value===1) {
+              pointQuality.Point.decrement('counter_quality_up');
+            } else {
+              pointQuality.Point.decrement('counter_quality_down');
+            }
+            pointQuality.deleted = true;
+            pointQuality.save().then(function () {
+              forEachCallback();
+            }).catch((error) => {
+              forEachCallback(error);
+            });
+          }, function (error) {
+            if (error) {
+              seriesCallback(error);
+            } else {
+              log.info('User PointQuality Deleted', { context: 'ac-delete', userId: workPackage.userId});
+              seriesCallback();
+            }
+          });
+        }).catch((error) => {
+          seriesCallback(error);
+        });
+      },
+      (seriesCallback) => {
+        models.Point.update(
+          { deleted: true },
+          { where: { user_id: workPackage.userId } }
+        ).then((spread) => {
+          log.info('User Points Deleted', { numberDeleted: spread[0],context: 'ac-delete', userId: workPackage.userId});
+          seriesCallback();
+        }).catch((error) => {
+          seriesCallback(error);
+        })
+      },
+      (seriesCallback) => {
+        models.AcActivity.update(
+          { deleted: true },
+          { where: { user_id: workPackage.userId } }
+        ).then((spread) => {
+          log.info('User AcActitivies Deleted', { numberDeleted: spread[0],context: 'ac-delete', userId: workPackage.userId});
+          seriesCallback();
+        }).catch((error) => {
+          seriesCallback(error);
+        })
+      },
+      (seriesCallback) => {
+        models.Post.update(
+          { deleted: true },
+          { where: { user_id: workPackage.userId } }
+        ).then((spread) => {
+          log.info('User Post Deleted', { numberDeleted: spread[0],context: 'ac-delete', userId: workPackage.userId});
+          seriesCallback();
+        }).catch((error) => {
+          seriesCallback(error);
+        })
+      },
+      (seriesCallback) => {
+        models.Group.update(
+          { user_id: workPackage.anonymousUserId },
+          { where: { user_id: workPackage.userId } }
+        ).then((spread) => {
+          log.info('User Groups Anonymized', { numberDeleted: spread[0],context: 'ac-delete', userId: workPackage.userId});
+          seriesCallback();
+        }).catch((error) => {
+          seriesCallback(error);
+        })
+      },
+      (seriesCallback) => {
+        models.Community.update(
+          { user_id: workPackage.anonymousUserId, ip_address: '127.0.0.1' },
+          { where: { user_id: workPackage.userId } }
+        ).then((spread) => {
+          log.info('User Communities Anonymized', { numberDeleted: spread[0],context: 'ac-delete', userId: workPackage.userId});
+          seriesCallback();
+        }).catch((error) => {
+          seriesCallback(error);
+        })
+      }
+     ], (error) => {
+      callback(error);
+    });
+  } else {
+    callback("No userId or workPackage.anonymousUserId");
   }
+};
+
+DeletionWorker.prototype.process = (workPackage, callback) => {
+  getAnonymousUser((error, anonymousUser) => {
+    if (error) {
+      callback(error);
+    } else {
+      workPackage = _.merge({anonymousUserId: anonymousUser.id}, workPackage);
+      switch (workPackage.type) {
+        case 'delete-point-content':
+          deletePointContent(workPackage, callback);
+          break;
+        case 'delete-post-content':
+          deletePostContent(workPackage, callback);
+          break;
+        case 'delete-group-content':
+          deleteGroupContent(workPackage, callback);
+          break;
+        case 'delete-community-content':
+          deleteCommunityContent(workPackage, callback);
+          break;
+        case 'delete-user-content':
+          deleteUserContent(workPackage, callback);
+          break;
+        default:
+          callback("Unknown type for workPackage: "+workPackage.type);
+      }
+    }
+  });
 };
 
 module.exports = new DeletionWorker();

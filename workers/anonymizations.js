@@ -36,10 +36,21 @@ const anonymizePointActivities = (workPackage, callback) => {
       },
       (seriesCallback) => {
         models.PointQuality.update(
-          { user_id: workPackage.anonymousUserId },
+          { user_id: workPackage.anonymousUserId, ip_address: '127.0.0.1' },
           { where: { point_id: pointId } }
         ).then(function (spread) {
           log.info('Point Quality Anonymized', {pointId: pointId, numberAnonymized: spread[0],context: 'ac-anonymize', userId: workPackage.userId});
+          seriesCallback();
+        }).catch(function (error) {
+          seriesCallback(error);
+        });
+      },
+      (seriesCallback) => {
+        models.PointRevision.update(
+          { user_id: workPackage.anonymousUserId, ip_address: '127.0.0.1' },
+          { where: { point_id: pointId } }
+        ).then(function (spread) {
+          log.info('Point Revision Anonymized', {pointId: pointId, numberAnonymized: spread[0],context: 'ac-anonymize', userId: workPackage.userId});
           seriesCallback();
         }).catch(function (error) {
           seriesCallback(error);
@@ -92,7 +103,7 @@ const anonymizePostContent = (workPackage, callback) => {
       },
       (seriesCallback) => {
         models.Point.update(
-          { user_id: workPackage.anonymousUserId },
+          { user_id: workPackage.anonymousUserId, ip_address: '127.0.0.1' },
           { where: { post_id: postId } }
         ).then((spread) => {
           log.info('Post Activities Points Anonymized', {postId: postId, numberAnonymized: spread[0],context: 'ac-anonymize', userId: workPackage.userId});
@@ -128,7 +139,7 @@ const anonymizePostContent = (workPackage, callback) => {
       },
       (seriesCallback) => {
         models.Endorsement.update(
-          { user_id: workPackage.anonymousUserId },
+          { user_id: workPackage.anonymousUserId, ip_address: '127.0.0.1' },
           { where: { post_id: postId } }
         ).then((spread) => {
           log.info('Post Endorsement Anonymized', { postId: postId, numberAnonymized: spread[0],context: 'ac-anonymize', userId: workPackage.userId});
@@ -213,7 +224,7 @@ const anonymizeGroupContent = (workPackage, callback) => {
       },
       (seriesCallback) => {
         models.Point.update(
-          { user_id: workPackage.anonymousUserId },
+          { user_id: workPackage.anonymousUserId, ip_address: '127.0.0.1' },
           { where: { group_id: groupId }}
         ).then((spread) => {
           log.info('Group Points Anonymized', {groupId: groupId, numberAnonymized: spread[0],context: 'ac-anonymize', userId: workPackage.userId});
@@ -242,7 +253,7 @@ const anonymizeGroupContent = (workPackage, callback) => {
             pointRevisionsIds = pointRevisionsIds.concat(newIds);
           });
           models.PointRevision.update(
-            { user_id: workPackage.anonymousUserId },
+            { user_id: workPackage.anonymousUserId, ip_address: '127.0.0.1' },
             { where: {
                 id: {
                   $in: pointRevisionsIds
@@ -279,7 +290,7 @@ const anonymizeGroupContent = (workPackage, callback) => {
             pointQualitiesIds = pointQualitiesIds.concat(newIds);
           });
           models.PointQuality.update(
-            { user_id: workPackage.anonymousUserId },
+            { user_id: workPackage.anonymousUserId, ip_address: '127.0.0.1' },
             { where: {
                 id: {
                   $in: pointQualitiesIds
@@ -400,6 +411,94 @@ const anonymizeCommunityContent = (workPackage, callback) => {
   }
 };
 
+const anonymizeUserContent = (workPackage, callback) => {
+  if (workPackage.userId && workPackage.anonymousUserId) {
+    async.series([
+      (seriesCallback) => {
+        models.Endorsement.update(
+          { user_id: workPackage.anonymousUserId, ip_address: '127.0.0.1' },
+          { where: { user_id: workPackage.userId } }
+        ).then((spread) => {
+          log.info('User Endorsement Anonymized', { numberDeleted: spread[0],context: 'ac-anonymize', userId: workPackage.userId});
+          seriesCallback();
+        }).catch((error) => {
+          seriesCallback(error);
+        })
+      },
+      (seriesCallback) => {
+        models.PointQuality.update(
+          { user_id: workPackage.anonymousUserId, ip_address: '127.0.0.1' },
+          { where: { user_id: workPackage.userId } }
+        ).then((spread) => {
+          log.info('User Points Anonymized', { numberDeleted: spread[0],context: 'ac-anonymize', userId: workPackage.userId});
+          seriesCallback();
+        }).catch((error) => {
+          seriesCallback(error);
+        })
+      },
+      (seriesCallback) => {
+        models.Point.update(
+          { user_id: workPackage.anonymousUserId, ip_address: '127.0.0.1' },
+          { where: { user_id: workPackage.userId } }
+        ).then((spread) => {
+          log.info('User Points Anonymized', { numberDeleted: spread[0],context: 'ac-anonymize', userId: workPackage.userId});
+          seriesCallback();
+        }).catch((error) => {
+          seriesCallback(error);
+        })
+      },
+      (seriesCallback) => {
+        models.AcActivity.update(
+          { user_id: workPackage.anonymousUserId },
+          { where: { user_id: workPackage.userId } }
+        ).then((spread) => {
+          log.info('User AcActitivies Anonymized', { numberDeleted: spread[0],context: 'ac-anonymize', userId: workPackage.userId});
+          seriesCallback();
+        }).catch((error) => {
+          seriesCallback(error);
+        })
+      },
+      (seriesCallback) => {
+        models.Post.update(
+          { user_id: workPackage.anonymousUserId, ip_address: '127.0.0.1' },
+          { where: { user_id: workPackage.userId } }
+        ).then((spread) => {
+          log.info('User Post Anonymized', { numberDeleted: spread[0],context: 'ac-anonymize', userId: workPackage.userId});
+          seriesCallback();
+        }).catch((error) => {
+          seriesCallback(error);
+        })
+      },
+      (seriesCallback) => {
+        models.Group.update(
+          { user_id: workPackage.anonymousUserId },
+          { where: { user_id: workPackage.userId } }
+        ).then((spread) => {
+          log.info('User Groups Anonymized', { numberDeleted: spread[0],context: 'ac-anonymize', userId: workPackage.userId});
+          seriesCallback();
+        }).catch((error) => {
+          seriesCallback(error);
+        })
+      },
+      (seriesCallback) => {
+        models.Community.update(
+          { user_id: workPackage.anonymousUserId, ip_address: '127.0.0.1' },
+          { where: { user_id: workPackage.userId } }
+        ).then((spread) => {
+          log.info('User Communities Anonymized', { numberDeleted: spread[0],context: 'ac-anonymize', userId: workPackage.userId});
+          seriesCallback();
+        }).catch((error) => {
+          seriesCallback(error);
+        })
+      }
+    ], (error) => {
+      callback(error);
+    });
+  } else {
+    callback("No userId or workPackage.anonymousUserId");
+  }
+};
+
 AnonymizationWorker.prototype.process = (workPackage, callback) => {
   getAnonymousUser((error, anonymousUser) => {
     if (error) {
@@ -417,11 +516,16 @@ AnonymizationWorker.prototype.process = (workPackage, callback) => {
         case 'anonymize-community-content':
           anonymizeCommunityContent(workPackage, callback);
           break;
+        case 'anonymize-user-content':
+          anonymizeUserContent(workPackage, callback);
+          break;
         default:
-          callback("Unknown type for workPackage");
+          callback("Unknown type for workPackage: "+workPackage.type);
       }
     }
   });
 };
+
+
 
 module.exports = new AnonymizationWorker();
