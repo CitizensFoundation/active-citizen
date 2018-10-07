@@ -483,20 +483,20 @@ const deleteUserEndorsements = (workPackage, callback) => {
         attributes: ['id', 'counter_endorsements_up', 'counter_endorsements_down']
       }
     ]
-  }).then(function (endorsements) {
-    async.forEach(endorsements, function (endorsement, forEachCallback) {
+  }).then((endorsements) => {
+    async.forEach(endorsements, (endorsement, forEachCallback) => {
       if (endorsement.value===1) {
         endorsement.Post.decrement('counter_endorsements_up');
       } else {
         endorsement.Post.decrement('counter_endorsements_down');
       }
       endorsement.deleted = true;
-      endorsement.save().then(function () {
+      endorsement.save().then( () => {
         forEachCallback();
       }).catch((error) => {
         forEachCallback(error);
       });
-    }, function (error) {
+    }, (error) => {
       if (error) {
         callback(error);
       } else {
@@ -507,6 +507,18 @@ const deleteUserEndorsements = (workPackage, callback) => {
   }).catch((error) => {
     callback(error);
   });
+};
+
+const moveUserEndorsements = (workPackage, callback) => {
+  models.Endorsement.update(
+    { user_id: workPackage.toUserId },
+    { where: { user_id: workPackage.fromUserId } }
+  ).then((spread) => {
+    log.info('Endorsement Moved', { numberDeleted: spread[0],context: 'ac-move', fromUserId: workPackage.fromUserId, toUserId: workPackage.toUserId});
+    callback();
+  }).catch((error) => {
+    callback(error);
+  })
 };
 
 const deleteUserContent = (workPackage, callback) => {
@@ -639,6 +651,9 @@ DeletionWorker.prototype.process = (workPackage, callback) => {
           break;
         case 'delete-user-endorsements':
           deleteUserEndorsements(workPackage, callback);
+          break;
+        case 'move-user-endorsements':
+          moveUserEndorsements(workPackage, callback);
           break;
         default:
           callback("Unknown type for workPackage: "+workPackage.type);
