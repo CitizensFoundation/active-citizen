@@ -471,49 +471,53 @@ const deleteCommunityContent = (workPackage, callback) => {
   }
 };
 
+const deleteUserEndorsements = (workPackage, callback) => {
+  models.Endorsement.findAll({
+    attributes: ['id', 'post_id', 'deleted','value'],
+    where: {
+      user_id: workPackage.userId
+    },
+    include: [
+      {
+        model: models.Post,
+        attributes: ['id', 'counter_endorsements_up', 'counter_endorsements_down']
+      }
+    ]
+  }).then(function (endorsements) {
+    async.forEach(endorsements, function (endorsement, forEachCallback) {
+      if (endorsement.value===1) {
+        endorsement.Post.decrement('counter_endorsements_up');
+      } else {
+        endorsement.Post.decrement('counter_endorsements_down');
+      }
+      endorsement.deleted = true;
+      endorsement.save().then(function () {
+        forEachCallback();
+      }).catch((error) => {
+        forEachCallback(error);
+      });
+    }, function (error) {
+      if (error) {
+        callback(error);
+      } else {
+        log.info('User Endorsements Deleted', { context: 'ac-delete', userId: workPackage.userId});
+        callback();
+      }
+    });
+  }).catch((error) => {
+    callback(error);
+  });
+};
+
 const deleteUserContent = (workPackage, callback) => {
   if (workPackage.userId && workPackage.anonymousUserId) {
     async.series([
       (seriesCallback) => {
-        models.Endorsement.findAll({
-          attributes: ['id', 'post_id', 'deleted'],
-          where: {
-            user_id: workPackage.userId
-          },
-          include: [
-            {
-              model: models.Post,
-              attributes: ['id', 'counter_endorsements_up', 'counter_endorsements_down']
-            }
-          ]
-        }).then(function (endorsements) {
-          async.forEach(endorsements, function (endorsement, forEachCallback) {
-            if (endorsement.value===1) {
-              endorsement.Post.decrement('counter_endorsements_up');
-            } else {
-              endorsement.Post.decrement('counter_endorsements_down');
-            }
-            endorsement.deleted = true;
-            endorsement.save().then(function () {
-              forEachCallback();
-            }).catch((error) => {
-              forEachCallback(error);
-            });
-          }, function (error) {
-            if (error) {
-              seriesCallback(error);
-            } else {
-              log.info('User Endorsements Deleted', { context: 'ac-delete', userId: workPackage.userId});
-              seriesCallback();
-            }
-          });
-        }).catch((error) => {
-          seriesCallback(error);
-        });
+        deleteUserEndorsements(workPackage, seriesCallback);
       },
       (seriesCallback) => {
         models.PointQuality.findAll({
-          attributes: ['id', 'point_id', 'deleted'],
+          attributes: ['id', 'point_id', 'deleted','value'],
           where: {
             user_id: workPackage.userId
           },
@@ -632,6 +636,9 @@ DeletionWorker.prototype.process = (workPackage, callback) => {
           break;
         case 'delete-user-content':
           deleteUserContent(workPackage, callback);
+          break;
+        case 'delete-user-endorsements':
+          deleteUserEndorsements(workPackage, callback);
           break;
         default:
           callback("Unknown type for workPackage: "+workPackage.type);
