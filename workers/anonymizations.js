@@ -499,6 +499,178 @@ const anonymizeUserContent = (workPackage, callback) => {
   }
 };
 
+const getAllUsersFromGroups = (groupIds, callback) => {
+  let userIdsWithContent = {};
+  let usersArray;
+
+  async.series([
+    (seriesCallback) => {
+      models.Post.findAll({
+        where: {
+          group_id: {
+            $in: groupIds
+          }
+        },
+        attributes: ['id','user_id']
+      }).then((posts) => {
+        posts.forEach( (post) => {
+          if (!userIdsWithContent[post.user_id]) {
+            userIdsWithContent[post.user_id] = {};
+            userIdsWithContent[post.user_id].postIds = [];
+            userIdsWithContent[post.user_id].pointIds = [];
+          }
+          userIdsWithContent[post.user_id].postIds.push(post.id);
+        });
+        seriesCallback();
+      }).catch((error) => {
+        seriesCallback(error);
+      });
+    },
+    (seriesCallback) => {
+      models.Point.findAll({
+        include: [
+          {
+            model: models.Post,
+            required: true,
+            attributes: ['id','name'],
+            where: {
+              group_id: {
+                $in: groupIds
+              }
+            },
+          }
+        ],
+        attributes: ['id','user_id']
+      }).then((points) => {
+        points.forEach( (point) => {
+          if (!userIdsWithContent[point.user_id]) {
+            userIdsWithContent[point.user_id] = {};
+            userIdsWithContent[point.user_id].pointIds = [];
+            userIdsWithContent[point.user_id].postIds = [];
+          }
+          userIdsWithContent[point.user_id].pointIds.push(point.id);
+        });
+        seriesCallback();
+      }).catch((error) => {
+        seriesCallback(error);
+      });
+    },
+    (seriesCallback) => {
+      usersArray = _.map(userIdsWithContent, (userData, key) => {
+        return {id: key, pointIds: userData.pointIds, postIds: userData.postIds}
+      });
+      seriesCallback();
+    }], (error) => { callback(error, usersArray) });
+};
+
+const notifyGroupUsers = (workPackage, callback) => {
+  let usersArray, groupRecord;
+
+  async.series([
+    (seriesCallback) => {
+      getAllUsersFromGroups([workPackage.groupId], (error, users) => {
+        if (error) {
+          seriesCallback(error);
+        } else {
+          usersArray = users;
+          seriesCallback();
+        }
+      });
+    },
+    (seriesCallback) => {
+      models.Group.find(
+        {
+          where: {id: workPackage.groupId },
+          attributes: ['id', 'community_id'],
+          include: [
+            {
+              model: models.Community,
+              attribues: ['id', 'domain_id']
+            }
+          ]
+        }
+      ).then((group) => {
+        if (group) {
+          groupRecord = group;
+          seriesCallback();
+        } else {
+          seriesCallback("Can't find group record")
+        }
+      }).catch( (error) => { seriesCallback(error) });
+    },
+    (seriesCallback) => {
+      async.forEach(usersArray, (user, forEachCallback) => {
+        models.AcActivity.createActivity({
+          type: 'activity.system.generalUserNotification',
+          object: {
+            type: "groupContentToBeAnonymized", name: workPackage.groupName, forwardToUser: true, sendEmail: true,
+            pointIds: user.pointIds, postIds: user.postIds
+          },
+          userId: user.id, groupId: groupRecord.id, communityId: groupRecord.community_id,
+          domainId: groupRecord.Community.domain_id
+        }, (error) => {
+          forEachCallback(error);
+        });
+      });
+    }],
+    (error) => { callback(error) });
+};
+
+const notifyCommunityUsers = (workPackage, callback) => {
+  let usersArray, communityRecord, groupIds;
+
+  async.series([
+    (seriesCallback) => {
+      models.Community.find({
+        attributes: ['id'],
+        where: {
+          id: workPackage.communityId
+        },
+        include: [
+          {
+            model: models.Group,
+            attributes: ['id']
+          }
+        ]
+      }).then( (community) => {
+        communityRecord = community;
+        groupIds = _.map(community.Groups, (group) => {
+          return group.id
+        });
+        seriesCallback();
+      }).catch((error) => {
+        seriesCallback(error);
+      });
+    },
+    (seriesCallback) => {
+      getAllUsersFromGroups(groupIds, (error, users) => {
+        if (error) {
+          seriesCallback(error);
+        } else {
+          usersArray = users;
+          seriesCallback();
+        }
+      });
+    },
+    (seriesCallback) => {
+      async.forEach(usersArray, (user, forEachCallback) => {
+        models.AcActivity.createActivity({
+          type: 'activity.system.generalUserNotification',
+          object: {
+            type: "communityContentToBeAnonymized", name: workPackage.communityName,
+            forwardToUser: true, sendEmail: true,
+            pointIds: user.pointIds, postIds: user.postIds
+          },
+          userId: user.id, communityId: communityRecord.id,
+          domainId: communityRecord.domain_id
+        }, (error) => {
+          forEachCallback(error);
+        });
+      });
+    }],
+  (error) => { callback(error) });
+};
+
 AnonymizationWorker.prototype.process = (workPackage, callback) => {
   getAnonymousUser((error, anonymousUser) => {
     if (error) {
@@ -519,13 +691,17 @@ AnonymizationWorker.prototype.process = (workPackage, callback) => {
         case 'anonymize-user-content':
           anonymizeUserContent(workPackage, callback);
           break;
+        case 'notify-group-users':
+          notifyGroupUsers(workPackage, callback);
+          break;
+        case 'notify-community-users':
+          notifyCommunityUsers(workPackage, callback);
+          break;
         default:
           callback("Unknown type for workPackage: "+workPackage.type);
       }
     }
   });
 };
-
-
 
 module.exports = new AnonymizationWorker();

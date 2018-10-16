@@ -1,5 +1,12 @@
 {
+  "yourPosts": "Your posts",
+  "yourPoints": "Your points",
+  "yourGroupPoints": "Your group points",
+  "yourCommunityPoints": "Your community points",
   "notification": {
+    "contentToBeAnonymized": "Your content will be anonymized in 7 days:",
+    "communityContentToBeAnonymized": "All your content in this community will be anonymized and archived in 7 days. See your content below.",
+    "groupContentToBeAnonymized": "All your content in this group will be anonymized and archived in 7 days. See your content below.",
     "post": {
       "statusChangeSubject": "Status of post changed"
     },
