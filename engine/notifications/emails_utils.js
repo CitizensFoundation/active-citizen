@@ -200,6 +200,10 @@ var sendOneEmail = function (emailLocals, callback) {
       log.info("EmailWorker Started Locale", {});
       var locale;
 
+      if (emailLocals.post && emailLocals.point && !emailLocals.point.Post) {
+        emailLocals.point.Post = emailLocals.post;
+      }
+
       if (emailLocals.user.default_locale && emailLocals.user.default_locale != "") {
         locale = emailLocals.user.default_locale;
       } else if (emailLocals.community && emailLocals.community.default_locale && emailLocals.community.default_locale != "") {
