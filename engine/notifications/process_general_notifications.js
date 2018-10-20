@@ -130,23 +130,23 @@ const getLinkedPostAndPoints = (postIds, pointIds, community, domain, callback) 
     if (error) {
       callback(error)
     } else {
-      finalContent += '<br><b>'+i18n.t('yourPosts')+'</b><br><br>\n';
+      finalContent += '<br><b>'+i18n.t('yourPosts')+'</b><br>\n';
       _.forEach(allPosts, (post) => {
         finalContent += makeLinkToPost(post, community, domain) + "<br>\n";
       });
-      finalContent += "<br>\n";
+      finalContent += "\n";
       if (countProperties(allGroupedPostPoints)>0) {
-        finalContent += '<br><b>'+i18n.t('yourPoints')+'</b><br><br>\n';
+        finalContent += '<br><b>'+i18n.t('yourPoints')+'</b><br>\n';
         finalContent += makeLinksForPoints(allGroupedPostPoints, community, domain);
         finalContent += "<br>\n";
       }
       if (countProperties(allGroupPoints)>0) {
-        finalContent += '<br><b>'+i18n.t('yourGroupPoints')+'</b><br><br>\n';
+        finalContent += '<br><b>'+i18n.t('yourGroupPoints')+'</b><br>\n';
         finalContent += makeLinksForPoints(allGroupPoints, community, domain);
         finalContent += "<br>\n";
       }
       if (countProperties(allCommunityPoints)>0) {
-        finalContent += '<br><b>'+i18n.t('yourCommunityPoints')+'</b><br><br>\n';
+        finalContent += '<br><b>'+i18n.t('yourCommunityPoints')+'</b><br>\n';
         finalContent += makeLinksForPoints(allCommunityPoints, community, domain);
       }
       callback(null, finalContent);

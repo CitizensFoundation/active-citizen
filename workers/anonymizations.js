@@ -499,7 +499,7 @@ const anonymizeUserContent = (workPackage, callback) => {
   }
 };
 
-const getAllUsersFromGroups = (groupIds, callback) => {
+const getAllUsers = (groupIds, communityId, callback) => {
   let userIdsWithContent = {};
   let usersArray;
 
@@ -528,18 +528,11 @@ const getAllUsersFromGroups = (groupIds, callback) => {
     },
     (seriesCallback) => {
       models.Point.findAll({
-        include: [
-          {
-            model: models.Post,
-            required: true,
-            attributes: ['id','name'],
-            where: {
-              group_id: {
-                $in: groupIds
-              }
-            },
+        where: {
+          group_id: {
+            $in: groupIds
           }
-        ],
+        },
         attributes: ['id','user_id']
       }).then((points) => {
         points.forEach( (point) => {
@@ -556,6 +549,34 @@ const getAllUsersFromGroups = (groupIds, callback) => {
       });
     },
     (seriesCallback) => {
+      if (communityId) {
+        models.Point.findAll({
+          where: {
+            $and: [
+              { community_id: communityId },
+              { group_id: null }
+            ],
+          },
+          attributes: ['id','user_id']
+        }).then((points) => {
+          points.forEach( (point) => {
+            if (!userIdsWithContent[point.user_id]) {
+              userIdsWithContent[point.user_id] = {};
+              userIdsWithContent[point.user_id].pointIds = [];
+              userIdsWithContent[point.user_id].postIds = [];
+            }
+            userIdsWithContent[point.user_id].pointIds.push(point.id);
+            userIdsWithContent[point.user_id].pointIds = _.uniq(userIdsWithContent[point.user_id].pointIds)
+          });
+          seriesCallback();
+        }).catch((error) => {
+          seriesCallback(error);
+        });
+      } else {
+        seriesCallback();
+      }
+    },
+    (seriesCallback) => {
       usersArray = _.map(userIdsWithContent, (userData, key) => {
         return {id: key, pointIds: userData.pointIds, postIds: userData.postIds}
       });
@@ -568,7 +589,7 @@ const notifyGroupUsers = (workPackage, callback) => {
 
   async.series([
     (seriesCallback) => {
-      getAllUsersFromGroups([workPackage.groupId], (error, users) => {
+      getAllUsers([workPackage.groupId], null, (error, users) => {
         if (error) {
           seriesCallback(error);
         } else {
@@ -643,7 +664,7 @@ const notifyCommunityUsers = (workPackage, callback) => {
       });
     },
     (seriesCallback) => {
-      getAllUsersFromGroups(groupIds, (error, users) => {
+      getAllUsers(groupIds, workPackage.communityId, (error, users) => {
         if (error) {
           seriesCallback(error);
         } else {

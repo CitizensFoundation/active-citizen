@@ -1,4 +1,4 @@
-var DEBUG_EMAILS_TO_TEMP_FIlE = false;
+var DEBUG_EMAILS_TO_TEMP_FIlE = true;
 
 var log = require('../../utils/logger');
 var toJson = require('../../utils/to_json');
