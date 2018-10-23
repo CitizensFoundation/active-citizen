@@ -509,6 +509,47 @@ const deleteUserEndorsements = (workPackage, callback) => {
   });
 };
 
+const deleteUserGroupEndorsements = (workPackage, callback) => {
+  models.Endorsement.findAll({
+    attributes: ['id', 'post_id', 'deleted','value'],
+    where: {
+      user_id: workPackage.userId
+    },
+    include: [
+      {
+        model: models.Post,
+        attributes: ['id', 'counter_endorsements_up', 'counter_endorsements_down'],
+        where: {
+          group_id: workPackage.groupId
+        }
+      }
+    ]
+  }).then((endorsements) => {
+    async.forEach(endorsements, (endorsement, forEachCallback) => {
+      if (endorsement.value===1) {
+        endorsement.Post.decrement('counter_endorsements_up');
+      } else {
+        endorsement.Post.decrement('counter_endorsements_down');
+      }
+      endorsement.deleted = true;
+      endorsement.save().then( () => {
+        forEachCallback();
+      }).catch((error) => {
+        forEachCallback(error);
+      });
+    }, (error) => {
+      if (error) {
+        callback(error);
+      } else {
+        log.info('User Group Endorsements Deleted', { context: 'ac-delete', userId: workPackage.userId});
+        callback();
+      }
+    });
+  }).catch((error) => {
+    callback(error);
+  });
+};
+
 const moveUserEndorsements = (workPackage, callback) => {
   models.Endorsement.update(
     { user_id: workPackage.toUserId },
@@ -627,6 +668,162 @@ const deleteUserContent = (workPackage, callback) => {
   }
 };
 
+const deleteUserGroupContent = (workPackage, callback) => {
+  if (workPackage.userId && workPackage.anonymousUserId && workPackage.groupId) {
+    async.series([
+      (seriesCallback) => {
+        deleteUserGroupEndorsements(workPackage, seriesCallback);
+      },
+      (seriesCallback) => {
+        models.PointQuality.findAll({
+          attributes: ['id', 'point_id', 'deleted','value'],
+          where: {
+            user_id: workPackage.userId
+          },
+          include: [
+            {
+              model: models.Point,
+              attributes: ['id', 'counter_quality_up', 'counter_quality_down'],
+              required: true,
+              where: {
+                group_id: workPackage.groupId
+              }
+            }
+          ]
+        }).then(function (pointQualities) {
+          async.forEach(pointQualities, function (pointQuality, forEachCallback) {
+            if (pointQuality.value===1) {
+              pointQuality.Point.decrement('counter_quality_up');
+            } else {
+              pointQuality.Point.decrement('counter_quality_down');
+            }
+            pointQuality.deleted = true;
+            pointQuality.save().then(function () {
+              forEachCallback();
+            }).catch((error) => {
+              forEachCallback(error);
+            });
+          }, function (error) {
+            if (error) {
+              seriesCallback(error);
+            } else {
+              log.info('User PointQuality Deleted', { context: 'ac-delete', userId: workPackage.userId});
+              seriesCallback();
+            }
+          });
+        }).catch((error) => {
+          seriesCallback(error);
+        });
+      },
+      (seriesCallback) => {
+        models.Point.update(
+          { deleted: true },
+          { where: { user_id: workPackage.userId, group_id: workPackage.groupId } }
+        ).then((spread) => {
+          log.info('User Group Points Deleted', { numberDeleted: spread[0],context: 'ac-delete', userId: workPackage.userId});
+          seriesCallback();
+        }).catch((error) => {
+          seriesCallback(error);
+        })
+      },
+      (seriesCallback) => {
+        models.AcActivity.update(
+          { deleted: true },
+          { where: { user_id: workPackage.userId, group_id: workPackage.groupId } }
+        ).then((spread) => {
+          log.info('User AcActitivies Deleted', { numberDeleted: spread[0],context: 'ac-delete', userId: workPackage.userId});
+          seriesCallback();
+        }).catch((error) => {
+          seriesCallback(error);
+        })
+      },
+      (seriesCallback) => {
+        models.Post.update(
+          { deleted: true },
+          { where: { user_id: workPackage.userId, group_id: workPackage.groupId } }
+        ).then((spread) => {
+          log.info('User Post Deleted', { numberDeleted: spread[0],context: 'ac-delete', userId: workPackage.userId});
+          seriesCallback();
+        }).catch((error) => {
+          seriesCallback(error);
+        })
+      }
+    ], (error) => {
+      callback(error);
+    });
+  } else {
+    callback("No userId or anonymousUserId or groupId");
+  }
+};
+
+const deleteUserCommunityContent = (workPackage, callback) => {
+  if (workPackage.userId && workPackage.anonymousUserId && workPackage.communityId) {
+    models.Community.find({
+      attributes: ['id'],
+      where: {
+        id: workPackage.communityId
+      },
+      include: [
+        {
+          model: models.Group,
+          attributes: ['id']
+        }
+      ]
+    }).then( (community) => {
+      const groupIds = _.map(community.Groups, (group) => {
+        return group.id
+      });
+      async.forEach(groupIds, (groupId, forEachCallback) => {
+        deleteUserGroupContent({
+          userId: workPackage.userId,
+          anonymousUserId: workPackage.anonymousUserId,
+          groupId: groupId}, forEachCallback);
+      }, (error) => {
+        log.info("User Community Content Deleted", { error: error, context: 'ac-delete', userId: workPackage.userId});
+        callback(error);
+      });
+    }).catch((error) => {
+      callback(error);
+    });
+  } else {
+    callback("No userId or anonymousUserId or communityId");
+  }
+};
+
+const deleteUserDomainContent = (workPackage, callback) => {
+  if (workPackage.userId && workPackage.anonymousUserId && workPackage.domainId) {
+    models.Domain.find({
+      attributes: ['id'],
+      where: {
+        id: workPackage.domainId
+      },
+      include: [
+        {
+          model: models.Community,
+          attributes: ['id']
+        }
+      ]
+    }).then( (domain) => {
+      const communityIds = _.map(domain.Communities, (community) => {
+        return community.id
+      });
+      async.forEach(communityIds, (communityId, forEachCallback) => {
+        deleteUserCommunityContent({
+          userId: workPackage.userId,
+          anonymousUserId: workPackage.anonymousUserId,
+          communityId: communityId }, forEachCallback);
+      }, (error) => {
+        log.info("User Domain Content Deleted", { error: error, context: 'ac-delete', userId: workPackage.userId});
+        callback(error);
+      });
+    }).catch((error) => {
+      callback(error);
+    });
+  } else {
+    callback("No userId or anonymousUserId or domainId");
+  }
+};
+
 DeletionWorker.prototype.process = (workPackage, callback) => {
   getAnonymousUser((error, anonymousUser) => {
     if (error) {
@@ -648,6 +845,15 @@ DeletionWorker.prototype.process = (workPackage, callback) => {
           break;
         case 'delete-user-content':
           deleteUserContent(workPackage, callback);
+          break;
+        case 'delete-group-user-content':
+          deleteUserGroupContent(workPackage, callback);
+          break;
+        case 'delete-community-user-content':
+          deleteUserCommunityContent(workPackage, callback);
+          break;
+        case 'delete-domain-user-content':
+          deleteUserDomainContent(workPackage, callback);
           break;
         case 'delete-user-endorsements':
           deleteUserEndorsements(workPackage, callback);

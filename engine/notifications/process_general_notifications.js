@@ -29,7 +29,7 @@ const getPointsGroupedByModel = (pointIds, includeModel, whereIn, callback) => {
   );
   models.Point.findAll({
     where: mergedWhere,
-    attributes: ['id', 'content', 'post_id'],
+    attributes: ['id', 'content', 'post_id','group_id','community_id'],
     include: [
       {
         model: models[includeModel],
@@ -60,7 +60,15 @@ const makeLinkToPost = (post, community, domain) => {
 
 const makeLinkToPoint = (point, community, domain) => {
   const hostName = community.hostname ? community.hostname : 'app';
-  const url = 'https://'+hostName+'.'+domain.domain_name+'/post/'+point.post_id+'/'+point.id;
+
+  let url;
+  if (point.post_id) {
+    url = 'https://'+hostName+'.'+domain.domain_name+'/post/'+point.post_id+'/'+point.id;
+  } else if (point.group_id) {
+    url = 'https://'+hostName+'.'+domain.domain_name+'/group/'+point.group_id+'/news/'+point.id;
+  } else if (point.community_id) {
+    url = 'https://'+hostName+'.'+domain.domain_name+'/community/'+point.community_id+'/news/'+point.id;
+  }
   let content;
   if (!point.content & point.PointRevisions[0]) {
     content = point.PointRevisions[0].content
@@ -156,14 +164,17 @@ const getLinkedPostAndPoints = (postIds, pointIds, community, domain, callback) 
 
 const processContentToBeAnonymized =  (notification, object, domain, community, group, user, callback) => {
   let link;
+  let prependToContent;
 
   if (object.type==='communityContentToBeAnonymized') {
     link = linkTo("https://"+community.hostname+"."+domain.domain_name);
+    prependToContent =  i18n.t('communityContentToBeAnonymized')+'<br><br>\n'
   } else {
     link = linkTo("https://"+community.hostname+"."+domain.domain_name+"/group/"+group.id)
+    prependToContent =  i18n.t('groupContentToBeAnonymized')+'<br><br>\n'
   }
 
-  const header = i18n.t('notification.contentToBeAnonymized')+' '+object.name;
+  const header = object.name;
 
   getLinkedPostAndPoints(object.postIds, object.pointIds, community, domain, (error, content) => {
     if (error) {
@@ -178,7 +189,7 @@ const processContentToBeAnonymized =  (notification, object, domain, community, 
         group: group,
         object: object,
         header: header,
-        content: content,
+        content: prependToContent+content,
         link: link
       }).priority('critical').removeOnComplete(true).save();
       callback();

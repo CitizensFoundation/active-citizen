@@ -157,8 +157,8 @@ var sendOneEmail = function (emailLocals, callback) {
       if (emailLocals.user && emailLocals.user.email) {
         seriesCallback();
       } else {
-        log.error("EmailWorker Can't find email for users", {emailLocals: emailLocals});
-        seriesCallback("Can't find user email");
+        log.warn("EmailWorker Can't find email for users", {emailLocals: emailLocals});
+        seriesCallback();
       }
     },
 

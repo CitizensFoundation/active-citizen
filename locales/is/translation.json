@@ -1,5 +1,12 @@
 {
+  "yourPosts": "Þínar hugmyndir",
+  "yourPoints": "Þín rök",
+  "yourGroupPoints": "Athugasemdir í hóp",
+  "yourCommunityPoints": "Athugasemdir í svæði",
   "notification": {
+    "contentToBeAnonymized": "Þitt efni verður afpersónugreint eftir 7 daga í",
+    "communityContentToBeAnonymized": "Allt þitt efni á þessu svæði verður afpersónugreint til geymslu eftir 7 daga. Þú munt ekki geta eytt því eða breytt eftir það. Sjá efni hér að neðan.",
+    "groupContentToBeAnonymized": "Allt þitt efni í þessum hóp verður afpersónugreint til geymslu eftir 7 daga. Þú munt ekki geta eytt því eða breytt eftir það. Sjá efni hér að neðan.",
     "post": {
       "statusChangeSubject": "Stöðu hugmyndar breytt"
     },
