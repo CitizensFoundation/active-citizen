@@ -12,6 +12,71 @@ if(process.env.AIRBRAKE_PROJECT_ID) {
   airbrake = require('../utils/airbrake');
 }
 
+const getGroupAndUser = (groupId, userId, userEmail, callback) => {
+  var user, group;
+
+  async.series([
+    (seriesCallback) => {
+      models.Group.find({
+        where: {
+          id: groupId
+        }
+      }).then((groupIn) => {
+        if (groupIn) {
+          group = groupIn;
+        }
+        seriesCallback();
+      }).catch((error) => {
+        seriesCallback(error);
+      });
+    },
+    (seriesCallback) => {
+      if (userId) {
+        models.User.find({
+          where: {
+            id: userId
+          },
+          attributes: ['id','email','name','created_at']
+        }).then((userIn) => {
+          if (userIn) {
+            user = userIn;
+          }
+          seriesCallback();
+        }).catch((error) => {
+          seriesCallback(error);
+        });
+      } else {
+        seriesCallback();
+      }
+    },
+    (seriesCallback) => {
+      if (userEmail) {
+        models.User.find({
+          where: {
+            email: userEmail
+          },
+          attributes: ['id','email','name','created_at']
+        }).then((userIn) => {
+          if (userIn) {
+            user = userIn;
+          }
+          seriesCallback();
+        }).catch((error) => {
+          seriesCallback(error);
+        });
+      } else {
+        seriesCallback();
+      }
+    }
+  ], (error) => {
+    if (error) {
+      callback(error)
+    } else {
+      callback(null, group, user);
+    }
+  });
+};
+
 const recountGroupFromPostId = (postId, callback) => {
   let postsCount = 0;
   let pointsCount = 0;
@@ -824,6 +889,72 @@ const deleteUserDomainContent = (workPackage, callback) => {
   }
 };
 
+const removeManyGroupAdmins = (workPackage, callback) => {
+  if (workPackage.userIds && workPackage.userIds.length>0 && workPackage.groupId) {
+    async.forEach(workPackage.userIds, (userId, seriesCallback) => {
+      getGroupAndUser(workPackage.groupId, userId, null, (error, group, user) => {
+        if (error) {
+          seriesCallback(error);
+        } else if (user && group) {
+          group.removeGroupAdmins(user).then((results) => {
+            log.info('Admin removed', {context: 'remove_admin', groupId: workPackage.groupId, userRemovedId: userId});
+            seriesCallback()
+          });
+        } else {
+          seriesCallback("User or group not found for removeManyGroupAdmins");
+        }
+      });
+    });
+  } else {
+    callback("No userIds for removeManyGroupAdmins");
+  }
+};
+
+const removeManyGroupUsers = (workPackage, callback) => {
+  if (workPackage.userIds && workPackage.userIds.length>0 && workPackage.groupId) {
+    async.forEach(workPackage.userIds, (userId, seriesCallback) => {
+      getGroupAndUser(workPackage.groupId, userId, null, (error, group, user) => {
+        if (error) {
+          seriesCallback(error);
+        } else if (user && group) {
+          group.removeGroupUsers(user).then((results) => {
+            log.info('User removed', {context: 'remove_user', groupId: workPackage.groupId, userRemovedId: userId});
+            seriesCallback()
+          });
+        } else {
+          seriesCallback("User or group not found for removeManyGroupUsers");
+        }
+      });
+    });
+  } else {
+    callback("No userIds for removeManyGroupUsers");
+  }
+};
+
+const removeManyGroupUsersAndDeleteContent = (workPackage, callback) => {
+  if (workPackage.userIds && workPackage.userIds.length>0 && workPackage.groupId) {
+    async.parallel([
+      (parallelCallback) => {
+        removeManyGroupUsers(workPackage, parallelCallback);
+      },
+      (parallelCallback) => {
+        async.forEach(workPackage.userIds, (userId, forEachCallback) => {
+          deleteUserGroupContent({
+            userId: userId,
+            groupId: workPackage.groupId,
+            anonymousUserId: workPackage.anonymousUserId
+          }, forEachCallback);
+        }, (error) => {
+          parallelCallback(error);
+        });
+      },
+
+    ])
+  } else {
+    callback("No userIds for removeManyGroupUsersAndDeleteContent");
+  }
+};
+
 DeletionWorker.prototype.process = (workPackage, callback) => {
   getAnonymousUser((error, anonymousUser) => {
     if (error) {
@@ -860,6 +991,15 @@ DeletionWorker.prototype.process = (workPackage, callback) => {
           break;
         case 'move-user-endorsements':
           moveUserEndorsements(workPackage, callback);
+          break;
+        case 'remove-many-group-admins':
+          removeManyGroupAdmins(workPackage, callback);
+          break;
+        case 'remove-many-group-users':
+          removeManyGroupUsers(workPackage, callback);
+          break;
+        case 'remove-many-group-users-and-delete-content':
+          removeManyGroupUsersAndDeleteContent(workPackage, callback);
           break;
         default:
           callback("Unknown type for workPackage: "+workPackage.type);
