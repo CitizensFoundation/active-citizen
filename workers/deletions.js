@@ -77,6 +77,231 @@ const getGroupAndUser = (groupId, userId, userEmail, callback) => {
   });
 };
 
+var getCommunityAndUser = function (communityId, userId, userEmail, callback) {
+  var user, community;
+
+  async.series([
+    function (seriesCallback) {
+      models.Community.find({
+        where: {
+          id: communityId
+        }
+      }).then(function (communityIn) {
+        if (communityIn) {
+          community = communityIn;
+        }
+        seriesCallback();
+      }).catch(function (error) {
+        seriesCallback(error);
+      });
+    },
+    function (seriesCallback) {
+      if (userId) {
+        models.User.find({
+          where: {
+            id: userId
+          },
+          attributes: ['id','email','name','created_at']
+        }).then(function (userIn) {
+          if (userIn) {
+            user = userIn;
+          }
+          seriesCallback();
+        }).catch(function (error) {
+          seriesCallback(error);
+        });
+      } else {
+        seriesCallback();
+      }
+    },
+    function (seriesCallback) {
+      if (userEmail) {
+        models.User.find({
+          where: {
+            email: userEmail
+          },
+          attributes: ['id','email','name','created_at']
+        }).then(function (userIn) {
+          if (userIn) {
+            user = userIn;
+          }
+          seriesCallback();
+        }).catch(function (error) {
+          seriesCallback(error);
+        });
+      } else {
+        seriesCallback();
+      }
+    }
+  ], function (error) {
+    if (error) {
+      callback(error)
+    } else {
+      callback(null, community, user);
+    }
+  });
+};
+
+var getDomainAndUser = function (domainId, userId, userEmail, callback) {
+  var user, domain;
+
+  async.series([
+    function (seriesCallback) {
+      models.Domain.find({
+        where: {
+          id: domainId
+        }
+      }).then(function (domainIn) {
+        if (domainIn) {
+          domain = domainIn;
+        }
+        seriesCallback();
+      }).catch(function (error) {
+        seriesCallback(error);
+      });
+    },
+    function (seriesCallback) {
+      if (userId) {
+        models.User.find({
+          where: {
+            id: userId
+          },
+          attributes: ['id','email','name','created_at']
+        }).then(function (userIn) {
+          if (userIn) {
+            user = userIn;
+          }
+          seriesCallback();
+        }).catch(function (error) {
+          seriesCallback(error);
+        });
+      } else {
+        seriesCallback();
+      }
+    },
+    function (seriesCallback) {
+      if (userEmail) {
+        models.User.find({
+          where: {
+            email: userEmail
+          },
+          attributes: ['id','email','name','created_at']
+        }).then(function (userIn) {
+          if (userIn) {
+            user = userIn;
+          }
+          seriesCallback();
+        }).catch(function (error) {
+          seriesCallback(error);
+        });
+      } else {
+        seriesCallback();
+      }
+    }
+  ], function (error) {
+    if (error) {
+      callback(error)
+    } else {
+      callback(null, domain, user);
+    }
+  });
+};
+
+const recountGroup = (groupId, callback) => {
+  let postsCount, pointsCount, userCount = 0;
+    async.series([
+      (seriesCallback) => {
+        models.Post.findAll({
+          where: {
+            group_id: groupId
+          }
+        }).then(function (posts) {
+          postsCount = posts.length;
+          seriesCallback();
+        }).catch((error) => {
+          seriesCallback(error);
+        });
+      },
+      (seriesCallback) => {
+        models.Point.findAll({
+          include: [
+            {
+              model: models.Post,
+              where: {
+                group_id: groupId
+              }
+            }
+          ]
+        }).then(function (posts) {
+          pointsCount = posts.length;
+          seriesCallback();
+        }).catch((error) => {
+          seriesCallback(error);
+        });
+      }
+    ], (error) => {
+      if (error) {
+        callback(error);
+      } else {
+        models.Group.find({
+          where: { id: groupId },
+          attributes: ['id', 'community_id', 'counter_posts', 'counter_points'],
+          include: [
+            {
+              model: models.User,
+              as: 'GroupUsers',
+              attributes: ['id']
+            }
+          ]
+        }).then((group) => {
+          if (group) {
+            group.counter_posts = postsCount;
+            group.counter_points = pointsCount;
+            group.counter_user = group.GroupUsers.length;
+            group.save().then(() => {
+              log.info("Group recounted", { error: error, context: 'ac-delete', groupId: groupId });
+              callback();
+            }).catch((error) => {
+              callback(error);
+            });
+          } else {
+            log.warn("No group for update counters");
+            callback();
+          }
+        }).catch((error) => {
+          callback(error);
+        });
+      }
+    });
+};
+
+const recountCommunity = (communityId, callback) => {
+  models.Community.find({
+    attributes: ['id'],
+    where: {
+      id: workPackage.communityId
+    },
+    include: [
+      {
+        model: models.Group,
+        attributes: ['id']
+      }
+    ]
+  }).then( (community) => {
+    const groupIds = _.map(community.Groups, (group) => {
+      return group.id
+    });
+    async.forEach(groupIds, (groupId, forEachCallback) => {
+      recountGroup(groupId, forEachCallback);
+    }, (error) => {
+      log.info("Community recounted", { error: error, context: 'ac-delete', communityId: communityId });
+      callback(error);
+    });
+  }).catch((error) => {
+    callback(error);
+  });
+};
+
 const recountGroupFromPostId = (postId, callback) => {
   let postsCount = 0;
   let pointsCount = 0;
@@ -904,9 +1129,57 @@ const removeManyGroupAdmins = (workPackage, callback) => {
           seriesCallback("User or group not found for removeManyGroupAdmins");
         }
       });
+    }, (error) => {
+      callback(error);
     });
   } else {
     callback("No userIds for removeManyGroupAdmins");
+  }
+};
+
+const removeManyCommunityAdmins = (workPackage, callback) => {
+  if (workPackage.userIds && workPackage.userIds.length>0 && workPackage.communityId) {
+    async.forEach(workPackage.userIds, (userId, seriesCallback) => {
+      getCommunityAndUser(workPackage.communityId, userId, null, (error, community, user) => {
+        if (error) {
+          seriesCallback(error);
+        } else if (user && community) {
+          community.removeCommunityAdmins(user).then((results) => {
+            log.info('Admin removed', {context: 'remove_admin', communityId: workPackage.communityId, userRemovedId: userId});
+            seriesCallback()
+          });
+        } else {
+          seriesCallback("User or community not found for removeManyCommunityAdmins");
+        }
+      });
+    }, (error) => {
+      callback(error);
+    });
+  } else {
+    callback("No userIds for removeManyCommunityAdmins");
+  }
+};
+
+const removeManyDomainAdmins = (workPackage, callback) => {
+  if (workPackage.userIds && workPackage.userIds.length>0 && workPackage.domainId) {
+    async.forEach(workPackage.userIds, (userId, seriesCallback) => {
+      getDomainAndUser(workPackage.domainId, userId, null, (error, domain, user) => {
+        if (error) {
+          seriesCallback(error);
+        } else if (user && domain) {
+          domain.removeDomainAdmins(user).then((results) => {
+            log.info('Admin removed', {context: 'remove_admin', domainId: workPackage.domainId, userRemovedId: userId});
+            seriesCallback()
+          });
+        } else {
+          seriesCallback("User or domain not found for removeManyDomainAdmins");
+        }
+      });
+    }, (error) => {
+      callback(error);
+    });
+  } else {
+    callback("No userIds for removeManyDomainAdmins");
   }
 };
 
@@ -925,9 +1198,61 @@ const removeManyGroupUsers = (workPackage, callback) => {
           seriesCallback("User or group not found for removeManyGroupUsers");
         }
       });
+    }, (error) => {
+      if (error) {
+        callback(error);
+      } else {
+        recountGroup(workPackage.groupId, callback);
+      }
     });
   } else {
     callback("No userIds for removeManyGroupUsers");
+  }
+};
+
+const removeManyCommunityUsers = (workPackage, callback) => {
+  if (workPackage.userIds && workPackage.userIds.length>0 && workPackage.communityId) {
+    async.forEach(workPackage.userIds, (userId, seriesCallback) => {
+      getCommunityAndUser(workPackage.communityId, userId, null, (error, community, user) => {
+        if (error) {
+          seriesCallback(error);
+        } else if (user && community) {
+          community.removeCommunityUsers(user).then((results) => {
+            log.info('User removed', {context: 'remove_user', communityId: workPackage.communityId, userRemovedId: userId});
+            seriesCallback()
+          });
+        } else {
+          seriesCallback("User or community not found for removeManyCommunityUsers");
+        }
+      });
+    }, (error) => {
+      callback(error);
+    });
+  } else {
+    callback("No userIds for removeManyCommunityUsers");
+  }
+};
+
+const removeManyDomainUsers = (workPackage, callback) => {
+  if (workPackage.userIds && workPackage.userIds.length>0 && workPackage.domainId) {
+    async.forEach(workPackage.userIds, (userId, seriesCallback) => {
+      getDomainAndUser(workPackage.domainId, userId, null, (error, domain, user) => {
+        if (error) {
+          seriesCallback(error);
+        } else if (user && domain) {
+          domain.removeDomainUsers(user).then((results) => {
+            log.info('User removed', {context: 'remove_user', domainId: workPackage.domainId, userRemovedId: userId});
+            seriesCallback()
+          });
+        } else {
+          seriesCallback("User or domain not found for removeManyDomainUsers");
+        }
+      });
+    }, (error) => {
+      callback(error);
+    });
+  } else {
+    callback("No userIds for removeManyDomainUsers");
   }
 };
 
@@ -947,11 +1272,66 @@ const removeManyGroupUsersAndDeleteContent = (workPackage, callback) => {
         }, (error) => {
           parallelCallback(error);
         });
-      },
-
-    ])
+      }
+    ], (error) => {
+      if (error) {
+        callback(error);
+      } else {
+        recountGroup(workPackage.groupId, callback);
+      }
+    })
   } else {
     callback("No userIds for removeManyGroupUsersAndDeleteContent");
+  }
+};
+
+const removeManyCommunityUsersAndDeleteContent = (workPackage, callback) => {
+  if (workPackage.userIds && workPackage.userIds.length>0 && workPackage.communityId) {
+    async.parallel([
+      (parallelCallback) => {
+        removeManyCommunityUsers(workPackage, parallelCallback);
+      },
+      (parallelCallback) => {
+        async.forEach(workPackage.userIds, (userId, forEachCallback) => {
+          deleteUserCommunityContent({
+            userId: userId,
+            communityId: workPackage.communityId,
+            anonymousUserId: workPackage.anonymousUserId
+          }, forEachCallback);
+        }, (error) => {
+          parallelCallback(error);
+        });
+      }
+    ], (error) => {
+      callback(error);
+    })
+  } else {
+    callback("No userIds for removeManyCommunityUsersAndDeleteContent");
+  }
+};
+
+const removeManyDomainUsersAndDeleteContent = (workPackage, callback) => {
+  if (workPackage.userIds && workPackage.userIds.length>0 && workPackage.domainId) {
+    async.parallel([
+      (parallelCallback) => {
+        removeManyDomainUsers(workPackage, parallelCallback);
+      },
+      (parallelCallback) => {
+        async.forEach(workPackage.userIds, (userId, forEachCallback) => {
+          deleteUserDomainContent({
+            userId: userId,
+            domainId: workPackage.domainId,
+            anonymousUserId: workPackage.anonymousUserId
+          }, forEachCallback);
+        }, (error) => {
+          parallelCallback(error);
+        });
+      }
+    ], (error) => {
+      callback(error);
+    })
+  } else {
+    callback("No userIds for removeManyDomainUsersAndDeleteContent");
   }
 };
 
@@ -1000,6 +1380,24 @@ DeletionWorker.prototype.process = (workPackage, callback) => {
           break;
         case 'remove-many-group-users-and-delete-content':
           removeManyGroupUsersAndDeleteContent(workPackage, callback);
+          break;
+        case 'remove-many-community-admins':
+          removeManyCommunityAdmins(workPackage, callback);
+          break;
+        case 'remove-many-community-users':
+          removeManyCommunityUsers(workPackage, callback);
+          break;
+        case 'remove-many-community-users-and-delete-content':
+          removeManyCommunityUsersAndDeleteContent(workPackage, callback);
+          break;
+        case 'remove-many-domain-admins':
+          removeManyDomainAdmins(workPackage, callback);
+          break;
+        case 'remove-many-domain-users':
+          removeManyDomainUsers(workPackage, callback);
+          break;
+        case 'remove-many-domain-users-and-delete-content':
+          removeManyDomainUsersAndDeleteContent(workPackage, callback);
           break;
         default:
           callback("Unknown type for workPackage: "+workPackage.type);
