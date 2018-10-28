@@ -292,6 +292,11 @@ module.exports = function(sequelize, DataTypes) {
         if (typeof user == "number") {
           user = { id: user };
         }
+
+        if (typeof user == "string" && user.length>0) {
+          user = { id: user };
+        }
+
         var domain = activity.object.domain;
         var community = activity.object.community;
 

@@ -1,4 +1,4 @@
-var DEBUG_EMAILS_TO_TEMP_FIlE = false;
+var DEBUG_EMAILS_TO_TEMP_FIlE = true;
 
 var log = require('../../utils/logger');
 var toJson = require('../../utils/to_json');
@@ -157,8 +157,8 @@ var sendOneEmail = function (emailLocals, callback) {
       if (emailLocals.user && emailLocals.user.email) {
         seriesCallback();
       } else {
-        log.error("EmailWorker Can't find email for users", {emailLocals: emailLocals});
-        seriesCallback("Can't find user email");
+        log.warn("EmailWorker Can't find email for users", {emailLocals: emailLocals});
+        seriesCallback();
       }
     },
 

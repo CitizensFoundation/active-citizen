@@ -7,6 +7,7 @@ var i18n = require('../utils/i18n');
 var toJson = require('../utils/to_json');
 var deliverPostNotification = require('../engine/notifications/post_delivery.js');
 var deliverPointNotification = require('../engine/notifications/point_delivery.js');
+const processGeneralNotification = require('../engine/notifications/process_general_notifications');
 
 var airbrake = null;
 if(process.env.AIRBRAKE_PROJECT_ID) {
@@ -97,9 +98,9 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
           log.info("NotificationDeliveryWorker Debug 1", {results: results.dataValues});
           if (results) {
             notification = results;
+            group = notification.AcActivities[0].Group;
             if (notification.AcActivities[0].Domain) {
               domain = notification.AcActivities[0].Domain;
-              group = notification.AcActivities[0].Group;
             } else if (notification.AcActivities[0].Group &&
                        notification.AcActivities[0].Group.Community &&
                        notification.AcActivities[0].Group.Community.Domain) {
@@ -301,13 +302,18 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
               seriesCallback(error);
             });
             break;
+          case "notification.generalUserNotification":
+            processGeneralNotification(notification, domain, community, group, user, (error) => {
+              log.info('Processing notification.generalUserNotification Completed', { type: notification.type, user: user ? user.simple() : null });
+              seriesCallback(error);
+            });
+            break;
           default:
             seriesCallback();
         }
       }
-
     ],
-    function(error) {
+    (error) => {
       if (error) {
         if (error.stack)
           log.error("NotificationDeliveryWorker Error", {err: error, stack: error.stack.split("\n") });
