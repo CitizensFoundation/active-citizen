@@ -362,7 +362,7 @@ const recountCommunity = (workPackage, callback) => {
       (innerCallback) => {
         if (workPackage.doDeepGroupCounting) {
           async.forEach(groupIds, (groupId, forEachCallback) => {
-            recountGroup(groupId, forEachCallback);
+            recountGroup({ groupId: groupId }, forEachCallback);
           }, (error) => {
             log.info("Community groups deep recounted", { error: error, context: 'ac-delete', communityId: workPackage.communityId });
             innerCallback(error);
@@ -1268,7 +1268,7 @@ const deleteUserGroupContent = (workPackage, callback) => {
           { deleted: true },
           { where: { user_id: workPackage.userId, group_id: workPackage.groupId } }
         ).then((spread) => {
-          log.info('User AcActitivies Deleted', { numberDeleted: spread[0],context: 'ac-delete', userId: workPackage.userId});
+          log.info('User Group AcActitivies Deleted', { numberDeleted: spread[0],context: 'ac-delete', userId: workPackage.userId});
           seriesCallback();
         }).catch((error) => {
           seriesCallback(error);
@@ -1480,7 +1480,7 @@ const removeManyCommunityUsers = (workPackage, callback) => {
       if (error) {
         callback(error);
       } else {
-        recountFromCommunity(workPackage, callback);
+        recountAllFromCommunity(workPackage, callback);
       }
     });
   } else {
@@ -1507,7 +1507,7 @@ const removeManyDomainUsers = (workPackage, callback) => {
       if (error) {
         callback(error);
       } else {
-        recountFromDomain(workPackage, callback);
+        recountAllFromDomain(workPackage, callback);
       }
     });
   } else {
@@ -1546,11 +1546,8 @@ const removeManyGroupUsersAndDeleteContent = (workPackage, callback) => {
 
 const removeManyCommunityUsersAndDeleteContent = (workPackage, callback) => {
   if (workPackage.userIds && workPackage.userIds.length>0 && workPackage.communityId) {
-    async.parallel([
-      (parallelCallback) => {
-        removeManyCommunityUsers(workPackage, parallelCallback);
-      },
-      (parallelCallback) => {
+    async.series([
+      (seriesCallback) => {
         async.forEach(workPackage.userIds, (userId, forEachCallback) => {
           deleteUserCommunityContent({
             userId: userId,
@@ -1558,14 +1555,17 @@ const removeManyCommunityUsersAndDeleteContent = (workPackage, callback) => {
             anonymousUserId: workPackage.anonymousUserId
           }, forEachCallback);
         }, (error) => {
-          parallelCallback(error);
+          seriesCallback(error);
         });
-      }
+      },
+      (seriesCallback) => {
+        removeManyCommunityUsers(workPackage, seriesCallback);
+      },
     ], (error) => {
       if (error) {
         callback(error);
       } else {
-        recountFromCommunity(workPackage, callback);
+        recountAllFromCommunity(workPackage, callback);
       }
     })
   } else {
@@ -1594,7 +1594,7 @@ const removeManyDomainUsersAndDeleteContent = (workPackage, callback) => {
       if (error) {
         callback(error);
       } else {
-        recountFromDomain(workPackage, callback);
+        recountAllFromDomain(workPackage, callback);
       }
     })
   } else {
