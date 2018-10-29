@@ -352,6 +352,11 @@ const recountCommunity = (workPackage, callback) => {
       {
         model: models.Group,
         attributes: ['id','counter_posts', 'counter_points','counter_users']
+      },
+      {
+        model: models.User,
+        as: 'CommunityUsers',
+        attributes: ['id']
       }
     ]
   }).then( (community) => {
@@ -381,7 +386,7 @@ const recountCommunity = (workPackage, callback) => {
           });
           community.counter_posts = postCount;
           community.counter_points = pointCount;
-          community.counter_users = userCount;
+          community.counter_users = community.CommunityUsers.length;
           community.save().then(() => {
             log.info("Community recounted", { context: 'ac-delete', communityId: workPackage.communityId });
             innerCallback();
@@ -410,6 +415,11 @@ const recountDomain = (workPackage, callback) => {
       {
         model: models.Community,
         attributes: ['id','counter_posts','counter_points','counter_users']
+      },
+      {
+        model: models.User,
+        as: 'DomainUsers',
+        attributes: ['id']
       }
     ]
   }).then((domain) => {
@@ -426,7 +436,7 @@ const recountDomain = (workPackage, callback) => {
         });
         domain.counter_posts = postCount;
         domain.counter_points = pointCount;
-        domain.counter_users = userCount;
+        domain.counter_users = domain.DomainUsers.length;
         domain.save(() => {
           innerCallback();
         }).catch((error) => { innerCallback(error) });
