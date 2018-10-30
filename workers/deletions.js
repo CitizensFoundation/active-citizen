@@ -12,6 +12,8 @@ if(process.env.AIRBRAKE_PROJECT_ID) {
   airbrake = require('../utils/airbrake');
 }
 
+let DeletionWorker = function () {};
+
 const getGroupAndUser = (groupId, userId, userEmail, callback) => {
   var user, group;
 
@@ -445,6 +447,7 @@ const recountDomain = (workPackage, callback) => {
       callback(error);
     });
   }).catch((error) => {
+    log.info("recountDomain done", { error: error, workPackage: workPackage });
     callback(error);
   });
 };
@@ -519,6 +522,7 @@ const recountGroupFromPostId = (postId, callback) => {
       callback();
     }
   }).catch((error) => {
+    log.info("recountGroupFromPostId done", { error: error });
     callback(error);
   });
 };
@@ -564,11 +568,10 @@ const resetCountForCommunityForGroup = (groupId, callback) => {
       callback();
     }
   }).catch((error) => {
+    log.info("resetCountForCommunityForGroup done", { error: error });
     callback(error)
   });
 };
-
-let DeletionWorker = function () {};
 
 const deletePointContent = (workPackage, callback) => {
   const pointId = workPackage.pointId;
@@ -602,6 +605,7 @@ const deletePointContent = (workPackage, callback) => {
         });
       }
     ], (error) => {
+      log.info("deletePointContent done", { error: error, workPackage: workPackage });
       callback(error);
     });
   } else {
@@ -1296,6 +1300,7 @@ const deleteUserGroupContent = (workPackage, callback) => {
         })
       }
     ], (error) => {
+      log.info("deleteUserGroupContent done", { error: error });
       callback(error);
     });
   } else {
@@ -1448,7 +1453,7 @@ const removeManyGroupUsers = (workPackage, callback) => {
           seriesCallback(error);
         } else if (user && group) {
           group.removeGroupUsers(user).then((results) => {
-            log.info('User removed', {context: 'remove_user', groupId: workPackage.groupId, userRemovedId: userId});
+            log.info('User removed', {context: 'remove_user', results: results, groupId: workPackage.groupId, userRemovedId: userId});
             seriesCallback()
           });
         } else {
@@ -1571,6 +1576,29 @@ const removeManyCommunityUsersAndDeleteContent = (workPackage, callback) => {
       (seriesCallback) => {
         removeManyCommunityUsers(workPackage, seriesCallback);
       },
+      (seriesCallback) => {
+        models.Community.find({
+          where: {
+            id: workPackage.communityId
+          },
+          attributes: ['id'],
+          include: [
+            {
+              model: models.Group,
+              attributes: ['id']
+            }
+          ]
+        }).then((community) => {
+          async.forEach(community.Groups, (group, forEachCallback) => {
+            removeManyGroupUsers( _.merge(workPackage, { groupId: group.id }), forEachCallback);
+          }, (error) => {
+            log.info("Have removed group users for community deletion", { error: error, communityId: workPackage.communityId });
+            seriesCallback(error);
+          });
+        }).catch((error) => {
+          seriesCallback(error);
+        })
+      }
     ], (error) => {
       if (error) {
         callback(error);
@@ -1585,11 +1613,8 @@ const removeManyCommunityUsersAndDeleteContent = (workPackage, callback) => {
 
 const removeManyDomainUsersAndDeleteContent = (workPackage, callback) => {
   if (workPackage.userIds && workPackage.userIds.length>0 && workPackage.domainId) {
-    async.parallel([
-      (parallelCallback) => {
-        removeManyDomainUsers(workPackage, parallelCallback);
-      },
-      (parallelCallback) => {
+    async.series([
+      (seriesCallback) => {
         async.forEach(workPackage.userIds, (userId, forEachCallback) => {
           deleteUserDomainContent({
             userId: userId,
@@ -1597,8 +1622,62 @@ const removeManyDomainUsersAndDeleteContent = (workPackage, callback) => {
             anonymousUserId: workPackage.anonymousUserId
           }, forEachCallback);
         }, (error) => {
-          parallelCallback(error);
+          seriesCallback(error);
         });
+      },
+      (seriesCallback) => {
+        models.Domain.find({
+          where: {
+            id: workPackage.domainId
+          },
+          attributes: ['id'],
+          include: [
+            {
+              model: models.Community,
+              attributes: ['id']
+            }
+          ]
+        }).then((domain) => {
+          async.forEach(domain.Communities, (community, forEachCallback) => {
+            async.series([
+              (innerSeriesCallback) => {
+                removeManyCommunityUsers( _.merge(workPackage, { communityId: community.id }), innerSeriesCallback);
+              },
+              (innerSeriesCallback) => {
+                models.Community.find({
+                  where: {
+                    id: communityId
+                  },
+                  attributes: ['id'],
+                  include: [
+                    {
+                      model: models.Group,
+                      attributes: ['id']
+                    }
+                  ]
+                }).then((community) => {
+                  async.forEach(community.Groups, (group, innerForEachCallback) => {
+                    removeManyGroupUsers( _.merge(workPackage, { groupId: group.id }), innerForEachCallback);
+                  }, (error) => {
+                    log.info("Have removed group users for domain deletion", { error: error, domainId: workPackage.domainId });
+                    innerSeriesCallback(error);
+                  });
+                }).catch((error) => {
+                  innerSeriesCallback(error);
+                })
+              },
+            ], (error) => {
+              forEachCallback(error);
+            })
+          }, (error) => {
+            seriesCallback(error);
+          })
+        }).catch((error) => {
+          seriesCallback(error);
+        });
+      },
+      (seriesCallback) => {
+        removeManyDomainUsers(workPackage, seriesCallback);
       }
     ], (error) => {
       if (error) {
