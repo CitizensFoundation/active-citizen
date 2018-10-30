@@ -425,29 +425,35 @@ const recountDomain = (workPackage, callback) => {
       }
     ]
   }).then((domain) => {
-    const communityIds = _.map(domain.Communities, (community) => {
-      return community.id
-    });
-    async.series([
-      (innerCallback) => {
-        let postCount = 0, pointCount = 0, userCount = 0;
-        _.forEach(domain.Communities, (community) => {
-          postCount += community.counter_posts;
-          pointCount += community.counter_points;
-          userCount += community.counter_users;
-        });
-        domain.counter_posts = postCount;
-        domain.counter_points = pointCount;
-        domain.counter_users = domain.DomainUsers.length;
-        domain.save(() => {
-          innerCallback();
-        }).catch((error) => { innerCallback(error) });
-      }
-    ], (error) => {
-      callback(error);
-    });
+    if (domain) {
+      const communityIds = _.map(domain.Communities, (community) => {
+        return community.id
+      });
+      async.series([
+        (innerCallback) => {
+          let postCount = 0, pointCount = 0, userCount = 0;
+          _.forEach(domain.Communities, (community) => {
+            postCount += community.counter_posts;
+            pointCount += community.counter_points;
+            userCount += community.counter_users;
+          });
+          domain.counter_posts = postCount;
+          domain.counter_points = pointCount;
+          domain.counter_users = domain.DomainUsers.length;
+          domain.save(() => {
+            log.info("recountDomain done", { error: error, workPackage: workPackage });
+            innerCallback();
+          }).catch((error) => {
+            innerCallback(error)
+          });
+        }
+      ], (error) => {
+        callback(error);
+      });
+    } else {
+      callback("No domain");
+    }
   }).catch((error) => {
-    log.info("recountDomain done", { error: error, workPackage: workPackage });
     callback(error);
   });
 };
@@ -1132,7 +1138,7 @@ const recountAllFromGroup = (workPackage, callback) => {
         ]
       }).then((group) => {
         communityId = group.Community.id;
-        domainId = group.Community.id;
+        domainId = group.Community.Domain.id;
         seriesCallback();
       }).catch((error)=>{ seriesCallback() })
     },
@@ -1590,7 +1596,7 @@ const removeManyCommunityUsersAndDeleteContent = (workPackage, callback) => {
           ]
         }).then((community) => {
           async.forEach(community.Groups, (group, forEachCallback) => {
-            removeManyGroupUsers( _.merge(workPackage, { groupId: group.id }), forEachCallback);
+            removeManyGroupUsers( _.merge(workPackage, { groupId: group.id, skipRecount: true }), forEachCallback);
           }, (error) => {
             log.info("Have removed group users for community deletion", { error: error, communityId: workPackage.communityId });
             seriesCallback(error);
@@ -1657,7 +1663,7 @@ const removeManyDomainUsersAndDeleteContent = (workPackage, callback) => {
                   ]
                 }).then((community) => {
                   async.forEach(community.Groups, (group, innerForEachCallback) => {
-                    removeManyGroupUsers( _.merge(workPackage, { groupId: group.id }), innerForEachCallback);
+                    removeManyGroupUsers( _.merge(workPackage, { groupId: group.id, skipRecount: true }), innerForEachCallback);
                   }, (error) => {
                     log.info("Have removed group users for domain deletion", { error: error, domainId: workPackage.domainId });
                     innerSeriesCallback(error);
