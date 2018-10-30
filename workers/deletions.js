@@ -346,7 +346,7 @@ const recountGroup = (workPackage, callback) => {
 
 const recountCommunity = (workPackage, callback) => {
   models.Community.find({
-    attributes: ['id','counter_posts', 'counter_points','counter_users'],
+    attributes: ['id','counter_posts', 'counter_points', 'counter_users'],
     where: {
       id: workPackage.communityId
     },
@@ -384,7 +384,6 @@ const recountCommunity = (workPackage, callback) => {
           _.forEach(community.Groups, (group) => {
             postCount += group.counter_posts;
             pointCount += group.counter_points;
-            userCount += group.counter_users;
           });
           community.counter_posts = postCount;
           community.counter_points = pointCount;
