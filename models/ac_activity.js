@@ -150,6 +150,10 @@ module.exports = function(sequelize, DataTypes) {
         }
       },
       {
+        name: 'userid_groupid_deleted',
+        fields: ['user_id','group_id','deleted']
+      },
+      {
         name: 'activity_active_by_post_id',
         fields: ['post_id'],
         where: {

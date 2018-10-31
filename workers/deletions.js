@@ -358,49 +358,54 @@ const recountCommunity = (workPackage, callback) => {
       {
         model: models.User,
         as: 'CommunityUsers',
-        attributes: ['id']
+        attributes: ['id'],
+        required: false
       }
     ]
   }).then( (community) => {
-    const groupIds = _.map(community.Groups, (group) => {
-      return group.id
-    });
-    async.series([
-      (innerCallback) => {
-        if (workPackage.doDeepGroupCounting) {
-          async.forEach(groupIds, (groupId, forEachCallback) => {
-            recountGroup({ groupId: groupId }, forEachCallback);
-          }, (error) => {
-            log.info("Community groups deep recounted", { error: error, context: 'ac-delete', communityId: workPackage.communityId });
-            innerCallback(error);
-          });
-        } else {
-          innerCallback();
-        }
-      },
-      (innerCallback) => {
-        let postCount = 0, pointCount = 0, userCount = 0;
-        community.reload().then((community) => {
-          _.forEach(community.Groups, (group) => {
-            postCount += group.counter_posts;
-            pointCount += group.counter_points;
-          });
-          community.counter_posts = postCount;
-          community.counter_points = pointCount;
-          community.counter_users = community.CommunityUsers.length;
-          community.save().then(() => {
-            log.info("Community recounted", { context: 'ac-delete', communityId: workPackage.communityId });
+    if (community) {
+      const groupIds = _.map(community.Groups, (group) => {
+        return group.id
+      });
+      async.series([
+        (innerCallback) => {
+          if (workPackage.doDeepGroupCounting) {
+            async.forEach(groupIds, (groupId, forEachCallback) => {
+              recountGroup({ groupId: groupId }, forEachCallback);
+            }, (error) => {
+              log.info("Community groups deep recounted", { error: error, context: 'ac-delete', communityId: workPackage.communityId });
+              innerCallback(error);
+            });
+          } else {
             innerCallback();
-          }).catch((error) => {
-            innerCallback(error)
-          });
-        }).catch((error)=>{
-          innerCallback()
-        })
-      }
-    ], (error) => {
-      callback(error);
-    });
+          }
+        },
+        (innerCallback) => {
+          let postCount = 0, pointCount = 0, userCount = 0;
+          community.reload().then((community) => {
+            _.forEach(community.Groups, (group) => {
+              postCount += group.counter_posts;
+              pointCount += group.counter_points;
+            });
+            community.counter_posts = postCount;
+            community.counter_points = pointCount;
+            community.counter_users = community.CommunityUsers ? community.CommunityUsers.length : 0;
+            community.save().then(() => {
+              log.info("Community recounted", { context: 'ac-delete', communityId: workPackage.communityId });
+              innerCallback();
+            }).catch((error) => {
+              innerCallback(error)
+            });
+          }).catch((error)=>{
+            innerCallback()
+          })
+        }
+      ], (error) => {
+        callback(error);
+      });
+    } else {
+      callback("No community in recount community");
+    }
   }).catch((error) => {
     callback(error);
   });
@@ -416,31 +421,21 @@ const recountDomain = (workPackage, callback) => {
       {
         model: models.Community,
         attributes: ['id','counter_posts','counter_points','counter_users']
-      },
-      {
-        model: models.User,
-        as: 'DomainUsers',
-        attributes: ['id']
       }
     ]
   }).then((domain) => {
     if (domain) {
-      const communityIds = _.map(domain.Communities, (community) => {
-        return community.id
-      });
       async.series([
         (innerCallback) => {
           let postCount = 0, pointCount = 0, userCount = 0;
           _.forEach(domain.Communities, (community) => {
             postCount += community.counter_posts;
             pointCount += community.counter_points;
-            userCount += community.counter_users;
           });
           domain.counter_posts = postCount;
           domain.counter_points = pointCount;
-          domain.counter_users = domain.DomainUsers.length;
-          domain.save(() => {
-            log.info("recountDomain done", { error: error, workPackage: workPackage });
+          domain.save().then(() => {
+            log.info("recountDomain done", { workPackage: workPackage });
             innerCallback();
           }).catch((error) => {
             innerCallback(error)
@@ -1118,6 +1113,7 @@ const recountAllFromGroup = (workPackage, callback) => {
   let domainId, communityId;
   async.series([
     (seriesCallback) => {
+      log.info("RecountAllFromGroup start");
       models.Group.find({
         where: {
           id: workPackage.groupId
@@ -1143,14 +1139,17 @@ const recountAllFromGroup = (workPackage, callback) => {
     },
 
     (seriesCallback) => {
+      log.info("RecountAllFromGroup group count");
       recountGroup({ groupId: workPackage.groupId }, seriesCallback);
     },
 
     (seriesCallback) => {
+      log.info("RecountAllFromGroup community count");
       recountCommunity({ communityId: communityId }, seriesCallback);
     },
 
     (seriesCallback) => {
+      log.info("RecountAllFromGroup domain count");
       recountDomain({ domainId: domainId }, seriesCallback);
     }
   ], (error) => {
@@ -1165,7 +1164,7 @@ const recountAllFromCommunity = (workPackage, callback) => {
     (seriesCallback) => {
       models.Community.find({
         where: {
-          id: workPackage.groupId
+          id: workPackage.communityId
         },
         attributes: ['id'],
         include: [
@@ -1175,7 +1174,7 @@ const recountAllFromCommunity = (workPackage, callback) => {
           }
         ]
       }).then((community) => {
-        domainId = community.id;
+        domainId = community.Domain.id;
         seriesCallback();
       }).catch((error)=>{ seriesCallback() })
     },
@@ -1189,7 +1188,7 @@ const recountAllFromCommunity = (workPackage, callback) => {
     }
   ], (error) => {
     log.info("RecountAllFromCommunity finished");
-    callback();
+    callback(error);
   })
 };
 
@@ -1303,6 +1302,14 @@ const deleteUserGroupContent = (workPackage, callback) => {
         }).catch((error) => {
           seriesCallback(error);
         })
+      },
+      (seriesCallback) => {
+        if (workPackage.skipRecount) {
+          log.info("Skip recount in deleteGroup content");
+          seriesCallback();
+        } else {
+          recountAllFromGroup(workPackage, seriesCallback);
+        }
       }
     ], (error) => {
       log.info("deleteUserGroupContent done", { error: error });
@@ -1333,6 +1340,7 @@ const deleteUserCommunityContent = (workPackage, callback) => {
       async.forEach(groupIds, (groupId, forEachCallback) => {
         deleteUserGroupContent({
           userId: workPackage.userId,
+          skipRecount: true,
           anonymousUserId: workPackage.anonymousUserId,
           groupId: groupId}, forEachCallback);
       }, (error) => {
@@ -1340,7 +1348,12 @@ const deleteUserCommunityContent = (workPackage, callback) => {
         callback(error);
       });
     }).catch((error) => {
-      callback(error);
+      if (workPackage.skipRecount) {
+        log.info("Skiping recount for deleteUserCommunityContent");
+        callback(error);
+      } else {
+        recountAllFromGroup(workPackage, callback);
+      }
     });
   } else {
     callback("No userId or anonymousUserId or communityId");
@@ -1367,6 +1380,7 @@ const deleteUserDomainContent = (workPackage, callback) => {
       async.forEach(communityIds, (communityId, forEachCallback) => {
         deleteUserCommunityContent({
           userId: workPackage.userId,
+          skipRecount: true,
           anonymousUserId: workPackage.anonymousUserId,
           communityId: communityId }, forEachCallback);
       }, (error) => {
@@ -1374,7 +1388,12 @@ const deleteUserDomainContent = (workPackage, callback) => {
         callback(error);
       });
     }).catch((error) => {
-      callback(error);
+      if (workPackage.skipRecount) {
+        log.info("Skiping recount for deleteUserDomainContent");
+        callback(error);
+      } else {
+        recountAllFromDomain(workPackage, callback);
+      }
     });
   } else {
     callback("No userId or anonymousUserId or domainId");
@@ -1470,6 +1489,7 @@ const removeManyGroupUsers = (workPackage, callback) => {
         callback(error);
       } else {
         if (workPackage.skipRecount) {
+          log.info("Skipping recount for group", { workPackage: workPackage });
           callback();
         } else {
           recountAllFromGroup(workPackage, callback);
@@ -1545,6 +1565,7 @@ const removeManyGroupUsersAndDeleteContent = (workPackage, callback) => {
         async.forEach(workPackage.userIds, (userId, forEachCallback) => {
           deleteUserGroupContent({
             userId: userId,
+            skipRecount: true,
             groupId: workPackage.groupId,
             anonymousUserId: workPackage.anonymousUserId
           }, forEachCallback);
@@ -1571,6 +1592,7 @@ const removeManyCommunityUsersAndDeleteContent = (workPackage, callback) => {
         async.forEach(workPackage.userIds, (userId, forEachCallback) => {
           deleteUserCommunityContent({
             userId: userId,
+            skipRecount: true,
             communityId: workPackage.communityId,
             anonymousUserId: workPackage.anonymousUserId
           }, forEachCallback);
@@ -1623,6 +1645,7 @@ const removeManyDomainUsersAndDeleteContent = (workPackage, callback) => {
         async.forEach(workPackage.userIds, (userId, forEachCallback) => {
           deleteUserDomainContent({
             userId: userId,
+            skipRecount: true,
             domainId: workPackage.domainId,
             anonymousUserId: workPackage.anonymousUserId
           }, forEachCallback);
