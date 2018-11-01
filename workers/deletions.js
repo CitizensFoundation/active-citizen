@@ -1611,7 +1611,7 @@ const removeManyCommunityUsersAndDeleteContent = (workPackage, callback) => {
         });
       },
       (seriesCallback) => {
-        removeManyCommunityUsers(_.merge(workPackage, { skipRecount: true }, seriesCallback);
+        removeManyCommunityUsers(_.merge(workPackage, { skipRecount: true }), seriesCallback);
       },
       (seriesCallback) => {
         models.Community.find({
@@ -1679,7 +1679,7 @@ const removeManyDomainUsersAndDeleteContent = (workPackage, callback) => {
           async.forEachLimit(domain.Communities, 100, (community, forEachCallback) => {
             async.series([
               (innerSeriesCallback) => {
-                removeManyCommunityUsers( _.merge(workPackage, { communityId: community.id, skipRecount: true}), innerSeriesCallback);
+                removeManyCommunityUsers( _.merge(workPackage, { communityId: community.id, skipRecount: true }), innerSeriesCallback);
               },
               (innerSeriesCallback) => {
                 models.Community.find({
@@ -1715,7 +1715,7 @@ const removeManyDomainUsersAndDeleteContent = (workPackage, callback) => {
         });
       },
       (seriesCallback) => {
-        removeManyDomainUsers(_.merge(workPackage, { skipRecount: true }, seriesCallback);
+        removeManyDomainUsers(_.merge(workPackage, { skipRecount: true }), seriesCallback);
       }
     ], (error) => {
       if (error) {
