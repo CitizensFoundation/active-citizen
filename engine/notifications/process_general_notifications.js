@@ -138,23 +138,29 @@ const getLinkedPostAndPoints = (postIds, pointIds, community, domain, callback) 
     if (error) {
       callback(error)
     } else {
-      finalContent += '<br><b>'+i18n.t('yourPosts')+'</b><br>\n';
+      if (allPosts.length>0) {
+        finalContent += '<br><b>'+i18n.t('yourPosts')+'</b><br>\n';
+      }
       _.forEach(allPosts, (post) => {
         finalContent += makeLinkToPost(post, community, domain) + "<br>\n";
       });
-      finalContent += "\n";
+
+      if (allPosts.length>0) {
+        finalContent += "<br>\n";
+      }
+
       if (countProperties(allGroupedPostPoints)>0) {
-        finalContent += '<br><b>'+i18n.t('yourPoints')+'</b><br>\n';
+        finalContent += '<b>'+i18n.t('yourPoints')+'</b><br>\n';
         finalContent += makeLinksForPoints(allGroupedPostPoints, community, domain);
         finalContent += "<br>\n";
       }
       if (countProperties(allGroupPoints)>0) {
-        finalContent += '<br><b>'+i18n.t('yourGroupPoints')+'</b><br>\n';
+        finalContent += '<b>'+i18n.t('yourGroupPoints')+'</b><br>\n';
         finalContent += makeLinksForPoints(allGroupPoints, community, domain);
         finalContent += "<br>\n";
       }
       if (countProperties(allCommunityPoints)>0) {
-        finalContent += '<br><b>'+i18n.t('yourCommunityPoints')+'</b><br>\n';
+        finalContent += '<b>'+i18n.t('yourCommunityPoints')+'</b><br>\n';
         finalContent += makeLinksForPoints(allCommunityPoints, community, domain);
       }
       callback(null, finalContent);
@@ -168,10 +174,10 @@ const processContentToBeAnonymized =  (notification, object, domain, community, 
 
   if (object.type==='communityContentToBeAnonymized') {
     link = linkTo("https://"+community.hostname+"."+domain.domain_name);
-    prependToContent =  i18n.t('communityContentToBeAnonymized')+'<br><br>\n'
+    prependToContent =  i18n.t('notification.communityContentToBeAnonymized')+'<br><br>\n'
   } else {
     link = linkTo("https://"+community.hostname+"."+domain.domain_name+"/group/"+group.id)
-    prependToContent =  i18n.t('groupContentToBeAnonymized')+'<br><br>\n'
+    prependToContent =  i18n.t('notification.groupContentToBeAnonymized')+'<br><br>\n'
   }
 
   const header = object.name;

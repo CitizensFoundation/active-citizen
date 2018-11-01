@@ -632,7 +632,7 @@ const notifyGroupUsers = (workPackage, callback) => {
         }, (error) => {
           forEachCallback(error);
         });
-      });
+      }, (error) => { seriesCallback(error) });
     }],
     (error) => { callback(error) });
 };
@@ -643,7 +643,7 @@ const notifyCommunityUsers = (workPackage, callback) => {
   async.series([
     (seriesCallback) => {
       models.Community.find({
-        attributes: ['id'],
+        attributes: ['id','domain_id'],
         where: {
           id: workPackage.communityId
         },
@@ -687,7 +687,7 @@ const notifyCommunityUsers = (workPackage, callback) => {
         }, (error) => {
           forEachCallback(error);
         });
-      });
+      }, (error) => { seriesCallback(error) });
     }],
   (error) => { callback(error) });
 };
