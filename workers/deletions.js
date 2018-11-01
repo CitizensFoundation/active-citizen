@@ -1521,7 +1521,12 @@ const removeManyCommunityUsers = (workPackage, callback) => {
       if (error) {
         callback(error);
       } else {
-        recountAllFromCommunity(workPackage, callback);
+        if (workPackage.skipRecount) {
+          log.info("Skipping recount for community", { workPackage: workPackage });
+          callback();
+        } else {
+          recountAllFromCommunity(workPackage, callback);
+        }
       }
     });
   } else {
@@ -1548,7 +1553,11 @@ const removeManyDomainUsers = (workPackage, callback) => {
       if (error) {
         callback(error);
       } else {
-        recountAllFromDomain(workPackage, callback);
+        if (workPackage.skipRecount) {
+          callback();
+        } else {
+          recountAllFromDomain(workPackage, callback);
+        }
       }
     });
   } else {
@@ -1602,7 +1611,7 @@ const removeManyCommunityUsersAndDeleteContent = (workPackage, callback) => {
         });
       },
       (seriesCallback) => {
-        removeManyCommunityUsers(workPackage, seriesCallback);
+        removeManyCommunityUsers(_.merge(workPackage, { skipRecount: true }, seriesCallback);
       },
       (seriesCallback) => {
         models.Community.find({
@@ -1670,12 +1679,12 @@ const removeManyDomainUsersAndDeleteContent = (workPackage, callback) => {
           async.forEachLimit(domain.Communities, 100, (community, forEachCallback) => {
             async.series([
               (innerSeriesCallback) => {
-                removeManyCommunityUsers( _.merge(workPackage, { communityId: community.id }), innerSeriesCallback);
+                removeManyCommunityUsers( _.merge(workPackage, { communityId: community.id, skipRecount: true}), innerSeriesCallback);
               },
               (innerSeriesCallback) => {
                 models.Community.find({
                   where: {
-                    id: communityId
+                    id: community.id
                   },
                   attributes: ['id'],
                   include: [
@@ -1706,7 +1715,7 @@ const removeManyDomainUsersAndDeleteContent = (workPackage, callback) => {
         });
       },
       (seriesCallback) => {
-        removeManyDomainUsers(workPackage, seriesCallback);
+        removeManyDomainUsers(_.merge(workPackage, { skipRecount: true }, seriesCallback);
       }
     ], (error) => {
       if (error) {
