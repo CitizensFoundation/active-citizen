@@ -281,7 +281,7 @@ const recountGroup = (workPackage, callback) => {
         }
       }).then(function (posts) {
         postsCount = posts.length;
-        async.forEach(posts, (post, forEachCallback) => {
+        async.forEachLimit(posts, 100, (post, forEachCallback) => {
           recountPost(post.id, forEachCallback);
         }, (error) => {
           seriesCallback(error);
@@ -370,7 +370,7 @@ const recountCommunity = (workPackage, callback) => {
       async.series([
         (innerCallback) => {
           if (workPackage.doDeepGroupCounting) {
-            async.forEach(groupIds, (groupId, forEachCallback) => {
+            async.forEachLimit(groupIds, 100, (groupId, forEachCallback) => {
               recountGroup({ groupId: groupId }, forEachCallback);
             }, (error) => {
               log.info("Community groups deep recounted", { error: error, context: 'ac-delete', communityId: workPackage.communityId });
@@ -412,6 +412,7 @@ const recountCommunity = (workPackage, callback) => {
 };
 
 const recountDomain = (workPackage, callback) => {
+  log.info("recountDomain started");
   models.Domain.find({
     attributes: ['id','counter_posts','counter_points','counter_users'],
     where: {
@@ -425,6 +426,7 @@ const recountDomain = (workPackage, callback) => {
     ]
   }).then((domain) => {
     if (domain) {
+      log.info("recountDomain found domain");
       async.series([
         (innerCallback) => {
           let postCount = 0, pointCount = 0, userCount = 0;
@@ -640,7 +642,7 @@ const deletePostContent = (workPackage, callback) => {
             post_id: postId
           }
         }).then((points) => {
-          async.forEach(points, (point, innerCallback) => {
+          async.forEachLimit(points, 100, (point, innerCallback) => {
             deletePointContent(_.merge({pointId: point.id, skipActivities: true}, workPackage), innerCallback);
           }, (error) => {
             seriesCallback(error);
@@ -754,7 +756,7 @@ const deleteGroupContent = (workPackage, callback) => {
           attributes: ['id'],
           where: { group_id: groupId }
         }).then(function (posts) {
-          async.forEach(posts, function (post, innerCallback) {
+          async.forEachLimit(posts, 100, function (post, innerCallback) {
             deletePostContent(_.merge({postId: post.id, skipActivities: true, useNotification: false, resetCounters: false }, workPackage), innerCallback);
           }, (error) => {
             seriesCallback(error);
@@ -925,7 +927,7 @@ const deleteUserEndorsements = (workPackage, callback) => {
       }
     ]
   }).then((endorsements) => {
-    async.forEach(endorsements, (endorsement, forEachCallback) => {
+    async.forEachLimit(endorsements, 100, (endorsement, forEachCallback) => {
       if (endorsement.value===1) {
         endorsement.Post.decrement('counter_endorsements_up');
       } else {
@@ -966,7 +968,7 @@ const deleteUserGroupEndorsements = (workPackage, callback) => {
       }
     ]
   }).then((endorsements) => {
-    async.forEach(endorsements, (endorsement, forEachCallback) => {
+    async.forEachLimit(endorsements, 100, (endorsement, forEachCallback) => {
       if (endorsement.value===1) {
         endorsement.Post.decrement('counter_endorsements_up');
       } else {
@@ -1022,7 +1024,7 @@ const deleteUserContent = (workPackage, callback) => {
             }
           ]
         }).then(function (pointQualities) {
-          async.forEach(pointQualities, function (pointQuality, forEachCallback) {
+          async.forEachLimit(pointQualities, 100, function (pointQuality, forEachCallback) {
             if (pointQuality.value===1) {
               pointQuality.Point.decrement('counter_quality_up');
             } else {
@@ -1193,7 +1195,6 @@ const recountAllFromCommunity = (workPackage, callback) => {
 };
 
 const recountAllFromDomain = (workPackage, callback) => {
-  let domainId;
   async.series([
     (seriesCallback) => {
       models.Domain.find({
@@ -1208,18 +1209,18 @@ const recountAllFromDomain = (workPackage, callback) => {
           }
         ]
       }).then((domain) => {
-        async.forEach(domain.Communities, (community, forEachCallback) => {
+        async.forEachLimit(domain.Communities, 100, (community, forEachCallback) => {
           recountCommunity({ communityId: community.id, doDeepGroupCounting: true }, forEachCallback);
         }, (error) => { seriesCallback(error) });
       }).catch((error)=>{ seriesCallback() })
     },
 
     (seriesCallback) => {
-      recountDomain({ domainId: domainId }, seriesCallback);
+      recountDomain({ domainId: workPackage.domainId }, seriesCallback);
     }
   ], (error) => {
     log.info("RecountAllFromDomain finished");
-    callback();
+    callback(error);
   })
 };
 
@@ -1246,7 +1247,7 @@ const deleteUserGroupContent = (workPackage, callback) => {
             }
           ]
         }).then(function (pointQualities) {
-          async.forEach(pointQualities, function (pointQuality, forEachCallback) {
+          async.forEachLimit(pointQualities, 100, function (pointQuality, forEachCallback) {
             if (pointQuality.value===1) {
               pointQuality.Point.decrement('counter_quality_up');
             } else {
@@ -1337,7 +1338,7 @@ const deleteUserCommunityContent = (workPackage, callback) => {
       const groupIds = _.map(community.Groups, (group) => {
         return group.id
       });
-      async.forEach(groupIds, (groupId, forEachCallback) => {
+      async.forEachLimit(groupIds, 100, (groupId, forEachCallback) => {
         deleteUserGroupContent({
           userId: workPackage.userId,
           skipRecount: true,
@@ -1377,7 +1378,7 @@ const deleteUserDomainContent = (workPackage, callback) => {
       const communityIds = _.map(domain.Communities, (community) => {
         return community.id
       });
-      async.forEach(communityIds, (communityId, forEachCallback) => {
+      async.forEachLimit(communityIds, 100, (communityId, forEachCallback) => {
         deleteUserCommunityContent({
           userId: workPackage.userId,
           skipRecount: true,
@@ -1385,15 +1386,15 @@ const deleteUserDomainContent = (workPackage, callback) => {
           communityId: communityId }, forEachCallback);
       }, (error) => {
         log.info("User Domain Content Deleted", { error: error, context: 'ac-delete', userId: workPackage.userId});
-        callback(error);
+        if (workPackage.skipRecount) {
+          log.info("Skiping recount for deleteUserDomainContent");
+          callback(error);
+        } else {
+          recountAllFromDomain(workPackage, callback);
+        }
       });
     }).catch((error) => {
-      if (workPackage.skipRecount) {
-        log.info("Skiping recount for deleteUserDomainContent");
-        callback(error);
-      } else {
-        recountAllFromDomain(workPackage, callback);
-      }
+      callback(error);
     });
   } else {
     callback("No userId or anonymousUserId or domainId");
@@ -1402,7 +1403,7 @@ const deleteUserDomainContent = (workPackage, callback) => {
 
 const removeManyGroupAdmins = (workPackage, callback) => {
   if (workPackage.userIds && workPackage.userIds.length>0 && workPackage.groupId) {
-    async.forEach(workPackage.userIds, (userId, seriesCallback) => {
+    async.forEachLimit(workPackage.userIds, 100, (userId, seriesCallback) => {
       getGroupAndUser(workPackage.groupId, userId, null, (error, group, user) => {
         if (error) {
           seriesCallback(error);
@@ -1425,7 +1426,7 @@ const removeManyGroupAdmins = (workPackage, callback) => {
 
 const removeManyCommunityAdmins = (workPackage, callback) => {
   if (workPackage.userIds && workPackage.userIds.length>0 && workPackage.communityId) {
-    async.forEach(workPackage.userIds, (userId, seriesCallback) => {
+    async.forEachLimit(workPackage.userIds, 100, (userId, seriesCallback) => {
       getCommunityAndUser(workPackage.communityId, userId, null, (error, community, user) => {
         if (error) {
           seriesCallback(error);
@@ -1448,7 +1449,7 @@ const removeManyCommunityAdmins = (workPackage, callback) => {
 
 const removeManyDomainAdmins = (workPackage, callback) => {
   if (workPackage.userIds && workPackage.userIds.length>0 && workPackage.domainId) {
-    async.forEach(workPackage.userIds, (userId, seriesCallback) => {
+    async.forEachLimit(workPackage.userIds, 100, (userId, seriesCallback) => {
       getDomainAndUser(workPackage.domainId, userId, null, (error, domain, user) => {
         if (error) {
           seriesCallback(error);
@@ -1471,7 +1472,7 @@ const removeManyDomainAdmins = (workPackage, callback) => {
 
 const removeManyGroupUsers = (workPackage, callback) => {
   if (workPackage.userIds && workPackage.userIds.length>0 && workPackage.groupId) {
-    async.forEach(workPackage.userIds, (userId, seriesCallback) => {
+    async.forEachLimit(workPackage.userIds, 100, (userId, seriesCallback) => {
       getGroupAndUser(workPackage.groupId, userId, null, (error, group, user) => {
         if (error) {
           seriesCallback(error);
@@ -1503,7 +1504,7 @@ const removeManyGroupUsers = (workPackage, callback) => {
 
 const removeManyCommunityUsers = (workPackage, callback) => {
   if (workPackage.userIds && workPackage.userIds.length>0 && workPackage.communityId) {
-    async.forEach(workPackage.userIds, (userId, seriesCallback) => {
+    async.forEachLimit(workPackage.userIds, 100, (userId, seriesCallback) => {
       getCommunityAndUser(workPackage.communityId, userId, null, (error, community, user) => {
         if (error) {
           seriesCallback(error);
@@ -1530,7 +1531,7 @@ const removeManyCommunityUsers = (workPackage, callback) => {
 
 const removeManyDomainUsers = (workPackage, callback) => {
   if (workPackage.userIds && workPackage.userIds.length>0 && workPackage.domainId) {
-    async.forEach(workPackage.userIds, (userId, seriesCallback) => {
+    async.forEachLimit(workPackage.userIds, 100, (userId, seriesCallback) => {
       getDomainAndUser(workPackage.domainId, userId, null, (error, domain, user) => {
         if (error) {
           seriesCallback(error);
@@ -1562,7 +1563,7 @@ const removeManyGroupUsersAndDeleteContent = (workPackage, callback) => {
         removeManyGroupUsers(_.merge(workPackage, { skipRecount: true }), parallelCallback);
       },
       (parallelCallback) => {
-        async.forEach(workPackage.userIds, (userId, forEachCallback) => {
+        async.forEachLimit(workPackage.userIds, 100, (userId, forEachCallback) => {
           deleteUserGroupContent({
             userId: userId,
             skipRecount: true,
@@ -1589,7 +1590,7 @@ const removeManyCommunityUsersAndDeleteContent = (workPackage, callback) => {
   if (workPackage.userIds && workPackage.userIds.length>0 && workPackage.communityId) {
     async.series([
       (seriesCallback) => {
-        async.forEach(workPackage.userIds, (userId, forEachCallback) => {
+        async.forEachLimit(workPackage.userIds, 100, (userId, forEachCallback) => {
           deleteUserCommunityContent({
             userId: userId,
             skipRecount: true,
@@ -1616,7 +1617,7 @@ const removeManyCommunityUsersAndDeleteContent = (workPackage, callback) => {
             }
           ]
         }).then((community) => {
-          async.forEach(community.Groups, (group, forEachCallback) => {
+          async.forEachLimit(community.Groups, 100, (group, forEachCallback) => {
             removeManyGroupUsers( _.merge(workPackage, { groupId: group.id, skipRecount: true }), forEachCallback);
           }, (error) => {
             log.info("Have removed group users for community deletion", { error: error, communityId: workPackage.communityId });
@@ -1642,7 +1643,7 @@ const removeManyDomainUsersAndDeleteContent = (workPackage, callback) => {
   if (workPackage.userIds && workPackage.userIds.length>0 && workPackage.domainId) {
     async.series([
       (seriesCallback) => {
-        async.forEach(workPackage.userIds, (userId, forEachCallback) => {
+        async.forEachLimit(workPackage.userIds, 100, (userId, forEachCallback) => {
           deleteUserDomainContent({
             userId: userId,
             skipRecount: true,
@@ -1666,7 +1667,7 @@ const removeManyDomainUsersAndDeleteContent = (workPackage, callback) => {
             }
           ]
         }).then((domain) => {
-          async.forEach(domain.Communities, (community, forEachCallback) => {
+          async.forEachLimit(domain.Communities, 100, (community, forEachCallback) => {
             async.series([
               (innerSeriesCallback) => {
                 removeManyCommunityUsers( _.merge(workPackage, { communityId: community.id }), innerSeriesCallback);
@@ -1684,7 +1685,7 @@ const removeManyDomainUsersAndDeleteContent = (workPackage, callback) => {
                     }
                   ]
                 }).then((community) => {
-                  async.forEach(community.Groups, (group, innerForEachCallback) => {
+                  async.forEachLimit(community.Groups, 100, (group, innerForEachCallback) => {
                     removeManyGroupUsers( _.merge(workPackage, { groupId: group.id, skipRecount: true }), innerForEachCallback);
                   }, (error) => {
                     log.info("Have removed group users for domain deletion", { error: error, domainId: workPackage.domainId });
