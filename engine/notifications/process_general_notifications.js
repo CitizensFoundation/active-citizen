@@ -187,7 +187,7 @@ const processContentToBeAnonymized =  (notification, object, domain, community, 
       callback(error);
     } else {
       queue.create('send-one-email', {
-        subject: { translateToken: 'contentToBeAnonymized', contentName: object.name },
+        subject: { translateToken: 'notification.contentToBeAnonymized', contentName: object.name },
         template: 'general_user_notification',
         user: user,
         domain: domain,
