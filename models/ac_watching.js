@@ -15,6 +15,8 @@ module.exports = function(sequelize, DataTypes) {
       }
     },
 
+    timestamps: true,
+
     underscored: true,
 
     tableName: 'ac_watching',

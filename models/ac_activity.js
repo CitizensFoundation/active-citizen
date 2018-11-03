@@ -71,6 +71,8 @@ module.exports = function(sequelize, DataTypes) {
       }
     },
 
+    timestamps: true,
+
     indexes: _.concat(commonIndexForActivitiesAndNewsFeeds('created_at'), [
       {
         name: 'activity_public_and_active_by_type',

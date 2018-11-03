@@ -26,6 +26,8 @@ module.exports = function(sequelize, DataTypes) {
       }
     },
 
+    timestamps: true,
+
     indexes: [
       {
         name: 'notification_public_and_active_by_type',

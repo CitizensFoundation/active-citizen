@@ -22,6 +22,8 @@ module.exports = function(sequelize, DataTypes) {
       }
     },
 
+    timestamps: true,
+
     indexes: [
       {
         fields: ['id'],

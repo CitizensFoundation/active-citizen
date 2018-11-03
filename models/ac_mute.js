@@ -15,6 +15,8 @@ module.exports = function(sequelize, DataTypes) {
 
     underscored: true,
 
+    timestamps: true,
+
     tableName: 'ac_mutes',
 
     classMethods: {
