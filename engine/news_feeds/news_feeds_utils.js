@@ -312,6 +312,20 @@ var activitiesDefaultIncludes = function (options) {
           required: false
         },
         {
+          model: models.Video,
+          required: false,
+          attributes: ['id','formats','updated_at','viewable'],
+          as: 'PostVideos',
+          include: [
+            {
+              model: models.Image,
+              as: 'VideoImages',
+              attributes:["formats",'updated_at'],
+              required: false
+            },
+          ]
+        },
+        {
           // Category
           model: models.Category,
           required: false,
@@ -339,6 +353,20 @@ var activitiesDefaultIncludes = function (options) {
             }
           ],
           required: false
+        },
+        {
+          model: models.Video,
+          required: false,
+          attributes: ['id','formats','updated_at','viewable'],
+          as: 'PointVideos',
+          include: [
+            {
+              model: models.Image,
+              as: 'VideoImages',
+              attributes:["formats",'updated_at'],
+              required: false
+            },
+          ]
         },
         {
           model: models.Post,
