@@ -237,8 +237,8 @@ const getLanguageArray = (workPackage) => {
 
     if (alternativeLanguageCodes.length<3)
       alternativeLanguageCodes.push("en-US");
-    if (alternativeLanguageCodes.length<3)
-      alternativeLanguageCodes.push("is-IS");
+   // if (alternativeLanguageCodes.length<3)
+   //   alternativeLanguageCodes.push("is-IS");
 
     if (alternativeLanguageCodes.length<3)
       alternativeLanguageCodes = alternativeLanguageCodes.slice(0,3);
@@ -365,10 +365,15 @@ const createTranscriptForVideo = (workPackage, callback) => {
             if (error) {
               video.set('meta.transcript.error', error);
             } else {
-              const transcription = response.results
-                .map(result => result.alternatives[0].transcript)
-                .join('\n');
-              video.set('meta.transcript.text', transcription);
+              if (response.results && response.results && response.results.length>0 &&
+                response.results[0].alternatives && response.results[0].alternatives.length>0) {
+                const transcription = response.results
+                  .map(result => result.alternatives[0].transcript)
+                  .join('\n');
+                video.set('meta.transcript.text', transcription);
+              } else {
+                video.set('meta.transcript.error', 'Found no text');
+              }
             }
             video.save().then(() => {
               log.info("Video with transcript saved", { videoId: workPackage.videoId, error });
