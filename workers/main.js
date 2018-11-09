@@ -10,6 +10,7 @@ var deletions = require('./deletions');
 var anonymizations = require('./anonymizations');
 var email = require('./email');
 var queue = require('./queue');
+var speechToText = require('./speech_to_text');
 
 log.info("Dirname", {dirname: __dirname});
 
@@ -63,5 +64,10 @@ i18n
     queue.process('process-anonymization', 1, function(job, done) {
       anonymizations.process(job.data, done);
     });
+
+    queue.process('process-voice-to-text', 1, function(job, done) {
+      speechToText.process(job.data, done);
+    });
+
   });
 
