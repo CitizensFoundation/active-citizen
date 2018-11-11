@@ -392,10 +392,58 @@ const createTranscriptForVideo = (workPackage, callback) => {
   })
 };
 
+const createTranscriptForAudio = (workPackage, callback) => {
+  models.Audio.find({
+    where: workPackage.audioId
+  }).then((audio) => {
+    if (audio) {
+      const audioUrl = audio.formats[0];
+      const flacUrl = audioUrl.slice(0, audioUrl.length-4)+'.flac';
+      uploadFlacToGoogleCloud(flacUrl, (error, gsUri) => {
+        if (error) {
+          callback(error);
+        } else {
+          createTranscriptForFlac(gsUri, workPackage, (error, response) => {
+            if (!audio.meta.transcripts)
+              audio.set('meta.transcript', {});
+            audio.set('meta.transcript.googleSpeechResponse', response);
+            if (error) {
+              audio.set('meta.transcript.error', error);
+            } else {
+              if (response.results && response.results && response.results.length>0 &&
+                response.results[0].alternatives && response.results[0].alternatives.length>0) {
+                const transcription = response.results
+                  .map(result => result.alternatives[0].transcript)
+                  .join('\n');
+                audio.set('meta.transcript.text', transcription);
+              } else {
+                audio.set('meta.transcript.error', 'Found no text');
+              }
+            }
+            audio.save().then(() => {
+              log.info("Audio with transcript saved", { audioId: workPackage.audioId, error });
+              callback()
+            }).catch((error) => {
+              callback(error);
+            });
+          });
+        }
+      });
+    } else {
+      callback("Couldn't find audio for createTranscriptForAudio", { workPackage });
+    }
+  }).catch((error) => {
+    callback(error);
+  })
+};
+
 VoiceToTextWorker.prototype.process = (workPackage, callback) => {
   switch (workPackage.type) {
     case 'create-video-transcript':
       createTranscriptForVideo(workPackage, callback);
+      break;
+    case 'create-audio-transcript':
+      createTranscriptForAudio(workPackage, callback);
       break;
     default:
       callback("Unknown type for workPackage: "+workPackage.type);
