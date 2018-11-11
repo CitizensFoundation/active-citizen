@@ -326,6 +326,12 @@ var activitiesDefaultIncludes = function (options) {
           ]
         },
         {
+          model: models.Audio,
+          required: false,
+          attributes: ['id','formats','updated_at','listenable'],
+          as: 'PostAudios',
+        },
+        {
           // Category
           model: models.Category,
           required: false,
@@ -367,6 +373,12 @@ var activitiesDefaultIncludes = function (options) {
               required: false
             },
           ]
+        },
+        {
+          model: models.Audio,
+          required: false,
+          attributes: ['id','formats','updated_at','listenable'],
+          as: 'PointAudios'
         },
         {
           model: models.Post,
