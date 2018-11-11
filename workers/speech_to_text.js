@@ -284,8 +284,7 @@ const createTranscriptForFlac = (flackUrl, workPackage, callback) => {
       audio: audio,
     };
 
-    // Detects speech in the audio file. This creates a recognition job that you
-    // can wait for now, or get its result later.
+    log.info("Starting speech to text", { request });
     client
       .longRunningRecognize(request)
       .then(data => {
@@ -294,6 +293,7 @@ const createTranscriptForFlac = (flackUrl, workPackage, callback) => {
         return operation.promise();
       })
       .then(data => {
+        log.info("Got data from google cloud", { data });
         callback(null, data[0]);
       })
       .catch(error => {
@@ -333,6 +333,7 @@ const uploadFlacToGoogleCloud = (flacUrl, callback) => {
               if (error) {
                 callback(error)
               } else {
+                log.info("uploadFlacToGoogleCloud done", { flacUrl });
                 callback(null, fileUri);
               }
             });
