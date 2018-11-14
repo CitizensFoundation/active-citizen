@@ -139,15 +139,15 @@ const supportedGoogleLanguges = [
   ['ar-QA',false,false],
   ['ar-LB',false,false],
   ['ar-EG',true,false],
-  ['fa-IR',false,false],
-  ['hi-IN',false,false],
-  ['th-TH',false,false],
-  ['ko-KR',false,false],
+  ['fa-IR',true,false],
+  ['hi-IN',true,false],
+  ['th-TH',true,false],
+  ['ko-KR',true,false],
   ['cmn-Hant-TW',false,true],
-  ['yue-Hant-HK',false,false],
-  ['ja-JP',false,false],
+  ['yue-Hant-HK',true,false],
+  ['ja-JP',true,false],
   ['cmn-Hans-HK',false,false],
-  ['cmn-Hans-CN',true,true]
+  ['cmn-Hans-CN',true,false]
 ];
 
 const transformYrpriCode = (code) => {
