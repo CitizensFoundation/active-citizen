@@ -314,7 +314,7 @@ var activitiesDefaultIncludes = function (options) {
         {
           model: models.Video,
           required: false,
-          attributes: ['id','formats','updated_at','viewable'],
+          attributes: ['id','formats','updated_at','viewable','public_meta'],
           as: 'PostVideos',
           include: [
             {
@@ -363,7 +363,7 @@ var activitiesDefaultIncludes = function (options) {
         {
           model: models.Video,
           required: false,
-          attributes: ['id','formats','updated_at','viewable'],
+          attributes: ['id','formats','updated_at','viewable','public_meta'],
           as: 'PointVideos',
           include: [
             {
