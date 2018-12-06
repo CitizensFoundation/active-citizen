@@ -240,7 +240,7 @@ const getLanguageArray = (workPackage) => {
    // if (alternativeLanguageCodes.length<3)
    //   alternativeLanguageCodes.push("is-IS");
 
-    if (alternativeLanguageCodes.length<3)
+    if (alternativeLanguageCodes.length>3)
       alternativeLanguageCodes = alternativeLanguageCodes.slice(0,3);
 
     const languageSelection = { languageCode, alternativeLanguageCodes };
@@ -269,7 +269,8 @@ const createTranscriptForFlac = (flackUrl, workPackage, callback) => {
       encoding: encoding,
       sampleRateHertz: sampleRateHertz,
       languageCode: languageSelection.languageCode,
-      alternativeLanguageCodes: languageSelection.alternativeLanguageCodes,
+      // Disabled for now as it does not work well enough for long form content
+      //alternativeLanguageCodes: languageSelection.alternativeLanguageCodes,
       enableWordTimeOffsets: true,
       enableAutomaticPunctuation: true,
       enableWordConfidence: true
