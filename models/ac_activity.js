@@ -62,8 +62,7 @@ module.exports = function(sequelize, DataTypes) {
     target: DataTypes.JSONB,
     context: DataTypes.JSONB,
     user_interaction_profile: DataTypes.JSONB,
-    deleted: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
-    published: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false }
+    deleted: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false }
   }, {
 
     defaultScope: {
