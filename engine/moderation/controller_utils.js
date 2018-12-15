@@ -124,7 +124,10 @@ const getPushItem = (type, model) => {
     status: model.status,
     user_id: model.user_id,
     last_reported_by: lastReportedBy,
-    toxicity_score: toxicityScore
+    toxicity_score: toxicityScore,
+    user_email: model.User.email,
+    name: model.name,
+    content: type==='post' ? model.description : model.content
   };
 };
 
@@ -156,7 +159,10 @@ const getModelModeration = (options, callback) => {
           status: "in_moderation"
         }
       ],
-    }
+    },
+    include: [
+      models.User
+    ]
   }).then(posts => {
     callback(null, posts);
   }).catch(error => {
