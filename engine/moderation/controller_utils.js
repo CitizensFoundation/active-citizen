@@ -1,10 +1,10 @@
-var queue = require('../../workers/queue');
-var models = require("../../../models");
-var i18n = require('../../utils/i18n');
-var async = require('async');
-var log = require('../../utils/logger');
-var _ = require('lodash');
-var toJson = require('../../utils/to_json');
+const queue = require('../../workers/queue');
+const models = require("../../../models");
+const i18n = require('../../utils/i18n');
+const async = require('async');
+const moment = require('moment');
+const log = require('../../utils/logger');
+const _ = require('lodash');
 
 const moderationItemsActionMaster = (req, res, options) => {
   options.model.find({
@@ -119,14 +119,15 @@ const getPushItem = (type, model) => {
   return {
     id: model.id,
     created_at: model.created_at,
-    modelType: type,
+    formatted_date: moment(model.created_at).format("DD/MM/YY HH:mm"),
+    type: type,
     counter_flags: model.counter_flags,
     status: model.status,
     user_id: model.user_id,
     last_reported_by: lastReportedBy,
     toxicity_score: toxicityScore,
     user_email: model.User.email,
-    name: model.name,
+    title: model.name,
     content: type==='post' ? model.description : model.content
   };
 };
@@ -162,9 +163,9 @@ const getModelModeration = (options, callback) => {
     },
     include: [
       models.User
-    ]
-  }).then(posts => {
-    callback(null, posts);
+    ].concat(options.includes)
+  }).then(items => {
+    callback(null, items);
   }).catch(error => {
     callback(error);
   })
@@ -175,21 +176,15 @@ const getAllModeratedItemsByMaster = (includes, callback) => {
 
   async.parallel([
     parallelCallback => {
-      getModelModeration({model: models.Post, includes: domainIncludes(domainId) }, (error, postsIn) => {
-        if (error) {
-          parallelCallback(error);
-        } else {
-          posts = postsIn;
-        }
+      getModelModeration({model: models.Post, includes }, (error, postsIn) => {
+        parallelCallback(error);
+        posts = postsIn;
       })
     },
     parallelCallback => {
-      getModelModeration({model: models.Point, includes: domainIncludes(domainId) }, (error, pointsIn) => {
-        if (error) {
-          parallelCallback(error);
-        } else {
-          points = pointsIn;
-        }
+      getModelModeration({model: models.Point, includes }, (error, pointsIn) => {
+        points = pointsIn;
+        parallelCallback(error);
       })
     }
   ], error => {
