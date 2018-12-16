@@ -122,13 +122,21 @@ const getPushItem = (type, model) => {
     formatted_date: moment(model.created_at).format("DD/MM/YY HH:mm"),
     type: type,
     counter_flags: model.counter_flags,
-    status: model.status,
+    status: Math.random() > 0.3 ? model.status : 'blocked',
     user_id: model.user_id,
     last_reported_by: lastReportedBy,
     toxicity_score: toxicityScore,
     user_email: model.User.email,
+    cover_media_type: model.cover_media_type,
+    is_post: type==='post',
+    is_point: type==='point',
     title: model.name,
-    content: type==='post' ? model.description : model.content
+    content: type==='post' ? model.description : model.content,
+    PostVideos: model.PostVideos,
+    PostAudios: model.PostAudios,
+    PostHeaderImages: model.PostHeaderImages,
+    PointVideos: model.PostVideos,
+    PointAudios: model.PostAudios
   };
 };
 
@@ -140,9 +148,7 @@ const getItems = (posts, points) => {
   _.forEach(points, point => {
     items.push(getPushItem('point', point));
   });
-  items = _.orderBy(items, item => {
-    return item.created_at
-  });
+  items = _.orderBy(items,['status', 'counter_flags'], ['asc','desc']);
   return items;
 };
 
@@ -161,9 +167,8 @@ const getModelModeration = (options, callback) => {
         }
       ],
     },
-    include: [
-      models.User
-    ].concat(options.includes)
+    order: options.order,
+    include: options.includes
   }).then(items => {
     callback(null, items);
   }).catch(error => {
@@ -174,15 +179,85 @@ const getModelModeration = (options, callback) => {
 const getAllModeratedItemsByMaster = (includes, callback) => {
   let posts, points;
 
-  async.parallel([
+  async.series([
     parallelCallback => {
-      getModelModeration({model: models.Post, includes }, (error, postsIn) => {
+      const postIncludes = includes.concat([
+        {
+          model: models.Image,
+          required: false,
+          as: 'PostHeaderImages'
+        },
+        {
+          model: models.Video,
+          required: false,
+          attributes: ['id','formats','updated_at','viewable','public_meta'],
+          as: 'PostVideos',
+          include: [
+            {
+              model: models.Image,
+              as: 'VideoImages',
+              attributes:["formats",'updated_at'],
+              required: false
+            },
+          ]
+        },
+        {
+          model: models.Audio,
+          required: false,
+          attributes: ['id','formats','updated_at','listenable'],
+          as: 'PostAudios',
+        },
+        {
+          model: models.User
+        }
+      ]);
+
+      const order = [
+        [ { model: models.Image, as: 'PostHeaderImages' } ,'updated_at', 'asc' ],
+        [ { model: models.Video, as: "PostVideos" }, 'updated_at', 'desc' ],
+        [ { model: models.Audio, as: "PostAudios" }, 'updated_at', 'desc' ],
+        [ { model: models.Video, as: "PostVideos" }, { model: models.Image, as: 'VideoImages' } ,'updated_at', 'asc' ]
+      ];
+
+      getModelModeration({model: models.Post, includes: postIncludes, order }, (error, postsIn) => {
         parallelCallback(error);
         posts = postsIn;
       })
     },
     parallelCallback => {
-      getModelModeration({model: models.Point, includes }, (error, pointsIn) => {
+      const pointIncludes = includes.concat([
+        {
+          model: models.Video,
+          required: false,
+          attributes: ['id','formats','updated_at','viewable','public_meta'],
+          as: 'PointVideos',
+          include: [
+            {
+              model: models.Image,
+              as: 'VideoImages',
+              attributes:["formats",'updated_at'],
+              required: false
+            },
+          ]
+        },
+        {
+          model: models.Audio,
+          required: false,
+          attributes: ['id','formats','updated_at','listenable'],
+          as: 'PointAudios'
+        },
+        {
+          model: models.User
+        }
+      ]);
+
+      const order = [
+        [ { model: models.Video, as: "PointVideos" }, 'updated_at', 'desc' ],
+        [ { model: models.Audio, as: "PointAudios" }, 'updated_at', 'desc' ],
+        [ { model: models.Video, as: "PointVideos" }, { model: models.Image, as: 'VideoImages' } ,'updated_at', 'asc' ]
+      ];
+
+      getModelModeration({model: models.Point, includes: pointIncludes, order }, (error, pointsIn) => {
         points = pointsIn;
         parallelCallback(error);
       })
