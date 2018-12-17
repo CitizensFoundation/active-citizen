@@ -102,7 +102,7 @@ const moderationItemsActionGroup = (req, res, model, actionType) => {
 };
 
 const getPushItem = (type, model) => {
-  let lastReportedBy, toxicityScore = null;
+  let lastReportedBy, toxicityScore, latestContent = null;
 
   if (model.data && model.data.moderation) {
     const moderation = model.data.moderation;
@@ -114,6 +114,10 @@ const getPushItem = (type, model) => {
     if (moderation.toxicityScore) {
       toxicityScore = moderation.toxicityScore;
     }
+  }
+
+  if (type==='point') {
+    latestContent = model.PointRevisions[model.PointRevisions.length-1].content;
   }
 
   return {
@@ -131,12 +135,19 @@ const getPushItem = (type, model) => {
     is_post: type==='post',
     is_point: type==='point',
     title: model.name,
+    Group: model.Group,
+    language: model.language,
+    name: model.name,
+    description: model.description,
+    public_data: model.public_data,
     content: type==='post' ? model.description : model.content,
     PostVideos: model.PostVideos,
     PostAudios: model.PostAudios,
     PostHeaderImages: model.PostHeaderImages,
-    PointVideos: model.PostVideos,
-    PointAudios: model.PostAudios
+    PointVideos: model.PointVideos,
+    PointAudios: model.PointAudios,
+    PointRevisions: model.PointRevisions,
+    latestContent: latestContent
   };
 };
 
@@ -148,7 +159,7 @@ const getItems = (posts, points) => {
   _.forEach(points, point => {
     items.push(getPushItem('point', point));
   });
-  items = _.orderBy(items,['status', 'counter_flags'], ['asc','desc']);
+  items = _.orderBy(items,['status', 'counter_flags', 'created_at'], ['asc','desc','asc']);
   return items;
 };
 
@@ -248,12 +259,18 @@ const getAllModeratedItemsByMaster = (includes, callback) => {
         },
         {
           model: models.User
+        },
+        {
+          model: models.PointRevision,
+          attributes: { exclude: ['ip_address', 'user_agent'] },
+          required: false
         }
       ]);
 
       const order = [
         [ { model: models.Video, as: "PointVideos" }, 'updated_at', 'desc' ],
         [ { model: models.Audio, as: "PointAudios" }, 'updated_at', 'desc' ],
+        [ models.PointRevision, 'created_at', 'asc' ],
         [ { model: models.Video, as: "PointVideos" }, { model: models.Image, as: 'VideoImages' } ,'updated_at', 'asc' ]
       ];
 
