@@ -7,13 +7,50 @@ const log = require('../../utils/logger');
 const _ = require('lodash');
 
 const Perspective = require('perspective-api-client');
-const perspective = new Perspective({apiKey: process.env.GOOGLE_PERSPECTIVE_API_KEY});
+const perspectiveApi = new Perspective({apiKey: process.env.GOOGLE_PERSPECTIVE_API_KEY});
 
-log.info("Starting");
+const getToxicityScoreForText = (text, doNotStore, callback) => {
+  perspectiveApi.analyze(text, { doNotStore }).then( result => {
+    callback(null, result);
+  }).catch( error => {
+    callback(error);
+  });
+};
 
-(async () => {
-  const text = 'you empty-headed animal food trough wiper!';
-  const result = await perspective.analyze(text);
-  log.info(JSON.stringify(result, null, 2));
-})();
+const getTranslatedTextForPost = (post, callback) => {
+  let postName, postDescription;
+  async.parallel([
+    (parallelCallback) => {
+      
+    }
+  ], error => {
+    callback(error, postName, postDescription);
+  });
+};
 
+const getToxicityScoreForPost = (postId, callback) => {
+  if (process.env.GOOGLE_PERSPECTIVE_API_KEY) {
+    models.Post.find({
+      where: {
+        id: postId
+      },
+      attributes: ['id','name','description','language']
+    }).then( post => {
+
+      if (post.language && post.language.substring(0,2)==="en") {
+        getToxicityScoreForText(post.name+" "+post.description, callback);
+      } else {
+        getTranslatedTextForPost(post, (error, translatedText) => {
+          if (error)
+            callback(error);
+          else
+            getToxicityScoreForText(translatedText, callback);
+        });
+      }
+    }).catch( error => {
+      callback(error);
+    })
+  } else {
+    callback("No API key");
+  }
+};
