@@ -35,13 +35,13 @@ const setupModelPublicDataScore = (model, results) => {
     model.set('data.moderation', {});
   model.set('data.moderation.rawToxicityResults', results);
 
-  let toxicityScore, severeToxicityScore, identityAttachScore, threatScore, insultScore,
+  let toxicityScore, severeToxicityScore, identityAttackScore, threatScore, insultScore,
     profanityScore, sexuallyExplicitScore, flirtationScore;
 
   try {
     toxicityScore = results.attributeScores["TOXICITY"].summaryScore.value;
     severeToxicityScore = results.attributeScores["SEVERE_TOXICITY"].summaryScore.value;
-    identityAttachScore = results.attributeScores["IDENTITY_ATTACK"].summaryScore.value;
+    identityAttackScore = results.attributeScores["IDENTITY_ATTACK"].summaryScore.value;
     threatScore = results.attributeScores["THREAT"].summaryScore.value;
     insultScore = results.attributeScores["INSULT"].summaryScore.value;
     profanityScore = results.attributeScores["PROFANITY"].summaryScore.value;
@@ -53,7 +53,7 @@ const setupModelPublicDataScore = (model, results) => {
 
   model.set('data.moderation.toxicityScore', toxicityScore);
   model.set('data.moderation.severeToxicityScore', severeToxicityScore);
-  model.set('data.moderation.identityAttachScore', identityAttachScore);
+  model.set('data.moderation.identityAttackScore', identityAttackScore);
   model.set('data.moderation.threatScore', threatScore);
   model.set('data.moderation.insultScore', insultScore);
   model.set('data.moderation.profanityScore', profanityScore);
