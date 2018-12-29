@@ -101,18 +101,29 @@ const moderationItemsActionGroup = (req, res, model, actionType) => {
   moderationItemsActionMaster(req, res, { model, actionType, includes: groupIncludes(req.params.groupId) });
 };
 
+const _toPercent = number => {
+  if (number) {
+    return Math.round(number*100)+'%';
+  }
+};
+
 const getPushItem = (type, model) => {
-  let lastReportedBy, toxicityScore, latestContent = null;
+  let source, toxicityScore, latestContent = null, severeToxicityScore, lastReportedAt;
 
   if (model.data && model.data.moderation) {
     const moderation = model.data.moderation;
 
-    if (moderation.reporters && moderation.reporters.length>0) {
-      lastReportedBy =  moderation.reporters[moderation.reporters.length-1];
+    if (moderation.toxicityScore) {
+      toxicityScore = _toPercent(moderation.toxicityScore);
     }
 
-    if (moderation.toxicityScore) {
-      toxicityScore = moderation.toxicityScore;
+    if (moderation.severeToxicityScore) {
+      severeToxicityScore = _toPercent(moderation.severeToxicityScore);
+    }
+    if (moderation.lastReportedBy &&
+      moderation.lastReportedBy.length > 0) {
+      source = moderation.lastReportedBy[0].source;
+      lastReportedAtDate = moderation.lastReportedBy[moderation.lastReportedBy.length-1].date;
     }
   }
 
@@ -128,8 +139,10 @@ const getPushItem = (type, model) => {
     counter_flags: model.counter_flags,
     status: Math.random() > 0.3 ? model.status : 'blocked',
     user_id: model.user_id,
-    last_reported_by: lastReportedBy,
-    toxicity_score: toxicityScore,
+    toxicityScore: toxicityScore,
+    severeToxicityScore: severeToxicityScore,
+    source: source,
+    lastReportedAtDate: lastReportedAtDate ? moment(lastReportedAtDate).format("DD/MM/YY HH:mm") : null,
     user_email: model.User.email,
     cover_media_type: model.cover_media_type,
     is_post: type==='post',
@@ -139,8 +152,8 @@ const getPushItem = (type, model) => {
     language: model.language,
     name: model.name,
     description: model.description,
-    public_data: model.public_data,
-    content: type==='post' ? model.description : model.content,
+    moderation_data: { moderation: model.data ? model.data.moderation : null },
+    content: type==='post' ? (model.name + ' ' + model.description) : model.content,
     PostVideos: model.PostVideos,
     PostAudios: model.PostAudios,
     PostHeaderImages: model.PostHeaderImages,

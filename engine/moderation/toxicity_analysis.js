@@ -4,8 +4,12 @@ const moment = require('moment');
 const log = require('../../utils/logger');
 const _ = require('lodash');
 
-const TOXICITY_THRESHOLD = 0.15;
-const SEVERE_TOXICITY_THRESHOLD = 0.15;
+const TOXICITY_THRESHOLD = 0.40;
+const SEVERE_TOXICITY_THRESHOLD = 0.30;
+const TOXICITY_EMAIL_THRESHOLD = 0.75;
+const SEVERE_TOXICITY_EMAIL_THRESHOLD = 0.65;
+
+
 
 const Perspective = require('perspective-api-client');
 let perspectiveApi;
@@ -61,6 +65,19 @@ const hasModelBreachedToxicityThreshold = model => {
   if (model.data && model.data.moderation && (model.data.moderation.toxicityScore || model.data.moderation.severeToxicityScore)) {
     if (model.data.moderation.toxicityScore>TOXICITY_THRESHOLD ||
         model.data.moderation.severeToxicityScore>SEVERE_TOXICITY_THRESHOLD) {
+      return true;
+    } else {
+      return false;
+    }
+  } else {
+    return false;
+  }
+};
+
+const hasModelBreachedToxicityEmailThreshold = model => {
+  if (model.data && model.data.moderation && (model.data.moderation.toxicityScore || model.data.moderation.severeToxicityScore)) {
+    if (model.data.moderation.toxicityScore>TOXICITY_EMAIL_THRESHOLD ||
+      model.data.moderation.severeToxicityScore>SEVERE_TOXICITY_EMAIL_THRESHOLD) {
       return true;
     } else {
       return false;
@@ -173,7 +190,9 @@ const estimateToxicityScoreForPost = (postId, callback) => {
                   setupModelPublicDataScore(post, results);
                   post.save().then(() => {
                     if (hasModelBreachedToxicityThreshold(post)) {
-                      post.report(null, "fromPerspectiveAPI", callback);
+                      post.report({ disableNotification: !hasModelBreachedToxicityEmailThreshold(post) },
+                                  "perspectiveAPI",
+                                  callback);
                     } else {
                       callback();
                     }
@@ -274,12 +293,15 @@ const estimateToxicityScoreForPoint = (pointId, callback) => {
                             }
                           ]
                         }).then(post => {
-                          point.report(null, 'fromPerspectiveAPI', post, callback);
+                          point.report({ disableNotification: !hasModelBreachedToxicityEmailThreshold(point) },
+                                       'perspectiveAPI',
+                                        post, callback);
                         }).catch( error => {
                           callback(error);
                         });
                       } else {
-                        point.report(null, 'fromPerspectiveAPI', null, callback);
+                        point.report({ disableNotification: !hasModelBreachedToxicityEmailThreshold(point) },
+                                    'perspectiveAPI', null, callback);
                       }
                     } else {
                       callback();

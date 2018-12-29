@@ -11,6 +11,7 @@
       "statusChangeSubject": "Stöðu hugmyndar breytt"
     },
     "email": {
+      "automaticToxicityDetection": "Þetta efni hefur verið merkt sem 'eitrað' af gervigreindar kerfi. Þú getur eytt efni ef með þarf.",
       "newPointedAddedToThisIdea": "Nýjum rökum hefur verið bætt við hugmynd",
       "newPointedAddedToIdea": "Nýjum rökum hefur verið bætt við þína hugmynd",
       "thisNewIdea": "Nýrri hugmynd",

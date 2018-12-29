@@ -198,19 +198,37 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
             seriesCallback();
             break;
           case "notification.report.content":
-            var template, translateToken;
+            var template, translateToken, moderation, source;
             if (notification.AcActivities[0].Point) {
               template = 'point_activity';
               translateToken = 'notification.email.pointReport';
+              const point = notification.AcActivities[0].Point;
+              if (point.data && point.data.moderation) {
+                moderation = point.data.moderation;
+                if (moderation.lastReportedBy && moderation.lastReportedBy.length>0) {
+                 source = moderation.lastReportedBy[0].source;
+                }
+              }
             } else {
               template = 'post_activity';
               translateToken = 'notification.email.postReport';
+              const post = notification.AcActivities[0].Post;
+              if (post.data && post.data.moderation) {
+                moderation = post.data.moderation;
+                if (moderation.lastReportedBy && moderation.lastReportedBy.length>0) {
+                  source =  moderation.lastReportedBy[0].source;
+                }
+              }
             }
             queue.create('send-one-email', {
               subject: { translateToken: translateToken },
               template: template,
               user: user,
               domain: domain,
+              moderation: moderation,
+              source: source,
+              isAutomated: source && (source!=='user' && source!=='fromUser'),
+              isReportingContent: true,
               community: community,
               post: notification.AcActivities[0].Post.toJSON(),
               point: notification.AcActivities[0].Point ?  notification.AcActivities[0].Point.toJSON() : null,
