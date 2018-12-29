@@ -4,6 +4,9 @@ const moment = require('moment');
 const log = require('../../utils/logger');
 const _ = require('lodash');
 
+const TOXICITY_THRESHOLD = 0.15;
+const SEVERE_TOXICITY_THRESHOLD = 0.15;
+
 const Perspective = require('perspective-api-client');
 let perspectiveApi;
 if (process.env.GOOGLE_PERSPECTIVE_API_KEY) {
@@ -22,11 +25,11 @@ const getToxicityScoreForText = (text, doNotStore, callback) => {
 };
 
 const setupModelPublicDataScore = (model, results) => {
-  if (!model.public_data)
-    model.set('public_data', {});
-  if (!model.public_data.moderation)
-    model.set('public_data.moderation', {});
-  model.set('public_data.moderation.rawToxicityResults', results);
+  if (!model.data)
+    model.set('data', {});
+  if (!model.data.moderation)
+    model.set('data.moderation', {});
+  model.set('data.moderation.rawToxicityResults', results);
 
   let toxicityScore, severeToxicityScore, identityAttachScore, threatScore, insultScore,
     profanityScore, sexuallyExplicitScore, flirtationScore;
@@ -44,14 +47,27 @@ const setupModelPublicDataScore = (model, results) => {
     log.error(error);
   }
 
-  model.set('public_data.moderation.toxicityScore', toxicityScore);
-  model.set('public_data.moderation.severeToxicityScore', severeToxicityScore);
-  model.set('public_data.moderation.identityAttachScore', identityAttachScore);
-  model.set('public_data.moderation.threatScore', threatScore);
-  model.set('public_data.moderation.insultScore', insultScore);
-  model.set('public_data.moderation.profanityScore', profanityScore);
-  model.set('public_data.moderation.sexuallyExplicitScore', sexuallyExplicitScore);
-  model.set('public_data.moderation.flirtationScore', flirtationScore);
+  model.set('data.moderation.toxicityScore', toxicityScore);
+  model.set('data.moderation.severeToxicityScore', severeToxicityScore);
+  model.set('data.moderation.identityAttachScore', identityAttachScore);
+  model.set('data.moderation.threatScore', threatScore);
+  model.set('data.moderation.insultScore', insultScore);
+  model.set('data.moderation.profanityScore', profanityScore);
+  model.set('data.moderation.sexuallyExplicitScore', sexuallyExplicitScore);
+  model.set('data.moderation.flirtationScore', flirtationScore);
+};
+
+const hasModelBreachedToxicityThreshold = model => {
+  if (model.data && model.data.moderation && (model.data.moderation.toxicityScore || model.data.moderation.severeToxicityScore)) {
+    if (model.data.moderation.toxicityScore>TOXICITY_THRESHOLD ||
+        model.data.moderation.severeToxicityScore>SEVERE_TOXICITY_THRESHOLD) {
+      return true;
+    } else {
+      return false;
+    }
+  } else {
+    return false;
+  }
 };
 
 const getTranslatedTextForPost = (post, callback) => {
@@ -120,7 +136,14 @@ const estimateToxicityScoreForPost = (postId, callback) => {
             {
               model: models.Community,
               required: true,
-              attributes: ['id', 'access']
+              attributes: ['id', 'access'],
+              include: [
+                {
+                  model: models.Domain,
+                  required: true,
+                  attributes: ['id']
+                }
+              ]
             }
           ]
         },
@@ -129,7 +152,7 @@ const estimateToxicityScoreForPost = (postId, callback) => {
           attribues: ['id','age_group']
         }
       ],
-      attributes: ['id','name','description','language','public_data']
+      attributes: ['id','name','description','language','data','group_id']
     }).then( post => {
       if (post) {
         let doNotStoreValue = post.Group.access===0 && post.Group.Community.access === 0;
@@ -149,7 +172,11 @@ const estimateToxicityScoreForPost = (postId, callback) => {
                 } else {
                   setupModelPublicDataScore(post, results);
                   post.save().then(() => {
-                    callback();
+                    if (hasModelBreachedToxicityThreshold(post)) {
+                      post.report(null, "fromPerspectiveAPI", callback);
+                    } else {
+                      callback();
+                    }
                   }).catch( error => {
                     callback(error);
                   })
@@ -171,7 +198,7 @@ const estimateToxicityScoreForPost = (postId, callback) => {
 const estimateToxicityScoreForPoint = (pointId, callback) => {
   if (process.env.GOOGLE_PERSPECTIVE_API_KEY) {
     models.Point.find({
-      attributes: ['id','language','public_data'],
+      attributes: ['id','language','data','post_id','group_id'],
       where: {
         id: pointId
       },
@@ -221,7 +248,42 @@ const estimateToxicityScoreForPoint = (pointId, callback) => {
                 } else {
                   setupModelPublicDataScore(point, results);
                   point.save().then(() => {
-                    callback();
+                    if (hasModelBreachedToxicityThreshold(point)) {
+                      if (point.post_id) {
+                        models.Post.find({
+                          where: {
+                            id: point.post_id
+                          },
+                          attributes: ["id"],
+                          include: [
+                            {
+                              model: models.Group,
+                              attributes: ['id'],
+                              include: [
+                                {
+                                  model: models.Community,
+                                  attributes: ['id'],
+                                  include: [
+                                    {
+                                      model: models.Domain,
+                                      attributes: ['id']
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }).then(post => {
+                          point.report(null, 'fromPerspectiveAPI', post, callback);
+                        }).catch( error => {
+                          callback(error);
+                        });
+                      } else {
+                        point.report(null, 'fromPerspectiveAPI', null, callback);
+                      }
+                    } else {
+                      callback();
+                    }
                   }).catch( error => {
                     callback(error);
                   })
