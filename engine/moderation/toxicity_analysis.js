@@ -5,7 +5,10 @@ const log = require('../../utils/logger');
 const _ = require('lodash');
 
 const Perspective = require('perspective-api-client');
-const perspectiveApi = new Perspective({apiKey: process.env.GOOGLE_PERSPECTIVE_API_KEY});
+let perspectiveApi;
+if (process.env.GOOGLE_PERSPECTIVE_API_KEY) {
+  perspectiveApi = new Perspective({apiKey: process.env.GOOGLE_PERSPECTIVE_API_KEY});
+}
 
 const getToxicityScoreForText = (text, doNotStore, callback) => {
   perspectiveApi.analyze(text, { doNotStore, attributes: [
@@ -16,6 +19,39 @@ const getToxicityScoreForText = (text, doNotStore, callback) => {
   }).catch( error => {
     callback(error);
   });
+};
+
+const setupModelPublicDataScore = (model, results) => {
+  if (!model.public_data)
+    model.set('public_data', {});
+  if (!model.public_data.moderation)
+    model.set('public_data.moderation', {});
+  model.set('public_data.moderation.rawToxicityResults', results);
+
+  let toxicityScore, severeToxicityScore, identityAttachScore, threatScore, insultScore,
+    profanityScore, sexuallyExplicitScore, flirtationScore;
+
+  try {
+    toxicityScore = results.attributeScores["TOXICITY"].summaryScore.value;
+    severeToxicityScore = results.attributeScores["SEVERE_TOXICITY"].summaryScore.value;
+    identityAttachScore = results.attributeScores["IDENTITY_ATTACK"].summaryScore.value;
+    threatScore = results.attributeScores["THREAT"].summaryScore.value;
+    insultScore = results.attributeScores["INSULT"].summaryScore.value;
+    profanityScore = results.attributeScores["PROFANITY"].summaryScore.value;
+    sexuallyExplicitScore = results.attributeScores["SEXUALLY_EXPLICIT"].summaryScore.value;
+    flirtationScore = results.attributeScores["FLIRTATION"].summaryScore.value;
+  } catch (error) {
+    log.error(error);
+  }
+
+  model.set('public_data.moderation.toxicityScore', toxicityScore);
+  model.set('public_data.moderation.severeToxicityScore', severeToxicityScore);
+  model.set('public_data.moderation.identityAttachScore', identityAttachScore);
+  model.set('public_data.moderation.threatScore', threatScore);
+  model.set('public_data.moderation.insultScore', insultScore);
+  model.set('public_data.moderation.profanityScore', profanityScore);
+  model.set('public_data.moderation.sexuallyExplicitScore', sexuallyExplicitScore);
+  model.set('public_data.moderation.flirtationScore', flirtationScore);
 };
 
 const getTranslatedTextForPost = (post, callback) => {
@@ -50,7 +86,7 @@ const getTranslatedTextForPost = (post, callback) => {
       });
     }
   ], error => {
-    callback(error, `${postName} ${postDescription}`);
+    callback(error, `${postName.content} ${postDescription.content}`);
   });
 };
 
@@ -70,7 +106,7 @@ const getTranslatedTextForPoint = (point, callback) => {
   });
 };
 
-const getToxicityScoreForPost = (postId, callback) => {
+const estimateToxicityScoreForPost = (postId, callback) => {
   if (process.env.GOOGLE_PERSPECTIVE_API_KEY) {
     models.Post.find({
       where: {
@@ -93,7 +129,7 @@ const getToxicityScoreForPost = (postId, callback) => {
           attribues: ['id','age_group']
         }
       ],
-      attributes: ['id','name','description','language']
+      attributes: ['id','name','description','language','public_data']
     }).then( post => {
       if (post) {
         let doNotStoreValue = post.Group.access===0 && post.Group.Community.access === 0;
@@ -107,7 +143,18 @@ const getToxicityScoreForPost = (postId, callback) => {
             if (error)
               callback(error);
             else
-              getToxicityScoreForText(translatedText, doNotStoreValue, callback);
+              getToxicityScoreForText(translatedText, doNotStoreValue, (error, results) => {
+                if (error) {
+                  callback(error);
+                } else {
+                  setupModelPublicDataScore(post, results);
+                  post.save().then(() => {
+                    callback();
+                  }).catch( error => {
+                    callback(error);
+                  })
+                }
+              });
           });
         }
       } else {
@@ -121,10 +168,10 @@ const getToxicityScoreForPost = (postId, callback) => {
   }
 };
 
-const getToxicityScoreForPoint = (pointId, callback) => {
+const estimateToxicityScoreForPoint = (pointId, callback) => {
   if (process.env.GOOGLE_PERSPECTIVE_API_KEY) {
     models.Point.find({
-      attributes: ['id','language'],
+      attributes: ['id','language','public_data'],
       where: {
         id: pointId
       },
@@ -168,7 +215,18 @@ const getToxicityScoreForPoint = (pointId, callback) => {
             if (error)
               callback(error);
             else
-              getToxicityScoreForText(translatedText, doNotStoreValue, callback);
+              getToxicityScoreForText(translatedText.content, doNotStoreValue, (error, results) => {
+                if (error) {
+                  callback(error);
+                } else {
+                  setupModelPublicDataScore(point, results);
+                  point.save().then(() => {
+                    callback();
+                  }).catch( error => {
+                    callback(error);
+                  })
+                }
+              });
           });
         }
       } else {
@@ -183,6 +241,6 @@ const getToxicityScoreForPoint = (pointId, callback) => {
 };
 
 module.exports = {
-  getToxicityScoreForPoint,
-  getToxicityScoreForPost
+  estimateToxicityScoreForPoint,
+  estimateToxicityScoreForPost
 };

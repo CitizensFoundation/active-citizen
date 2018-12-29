@@ -8,6 +8,7 @@ var notification_news_feed = require('./notification_news_feed');
 var bulk_status_update = require('./bulk_status_update');
 var deletions = require('./deletions');
 var anonymizations = require('./anonymizations');
+var moderation = require('./moderation');
 var email = require('./email');
 var queue = require('./queue');
 var speechToText = require('./speech_to_text');
@@ -69,5 +70,8 @@ i18n
       speechToText.process(job.data, done);
     });
 
+    queue.process('process-moderation', 1, function(job, done) {
+      moderation.process(job.data, done);
+    });
   });
 
