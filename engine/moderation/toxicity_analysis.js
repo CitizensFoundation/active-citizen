@@ -139,13 +139,23 @@ const getTranslatedTextForPoint = (point, callback) => {
   });
 };
 
-const estimateToxicityScoreForPost = (postId, callback) => {
+const estimateToxicityScoreForPost = (options, callback) => {
   if (process.env.GOOGLE_PERSPECTIVE_API_KEY) {
     models.Post.find({
       where: {
-        id: postId
+        id: options.postId
       },
       include: [
+        {
+          model: models.Audio,
+          as: 'PostAudios',
+          required: false
+        },
+        {
+          model: models.Video,
+          as: 'PostVideos',
+          required: false
+        },
         {
           model: models.Group,
           attributes: ['id', 'access'],
@@ -176,8 +186,20 @@ const estimateToxicityScoreForPost = (postId, callback) => {
         if (post.User.age_group && (post.User.age_group==="0-12" || post.User.age_group==="0"))
           doNotStoreValue = true;
 
+        let textContent;
+
+        if (options.useTranscript && post.useVideo && post.PostVideos && post.PostVideos.length>0 &&
+            post.PostVideos[post.PostVideos.length-1].meta && post.PostVideos[0].meta.text) {
+          textContent = post.PostVideos[post.PostVideos.length-1].meta.text;
+        } else if (options.useTranscript && post.useAudio && post.PostAudios && post.PostAudios.length>0 &&
+            post.PostAudios[post.PostAudios.length-1].meta && post.PostVideos[post.PostAudios.length-1].meta.text) {
+          textContent = post.PostAudios[post.PostAudios.length-1].meta.text;
+        } else {
+          textContent = post.name+" "+post.description;
+        }
+
         if (post.language && post.language.substring(0,2)==="en") {
-          getToxicityScoreForText(post.name+" "+post.description, doNotStoreValue, callback);
+          getToxicityScoreForText(textContent, doNotStoreValue, callback);
         } else {
           getTranslatedTextForPost(post, (error, translatedText) => {
             if (error)
@@ -214,12 +236,12 @@ const estimateToxicityScoreForPost = (postId, callback) => {
   }
 };
 
-const estimateToxicityScoreForPoint = (pointId, callback) => {
+const estimateToxicityScoreForPoint = (options, callback) => {
   if (process.env.GOOGLE_PERSPECTIVE_API_KEY) {
     models.Point.find({
       attributes: ['id','language','data','post_id','group_id'],
       where: {
-        id: pointId
+        id: options.pointId
       },
       include: [
         {
@@ -273,7 +295,7 @@ const estimateToxicityScoreForPoint = (pointId, callback) => {
                           where: {
                             id: point.post_id
                           },
-                          attributes: ["id"],
+                          attributes: ["id",'data'],
                           include: [
                             {
                               model: models.Group,

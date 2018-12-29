@@ -137,7 +137,7 @@ const getPushItem = (type, model) => {
     formatted_date: moment(model.created_at).format("DD/MM/YY HH:mm"),
     type: type,
     counter_flags: model.counter_flags,
-    status: Math.random() > 0.3 ? model.status : 'blocked',
+    status: model.status,
     user_id: model.user_id,
     toxicityScore: toxicityScore,
     severeToxicityScore: severeToxicityScore,

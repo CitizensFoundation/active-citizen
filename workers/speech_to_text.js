@@ -373,6 +373,13 @@ const createTranscriptForVideo = (workPackage, callback) => {
                   .map(result => result.alternatives[0].transcript)
                   .join('\n');
                 video.set('meta.transcript.text', transcription);
+                if (video.PointVideos.length>0 && video.PointVideos[0].Point) {
+                  queue.create('process-moderation', { type: 'estimate-point-transcript-toxicity', useVideo: true, pointId: video.PointVideos[0].Point.id }).priority('high').removeOnComplete(true).save();
+                } else if (video.PostVideos.length>0 && video.PostVideos[0].Post) {
+                  queue.create('process-moderation', { type: 'estimate-post-transcript-toxicity', useVideo: true, postId: video.PostVideos[0].Post.id }).priority('high').removeOnComplete(true).save();
+                } else {
+                  log.error("Can't find neither point or post for audio");
+                }
               } else {
                 video.set('meta.transcript.error', 'Found no text');
               }
@@ -396,7 +403,19 @@ const createTranscriptForVideo = (workPackage, callback) => {
 
 const createTranscriptForAudio = (workPackage, callback) => {
   models.Audio.find({
-    where: workPackage.audioId
+    where: workPackage.audioId,
+    include: [
+      {
+        model: models.Point,
+        as: 'PointAudios',
+        required: false
+      },
+      {
+        model: models.Post,
+        as: 'PostAudios',
+        required: false
+      }
+    ]
   }).then((audio) => {
     if (audio) {
       const audioUrl = audio.formats[0];
@@ -423,6 +442,13 @@ const createTranscriptForAudio = (workPackage, callback) => {
               }
             }
             audio.save().then(() => {
+              if (audio.PointAudios.length>0 && audio.PointAudios[0].Point) {
+                queue.create('process-moderation', { type: 'estimate-point-transcript-toxicity', useAudio: true, pointId: audio.PointAudios[0].Point.id }).priority('high').removeOnComplete(true).save();
+              } else if (audio.PostAudios.length>0 && audio.PostAudios[0].Post) {
+                queue.create('process-moderation', { type: 'estimate-post-transcript-toxicity', useAudio: true, postId: audio.PostAudios[0].Post.id }).priority('high').removeOnComplete(true).save();
+              } else {
+                log.error("Can't find neither point or post for audio");
+              }
               log.info("Audio with transcript saved", { audioId: workPackage.audioId, error });
               callback()
             }).catch((error) => {
