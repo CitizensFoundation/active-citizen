@@ -326,13 +326,11 @@ const getAllModeratedItemsByDomain = (options, callback) => {
 };
 
 const getAllModeratedItemsByCommunity = (options, callback) => {
-  options.includes = communityIncludes(options.communityId);
-  getAllModeratedItemsByMaster(options, callback);
+  getAllModeratedItemsByMaster(_.merge(options, {includes: communityIncludes(options.communityId) }), callback);
 };
 
 const getAllModeratedItemsByGroup = (options, callback) => {
-  options.includes = groupIncludes(options.groupId);
-  getAllModeratedItemsByMaster(options, callback);
+  getAllModeratedItemsByMaster(_.merge(options, {includes: groupIncludes(options.groupId) }), callback);
 };
 
 const getAllModeratedItemsByUser = (options, callback) => {
