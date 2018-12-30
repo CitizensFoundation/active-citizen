@@ -89,6 +89,18 @@ const groupIncludes = (groupId) => {
   ];
 };
 
+const userIncludes = (userId) => {
+  return [
+    {
+      model: models.User,
+      required: true,
+      where: {
+        id: userId
+      }
+    }
+  ];
+};
+
 const moderationItemsActionDomain = (req, res, model, actionType) => {
   moderationItemsActionMaster(req, res, { model, actionType, includes: domainIncludes(req.params.domainId) });
 };
@@ -99,6 +111,10 @@ const moderationItemsActionCommunity = (req, res, model, actionType) => {
 
 const moderationItemsActionGroup = (req, res, model, actionType) => {
   moderationItemsActionMaster(req, res, { model, actionType, includes: groupIncludes(req.params.groupId) });
+};
+
+const moderationItemsActionUser = (req, res, model, actionType) => {
+  moderationItemsActionMaster(req, res, { model, actionType, includes: userIncludes(req.params.userId) });
 };
 
 const _toPercent = number => {
@@ -148,6 +164,7 @@ const getPushItem = (type, model) => {
     is_post: type==='post',
     is_point: type==='point',
     title: model.name,
+    post_id: model.post_id,
     Group: model.Group,
     language: model.language,
     name: model.name,
@@ -183,11 +200,11 @@ const getModelModeration = (options, callback) => {
       $or: [
         {
           counter_flags: {
-            $gt: 0
+            $gt: options.allContent ? -1 : 0
           },
         },
         {
-          status: "in_moderation"
+          status: "in_moderation_queue"
         }
       ],
     },
@@ -200,12 +217,15 @@ const getModelModeration = (options, callback) => {
   })
 };
 
-const getAllModeratedItemsByMaster = (includes, callback) => {
+const getAllModeratedItemsByMaster = (options, callback) => {
   let posts, points;
+
+  const postBaseIncludes = _.cloneDeep(options.includes);
+  const pointBaseIncludes = _.cloneDeep(options.includes);
 
   async.series([
     parallelCallback => {
-      const postIncludes = includes.concat([
+      let postIncludes = postBaseIncludes.concat([
         {
           model: models.Image,
           required: false,
@@ -230,11 +250,14 @@ const getAllModeratedItemsByMaster = (includes, callback) => {
           required: false,
           attributes: ['id','formats','updated_at','listenable'],
           as: 'PostAudios',
-        },
-        {
-          model: models.User
         }
       ]);
+
+      if (!options.userId) {
+        postIncludes = postIncludes.concat([ { model: models.User }]);
+      } else {
+        postIncludes = postIncludes.concat([ { model: models.Group }]);
+      }
 
       const order = [
         [ { model: models.Image, as: 'PostHeaderImages' } ,'updated_at', 'asc' ],
@@ -243,13 +266,13 @@ const getAllModeratedItemsByMaster = (includes, callback) => {
         [ { model: models.Video, as: "PostVideos" }, { model: models.Image, as: 'VideoImages' } ,'updated_at', 'asc' ]
       ];
 
-      getModelModeration({model: models.Post, includes: postIncludes, order }, (error, postsIn) => {
+      getModelModeration(_.merge(_.cloneDeep(options), {model: models.Post, includes: postIncludes, order }), (error, postsIn) => {
         parallelCallback(error);
         posts = postsIn;
       })
     },
     parallelCallback => {
-      const pointIncludes = includes.concat([
+      let pointIncludes = pointBaseIncludes.concat([
         {
           model: models.Video,
           required: false,
@@ -271,14 +294,15 @@ const getAllModeratedItemsByMaster = (includes, callback) => {
           as: 'PointAudios'
         },
         {
-          model: models.User
-        },
-        {
           model: models.PointRevision,
           attributes: { exclude: ['ip_address', 'user_agent'] },
           required: false
         }
       ]);
+
+      if (!options.userId) {
+        pointIncludes = pointIncludes.concat([ { model: models.User }]);
+      }
 
       const order = [
         [ { model: models.Video, as: "PointVideos" }, 'updated_at', 'desc' ],
@@ -287,7 +311,7 @@ const getAllModeratedItemsByMaster = (includes, callback) => {
         [ { model: models.Video, as: "PointVideos" }, { model: models.Image, as: 'VideoImages' } ,'updated_at', 'asc' ]
       ];
 
-      getModelModeration({model: models.Point, includes: pointIncludes, order }, (error, pointsIn) => {
+      getModelModeration(_.merge(_.cloneDeep(options), {model: models.Point, includes: pointIncludes, order }), (error, pointsIn) => {
         points = pointsIn;
         parallelCallback(error);
       })
@@ -297,16 +321,22 @@ const getAllModeratedItemsByMaster = (includes, callback) => {
   });
 };
 
-const getAllModeratedItemsByDomain = (domainId, callback) => {
-  getAllModeratedItemsByMaster(domainIncludes(domainId), callback);
+const getAllModeratedItemsByDomain = (options, callback) => {
+  getAllModeratedItemsByMaster(_.merge(options, {includes: domainIncludes(options.domainId) }), callback);
 };
 
-const getAllModeratedItemsByCommunity = (communityId, callback) => {
-  getAllModeratedItemsByMaster(communityIncludes(communityId), callback);
+const getAllModeratedItemsByCommunity = (options, callback) => {
+  options.includes = communityIncludes(options.communityId);
+  getAllModeratedItemsByMaster(options, callback);
 };
 
-const getAllModeratedItemsByGroup = (groupId, callback) => {
-  getAllModeratedItemsByMaster(groupIncludes(groupId), callback);
+const getAllModeratedItemsByGroup = (options, callback) => {
+  options.includes = groupIncludes(options.groupId);
+  getAllModeratedItemsByMaster(options, callback);
+};
+
+const getAllModeratedItemsByUser = (options, callback) => {
+  getAllModeratedItemsByMaster(_.merge(options, {includes: userIncludes(options.userId) }), callback);
 };
 
 module.exports = {
@@ -314,6 +344,7 @@ module.exports = {
   moderationItemsActionCommunity,
   moderationItemsActionGroup,
   getAllModeratedItemsByDomain,
+  getAllModeratedItemsByUser,
   getAllModeratedItemsByCommunity,
   getAllModeratedItemsByGroup
 };
