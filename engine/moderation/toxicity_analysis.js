@@ -9,8 +9,6 @@ const SEVERE_TOXICITY_THRESHOLD = 0.30;
 const TOXICITY_EMAIL_THRESHOLD = 0.75;
 const SEVERE_TOXICITY_EMAIL_THRESHOLD = 0.65;
 
-
-
 const Perspective = require('perspective-api-client');
 let perspectiveApi;
 if (process.env.GOOGLE_PERSPECTIVE_API_KEY) {
