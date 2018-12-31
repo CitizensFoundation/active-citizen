@@ -203,14 +203,14 @@ const estimateToxicityScoreForPost = (options, callback) => {
 
         if (post.language && post.language.substring(0,2)==="en") {
           textUsed = textContent;
-          getToxicityScoreForText(textContent, doNotStoreValue, callback);
+          getToxicityScoreForText(textUsed, doNotStoreValue, callback);
         } else {
           getTranslatedTextForPost(post, (error, translatedText) => {
             if (error)
               callback(error);
             else
               textUsed = translatedText;
-              getToxicityScoreForText(translatedText, doNotStoreValue, (error, results) => {
+              getToxicityScoreForText(textUsed, doNotStoreValue, (error, results) => {
                 if (error) {
                   callback(error);
                 } else {
@@ -285,14 +285,14 @@ const estimateToxicityScoreForPoint = (options, callback) => {
 
         if (point.language && point.language.substring(0,2)==="en") {
           textUsed = latestContent;
-          getToxicityScoreForText(latestContent, doNotStoreValue, callback);
+          getToxicityScoreForText(textUsed, doNotStoreValue, callback);
         } else {
           getTranslatedTextForPoint(point, (error, translatedText) => {
             if (error)
               callback(error);
             else
               textUsed = translatedText.content;
-              getToxicityScoreForText(translatedText.content, doNotStoreValue, (error, results) => {
+              getToxicityScoreForText(textUsed, doNotStoreValue, (error, results) => {
                 if (error) {
                   callback(error);
                 } else {
