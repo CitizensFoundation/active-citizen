@@ -127,15 +127,17 @@ const _toPercent = number => {
 };
 
 const getPushItem = (type, model) => {
-  let source, toxicityScore, latestContent = null,
+  let source, toxicityScore, toxicityScoreRaw, latestContent = null,
       severeToxicityScore,
-      lastReportedAtDate = null, firstReportedDate = null;
+      lastReportedAtDate = null, firstReportedDate = null,
+      lastReportedByEmail;
 
   if (model.data && model.data.moderation) {
     const moderation = model.data.moderation;
 
     if (moderation.toxicityScore) {
       toxicityScore = _toPercent(moderation.toxicityScore);
+      toxicityScoreRaw = moderation.toxicityScore;
     }
 
     if (moderation.severeToxicityScore) {
@@ -146,6 +148,7 @@ const getPushItem = (type, model) => {
       source = moderation.lastReportedBy[0].source;
       firstReportedDate = moderation.lastReportedBy[moderation.lastReportedBy.length-1].date;
       lastReportedAtDate = moderation.lastReportedBy[0].date;
+      lastReportedByEmail = moderation.lastReportedBy[0].userEmail;
     }
   }
 
@@ -154,6 +157,9 @@ const getPushItem = (type, model) => {
 
   if (!lastReportedAtDate)
     lastReportedAtDate = model.created_at;
+
+  if (!lastReportedByEmail)
+    lastReportedByEmail = "Unknown";
 
   if (type==='point') {
     latestContent = model.PointRevisions[model.PointRevisions.length-1].content;
@@ -164,10 +170,12 @@ const getPushItem = (type, model) => {
     created_at: model.created_at,
     formatted_date: moment(model.created_at).format("DD/MM/YY HH:mm"),
     type: type,
+    lastReportedByEmail: lastReportedByEmail,
     counter_flags: model.counter_flags,
     status: model.status,
     user_id: model.user_id,
     toxicityScore: toxicityScore,
+    toxicityScoreRaw: toxicityScoreRaw,
     severeToxicityScore: severeToxicityScore,
     source: source,
     lastReportedAtDate: lastReportedAtDate,
