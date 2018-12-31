@@ -196,7 +196,7 @@ const getPushItem = (type, model) => {
   };
 };
 
-const getItems = (posts, points) => {
+const getItems = (posts, points, options) => {
   let items = [];
   _.forEach(posts, post => {
     items.push(getPushItem('post', post));
@@ -204,7 +204,13 @@ const getItems = (posts, points) => {
   _.forEach(points, point => {
     items.push(getPushItem('point', point));
   });
-  items = _.orderBy(items,['status', 'counter_flags', 'created_at'], ['asc','desc','asc']);
+
+  if (options.allContent) {
+    items = _.orderBy(items,['created_at'], ['desc']);
+  } else {
+    items = _.orderBy(items,['status', 'counter_flags', 'created_at'], ['asc','desc','asc']);
+  }
+
   return items;
 };
 
@@ -332,7 +338,7 @@ const getAllModeratedItemsByMaster = (options, callback) => {
       })
     }
   ], error => {
-    callback(error, getItems(posts, points));
+    callback(error, getItems(posts, points, options));
   });
 };
 
