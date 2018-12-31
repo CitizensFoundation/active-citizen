@@ -20,6 +20,8 @@ const getToxicityScoreForText = (text, doNotStore, callback) => {
     'TOXICITY', 'SEVERE_TOXICITY','IDENTITY_ATTACK',
     'THREAT','INSULT','PROFANITY','SEXUALLY_EXPLICIT',
     'FLIRTATION'] }).then( result => {
+      log.debug("Text for toxicity", { text });
+      log.debug("getToxicityScoreForText", { result });
     callback(null, result);
   }).catch( error => {
     callback(error);
@@ -94,7 +96,7 @@ const getTranslatedTextForPost = (post, callback) => {
         textType: 'postName',
         targetLanguage: 'en'
       }};
-      models.TranslationCache.getTranslation(req, post, (error, translation) => {
+      models.AcTranslationCache.getTranslation(req, post, (error, translation) => {
         if (error) {
           parallelCallback(error);
         } else {
@@ -108,7 +110,7 @@ const getTranslatedTextForPost = (post, callback) => {
         textType: 'postContent',
         targetLanguage: 'en'
       }};
-      models.TranslationCache.getTranslation(req, post, (error, translation) => {
+      models.AcTranslationCache.getTranslation(req, post, (error, translation) => {
         if (error) {
           parallelCallback(error);
         } else {
@@ -129,7 +131,7 @@ const getTranslatedTextForPoint = (point, callback) => {
       targetLanguage: 'en'
     }
   };
-  models.TranslationCache.getTranslation(req, point, (error, translation) => {
+  models.AcTranslationCache.getTranslation(req, point, (error, translation) => {
     if (error) {
       callback(error);
     } else {
@@ -197,18 +199,22 @@ const estimateToxicityScoreForPost = (options, callback) => {
           textContent = post.name+" "+post.description;
         }
 
+        let textUsed;
+
         if (post.language && post.language.substring(0,2)==="en") {
+          textUsed = textContent;
           getToxicityScoreForText(textContent, doNotStoreValue, callback);
         } else {
           getTranslatedTextForPost(post, (error, translatedText) => {
             if (error)
               callback(error);
             else
+              textUsed = translatedText;
               getToxicityScoreForText(translatedText, doNotStoreValue, (error, results) => {
                 if (error) {
                   callback(error);
                 } else {
-                  setupModelPublicDataScore(post, textContent, results);
+                  setupModelPublicDataScore(post, textUsed, results);
                   post.save().then(() => {
                     if (hasModelBreachedToxicityThreshold(post)) {
                       post.report({ disableNotification: !hasModelBreachedToxicityEmailThreshold(post) },
@@ -275,18 +281,22 @@ const estimateToxicityScoreForPoint = (options, callback) => {
 
         const latestContent = point.PointRevisions[point.PointRevisions.length-1].content;
 
+        let textUsed;
+
         if (point.language && point.language.substring(0,2)==="en") {
+          textUsed = latestContent;
           getToxicityScoreForText(latestContent, doNotStoreValue, callback);
         } else {
           getTranslatedTextForPoint(point, (error, translatedText) => {
             if (error)
               callback(error);
             else
+              textUsed = translatedText.content;
               getToxicityScoreForText(translatedText.content, doNotStoreValue, (error, results) => {
                 if (error) {
                   callback(error);
                 } else {
-                  setupModelPublicDataScore(point, latestContent, results);
+                  setupModelPublicDataScore(point, textUsed, results);
                   point.save().then(() => {
                     if (hasModelBreachedToxicityThreshold(point)) {
                       if (point.post_id) {
