@@ -19,6 +19,9 @@ const moderationItemsActionMaster = (req, res, options) => {
       } else if (options.actionType==='approve') {
         item.status = 'published';
         item.counter_flags = 0;
+      } else if (options.actionType==='block') {
+        item.status = 'blocked';
+        item.counter_flags = 0;
       } else if (options.actionType==='clearFlags') {
         item.counter_flags = 0;
       }
@@ -124,7 +127,9 @@ const _toPercent = number => {
 };
 
 const getPushItem = (type, model) => {
-  let source, toxicityScore, latestContent = null, severeToxicityScore, lastReportedAt;
+  let source, toxicityScore, latestContent = null,
+      severeToxicityScore,
+      lastReportedAtDate = null, firstReportedDate = null;
 
   if (model.data && model.data.moderation) {
     const moderation = model.data.moderation;
@@ -139,9 +144,21 @@ const getPushItem = (type, model) => {
     if (moderation.lastReportedBy &&
       moderation.lastReportedBy.length > 0) {
       source = moderation.lastReportedBy[0].source;
-      lastReportedAtDate = moderation.lastReportedBy[moderation.lastReportedBy.length-1].date;
+      firstReportedDate = moderation.lastReportedBy[moderation.lastReportedBy.length-1].date;
+      lastReportedAtDate = moderation.lastReportedBy[0].date;
+
+      if (moderation.lastReportedBy.length > 1) {
+        const a =  moderation.lastReportedBy;
+        const b = a;
+      }
     }
   }
+
+  if (!firstReportedDate)
+    firstReportedDate = model.created_at;
+
+  if (!lastReportedAtDate)
+    lastReportedAtDate = model.created_at;
 
   if (type==='point') {
     latestContent = model.PointRevisions[model.PointRevisions.length-1].content;
@@ -158,7 +175,10 @@ const getPushItem = (type, model) => {
     toxicityScore: toxicityScore,
     severeToxicityScore: severeToxicityScore,
     source: source,
-    lastReportedAtDate: lastReportedAtDate ? moment(lastReportedAtDate).format("DD/MM/YY HH:mm") : null,
+    lastReportedAtDate: lastReportedAtDate,
+    firstReportedDate: firstReportedDate,
+    lastReportedAtDateFormatted: lastReportedAtDate ? moment(lastReportedAtDate).format("DD/MM/YY HH:mm") : null,
+    firstReportedDateFormatted:  firstReportedDate ? moment(firstReportedDate).format("DD/MM/YY HH:mm") : null,
     user_email: model.User.email,
     cover_media_type: model.cover_media_type,
     is_post: type==='post',
