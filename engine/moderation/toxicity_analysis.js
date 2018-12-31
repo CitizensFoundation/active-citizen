@@ -26,7 +26,7 @@ const getToxicityScoreForText = (text, doNotStore, callback) => {
   });
 };
 
-const setupModelPublicDataScore = (model, results) => {
+const setupModelPublicDataScore = (model, text, results) => {
   if (!model.data)
     model.set('data', {});
   if (!model.data.moderation)
@@ -57,6 +57,7 @@ const setupModelPublicDataScore = (model, results) => {
   model.set('data.moderation.profanityScore', profanityScore);
   model.set('data.moderation.sexuallyExplicitScore', sexuallyExplicitScore);
   model.set('data.moderation.flirtationScore', flirtationScore);
+  model.set('data.moderation.textUsedForScore', text);
 };
 
 const hasModelBreachedToxicityThreshold = model => {
@@ -207,7 +208,7 @@ const estimateToxicityScoreForPost = (options, callback) => {
                 if (error) {
                   callback(error);
                 } else {
-                  setupModelPublicDataScore(post, results);
+                  setupModelPublicDataScore(post, textContent, results);
                   post.save().then(() => {
                     if (hasModelBreachedToxicityThreshold(post)) {
                       post.report({ disableNotification: !hasModelBreachedToxicityEmailThreshold(post) },
@@ -285,7 +286,7 @@ const estimateToxicityScoreForPoint = (options, callback) => {
                 if (error) {
                   callback(error);
                 } else {
-                  setupModelPublicDataScore(point, results);
+                  setupModelPublicDataScore(point, latestContent, results);
                   point.save().then(() => {
                     if (hasModelBreachedToxicityThreshold(point)) {
                       if (point.post_id) {
