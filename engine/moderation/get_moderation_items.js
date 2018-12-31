@@ -146,11 +146,6 @@ const getPushItem = (type, model) => {
       source = moderation.lastReportedBy[0].source;
       firstReportedDate = moderation.lastReportedBy[moderation.lastReportedBy.length-1].date;
       lastReportedAtDate = moderation.lastReportedBy[0].date;
-
-      if (moderation.lastReportedBy.length > 1) {
-        const a =  moderation.lastReportedBy;
-        const b = a;
-      }
     }
   }
 
