@@ -6,38 +6,6 @@ const moment = require('moment');
 const log = require('../../utils/logger');
 const _ = require('lodash');
 
-const moderationItemsActionMaster = (req, res, options) => {
-  options.model.find({
-    where: {
-      id: req.params.itemId
-    },
-    include: options.includes
-  }).then(item => {
-    if (item) {
-      if (options.actionType==='delete') {
-        item.deleted = true;
-      } else if (options.actionType==='approve') {
-        item.status = 'published';
-        item.counter_flags = 0;
-      } else if (options.actionType==='block') {
-        item.status = 'blocked';
-        item.counter_flags = 0;
-      } else if (options.actionType==='clearFlags') {
-        item.counter_flags = 0;
-      }
-      item.save().then( () => {
-        res.sendStatus(200);
-      }).catch( error => {
-        log.error("Error deleting moderated item", { error });
-        res.sendStatus(500);
-      });
-    }
-  }).catch(error => {
-    log.error("Error deleting moderated item", { error });
-    res.sendStatus(500);
-  })
-};
-
 const domainIncludes = (domainId) => {
   return [
     {
@@ -102,22 +70,6 @@ const userIncludes = (userId) => {
       }
     }
   ];
-};
-
-const moderationItemsActionDomain = (req, res, model, actionType) => {
-  moderationItemsActionMaster(req, res, { model, actionType, includes: domainIncludes(req.params.domainId) });
-};
-
-const moderationItemsActionCommunity = (req, res, model, actionType) => {
-  moderationItemsActionMaster(req, res, { model, actionType, includes: communityIncludes(req.params.communityId) });
-};
-
-const moderationItemsActionGroup = (req, res, model, actionType) => {
-  moderationItemsActionMaster(req, res, { model, actionType, includes: groupIncludes(req.params.groupId) });
-};
-
-const moderationItemsActionUser = (req, res, model, actionType) => {
-  moderationItemsActionMaster(req, res, { model, actionType, includes: userIncludes(req.params.userId) });
 };
 
 const _toPercent = number => {
@@ -367,9 +319,10 @@ const getAllModeratedItemsByUser = (options, callback) => {
 };
 
 module.exports = {
-  moderationItemsActionDomain,
-  moderationItemsActionCommunity,
-  moderationItemsActionGroup,
+  domainIncludes,
+  communityIncludes,
+  groupIncludes,
+  userIncludes,
   getAllModeratedItemsByDomain,
   getAllModeratedItemsByUser,
   getAllModeratedItemsByCommunity,

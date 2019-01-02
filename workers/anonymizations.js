@@ -14,7 +14,7 @@ if(process.env.AIRBRAKE_PROJECT_ID) {
 
 let AnonymizationWorker = function () {};
 
-const anonymizePointActivities = (workPackage, callback) => {
+const anonymizePointContent = (workPackage, callback) => {
   const pointId = workPackage.pointId;
   log.info('Starting Point Activities Anonymized', {pointId: pointId, context: 'ac-anonymize', userId: workPackage.userId});
   if (pointId && workPackage.anonymousUserId) {
@@ -60,7 +60,7 @@ const anonymizePointActivities = (workPackage, callback) => {
       callback(error);
     });
   } else {
-    callback("No pointId or anonymousUserId for anonymizePointActivities");
+    callback("No pointId or anonymousUserId for anonymizePointContent");
   }
 };
 
@@ -92,7 +92,7 @@ const anonymizePostContent = (workPackage, callback) => {
           }
         }).then((points) => {
           async.forEach(points, (point, innerCallback) => {
-            anonymizePointActivities(_.merge({pointId: point.id, skipActivities: true}, workPackage), innerCallback);
+            anonymizePointContent(_.merge({pointId: point.id, skipActivities: true}, workPackage), innerCallback);
           }, (error) => {
             seriesCallback(error);
           })
@@ -698,10 +698,12 @@ AnonymizationWorker.prototype.process = (workPackage, callback) => {
       callback(error);
     } else {
       workPackage = _.merge({ anonymousUserId: anonymousUser.id }, workPackage);
-
       switch(workPackage.type) {
         case 'anonymize-post-content':
           anonymizePostContent(workPackage, callback);
+          break;
+        case 'anonymize-point-content':
+          anonymizePointContent(workPackage, callback);
           break;
         case 'anonymize-group-content':
           anonymizeGroupContent(workPackage, callback);

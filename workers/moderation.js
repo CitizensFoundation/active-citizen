@@ -1,3 +1,5 @@
+import {performManyModerationActions} from "../engine/moderation/process_moderation_items";
+
 const async = require("async");
 const models = require("../../models");
 const log = require('../utils/logger');
@@ -17,7 +19,6 @@ if(process.env.AIRBRAKE_PROJECT_ID) {
 let ModerationWorker = function () {};
 
 ModerationWorker.prototype.process = (workPackage, callback) => {
-  if (process.env.GOOGLE_PERSPECTIVE_API_KEY) {
     switch (workPackage.type) {
       case 'estimate-post-toxicity':
         estimateToxicityScoreForPost(workPackage, callback);
@@ -31,12 +32,12 @@ ModerationWorker.prototype.process = (workPackage, callback) => {
       case 'estimate-point-transcript-toxicity':
         estimateToxicityScoreForPoint(_.merge({useTranscript: true}, workPackage), callback);
         break;
+      case 'perform-many-moderation-actions':
+        performManyModerationActions(workPackage, callback);
+        break;
       default:
         callback("Unknown type for workPackage: " + workPackage.type);
     }
-  } else {
-    log.debug("No GOOGLE_PERSPECTIVE_API_KEY");
-    callback();
   }
 };
 

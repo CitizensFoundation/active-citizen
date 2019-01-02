@@ -187,7 +187,7 @@ const estimateToxicityScoreForPost = (options, callback) => {
         if (post.User.age_group && (post.User.age_group==="0-12" || post.User.age_group==="0"))
           doNotStoreValue = true;
 
-        let textContent;
+        let textContent, textUsed;
 
         if (options.useTranscript && post.useVideo && post.PostVideos && post.PostVideos.length>0 &&
             post.PostVideos[post.PostVideos.length-1].meta && post.PostVideos[0].meta.text) {
@@ -198,8 +198,6 @@ const estimateToxicityScoreForPost = (options, callback) => {
         } else {
           textContent = post.name+" "+post.description;
         }
-
-        let textUsed;
 
         if (post.language && post.language.substring(0,2)==="en") {
           textUsed = textContent;
@@ -250,6 +248,16 @@ const estimateToxicityScoreForPoint = (options, callback) => {
       },
       include: [
         {
+          model: models.Audio,
+          as: 'PointAudios',
+          required: false
+        },
+        {
+          model: models.Video,
+          as: 'PointVideos',
+          required: false
+        },
+        {
           model: models.Group,
           attributes: ['id', 'access'],
           required: false,
@@ -279,13 +287,21 @@ const estimateToxicityScoreForPoint = (options, callback) => {
         if (point.User.age_group && (point.User.age_group==="0-12" || point.User.age_group==="0"))
           doNotStoreValue = true;
 
-        const latestContent = point.PointRevisions[point.PointRevisions.length-1].content;
+        let textContent, textUsed;
 
-        let textUsed;
+        if (options.useTranscript && point.useVideo && point.PointVideos && point.PointVideos.length>0 &&
+          point.PointVideos[point.PointVideos.length-1].meta && point.PointVideos[0].meta.text) {
+          textContent = point.PointVideos[point.PointVideos.length-1].meta.text;
+        } else if (options.useTranscript && point.useAudio && point.PointAudios && point.PointAudios.length>0 &&
+          point.PointAudios[point.PointAudios.length-1].meta && point.PointVideos[point.PointAudios.length-1].meta.text) {
+          textContent = point.PointAudios[point.PointAudios.length-1].meta.text;
+        } else {
+          textContent = point.PointRevisions[point.PointRevisions.length-1].content;
+        }
 
         if (point.language && point.language.substring(0,2)==="en") {
-          textUsed = latestContent;
-          getToxicityScoreForText(textUsed, doNotStoreValue, callback);
+          textUsed = textContent;
+          getToxicityScoreForText(textContent, doNotStoreValue, callback);
         } else {
           getTranslatedTextForPoint(point, (error, translatedText) => {
             if (error)
@@ -351,7 +367,7 @@ const estimateToxicityScoreForPoint = (options, callback) => {
       callback(error);
     })
   } else {
-    callback("No API key");
+    callback("No Google API key");
   }
 };
 
