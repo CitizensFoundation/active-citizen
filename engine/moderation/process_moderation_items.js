@@ -17,8 +17,9 @@ const moderationItemActionMaster = (req, res, options) => {
       log.error("Error in getAnonymousUser in moderationItemsActionMaster", {error});
       res.sendStatus(500)
     } else {
-      options.model.find({
+      options.model.unscoped().find({
         where: {
+          deleted: false,
           id: options.itemId
         },
         include: options.includes
@@ -42,6 +43,9 @@ const moderationItemActionMaster = (req, res, options) => {
             log.error("Error deleting moderated item", { error });
             res.sendStatus(500);
           });
+        } else {
+          log.error("Can't find item", { options });
+          res.sendStatus(404);
         }
       }).catch(error => {
         log.error("Error deleting moderated item", { error });
@@ -74,20 +78,21 @@ const moderationManyItemsActionMaster = (workPackage, callback) => {
         updateValues = {
           user_id: anonymousUser.id
         };
-      } else if (options.actionType==='clearFlags') {
+      } else if (workPackage.actionType==='clearFlags') {
         updateValues = {
           counter_flags: 0
         };
       }
       if (updateValues) {
-        workPackage.model.update(
+        workPackage.model.unscoped().update(
           updateValues,
           {
             where: {
-            id: {
-              $in: workPackage.itemIds
-            }
-          },
+              deleted: false,
+              id: {
+                $in: workPackage.itemIds
+              }
+            },
           include: workPackage.includes
         }).then((spread) => {
           log.info('Moderation Action Many', { spread, workPackage });
