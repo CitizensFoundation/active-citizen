@@ -1,5 +1,3 @@
-import {domainIncludes, communityIncludes, groupIncludes, userIncludes} from "./get_moderation_items";
-
 const queue = require('../../workers/queue');
 const models = require("../../../models");
 const i18n = require('../../utils/i18n');
@@ -8,6 +6,10 @@ const moment = require('moment');
 const log = require('../../utils/logger');
 const _ = require('lodash');
 const getAnonymousUser = require('../../utils/get_anonymous_system_user');
+const domainIncludes = require('./get_moderation_items').domainIncludes;
+const communityIncludes = require('./get_moderation_items').communityIncludes;
+const groupIncludes = require('./get_moderation_items').groupIncludes;
+const userIncludes = require('./get_moderation_items').userIncludes;
 
 const moderationItemActionMaster = (req, res, options) => {
   getAnonymousUser((error, anonymousUser) => {
@@ -17,7 +19,7 @@ const moderationItemActionMaster = (req, res, options) => {
     } else {
       options.model.find({
         where: {
-          id: req.params.itemId
+          id: options.itemId
         },
         include: options.includes
       }).then(item => {
@@ -78,17 +80,17 @@ const moderationManyItemsActionMaster = (workPackage, callback) => {
         };
       }
       if (updateValues) {
-        workPackage.model.updateAll(
+        workPackage.model.update(
           updateValues,
           {
             where: {
             id: {
-              $in: workPackage.actionItemIds
+              $in: workPackage.itemIds
             }
           },
           include: workPackage.includes
         }).then((spread) => {
-          log.info('Moderation Action Many', { spread, options });
+          log.info('Moderation Action Many', { spread, workPackage });
           callback();
         }).catch(error => {
           callback(error);
@@ -100,30 +102,42 @@ const moderationManyItemsActionMaster = (workPackage, callback) => {
   });
 };
 
-const moderationItemActionDomain = (req, res, model, actionType) => {
-  moderationItemActionMaster(req, res, { model, actionType, includes: domainIncludes(req.params.domainId) });
-};
+const performSingleModerationAction = (req, res, options) => {
+  let includes, model;
 
-const moderationItemActionCommunity = (req, res, model, actionType) => {
-  moderationItemActionMaster(req, res, { model, actionType, includes: communityIncludes(req.params.communityId) });
-};
-
-const moderationItemActionGroup = (req, res, model, actionType) => {
-  moderationItemActionMaster(req, res, { model, actionType, includes: groupIncludes(req.params.groupId) });
-};
-
-const moderationItemActionUser = (req, res, model, actionType) => {
-  if (actionType==='delete' || actionType==='anonymize') {
-    moderationItemActionMaster(req, res, { model, actionType, includes: userIncludes(req.params.userId) });
-  } else {
-    log.error("Trying to call forbidden actions for user", { actionType });
+  if (options.domainId) {
+    includes = domainIncludes(options.domainId);
+  } else if (options.communityId) {
+    includes = communityIncludes(options.communityId);
+  } else if (options.groupId) {
+    includes = groupIncludes(options.groupId);
+  } else if (options.userId) {
+    includes =  userIncludes(options.userId);
+  }  else {
+    log.error("Missing model type", { options });
     res.sendStatus(500);
+    return;
   }
+
+  if (options.userId && (options.actionType!=='delete' && options.actionType!=='anonymize')) {
+    log.error("Trying to call forbidden actions for user", { options });
+    res.sendStatus(500);
+    return;
+  }
+
+  if (options.itemType==='post') {
+    model = models.Post;
+  } else if (options.itemType==='point') {
+    model = models.Point;
+  }
+
+  moderationItemActionMaster(req, res, { itemId: options.itemId, model, actionType: options.actionType, includes });
+
 };
 
 const performManyModerationActions = (workPackage, callback) => {
   const postItems = _.filter(workPackage.items, (item) => {
-    return item.isPost
+    return item.modelType === 'post';
   });
 
   const postIds = _.map(postItems, item => {
@@ -131,7 +145,7 @@ const performManyModerationActions = (workPackage, callback) => {
   });
 
   const pointItems = _.filter(workPackage.items, (item) => {
-    return item.isPoint
+    return item.modelType === 'point';
   });
 
   const pointIds = _.map(pointItems, item => {
@@ -141,29 +155,32 @@ const performManyModerationActions = (workPackage, callback) => {
   let includes;
 
   if (workPackage.domainId) {
-    includes = { includes: domainIncludes(workPackage.domainId) };
+    includes = domainIncludes(workPackage.domainId);
   } else if (workPackage.communityId) {
-    includes = { includes: communityIncludes(workPackage.communityId) };
+    includes = communityIncludes(workPackage.communityId);
   } else if (workPackage.groupId) {
-    includes = { includes: groupIncludes(workPackage.groupId) };
+    includes = groupIncludes(workPackage.groupId);
   } else if (workPackage.userId) {
-    includes = { includes: userIncludes(workPackage.userId) };
+    includes = userIncludes(workPackage.userId);
   }  else {
     callback("Wrong action parameters", workPackage);
     return;
   }
 
+  const pointWorkPackage = _.cloneDeep(workPackage);
+  const postWorkPackage = _.cloneDeep(workPackage);
+
   async.parallel([
     parallelCallback => {
       if (postIds && postIds.length>0) {
-        moderationManyItemsActionMaster(_.merge(workPackage, { model: model.Post, includes, actionItemIds: postIds }), parallelCallback);
+        moderationManyItemsActionMaster(_.merge(postWorkPackage, { model: models.Post, includes, itemIds: postIds }), parallelCallback);
       } else {
         parallelCallback();
       }
     },
     parallelCallback => {
       if (pointIds && pointIds.length>0) {
-        moderationManyItemsActionMaster(_.merge(workPackage, { model: model.Point, includes, actionItemIds: pointIds }), parallelCallback);
+        moderationManyItemsActionMaster(_.merge(pointWorkPackage, { model: models.Point, includes, itemIds: pointIds }), parallelCallback);
       } else {
         parallelCallback();
       }
@@ -175,9 +192,6 @@ const performManyModerationActions = (workPackage, callback) => {
 };
 
 module.exports = {
-  moderationItemActionDomain,
-  moderationItemActionCommunity,
-  moderationItemActionGroup,
-  moderationItemActionUser,
+  performSingleModerationAction,
   performManyModerationActions
 };

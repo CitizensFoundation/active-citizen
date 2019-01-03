@@ -1,5 +1,3 @@
-import {performManyModerationActions} from "../engine/moderation/process_moderation_items";
-
 const async = require("async");
 const models = require("../../models");
 const log = require('../utils/logger');
@@ -10,6 +8,7 @@ const _ = require('lodash');
 const fs = require('fs');
 const estimateToxicityScoreForPost = require('../engine/moderation/toxicity_analysis').estimateToxicityScoreForPost;
 const estimateToxicityScoreForPoint = require('../engine/moderation/toxicity_analysis').estimateToxicityScoreForPoint;
+const performManyModerationActions = require("../engine/moderation/process_moderation_items").performManyModerationActions;
 
 let airbrake = null;
 if(process.env.AIRBRAKE_PROJECT_ID) {
@@ -19,25 +18,24 @@ if(process.env.AIRBRAKE_PROJECT_ID) {
 let ModerationWorker = function () {};
 
 ModerationWorker.prototype.process = (workPackage, callback) => {
-    switch (workPackage.type) {
-      case 'estimate-post-toxicity':
-        estimateToxicityScoreForPost(workPackage, callback);
-        break;
-      case 'estimate-post-transcript-toxicity':
-        estimateToxicityScoreForPost(_.merge({useTranscript: true}, workPackage), callback);
-        break;
-      case 'estimate-point-toxicity':
-        estimateToxicityScoreForPoint(workPackage, callback);
-        break;
-      case 'estimate-point-transcript-toxicity':
-        estimateToxicityScoreForPoint(_.merge({useTranscript: true}, workPackage), callback);
-        break;
-      case 'perform-many-moderation-actions':
-        performManyModerationActions(workPackage, callback);
-        break;
-      default:
-        callback("Unknown type for workPackage: " + workPackage.type);
-    }
+  switch (workPackage.type) {
+    case 'estimate-post-toxicity':
+      estimateToxicityScoreForPost(workPackage, callback);
+      break;
+    case 'estimate-post-transcript-toxicity':
+      estimateToxicityScoreForPost(_.merge({useTranscript: true}, workPackage), callback);
+      break;
+    case 'estimate-point-toxicity':
+      estimateToxicityScoreForPoint(workPackage, callback);
+      break;
+    case 'estimate-point-transcript-toxicity':
+      estimateToxicityScoreForPoint(_.merge({useTranscript: true}, workPackage), callback);
+      break;
+    case 'perform-many-moderation-actions':
+      performManyModerationActions(workPackage, callback);
+      break;
+    default:
+      callback("Unknown type for workPackage: " + workPackage.type);
   }
 };
 
