@@ -1,6 +1,7 @@
 var async = require("async");
 const Translate = require('@google-cloud/translate');
 const farmhash = require('farmhash');
+var log = require('../utils/logger');
 
 "use strict";
 
@@ -96,7 +97,8 @@ module.exports = function(sequelize, DataTypes) {
 
       getTranslation: function (req, modelInstance, callback) {
         const contentToTranslate = AcTranslationCache.getContentToTranslate(req, modelInstance);
-        if (contentToTranslate && contentToTranslate!=='') {
+        if (contentToTranslate && contentToTranslate!=='' &&
+            contentToTranslate.length>6 && isNaN(contentToTranslate)) {
           const contentHash = farmhash.hash32(contentToTranslate).toString();
           const textType = req.query.textType;
           let targetLanguage = req.query.targetLanguage.replace('_','-');
@@ -119,7 +121,23 @@ module.exports = function(sequelize, DataTypes) {
             callback(error);
           });
         } else {
-          callback("Empty string for translation");
+          log.warn("Empty or short string for translation", {
+            textType: req.query.textType,
+            modelInstance,
+            targetLanguage: req.query.targetLanguage
+          });
+          if (!modelInstance.language) {
+            modelInstance.update({
+              language: '??'
+            }).then(function () {
+              callback(null, { content: contentToTranslate });
+            }).catch( error => {
+              callback(error);
+            });
+          } else {
+            callback();
+          }
+
         }
       }
     }
