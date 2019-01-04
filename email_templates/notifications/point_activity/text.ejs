@@ -13,6 +13,11 @@
 <%= t('notification.email.pointReport') %>
 <% } %>
 
+<% if (isReportingContent && isAutomated) { %>
+      <%= t('notification.email.automaticToxicityDetection') %>
+      Toxicity score: <%= moderation.toxicityScore %><br>
+<% } %>
+
 <% if (post) { %>
 <%= t('notification.email.newPointedAddedToThisIdea') %>:
 <%= post.name %>

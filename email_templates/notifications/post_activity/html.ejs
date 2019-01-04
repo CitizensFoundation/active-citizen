@@ -9,6 +9,16 @@
 <% } if (activity.type == 'activity.report.content') { %>
   <h1 style="font-weight: 600;line-height: 1.1em;margin: 0;font-size: 16pt;padding-top: 8px;"><%= t('notification.email.postReport') %></h1>
 <% } %>
+
+<% if (isReportingContent && isAutomated) { %>
+  <p style="line-height: 1.1em;margin: 0;font-size: 16pt;padding-top: 32px;">
+    <em><%= t('notification.email.automaticToxicityDetection') %></em>
+  </p>
+  <p>
+    Toxicity score: <%= moderation.toxicityScore %><br>
+  </p>
+<% } %>
+
 <div style="padding-top: 8px">
   <% if (activity.type == 'activity.post.new') { %>
     <h2><%= t('notification.email.thisNewIdea') %> "<%=post.name %>" <%= t('notification.email.hasBeenPosted')%></h2>
