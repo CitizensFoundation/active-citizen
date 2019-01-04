@@ -80,7 +80,7 @@ const _toPercent = number => {
 
 const getPushItem = (type, model) => {
   let source, toxicityScore, toxicityScoreRaw, latestContent = null,
-      severeToxicityScore,
+      severeToxicityScore, content,
       lastReportedAtDate = null, firstReportedDate = null,
       lastReportedByEmail;
 
@@ -113,8 +113,20 @@ const getPushItem = (type, model) => {
   if (!lastReportedByEmail)
     lastReportedByEmail = "Unknown";
 
+  let pointTextContent, postTextContent, postTranscriptContent, postNameContent;
+
   if (type==='point') {
+    pointTextContent = model.PointRevisions[model.PointRevisions.length-1].content;
     latestContent = model.PointRevisions[model.PointRevisions.length-1].content;
+  } else if (type==='post') {
+    postTextContent = model.description;
+    postNameContent = model.name;
+    if (model.PostVideos && model.PostVideos.length>0 && model.PostVideos[model.PostVideos.length-1].meta && model.PostVideos[0].meta.text) {
+      postTranscriptContent = model.PostVideos[model.PostVideos.length-1].meta.text;
+    } else if (model.PostAudios && model.PostAudios.length>0 &&
+      model.PostAudios[model.PostAudios.length-1].meta && model.PostVideos[model.PostAudios.length-1].meta.text) {
+      postTranscriptContent = model.PostAudios[model.PostAudios.length-1].meta.text;
+    }
   }
 
   return {
@@ -145,7 +157,13 @@ const getPushItem = (type, model) => {
     name: model.name,
     description: model.description,
     moderation_data: { moderation: model.data ? model.data.moderation : null },
-    content: type==='post' ? (model.name + ' ' + model.description) : model.content,
+    postTextContent,
+    content: type==='post' ? (model.name + ' ' + model.description) : pointTextContent,
+    pointTextContent,
+    postTranscriptContent,
+    postNameContent: postNameContent,
+    name_content: type==='post' ? model.name : "",
+    transcriptContent: postTranscriptContent,
     PostVideos: model.PostVideos,
     PostAudios: model.PostAudios,
     PostHeaderImages: model.PostHeaderImages,
