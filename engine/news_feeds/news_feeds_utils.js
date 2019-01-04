@@ -214,7 +214,7 @@ var activitiesDefaultIncludes = function (options) {
   if (options.domain_id) {
     community = {
       model: models.Community,
-      required: false,
+      required: true,
       where: { access: models.Community.ACCESS_PUBLIC }
     };
 
