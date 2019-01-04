@@ -289,12 +289,13 @@ const createTranscriptForFlac = (flackUrl, workPackage, callback) => {
     client
       .longRunningRecognize(request)
       .then(data => {
+        log.info("Got data from google cloud - step 1", { data });
         const operation = data[0];
         // Get a Promise representation of the final result of the job
         return operation.promise();
       })
       .then(data => {
-        log.info("Got data from google cloud", { data });
+        log.info("Got data from google cloud - step 2", { data });
         callback(null, data[0]);
       })
       .catch(error => {
