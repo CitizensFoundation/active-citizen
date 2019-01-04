@@ -137,6 +137,7 @@ const getPushItem = (type, model) => {
     lastReportedByEmail: lastReportedByEmail,
     counter_flags: model.counter_flags,
     status: model.status,
+    public_data: model.public_data,
     user_id: model.user_id,
     toxicityScore: toxicityScore,
     toxicityScoreRaw: toxicityScoreRaw,
@@ -186,7 +187,7 @@ const getItems = (posts, points, options) => {
   if (options.allContent) {
     items = _.orderBy(items,['created_at'], ['desc']);
   } else {
-    items = _.orderBy(items,['status', 'counter_flags', 'created_at'], ['asc','desc','asc']);
+    items = _.orderBy(items,['status', 'counter_flags', 'created_at'], ['asc','desc','desc']);
   }
 
   return items;

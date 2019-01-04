@@ -22,14 +22,8 @@ ModerationWorker.prototype.process = (workPackage, callback) => {
     case 'estimate-post-toxicity':
       estimateToxicityScoreForPost(workPackage, callback);
       break;
-    case 'estimate-post-transcript-toxicity':
-      estimateToxicityScoreForPost(_.merge({useTranscript: true}, workPackage), callback);
-      break;
     case 'estimate-point-toxicity':
       estimateToxicityScoreForPoint(workPackage, callback);
-      break;
-    case 'estimate-point-transcript-toxicity':
-      estimateToxicityScoreForPoint(_.merge({useTranscript: true}, workPackage), callback);
       break;
     case 'perform-many-moderation-actions':
       performManyModerationActions(workPackage, callback);

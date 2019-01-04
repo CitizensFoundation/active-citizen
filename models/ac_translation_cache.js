@@ -45,7 +45,8 @@ module.exports = function(sequelize, DataTypes) {
           case 'categoryName':
             return modelInstance.name;
           case 'postTranscriptContent':
-            return modelInstance.public_data.transcript.text;
+            return (modelInstance.public_data && modelInstance.public_data.transcript) ?
+                      modelInstance.public_data.transcript.text : null;
           default:
             console.error("No valid textType for translation");
             return null;
@@ -95,27 +96,31 @@ module.exports = function(sequelize, DataTypes) {
 
       getTranslation: function (req, modelInstance, callback) {
         const contentToTranslate = AcTranslationCache.getContentToTranslate(req, modelInstance);
-        const contentHash = farmhash.hash32(contentToTranslate).toString();
-        const textType = req.query.textType;
-        let targetLanguage = req.query.targetLanguage.replace('_','-');
-        if (targetLanguage!='zh-CN' && targetLanguage!='zh-TW') {
-          targetLanguage = targetLanguage.split("-")[0];
-        }
-        let indexKey = `${textType}-${modelInstance.id}-${targetLanguage}-${contentHash}`;
+        if (contentToTranslate && contentToTranslate!=='') {
+          const contentHash = farmhash.hash32(contentToTranslate).toString();
+          const textType = req.query.textType;
+          let targetLanguage = req.query.targetLanguage.replace('_','-');
+          if (targetLanguage!='zh-CN' && targetLanguage!='zh-TW') {
+            targetLanguage = targetLanguage.split("-")[0];
+          }
+          let indexKey = `${textType}-${modelInstance.id}-${targetLanguage}-${contentHash}`;
 
-        AcTranslationCache.findOne({
-          where: {
-            index_key: indexKey
-          }
-        }).then(function (translationModel) {
-          if (translationModel) {
-            callback(null, { content: translationModel.content });
-          } else {
-            AcTranslationCache.getTranslationFromGoogle(textType, indexKey, contentToTranslate, targetLanguage, modelInstance, callback);
-          }
-        }).catch(function (error) {
-          callback(error);
-        });
+          AcTranslationCache.findOne({
+            where: {
+              index_key: indexKey
+            }
+          }).then(function (translationModel) {
+            if (translationModel) {
+              callback(null, { content: translationModel.content });
+            } else {
+              AcTranslationCache.getTranslationFromGoogle(textType, indexKey, contentToTranslate, targetLanguage, modelInstance, callback);
+            }
+          }).catch(function (error) {
+            callback(error);
+          });
+        } else {
+          callback("Empty string for translation");
+        }
       }
     }
   });

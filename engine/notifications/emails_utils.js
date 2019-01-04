@@ -143,6 +143,11 @@ var filterNotificationForDelivery = function (notification, user, template, subj
 var sendOneEmail = function (emailLocals, callback) {
   var template, fromEmail;
 
+  if (!emailLocals.isReportingContent)
+    emailLocals.isReportingContent = false;
+  if (!emailLocals.isAutomated)
+    emailLocals.isAutomated = false;
+
   async.series([
     function (seriesCallback) {
       if (emailLocals.domain && emailLocals.domain.domain_name) {

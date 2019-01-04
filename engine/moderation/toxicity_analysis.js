@@ -16,16 +16,20 @@ if (process.env.GOOGLE_PERSPECTIVE_API_KEY) {
 }
 
 const getToxicityScoreForText = (text, doNotStore, callback) => {
-  perspectiveApi.analyze(text, { doNotStore, attributes: [
-    'TOXICITY', 'SEVERE_TOXICITY','IDENTITY_ATTACK',
-    'THREAT','INSULT','PROFANITY','SEXUALLY_EXPLICIT',
-    'FLIRTATION'] }).then( result => {
+  if (text && text!=="") {
+    perspectiveApi.analyze(text, { doNotStore, attributes: [
+        'TOXICITY', 'SEVERE_TOXICITY','IDENTITY_ATTACK',
+        'THREAT','INSULT','PROFANITY','SEXUALLY_EXPLICIT',
+        'FLIRTATION'] }).then( result => {
       log.debug("Text for toxicity", { text });
       log.debug("getToxicityScoreForText", { result });
-    callback(null, result);
-  }).catch( error => {
-    callback(error);
-  });
+      callback(null, result);
+    }).catch( error => {
+      callback(error);
+    });
+  } else {
+    callback("No text for toxicity score");
+  }
 };
 
 const setupModelPublicDataScore = (model, text, results) => {
@@ -89,7 +93,7 @@ const hasModelBreachedToxicityEmailThreshold = model => {
 };
 
 const getTranslatedTextForPost = (post, callback) => {
-  let postName, postDescription;
+  let postName, postDescription, postTranscript;
   async.parallel([
     (parallelCallback) => {
       const req = { query: {
@@ -118,9 +122,24 @@ const getTranslatedTextForPost = (post, callback) => {
           parallelCallback();
         }
       });
+    },
+    (parallelCallback) => {
+      const req = { query: {
+          textType: 'postTranscriptContent',
+          targetLanguage: 'en'
+        }};
+      models.AcTranslationCache.getTranslation(req, post, (error, translation) => {
+        if (error) {
+          log.warn("No text from translate", { error });
+          parallelCallback();
+        } else {
+          postTranscript = translation;
+          parallelCallback();
+        }
+      });
     }
   ], error => {
-    callback(error, `${postName.content} ${postDescription.content}`);
+    callback(error, `${postName.content} ${postDescription.content} ${postTranscript? postTranscript.content : ''}`);
   });
 };
 
@@ -180,29 +199,27 @@ const estimateToxicityScoreForPost = (options, callback) => {
           attribues: ['id','age_group']
         }
       ],
-      attributes: ['id','name','description','language','data','group_id']
+      attributes: ['id','name','description','language','data','group_id','public_data']
     }).then( post => {
       if (post) {
         let doNotStoreValue = post.Group.access===0 && post.Group.Community.access === 0;
         if (post.User.age_group && (post.User.age_group==="0-12" || post.User.age_group==="0"))
           doNotStoreValue = true;
 
-        let textContent, textUsed;
+        let textContent, textUsed, transcriptText;
 
-        if (options.useTranscript && post.useVideo && post.PostVideos && post.PostVideos.length>0 &&
-            post.PostVideos[post.PostVideos.length-1].meta && post.PostVideos[0].meta.text) {
-          textContent = post.PostVideos[post.PostVideos.length-1].meta.text;
-        } else if (options.useTranscript && post.useAudio && post.PostAudios && post.PostAudios.length>0 &&
-            post.PostAudios[post.PostAudios.length-1].meta && post.PostVideos[post.PostAudios.length-1].meta.text) {
-          textContent = post.PostAudios[post.PostAudios.length-1].meta.text;
-        } else {
-          textContent = post.name+" "+post.description;
+        if (post.public_data &&
+            post.public_data.transcript &&
+            post.public_data.transcript.text) {
+          transcriptText = post.public_data.transcript.text;
         }
+
+        textContent = `${post.name} ${post.description} ${transcriptText? transcriptText : ''}`;
 
         if (post.language && post.language.substring(0,2)==="en") {
           textUsed = textContent;
           getToxicityScoreForText(textUsed, doNotStoreValue, callback);
-        } else {
+        } else if (textContent && textContent!=='') {
           getTranslatedTextForPost(post, (error, translatedText) => {
             if (error)
               callback(error);
@@ -227,6 +244,9 @@ const estimateToxicityScoreForPost = (options, callback) => {
                 }
               });
           });
+        } else {
+          log.warn("No text for toxicity");
+          callback();
         }
       } else {
         callback("Could not find post");
@@ -289,20 +309,12 @@ const estimateToxicityScoreForPoint = (options, callback) => {
 
         let textContent, textUsed;
 
-        if (options.useTranscript && point.useVideo && point.PointVideos && point.PointVideos.length>0 &&
-          point.PointVideos[point.PointVideos.length-1].meta && point.PointVideos[0].meta.text) {
-          textContent = point.PointVideos[point.PointVideos.length-1].meta.text;
-        } else if (options.useTranscript && point.useAudio && point.PointAudios && point.PointAudios.length>0 &&
-          point.PointAudios[point.PointAudios.length-1].meta && point.PointVideos[point.PointAudios.length-1].meta.text) {
-          textContent = point.PointAudios[point.PointAudios.length-1].meta.text;
-        } else {
-          textContent = point.PointRevisions[point.PointRevisions.length-1].content;
-        }
+        textContent = point.PointRevisions[point.PointRevisions.length-1].content;
 
         if (point.language && point.language.substring(0,2)==="en") {
           textUsed = textContent;
           getToxicityScoreForText(textContent, doNotStoreValue, callback);
-        } else {
+        } else if (textContent && textContent!=='') {
           getTranslatedTextForPoint(point, (error, translatedText) => {
             if (error)
               callback(error);
@@ -359,6 +371,9 @@ const estimateToxicityScoreForPoint = (options, callback) => {
                 }
               });
           });
+        } else {
+          log.warn("Empty string for score");
+          callback();
         }
       } else {
         callback("Could not find point");
