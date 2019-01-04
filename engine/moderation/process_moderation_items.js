@@ -38,6 +38,23 @@ const moderationItemActionMaster = (req, res, options) => {
           }
           item.save().then( () => {
             log.info('Moderation Action Done', { item, options });
+            if (options.itemType==='point') {
+              if (options.actionType==='anonymize') {
+                queue.create('process-anonymization', { type: 'anonymize-point-activities', pointId: options.itemId }).
+                priority('high').removeOnComplete(true).save();
+              } else if (options.actionType==='delete') {
+                queue.create('process-deletion', { type: 'delete-point-activities', postId: options.itemId }).
+                priority('high').removeOnComplete(true).save();
+              }
+            } else if (options.itemType==='post') {
+              if (options.actionType==='anonymize') {
+                queue.create('process-anonymization', { type: 'anonymize-post-activities', pointId: options.itemId }).
+                priority('high').removeOnComplete(true).save();
+              } else if (options.actionType==='delete') {
+                queue.create('process-deletion', { type: 'delete-post-activities', postId: options.itemId }).
+                priority('high').removeOnComplete(true).save();
+              }
+            }
             res.sendStatus(200);
           }).catch( error => {
             log.error("Error deleting moderated item", { error });
@@ -53,6 +70,50 @@ const moderationItemActionMaster = (req, res, options) => {
       })
     }
   });
+};
+
+const createActivityJob = (workPackage, model) => {
+  if (workPackage.itemType==='post') {
+    if (workPackage.actionType==='anonymize') {
+      queue.create('process-anonymization', { type: 'anonymize-post-activities', postId: model.id }).
+      priority('high').removeOnComplete(true).save();
+    } else if (workPackage.actionType==='delete') {
+      queue.create('process-deletion', { type: 'delete-post-activities', postId: model.id }).
+      priority('high').removeOnComplete(true).save();
+    }
+  } else if (workPackage.itemType==='point') {
+    if (workPackage.actionType==='anonymize') {
+      queue.create('process-anonymization', { type: 'anonymize-point-activities', pointId: model.id }).
+      priority('high').removeOnComplete(true).save();
+    } else if (workPackage.actionType==='delete') {
+      queue.create('process-deletion', { type: 'delete-point-activities', pointId: model.id }).
+      priority('high').removeOnComplete(true).save();
+    }
+  }
+};
+
+const preProcessActivities = (workPackage, callback) => {
+  async.forEachLimit(workPackage.itemIds, 20, (id, forEachCallback) => {
+    workPackage.model.unscoped().find(
+      {
+        where: {
+          id: id
+        },
+        include: workPackage.includes
+      }).then((model) => {
+      if (model) {
+        createActivityJob(workPackage, model);
+        forEachCallback();
+      } else {
+        log.error("Trying to change activities on an unknown item");
+        forEachCallback();
+      }
+    }).catch(error => {
+      forEachCallback(error);
+    });
+  }, error => {
+    callback(error);
+  })
 };
 
 const moderationManyItemsActionMaster = (workPackage, callback) => {
@@ -84,22 +145,28 @@ const moderationManyItemsActionMaster = (workPackage, callback) => {
         };
       }
       if (updateValues) {
-        workPackage.model.unscoped().update(
-          updateValues,
-          {
-            where: {
-              deleted: false,
-              id: {
-                $in: workPackage.itemIds
-              }
-            },
-          include: workPackage.includes
-        }).then((spread) => {
-          log.info('Moderation Action Many', { spread, workPackage });
-          callback();
-        }).catch(error => {
-          callback(error);
-        })
+        preProcessActivities(workPackage, (error) => {
+          if (error) {
+            callback(error);
+          } else {
+            workPackage.model.unscoped().update(
+              updateValues,
+              {
+                where: {
+                  deleted: false,
+                  id: {
+                    $in: workPackage.itemIds
+                  }
+                },
+                include: workPackage.includes
+              }).then((spread, other) => {
+              log.info('Moderation Action Many', { spread, workPackage });
+              callback();
+            }).catch(error => {
+              callback(error);
+            })
+          }
+        });
       } else {
         callback("Couldn't find update values")
       }
@@ -136,7 +203,8 @@ const performSingleModerationAction = (req, res, options) => {
     model = models.Point;
   }
 
-  moderationItemActionMaster(req, res, { itemId: options.itemId, model, actionType: options.actionType, includes });
+  moderationItemActionMaster(req, res, { itemType: options.itemType, itemId: options.itemId, model, actionType: options.actionType, includes });
+
 
 };
 
@@ -178,14 +246,14 @@ const performManyModerationActions = (workPackage, callback) => {
   async.parallel([
     parallelCallback => {
       if (postIds && postIds.length>0) {
-        moderationManyItemsActionMaster(_.merge(postWorkPackage, { model: models.Post, includes, itemIds: postIds }), parallelCallback);
+        moderationManyItemsActionMaster(_.merge(postWorkPackage, { itemType: 'post', model: models.Post, includes, itemIds: postIds }), parallelCallback);
       } else {
         parallelCallback();
       }
     },
     parallelCallback => {
       if (pointIds && pointIds.length>0) {
-        moderationManyItemsActionMaster(_.merge(pointWorkPackage, { model: models.Point, includes, itemIds: pointIds }), parallelCallback);
+        moderationManyItemsActionMaster(_.merge(pointWorkPackage, { itemType: 'point', model: models.Point, includes, itemIds: pointIds }), parallelCallback);
       } else {
         parallelCallback();
       }

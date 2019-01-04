@@ -14,6 +14,69 @@ if(process.env.AIRBRAKE_PROJECT_ID) {
 
 let AnonymizationWorker = function () {};
 
+const anonymizePointActivities = (workPackage, callback) => {
+  const pointId = workPackage.pointId;
+  const userId = workPackage.userId;
+
+  log.info('Starting Point Activities Anonymized', {pointId: pointId, context: 'ac-anonymize', userId: workPackage.userId});
+  if (pointId && workPackage.anonymousUserId) {
+    async.series([
+      (seriesCallback) => {
+        models.AcActivity.update(
+          { user_id: workPackage.anonymousUserId },
+          { where: { point_id: pointId } }
+        ).then(function (spread) {
+          log.info('Point User Activities Anonymized', {pointId: pointId, numberAnonymized: spread[0],context: 'ac-anonymize', userId: workPackage.userId});
+          seriesCallback();
+        }).catch(function (error) {
+          seriesCallback(error);
+        });
+      },
+      (seriesCallback) => {
+        models.PointRevision.update(
+          { user_id: workPackage.anonymousUserId, ip_address: '127.0.0.1' },
+          { where: { point_id:  pointId, user_id: userId  } }
+        ).then(function (spread) {
+          log.info('Point User Revision Anonymized', {pointId: pointId, numberAnonymized: spread[0],context: 'ac-anonymize', userId: workPackage.userId});
+          seriesCallback();
+        }).catch(function (error) {
+          seriesCallback(error);
+        });
+      }
+    ], (error) => {
+      callback(error);
+    });
+  } else {
+    callback("No pointId, userId or anonymousUserId for anonymizePointActivities");
+  }
+};
+
+const anonymizePostActivities = (workPackage, callback) => {
+  const postId = workPackage.postId;
+  const userId = workPackage.userId;
+
+  log.info('Starting Post Activities Anonymized', {postId: postId, context: 'ac-anonymize', userId: workPackage.userId});
+  if (postId && workPackage.anonymousUserId) {
+    async.series([
+      (seriesCallback) => {
+        models.AcActivity.update(
+          { user_id: workPackage.anonymousUserId },
+          { where: { post_id: postId } }
+        ).then(function (spread) {
+          log.info('Post User Activities Anonymized', {postId: postId, numberAnonymized: spread[0],context: 'ac-anonymize', userId: workPackage.userId});
+          seriesCallback();
+        }).catch(function (error) {
+          seriesCallback(error);
+        });
+      }
+    ], (error) => {
+      callback(error);
+    });
+  } else {
+    callback("No pointId or anonymousUserId for anonymizePointActivities");
+  }
+};
+
 const anonymizePointContent = (workPackage, callback) => {
   const pointId = workPackage.pointId;
   log.info('Starting Point Activities Anonymized', {pointId: pointId, context: 'ac-anonymize', userId: workPackage.userId});
@@ -702,8 +765,14 @@ AnonymizationWorker.prototype.process = (workPackage, callback) => {
         case 'anonymize-post-content':
           anonymizePostContent(workPackage, callback);
           break;
+        case 'anonymize-post-activities':
+          anonymizePostActivities(workPackage, callback);
+          break;
         case 'anonymize-point-content':
           anonymizePointContent(workPackage, callback);
+          break;
+        case 'anonymize-point-activities':
+          anonymizePointActivities(workPackage, callback);
           break;
         case 'anonymize-group-content':
           anonymizeGroupContent(workPackage, callback);

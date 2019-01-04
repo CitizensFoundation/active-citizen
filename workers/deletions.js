@@ -615,6 +615,91 @@ const deletePointContent = (workPackage, callback) => {
   }
 };
 
+const deletePointActivities = (workPackage, callback) => {
+  const pointId = workPackage.pointId;
+  const userId = workPackage.userId;
+  log.info('Starting Point Activities Delete', {pointId: pointId, context: 'ac-delete', userId: workPackage.userId});
+  if (pointId) {
+    async.series([
+      (seriesCallback) => {
+        models.AcActivity.update(
+          { deleted: true },
+          { where: { point_id: pointId }}
+        ).then(function (spread) {
+          log.info('Point Activities Deleted', {pointId: pointId, numberDeleted: spread[0],context: 'ac-delete', userId: workPackage.userId});
+          seriesCallback();
+        }).catch(function (error) {
+          seriesCallback(error);
+        });
+      },
+      (seriesCallback) => {
+        models.PointRevision.update(
+          { deleted: true },
+          { where: { point_id: pointId } }
+        ).then(function (spread) {
+          log.info('Point Revision Deleted', {pointId: pointId, numberDeleted: spread[0],context: 'ac-delete', userId: workPackage.userId});
+          seriesCallback();
+        }).catch(function (error) {
+          seriesCallback(error);
+        });
+      },
+      (seriesCallback) => {
+        models.PointQuality.update(
+          { deleted: true },
+          { where: { point_id: pointId } }
+        ).then(function (spread) {
+          log.info('Point Quality Deleted', {pointId: pointId, numberDeleted: spread[0],context: 'ac-delete', userId: workPackage.userId});
+          seriesCallback();
+        }).catch(function (error) {
+          seriesCallback(error);
+        });
+      }
+    ], (error) => {
+      log.info("deletePointActivities done", { error: error, workPackage: workPackage });
+      callback(error);
+    });
+  } else {
+    callback("No pointId, userId for deletePointContent");
+  }
+};
+
+const deletePostActivities = (workPackage, callback) => {
+  const postId = workPackage.postId;
+  const userId = workPackage.userId;
+  log.info('Starting Post Activities Delete', {postId: postId, context: 'ac-delete', userId: workPackage.userId});
+  if (postId) {
+    async.series([
+      (seriesCallback) => {
+        models.AcActivity.update(
+          { deleted: true },
+          { where: { post_id: postId }}
+        ).then(function (spread) {
+          log.info('Post User Activities Deleted', {postId: postId, numberDeleted: spread[0],context: 'ac-delete', userId: workPackage.userId});
+          seriesCallback();
+        }).catch(function (error) {
+          seriesCallback(error);
+        });
+      },
+      (seriesCallback) => {
+        models.Endorsement.update(
+          { deleted: true },
+          { where: { post_id: postId } }
+        ).then(function (spread) {
+          log.info('Post User Endorsement Deleted', {postId: postId, numberDeleted: spread[0],context: 'ac-delete', userId: workPackage.userId});
+          seriesCallback();
+        }).catch(function (error) {
+          seriesCallback(error);
+        });
+      }
+    ], (error) => {
+      log.info("deletePostActivities done", { error: error, workPackage: workPackage });
+      callback(error);
+    });
+  } else {
+    callback("No pointId, userId for deletePostActivities");
+  }
+};
+
 const deletePostContent = (workPackage, callback) => {
   const postId = workPackage.postId;
   log.info('Starting Post Activities Delete', {postId: postId, context: 'ac-delete', userId: workPackage.userId});
@@ -1739,8 +1824,14 @@ DeletionWorker.prototype.process = (workPackage, callback) => {
         case 'delete-point-content':
           deletePointContent(workPackage, callback);
           break;
+        case 'delete-point-activities':
+          deletePointActivities(workPackage, callback);
+          break;
         case 'delete-post-content':
           deletePostContent(workPackage, callback);
+          break;
+        case 'delete-post-activities':
+          deletePostActivities(workPackage, callback);
           break;
         case 'delete-group-content':
           deleteGroupContent(workPackage, callback);
