@@ -129,6 +129,12 @@ const getPushItem = (type, model) => {
     }
   }
 
+  let groupName;
+  groupName = model.Group ? model.Group.name : null;
+  if (groupName==='hidden_public_group_for_domain_level_points') {
+    groupName = "";
+  }
+
   return {
     id: model.id,
     created_at: model.created_at,
@@ -153,7 +159,7 @@ const getPushItem = (type, model) => {
     is_point: type==='point',
     title: model.name,
     post_id: model.post_id,
-    Group: model.Group,
+    groupName: groupName,
     language: model.language,
     name: model.name,
     description: model.description,
@@ -302,6 +308,8 @@ const getAllModeratedItemsByMaster = (options, callback) => {
 
       if (!options.userId) {
         pointIncludes = pointIncludes.concat([ { model: models.User }]);
+      } else {
+        pointIncludes = pointIncludes.concat([ { model: models.Group, required: false }]);
       }
 
       const order = [
