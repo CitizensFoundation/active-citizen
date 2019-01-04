@@ -11,8 +11,8 @@
 <% } %>
 
 <% if (isReportingContent && isAutomated) { %>
-  <p style="line-height: 1.1em;margin: 0;font-size: 16pt;padding-top: 32px;">
-    <em><%= t('notification.email.automaticToxicityDetection') %></em>
+  <p style="padding-top: 8px;">
+    <b><%= t('notification.email.automaticToxicityDetection') %></b>
   </p>
   <p>
     Toxicity score: <%= moderation.toxicityScore %><br>
