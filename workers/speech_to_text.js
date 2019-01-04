@@ -355,37 +355,42 @@ const createTranscriptForVideo = (workPackage, callback) => {
     where: workPackage.videoId
   }).then((video) => {
     if (video) {
-      const videoUrl = video.formats[0];
-      const flacUrl = videoUrl.slice(0, videoUrl.length-4)+'.flac';
-      uploadFlacToGoogleCloud(flacUrl, (error, gsUri) => {
-        if (error) {
-          callback(error);
-        } else {
-          createTranscriptForFlac(gsUri, workPackage, (error, response) => {
-            if (!video.meta.transcripts)
-              video.set('meta.transcript', {});
-            video.set('meta.transcript.googleSpeechResponse', response);
-            if (error) {
-              video.set('meta.transcript.error', error);
-            } else {
-              if (response.results && response.results && response.results.length>0 &&
-                response.results[0].alternatives && response.results[0].alternatives.length>0) {
-                const transcription = response.results
-                  .map(result => result.alternatives[0].transcript)
-                  .join('\n');
-                video.set('meta.transcript.text', transcription);
+      if (!video.meta.transcript)
+        video.set('meta.transcript', {});
+      video.set('meta.transcript.inProgressDate', new Date());
+      video.save().then( ()=> {
+        const videoUrl = video.formats[0];
+        const flacUrl = videoUrl.slice(0, videoUrl.length-4)+'.flac';
+        uploadFlacToGoogleCloud(flacUrl, (error, gsUri) => {
+          if (error) {
+            callback(error);
+          } else {
+            createTranscriptForFlac(gsUri, workPackage, (error, response) => {
+              video.set('meta.transcript.googleSpeechResponse', response);
+              if (error) {
+                video.set('meta.transcript.error', error);
               } else {
-                video.set('meta.transcript.error', 'Found no text');
+                if (response.results && response.results && response.results.length>0 &&
+                  response.results[0].alternatives && response.results[0].alternatives.length>0) {
+                  const transcription = response.results
+                    .map(result => result.alternatives[0].transcript)
+                    .join('\n');
+                  video.set('meta.transcript.text', transcription);
+                } else {
+                  video.set('meta.transcript.error', 'Found no text');
+                }
               }
-            }
-            video.save().then(() => {
-              log.info("Video with transcript saved", { videoId: workPackage.videoId, error });
-              callback()
-            }).catch((error) => {
-              callback(error);
+              video.save().then(() => {
+                log.info("Video with transcript saved", { videoId: workPackage.videoId, error });
+                callback()
+              }).catch((error) => {
+                callback(error);
+              });
             });
-          });
-        }
+          }
+        });
+      }).catch( error => {
+        callback(error);
       });
     } else {
       callback("Couldn't find video for createTranscriptForVideo", { workPackage });
@@ -412,37 +417,42 @@ const createTranscriptForAudio = (workPackage, callback) => {
     ]
   }).then((audio) => {
     if (audio) {
-      const audioUrl = audio.formats[0];
-      const flacUrl = audioUrl.slice(0, audioUrl.length-4)+'.flac';
-      uploadFlacToGoogleCloud(flacUrl, (error, gsUri) => {
-        if (error) {
-          callback(error);
-        } else {
-          createTranscriptForFlac(gsUri, workPackage, (error, response) => {
-            if (!audio.meta.transcripts)
-              audio.set('meta.transcript', {});
-            audio.set('meta.transcript.googleSpeechResponse', response);
-            if (error) {
-              audio.set('meta.transcript.error', error);
-            } else {
-              if (response.results && response.results && response.results.length>0 &&
-                response.results[0].alternatives && response.results[0].alternatives.length>0) {
-                const transcription = response.results
-                  .map(result => result.alternatives[0].transcript)
-                  .join('\n');
-                audio.set('meta.transcript.text', transcription);
+      if (!audio.meta.transcript)
+        audio.set('meta.transcript', {});
+      audio.set('meta.transcript.inProgressDate', new Date());
+      audio.save().then( ()=> {
+        const audioUrl = audio.formats[0];
+        const flacUrl = audioUrl.slice(0, audioUrl.length-4)+'.flac';
+        uploadFlacToGoogleCloud(flacUrl, (error, gsUri) => {
+          if (error) {
+            callback(error);
+          } else {
+            createTranscriptForFlac(gsUri, workPackage, (error, response) => {
+              audio.set('meta.transcript.googleSpeechResponse', response);
+              if (error) {
+                audio.set('meta.transcript.error', error);
               } else {
-                audio.set('meta.transcript.error', 'Found no text');
+                if (response.results && response.results && response.results.length>0 &&
+                  response.results[0].alternatives && response.results[0].alternatives.length>0) {
+                  const transcription = response.results
+                    .map(result => result.alternatives[0].transcript)
+                    .join('\n');
+                  audio.set('meta.transcript.text', transcription);
+                } else {
+                  audio.set('meta.transcript.error', 'Found no text');
+                }
               }
-            }
-            audio.save().then(() => {
-              log.info("Audio with transcript saved", { audioId: workPackage.audioId, error });
-              callback()
-            }).catch((error) => {
-              callback(error);
+              audio.save().then(() => {
+                log.info("Audio with transcript saved", { audioId: workPackage.audioId, error });
+                callback()
+              }).catch((error) => {
+                callback(error);
+              });
             });
-          });
-        }
+          }
+        });
+      }).catch( error => {
+        callback(error);
       });
     } else {
       callback("Couldn't find audio for createTranscriptForAudio", { workPackage });
