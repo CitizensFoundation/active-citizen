@@ -13,6 +13,8 @@
     "email": {
       "automaticToxicityDetection": "Þetta efni hefur verið merkt sem hugsanlega 'eitrað' af gervigreindarkerfi. Þú getur eytt efni ef með þarf.",
       "automaticToxicityDetectionDisclaimer": "Stundum reiknar gervigreindarkerfi rangt, ef að það gerist þá þarft þú ekki að gera neitt og getur hunsað þennan tölvupóst.",
+      "automaticToxicityHowLikely": "Hversu líklegt að efni sé eitrað",
+      "automaticToxicityEnglishText": "Enskur texti notaður við útreikninga",
       "newPointedAddedToThisIdea": "Nýjum rökum hefur verið bætt við hugmynd",
       "newPointedAddedToIdea": "Nýjum rökum hefur verið bætt við þína hugmynd",
       "thisNewIdea": "Nýrri hugmynd",

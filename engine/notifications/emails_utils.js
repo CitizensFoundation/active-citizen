@@ -52,14 +52,11 @@ if (process.env.SENDGRID_USERNAME) {
 
   transport = nodemailer.createTransport(smtpTransport(smtpConfig));
 
-  console.log('SMTP Configured');
-
   transport.verify(function(error, success) {
     if (error) {
-      console.warn('ERROR');
-      console.warn(error);
+      log.error(error);
     } else {
-      console.log('Server is ready to take our messages');
+      log.info('Server is ready to take our messages');
     }
   });
 }
@@ -82,12 +79,12 @@ var filterNotificationForDelivery = function (notification, user, template, subj
 
   //TODO: Switch from FREQUENCY_AS_IT_HAPPENS if user has had a lot of emails > 25 in the hour or something
 
-  console.log("Notification Email Processing", {email: user.email, notification_settings_type: notification.notification_setting_type,
+  log.info("Notification Email Processing", {email: user.email, notification_settings_type: notification.notification_setting_type,
                                                 method: method, frequency: frequency});
 
   if (method !== models.AcNotification.METHOD_MUTED) {
     if (frequency === models.AcNotification.FREQUENCY_AS_IT_HAPPENS) {
-      console.log("Notification Email Processing Sending eMail", {email: user.email, method: method, frequency: frequency});
+      log.info("Notification Email Processing Sending eMail", {email: user.email, method: method, frequency: frequency});
       queue.create('send-one-email', {
         subject: subject,
         template: template,
@@ -267,7 +264,7 @@ var sendOneEmail = function (emailLocals, callback) {
               fs.unlink(fileName, function (err) {
                 fs.writeFile(fileName, results.html, function(err) {
                   if(err) {
-                    console.log(err);
+                    log.error(err);
                   }
                   seriesCallback();
                 });

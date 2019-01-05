@@ -198,7 +198,7 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
             seriesCallback();
             break;
           case "notification.report.content":
-            var template, translateToken, moderation, source;
+            var template, translateToken, moderation, source, toxicity;
             if (notification.AcActivities[0].Point) {
               template = 'point_activity';
               translateToken = 'notification.email.pointReport';
@@ -220,6 +220,11 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
                 }
               }
             }
+
+            if (moderation && moderation.toxicityScore) {
+              moderation.toxicityScorePercent = Math.round(moderation.toxicityScore*100)+'%';
+            }
+
             queue.create('send-one-email', {
               subject: { translateToken: translateToken },
               template: template,
