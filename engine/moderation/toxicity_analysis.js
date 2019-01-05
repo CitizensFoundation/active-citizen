@@ -250,13 +250,15 @@ const estimateToxicityScoreForPost = (options, callback) => {
               });
           });
         } else {
-          log.warn("No text for toxicity");
+          log.warn("getToxicityScoreForText post No text for toxicity");
           callback();
         }
       } else {
+        log.error("getToxicityScoreForText post could not find post");
         callback("Could not find post");
       }
     }).catch( error => {
+      log.error("getToxicityScoreForText post error", { error });
       callback(error);
     })
   } else {
@@ -381,13 +383,15 @@ const estimateToxicityScoreForPoint = (options, callback) => {
               });
           });
         } else {
-          log.warn("Empty string for score");
+          log.warn("getToxicityScoreForText No text for toxicity");
           callback();
         }
       } else {
+        log.error("getToxicityScoreForText could not find point");
         callback("Could not find point");
       }
     }).catch( error => {
+      log.error("getToxicityScoreForText error", { error });
       callback(error);
     })
   } else {
