@@ -22,7 +22,7 @@ const getToxicityScoreForText = (text, doNotStore, callback) => {
         'TOXICITY', 'SEVERE_TOXICITY','IDENTITY_ATTACK',
         'THREAT','INSULT','PROFANITY','SEXUALLY_EXPLICIT',
         'FLIRTATION'] }).then( result => {
-      log.debug("getToxicityScoreForText results", { result });
+      log.info("getToxicityScoreForText results", { result });
       callback(null, result);
     }).catch( error => {
       log.error("getToxicityScoreForText error", { error });
@@ -162,6 +162,7 @@ const getTranslatedTextForPoint = (point, callback) => {
 
 const estimateToxicityScoreForPost = (options, callback) => {
   if (process.env.GOOGLE_PERSPECTIVE_API_KEY) {
+    log.info("getToxicityScoreForText post preparing");
     models.Post.find({
       where: {
         id: options.postId
@@ -219,9 +220,12 @@ const estimateToxicityScoreForPost = (options, callback) => {
 
         if (post.language && post.language.substring(0,2)==="en") {
           textUsed = textContent;
+          log.info("getToxicityScoreForText post getting english text");
           getToxicityScoreForText(textUsed, doNotStoreValue, callback);
         } else if (textContent && textContent!=='') {
+          log.info("getToxicityScoreForText post getting translated text");
           getTranslatedTextForPost(post, (error, translatedText) => {
+            log.info("getToxicityScoreForText post got translated text", { translatedText, error });
             if (error)
               callback(error);
             else
@@ -262,6 +266,7 @@ const estimateToxicityScoreForPost = (options, callback) => {
 
 const estimateToxicityScoreForPoint = (options, callback) => {
   if (process.env.GOOGLE_PERSPECTIVE_API_KEY) {
+    log.info("getToxicityScoreForText preparing");
     models.Point.find({
       attributes: ['id','language','data','post_id','group_id'],
       where: {
@@ -314,9 +319,12 @@ const estimateToxicityScoreForPoint = (options, callback) => {
 
         if (point.language && point.language.substring(0,2)==="en") {
           textUsed = textContent;
+          log.info("getToxicityScoreForText getting english text");
           getToxicityScoreForText(textContent, doNotStoreValue, callback);
         } else if (textContent && textContent!=='') {
+          log.info("getToxicityScoreForText getting translated text");
           getTranslatedTextForPoint(point, (error, translatedText) => {
+            log.info("getToxicityScoreForText got translated text", { translatedText, error });
             if (error)
               callback(error);
             else
