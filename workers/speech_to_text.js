@@ -351,6 +351,7 @@ const uploadFlacToGoogleCloud = (flacUrl, callback) => {
 };
 
 const createTranscriptForVideo = (workPackage, callback) => {
+  log.info("In createTranscriptForVideo");
   models.Video.find({
     where: workPackage.videoId
   }).then((video) => {
@@ -365,7 +366,9 @@ const createTranscriptForVideo = (workPackage, callback) => {
           if (error) {
             callback(error);
           } else {
+            log.info("createTranscriptForVideo: have uploaded to Google Cloud");
             createTranscriptForFlac(gsUri, workPackage, (error, response) => {
+              log.info("createTranscriptForVideo: got transcript", { response });
               video.set('meta.transcript.googleSpeechResponse', response);
               if (error) {
                 video.set('meta.transcript.error', error);
@@ -401,6 +404,7 @@ const createTranscriptForVideo = (workPackage, callback) => {
 };
 
 const createTranscriptForAudio = (workPackage, callback) => {
+  log.info("In createTranscriptForAudio");
   models.Audio.find({
     where: workPackage.audioId,
     include: [
@@ -427,7 +431,9 @@ const createTranscriptForAudio = (workPackage, callback) => {
           if (error) {
             callback(error);
           } else {
+            log.info("createTranscriptForAudio: have uploaded to Google Cloud");
             createTranscriptForFlac(gsUri, workPackage, (error, response) => {
+              log.info("createTranscriptForAudio: got transcript", { response });
               audio.set('meta.transcript.googleSpeechResponse', response);
               if (error) {
                 audio.set('meta.transcript.error', error);
