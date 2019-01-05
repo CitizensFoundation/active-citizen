@@ -1,5 +1,5 @@
 var async = require("async");
-const Translate = require('@google-cloud/translate');
+const { Translate }= require('@google-cloud/translate');
 const farmhash = require('farmhash');
 var log = require('../utils/logger');
 

@@ -12,6 +12,7 @@
     },
     "email": {
       "automaticToxicityDetection": "This content has been automatically flagged as toxic using AI algorithms that estimate the toxicity of the content. You can delete the content if needed.",
+      "automaticToxicityDetectionDisclaimer": "Sometimes the AI algorithm calculates a wrong score, in that case do not worry, you need to take no further action and can ignore this email.",
       "newPointedAddedToThisIdea": "A new point has been added to this idea",
       "newPointedAddedToIdea": "A new point has been added to your idea",
       "thisNewIdea": "New idea",

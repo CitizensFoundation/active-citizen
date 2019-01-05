@@ -16,15 +16,16 @@ if (process.env.GOOGLE_PERSPECTIVE_API_KEY) {
 }
 
 const getToxicityScoreForText = (text, doNotStore, callback) => {
+  log.info("getToxicityScoreForText starting", { text, doNotStore });
   if (text && text!=="") {
     perspectiveApi.analyze(text, { doNotStore, attributes: [
         'TOXICITY', 'SEVERE_TOXICITY','IDENTITY_ATTACK',
         'THREAT','INSULT','PROFANITY','SEXUALLY_EXPLICIT',
         'FLIRTATION'] }).then( result => {
-      log.debug("Text for toxicity", { text });
-      log.debug("getToxicityScoreForText", { result });
+      log.debug("getToxicityScoreForText results", { result });
       callback(null, result);
     }).catch( error => {
+      log.error("getToxicityScoreForText error", { error });
       callback(error);
     });
   } else {

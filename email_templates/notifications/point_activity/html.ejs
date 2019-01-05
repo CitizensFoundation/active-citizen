@@ -14,11 +14,10 @@
 <% } %>
 
 <% if (isReportingContent && isAutomated) { %>
-  <p style="padding-top: 8px;">
-    <b><%= t('notification.email.automaticToxicityDetection') %></b>
-  </p>
-  <p>
-    Toxicity score: <%= moderation.toxicityScore %><br>
+  <p style="padding-top: 8px;line-height: 1.0em">
+    <b><%= t('notification.email.automaticToxicityDetection') %></b><br>
+    <em><%= t('notification.email.automaticToxicityDetectionDisclaimer') %></em><br>
+    Toxicity score: <%= moderation.toxicityScore %>
   </p>
 <% } %>
 
