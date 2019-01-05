@@ -659,7 +659,8 @@ const deletePointActivities = (workPackage, callback) => {
       callback(error);
     });
   } else {
-    callback("No pointId, userId for deletePointContent");
+    log.error("No pointId, userId for deletePointActivities", { workPackage: workPackage });
+    callback("No pointId, userId for deletePointActivities");
   }
 };
 

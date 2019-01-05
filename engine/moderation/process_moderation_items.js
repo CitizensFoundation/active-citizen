@@ -43,7 +43,7 @@ const moderationItemActionMaster = (req, res, options) => {
                 queue.create('process-anonymization', { type: 'anonymize-point-activities', pointId: options.itemId }).
                 priority('high').removeOnComplete(true).save();
               } else if (options.actionType==='delete') {
-                queue.create('process-deletion', { type: 'delete-point-activities', postId: options.itemId }).
+                queue.create('process-deletion', { type: 'delete-point-activities', pointId: options.itemId }).
                 priority('high').removeOnComplete(true).save();
               }
             } else if (options.itemType==='post') {
