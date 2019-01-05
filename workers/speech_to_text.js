@@ -285,20 +285,21 @@ const createTranscriptForFlac = (flackUrl, workPackage, callback) => {
       audio: audio,
     };
 
-    log.info("Starting speech to text", { request });
+    log.info("createTranscriptForFlac: Starting speech to text", { request });
     client
       .longRunningRecognize(request)
       .then(data => {
-        log.info("Got data from google cloud - step 1", { data });
+        log.info("createTranscriptForFlac: Got data from google cloud - step 1", { data });
         const operation = data[0];
         // Get a Promise representation of the final result of the job
         return operation.promise();
       })
       .then(data => {
-        log.info("Got data from google cloud - step 2", { data });
+        log.info("createTranscriptForFlac: Got data from google cloud - step 2", { data });
         callback(null, data[0]);
       })
       .catch(error => {
+        log.error("createTranscriptForFlac: error", { error });
         callback(error);
       });
   } else {
