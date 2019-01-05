@@ -372,6 +372,7 @@ const createTranscriptForVideo = (workPackage, callback) => {
               video.set('meta.transcript.googleSpeechResponse', response);
               if (error) {
                 video.set('meta.transcript.error', error);
+                log.error('createTranscriptForVideo', { error })
               } else {
                 if (response.results && response.results && response.results.length>0 &&
                   response.results[0].alternatives && response.results[0].alternatives.length>0) {
@@ -381,10 +382,11 @@ const createTranscriptForVideo = (workPackage, callback) => {
                   video.set('meta.transcript.text', transcription);
                 } else {
                   video.set('meta.transcript.error', 'Found no text');
+                  log.error('createTranscriptForVideo', { error: 'Found no text' })
                 }
               }
               video.save().then(() => {
-                log.info("Video with transcript saved", { videoId: workPackage.videoId, error });
+                log.info("createTranscriptForVideo: Video with transcript saved", { videoId: workPackage.videoId, error });
                 callback()
               }).catch((error) => {
                 callback(error);
@@ -437,6 +439,7 @@ const createTranscriptForAudio = (workPackage, callback) => {
               audio.set('meta.transcript.googleSpeechResponse', response);
               if (error) {
                 audio.set('meta.transcript.error', error);
+                log.error("createTranscriptForAudio", { error })
               } else {
                 if (response.results && response.results && response.results.length>0 &&
                   response.results[0].alternatives && response.results[0].alternatives.length>0) {
@@ -446,10 +449,11 @@ const createTranscriptForAudio = (workPackage, callback) => {
                   audio.set('meta.transcript.text', transcription);
                 } else {
                   audio.set('meta.transcript.error', 'Found no text');
+                  log.error("createTranscriptForAudio", { error: 'Found no text' })
                 }
               }
               audio.save().then(() => {
-                log.info("Audio with transcript saved", { audioId: workPackage.audioId, error });
+                log.info("createTranscriptForAudio: Audio with transcript saved", { audioId: workPackage.audioId, error });
                 callback()
               }).catch((error) => {
                 callback(error);
