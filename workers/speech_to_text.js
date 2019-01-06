@@ -282,7 +282,7 @@ const createTranscriptForFlac = (flackUrl, workPackage, callback) => {
 
     const request = {
       config: config,
-      audio: audio,
+      audio: audio
     };
 
     log.info("createTranscriptForFlac: Starting speech to text", { request });
@@ -290,8 +290,9 @@ const createTranscriptForFlac = (flackUrl, workPackage, callback) => {
       .longRunningRecognize(request)
       .then(data => {
         log.info("createTranscriptForFlac: Got data from google cloud - step 1", { data });
-        const operation = data[0];
-        // Get a Promise representation of the final result of the job
+        let operation = data[0];
+        operation.backoffSettings.totalTimeoutMillis = 120000;
+        log.info(operation.backoffSettings);
         return operation.promise();
       })
       .then(data => {
