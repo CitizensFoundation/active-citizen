@@ -11,13 +11,16 @@ const domainIncludes = (domainId) => {
     {
       model: models.Group,
       required: true,
+      attributes: ['id','configuration','name'],
       include: [
         {
           model: models.Community,
           required: true,
+          attributes: ['id','configuration','name'],
           include: [
             {
               model: models.Domain,
+              attributes: ['id','configuration','name'],
               where: {
                 id: domainId
               },
@@ -35,10 +38,12 @@ const communityIncludes = (communityId) => {
     {
       model: models.Group,
       required: true,
+      attributes: ['id','configuration','name'],
       include: [
         {
           model: models.Community,
           required: true,
+          attributes: ['id','configuration','name'],
           where: {
             id: communityId
           }
@@ -53,6 +58,7 @@ const groupIncludes = (groupId) => {
     {
       model: models.Group,
       required: true,
+      attributes: ['id','configuration','name'],
       where: {
         id: groupId
       }
@@ -64,6 +70,7 @@ const userIncludes = (userId) => {
   return [
     {
       model: models.User,
+      attributes: models.User.defaultAttributesWithSocialMediaPublicAndEmail,
       required: true,
       where: {
         id: userId
@@ -171,6 +178,7 @@ const getPushItem = (type, model) => {
     postNameContent: postNameContent,
     name_content: type==='post' ? model.name : "",
     transcriptContent: postTranscriptContent,
+    Group: model.Group,
     PostVideos: model.PostVideos,
     PostAudios: model.PostAudios,
     PostHeaderImages: model.PostHeaderImages,
@@ -215,7 +223,8 @@ const getModelModeration = (options, callback) => {
       ],
     },
     order: options.order,
-    include: options.includes
+    include: options.includes,
+    attributes: options.attributes
   }).then(items => {
     callback(null, items);
   }).catch(error => {
@@ -235,12 +244,13 @@ const getAllModeratedItemsByMaster = (options, callback) => {
         {
           model: models.Image,
           required: false,
-          as: 'PostHeaderImages'
+          as: 'PostHeaderImages',
+          attributes:["formats",'updated_at']
         },
         {
           model: models.Video,
           required: false,
-          attributes: ['id','formats','updated_at','viewable','public_meta'],
+          attributes: ['id','formats','updated_at','viewable','public_meta','meta'],
           as: 'PostVideos',
           include: [
             {
@@ -254,15 +264,15 @@ const getAllModeratedItemsByMaster = (options, callback) => {
         {
           model: models.Audio,
           required: false,
-          attributes: ['id','formats','updated_at','listenable'],
+          attributes: ['id','formats','updated_at','listenable','public_meta','meta'],
           as: 'PostAudios',
         }
       ]);
 
       if (!options.userId) {
-        postIncludes = postIncludes.concat([ { model: models.User }]);
+        postIncludes = postIncludes.concat([ { model: models.User, attributes: models.User.defaultAttributesWithSocialMediaPublicAndEmail }]);
       } else {
-        postIncludes = postIncludes.concat([ { model: models.Group }]);
+        postIncludes = postIncludes.concat([ { model: models.Group, attributes: ['id','name','configuration'] }]);
       }
 
       const order = [
@@ -271,6 +281,8 @@ const getAllModeratedItemsByMaster = (options, callback) => {
         [ { model: models.Audio, as: "PostAudios" }, 'updated_at', 'desc' ],
         [ { model: models.Video, as: "PostVideos" }, { model: models.Image, as: 'VideoImages' } ,'updated_at', 'asc' ]
       ];
+
+      const attributes = ['id','created_at','counter_flags','language','data','name','description','status','public_data','user_id'];
 
       getModelModeration(_.merge(_.cloneDeep(options), {model: models.Post, includes: postIncludes, order }), (error, postsIn) => {
         parallelCallback(error);
@@ -282,7 +294,7 @@ const getAllModeratedItemsByMaster = (options, callback) => {
         {
           model: models.Video,
           required: false,
-          attributes: ['id','formats','updated_at','viewable','public_meta'],
+          attributes: ['id','formats','updated_at','viewable','public_meta','meta'],
           as: 'PointVideos',
           include: [
             {
@@ -296,20 +308,20 @@ const getAllModeratedItemsByMaster = (options, callback) => {
         {
           model: models.Audio,
           required: false,
-          attributes: ['id','formats','updated_at','listenable'],
+          attributes: ['id','formats','updated_at','listenable','public_meta','meta'],
           as: 'PointAudios'
         },
         {
           model: models.PointRevision,
-          attributes: { exclude: ['ip_address', 'user_agent'] },
+          attributes: ['id','content'],
           required: false
         }
       ]);
 
       if (!options.userId) {
-        pointIncludes = pointIncludes.concat([ { model: models.User }]);
+        pointIncludes = pointIncludes.concat([ { model: models.User, attributes: models.User.defaultAttributesWithSocialMediaPublicAndEmail }]);
       } else {
-        pointIncludes = pointIncludes.concat([ { model: models.Group, required: false }]);
+        pointIncludes = pointIncludes.concat([ { model: models.Group, required: false, attributes: ['id','name','configuration'] }]);
       }
 
       const order = [
@@ -319,7 +331,9 @@ const getAllModeratedItemsByMaster = (options, callback) => {
         [ { model: models.Video, as: "PointVideos" }, { model: models.Image, as: 'VideoImages' } ,'updated_at', 'asc' ]
       ];
 
-      getModelModeration(_.merge(_.cloneDeep(options), {model: models.Point, includes: pointIncludes, order }), (error, pointsIn) => {
+      const attributes = ['id','created_at','counter_flags','name','language','data','post_id','status','public_data','user_id'];
+
+      getModelModeration(_.merge(_.cloneDeep(options), {model: models.Point, attributes, includes: pointIncludes, order }), (error, pointsIn) => {
         points = pointsIn;
         parallelCallback(error);
       })
