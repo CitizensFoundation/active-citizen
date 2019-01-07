@@ -190,6 +190,7 @@ const getPushItem = (type, model) => {
 };
 
 const getItems = (posts, points, options) => {
+  log.info("get_moderation_items getItems 1");
   let items = [];
   _.forEach(posts, post => {
     items.push(getPushItem('post', post));
@@ -198,6 +199,7 @@ const getItems = (posts, points, options) => {
   // Free memory
   posts = null;
 
+  log.info("get_moderation_items getItems 2");
   _.forEach(points, point => {
     items.push(getPushItem('point', point));
   });
@@ -205,6 +207,7 @@ const getItems = (posts, points, options) => {
   // Free memory
   points = null;
 
+  log.info("get_moderation_items getItems 3");
   if (options.allContent) {
     items = _.orderBy(items,['created_at'], ['desc']);
   } else {
@@ -215,6 +218,7 @@ const getItems = (posts, points, options) => {
 };
 
 const getModelModeration = (options, callback) => {
+  log.info("get_moderation_items getModelModeration X");
   options.model.unscoped().findAll({
     where: {
       deleted: false,
@@ -346,6 +350,7 @@ const getAllModeratedItemsByMaster = (options, callback) => {
       })
     }
   ], error => {
+    log.info("get_moderation_items got items from database");
     callback(error, getItems(posts, points, options));
   });
 };
