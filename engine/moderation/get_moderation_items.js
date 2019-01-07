@@ -194,9 +194,16 @@ const getItems = (posts, points, options) => {
   _.forEach(posts, post => {
     items.push(getPushItem('post', post));
   });
+
+  // Free memory
+  posts = null;
+
   _.forEach(points, point => {
     items.push(getPushItem('point', point));
   });
+
+  // Free memory
+  points = null;
 
   if (options.allContent) {
     items = _.orderBy(items,['created_at'], ['desc']);
