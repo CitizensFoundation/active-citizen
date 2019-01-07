@@ -131,7 +131,7 @@ const getPushItem = (type, model) => {
     if (model.PostVideos && model.PostVideos.length>0 && model.PostVideos[model.PostVideos.length-1].meta && model.PostVideos[0].meta.text) {
       postTranscriptContent = model.PostVideos[model.PostVideos.length-1].meta.text;
     } else if (model.PostAudios && model.PostAudios.length>0 &&
-      model.PostAudios[model.PostAudios.length-1].meta && model.PostVideos[model.PostAudios.length-1].meta.text) {
+      model.PostAudios[model.PostAudios.length-1].meta && model.PostAudios[model.PostAudios.length-1].meta.text) {
       postTranscriptContent = model.PostAudios[model.PostAudios.length-1].meta.text;
     }
   }
