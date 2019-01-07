@@ -209,12 +209,11 @@ const getItems = (posts, points, options) => {
 
   log.info("get_moderation_items getItems 3");
 
-  /*
   if (options.allContent) {
     items = _.orderBy(items,['created_at'], ['desc']);
   } else {
     items = _.orderBy(items,['status', 'counter_flags', 'created_at'], ['asc','desc','desc']);
-  }*/
+  }
 
   return items;
 };
