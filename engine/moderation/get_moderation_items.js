@@ -282,9 +282,9 @@ const getAllModeratedItemsByMaster = (options, callback) => {
         [ { model: models.Video, as: "PostVideos" }, { model: models.Image, as: 'VideoImages' } ,'updated_at', 'asc' ]
       ];
 
-      const attributes = ['id','created_at','counter_flags','language','data','name','description','status','public_data','user_id'];
+      const attributes = ['id','created_at','counter_flags','language','data','name','cover_media_type','description','status','public_data','user_id'];
 
-      getModelModeration(_.merge(_.cloneDeep(options), {model: models.Post, includes: postIncludes, order }), (error, postsIn) => {
+      getModelModeration(_.merge(_.cloneDeep(options), {model: models.Post, includes: postIncludes, order, attributes }), (error, postsIn) => {
         parallelCallback(error);
         posts = postsIn;
       })
