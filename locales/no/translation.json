@@ -11,6 +11,10 @@
       "statusChangeSubject": "Innleggstatus er endret"
     },
     "email": {
+      "automaticToxicityDetection": "Dette innholdet har blitt automatisk merket som 'giftig' ved hjelp av AI-algoritmer som anslår toksisiteten av innholdet. Du kan slette innholdet om nødvendig.",
+      "automaticToxicityDetectionDisclaimer": "Noen ganger beregner AI-algoritmen en feil score. I så fall trenger du ikke bekymre deg og kan du ignorere denne e-posten.",
+      "automaticToxicityHowLikely": "Sannsynligheten (%) for å være giftig",
+      "automaticToxicityEnglishText": "Engelsk tekst brukt for å beregne scoren",
       "newPointedAddedToThisIdea": "Et nytt argument har blitt lagt til idéen",
       "newPointedAddedToIdea": "Et nytt argument har blitt lagt til idéen din",
       "thisNewIdea": "Ny idé",
