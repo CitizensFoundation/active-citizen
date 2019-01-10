@@ -140,7 +140,12 @@ const getTranslatedTextForPost = (post, callback) => {
       });
     }
   ], error => {
-    callback(error, `${postName.content} ${postDescription.content} ${postTranscript? postTranscript.content : ''}`);
+    if (postName) {
+      callback(error, `${postName.content} ${postDescription.content} ${postTranscript? postTranscript.content : ''}`);
+    } else {
+      log.error("No postname for toxicity!", { error });
+      callback(error);
+    }
   });
 };
 
