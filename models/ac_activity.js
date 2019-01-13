@@ -335,7 +335,7 @@ module.exports = function(sequelize, DataTypes) {
               post_id: options.postId,
               point_id: options.pointId,
               post_status_change_id: options.postStatusChangeId,
-              access: options.access ? options.access : sequelize.models.AcActivity.ACCESS_PRIVATE
+              access: !isNaN(options.access) ? options.access : sequelize.models.AcActivity.ACCESS_PRIVATE
             }).save().then(function(activity) {
               if (activity) {
                 if (activity.type!='activity.fromApp') {
