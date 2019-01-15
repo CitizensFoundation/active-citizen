@@ -304,7 +304,7 @@ var activitiesDefaultIncludes = function (options) {
         {
           model: models.Group,
           required: false,
-          attributes: ['id', 'configuration']
+          attributes: ['id', 'configuration', 'theme_id', 'access']
         },
         {
           model: models.Image,
