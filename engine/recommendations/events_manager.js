@@ -39,16 +39,10 @@ var getPost = function (postId, callback) {
         {
           model: models.Group,
           required: true,
-          where: {
-            access: models.Group.ACCESS_PUBLIC
-          },
           include: [
             {
               model: models.Community,
               required: true,
-              where: {
-                access: models.Community.ACCESS_PUBLIC
-              },
               include: [
                 {
                   model: models.Domain,
@@ -89,7 +83,7 @@ var createOrUpdateItem = function (postId, date, callback) {
           community: [ convertToString(post.Group.Community.id) ],
           group: [ convertToString(post.Group.id) ],
           groupAccess: [ convertToString(post.Group.access) ],
-          communityAccess: [ convertToString(post.Group.access) ],
+          communityAccess: [ convertToString(post.Group.Community.access) ],
           groupStatus: [ convertToString(post.Group.status) ],
           communityStatus: [ convertToString(post.Group.Community.status) ],
           status: [ post.status ],
