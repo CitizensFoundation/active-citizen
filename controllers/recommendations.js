@@ -137,7 +137,7 @@ var processRecommendationsLight = function (groupId, req, res, recommendedItemId
 
   if (error) {
     finalIds = [];
-    log.error("Recommendation Error "+levelType, { err: error, userId:  req.user ? req.user.id : -1, errorStatus:  500 });
+    log.error("processRecommendationsLight Error", { err: error, userId:  req.user ? req.user.id : -1, errorStatus:  500 });
     if(airbrake) {
       airbrake.notify(error, function(airbrakeErr, url) {
         if (airbrakeErr) {
@@ -152,7 +152,7 @@ var processRecommendationsLight = function (groupId, req, res, recommendedItemId
     }
   }
 
-  log.info("Recommendations for group status", { recommendedItemIds: recommendedItemIds });
+  log.info("processRecommendationsLight for group status", { recommendedItemIds: recommendedItemIds });
 
   models.Post.findAll({
     where: {
@@ -173,7 +173,7 @@ var processRecommendationsLight = function (groupId, req, res, recommendedItemId
   }).then(function(posts) {
     res.send({recommendations: posts, groupId: groupId });
   }).catch(function(error) {
-    log.error("Recommendation Error "+levelType, { err: error, userId:  req.user ? req.user.id : -1, errorStatus: 500 });
+    log.error("processRecommendationsLight Error ", { err: error, userId:  req.user ? req.user.id : -1, errorStatus: 500 });
     if(airbrake) {
       airbrake.notify(error, function(airbrakeErr, url) {
         if (airbrakeErr) {
@@ -236,7 +236,12 @@ router.put('/groups/:id/getPostRecommendations', auth.can('view group'), functio
   });
 
   getRecommendationFor(options.user_id, DATE_OPTIONS_YEAR, options, function (error, recommendedItemIds) {
-    processRecommendationsLight(req.params.id, req, res, recommendedItemIds, error);
+    if (!error) {
+      processRecommendationsLight(req.params.id, req, res, recommendedItemIds, error);
+    } else {
+      log.error("Error from getRecommendationFor", { error });
+      res.send({recommendations: [], groupId: req.params.id });
+    }
   }, req.user ? req.user.default_locale : null);
 });
 
