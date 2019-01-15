@@ -140,7 +140,7 @@ const getTranslatedTextForPost = (post, callback) => {
       });
     }
   ], error => {
-    if (postName) {
+    if (postName && postDescription) {
       callback(error, `${postName.content} ${postDescription.content} ${postTranscript? postTranscript.content : ''}`);
     } else {
       log.error("No postname for toxicity!", { error });
