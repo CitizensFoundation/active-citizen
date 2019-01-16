@@ -4,10 +4,8 @@ const moment = require('moment');
 const log = require('../../utils/logger');
 const _ = require('lodash');
 
-const TOXICITY_THRESHOLD = 0.40;
-const SEVERE_TOXICITY_THRESHOLD = 0.30;
+const TOXICITY_THRESHOLD = 0.50;
 const TOXICITY_EMAIL_THRESHOLD = 0.75;
-const SEVERE_TOXICITY_EMAIL_THRESHOLD = 0.65;
 
 const Perspective = require('perspective-api-client');
 let perspectiveApi;
@@ -69,8 +67,7 @@ const setupModelPublicDataScore = (model, text, results) => {
 
 const hasModelBreachedToxicityThreshold = model => {
   if (model.data && model.data.moderation && (model.data.moderation.toxicityScore || model.data.moderation.severeToxicityScore)) {
-    if (model.data.moderation.toxicityScore>TOXICITY_THRESHOLD ||
-        model.data.moderation.severeToxicityScore>SEVERE_TOXICITY_THRESHOLD) {
+    if (model.data.moderation.toxicityScore>TOXICITY_THRESHOLD) {
       return true;
     } else {
       return false;
@@ -82,8 +79,7 @@ const hasModelBreachedToxicityThreshold = model => {
 
 const hasModelBreachedToxicityEmailThreshold = model => {
   if (model.data && model.data.moderation && (model.data.moderation.toxicityScore || model.data.moderation.severeToxicityScore)) {
-    if (model.data.moderation.toxicityScore>TOXICITY_EMAIL_THRESHOLD ||
-      model.data.moderation.severeToxicityScore>SEVERE_TOXICITY_EMAIL_THRESHOLD) {
+    if (model.data.moderation.toxicityScore>TOXICITY_EMAIL_THRESHOLD) {
       return true;
     } else {
       return false;
