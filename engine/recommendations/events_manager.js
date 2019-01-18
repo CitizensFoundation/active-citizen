@@ -66,7 +66,7 @@ var getPost = function (postId, callback) {
 };
 
 var createOrUpdateItem = function (postId, date, callback) {
-  client = getClient(ACTIVE_CITIZEN_PIO_APP_ID);
+  var client = getClient(ACTIVE_CITIZEN_PIO_APP_ID);
   getPost(postId, function (post) {
     if (post) {
       var properties = {};
@@ -110,12 +110,9 @@ var createOrUpdateItem = function (postId, date, callback) {
         entityId: post.id,
         properties: properties,
         date: date,
-        eventTime: post.created_at.toISOString()
+        eventTime: new Date().toISOString()
       }).then(function (result) {
         log.info('Events Manager createOrUpdateItem', {postId: post.id, result: result});
-        callback();
-      }).catch(function (error) {
-        log.error('Events Manager createOrUpdateItem Error', {postId: post.id, err: error });
         callback();
       });
     } else {
@@ -206,6 +203,12 @@ var generateRecommendationEvent = function (activity, callback) {
           callback();
         }
         break;
+      case "activity.post.status.change":
+        if (activity && activity.Post) {
+          createOrUpdateItem(activity.Post.id, activity.Post.created_at.toISOString(), callback);
+        } else {
+          callback();
+        }
       default:
         callback();
     }
@@ -252,7 +255,7 @@ var getRecommendationFor = function (userId, dateRange, options, callback, userL
 
   fields.push({
     name: 'official_status',
-    values: [ officialStatus ],
+    values: [ officialStatus.toString() ],
     bias: -1
   });
 
