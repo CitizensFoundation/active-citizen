@@ -133,10 +133,7 @@ var processRecommendations = function (levelType, req, res, recommendedItemIds, 
 };
 
 var processRecommendationsLight = function (groupId, req, res, recommendedItemIds, error) {
-  var finalIds;
-
   if (error) {
-    finalIds = [];
     log.error("processRecommendationsLight Error", { err: error, userId:  req.user ? req.user.id : -1, errorStatus:  500 });
     if(airbrake) {
       airbrake.notify(error, function(airbrakeErr, url) {
@@ -145,47 +142,43 @@ var processRecommendationsLight = function (groupId, req, res, recommendedItemId
         }
       });
     }
+    res.sendStatus(500);
   } else {
-    finalIds = _.shuffle(recommendedItemIds);
-    if (finalIds.length>OVERALL_LIMIT) {
-      finalIds = _.dropRight(finalIds, OVERALL_LIMIT);
-    }
-  }
+    log.info("processRecommendationsLight for group status", { recommendedItemIds: recommendedItemIds });
 
-  log.info("processRecommendationsLight for group status", { recommendedItemIds: recommendedItemIds });
-
-  models.Post.findAll({
-    where: {
-      id: {
-        $in: finalIds
-      }
-    },
-    attributes: ['id','name','description'],
-    include: [
-      {
-        model: models.Group,
-        required: true,
-        where: {
-          id: groupId
+    models.Post.findAll({
+      where: {
+        id: {
+          $in: recommendedItemIds
         }
-      }
-    ]
-  }).then(function(posts) {
-    res.send({recommendations: posts, groupId: groupId });
-  }).catch(function(error) {
-    log.error("processRecommendationsLight Error ", { err: error, userId:  req.user ? req.user.id : -1, errorStatus: 500 });
-    if(airbrake) {
-      airbrake.notify(error, function(airbrakeErr, url) {
-        if (airbrakeErr) {
-          log.error("AirBrake Error", { context: 'airbrake', err: airbrakeErr, errorStatus: 500 });
+      },
+      attributes: ['id','name','description'],
+      include: [
+        {
+          model: models.Group,
+          required: true,
+          where: {
+            id: groupId
+          }
         }
+      ]
+    }).then(function(posts) {
+      res.send({recommendations: posts, groupId: groupId });
+    }).catch(function(error) {
+      log.error("processRecommendationsLight Error ", { err: error, userId:  req.user ? req.user.id : -1, errorStatus: 500 });
+      if(airbrake) {
+        airbrake.notify(error, function(airbrakeErr, url) {
+          if (airbrakeErr) {
+            log.error("AirBrake Error", { context: 'airbrake', err: airbrakeErr, errorStatus: 500 });
+          }
+          res.sendStatus(500);
+        });
+      } else {
         res.sendStatus(500);
-      });
-    } else {
-      res.sendStatus(500);
-    }
-    res.sendStatus(200);
-  });
+      }
+      res.sendStatus(200);
+    });
+  }
 };
 
 router.get('/domains/:id', auth.can('view domain'), function(req, res) {
