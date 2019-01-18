@@ -18,7 +18,7 @@ if(process.env.AIRBRAKE_PROJECT_ID) {
 var OVERALL_LIMIT=7;
 
 var DATE_OPTIONS = { name:"date", after: moment().add(-1000, 'months').toISOString() };
-var DATE_OPTIONS_YEAR = { name:"date", after: moment().add(-3000, 'months').toISOString() };
+var DATE_OPTIONS_YEAR = { name:"date", after: moment().add(-36, 'months').toISOString() };
 
 var setupOptions = function (req) {
   var options = {
@@ -235,14 +235,37 @@ router.put('/groups/:id/getPostRecommendations', auth.can('view group'), functio
     limit: 100
   });
 
-  getRecommendationFor(options.user_id, DATE_OPTIONS_YEAR, options, function (error, recommendedItemIds) {
-    if (!error) {
-      processRecommendationsLight(req.params.id, req, res, recommendedItemIds, error);
+  models.Group.find({
+    where: {
+      id: req.params.id
+    },
+    attributes: [
+      'id','configuration'
+    ]
+  }).then( group => {
+    if (group) {
+      var dateOptions = DATE_OPTIONS_YEAR;
+      if (group.configuration && group.configuration.maxDaysBackForRecommendations && group.configuration.maxDaysBackForRecommendations) {
+        var maxDays = parseInt(group.configuration.maxDaysBackForRecommendations);
+        dateOptions = { name:"date", after: moment().add(-Math.abs(maxDays), 'days').toISOString() };
+      }
+
+      getRecommendationFor(options.user_id, dateOptions, options, function (error, recommendedItemIds) {
+        if (!error) {
+          processRecommendationsLight(req.params.id, req, res, recommendedItemIds, error);
+        } else {
+          log.error("Error from getRecommendationFor", { error });
+          res.send({recommendations: [], groupId: req.params.id });
+        }
+      }, req.user ? req.user.default_locale : null);
     } else {
-      log.error("Error from getRecommendationFor", { error });
-      res.send({recommendations: [], groupId: req.params.id });
+      log.error("Group not found");
+      res.sendStatus(401);
     }
-  }, req.user ? req.user.default_locale : null);
+  }).catch(error => {
+    log.error(error);
+    res.sendStatus(500);
+  });
 });
 
 module.exports = router;
