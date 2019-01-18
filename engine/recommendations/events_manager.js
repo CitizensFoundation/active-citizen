@@ -80,14 +80,23 @@ var createOrUpdateItem = function (postId, date, callback) {
       properties = _.merge(properties,
         {
           domain: [ convertToString(post.Group.Community.Domain.id) ],
+          domainLocale: [ post.Group.Community.Domain.default_locale ],
+
           community: [ convertToString(post.Group.Community.id) ],
+          communityAccess: [ convertToString(post.Group.Community.access) ],
+          communityStatus: [ post.Group.Community.status ],
+          communityLocale: [ (post.Group.Community.default_locale && post.Group.Community.default_locale!='')  ?
+            post.Group.Community.default_locale :
+            post.Group.Community.Domain.default_locale ],
+
           group: [ convertToString(post.Group.id) ],
           groupAccess: [ convertToString(post.Group.access) ],
-          communityAccess: [ convertToString(post.Group.Community.access) ],
           groupStatus: [ convertToString(post.Group.status) ],
-          communityStatus: [ convertToString(post.Group.Community.status) ],
-          status: [ post.status ],
-          official_status: [ convertToString(post.official_status) ]
+
+          status: [ post.deleted ? 'deleted' : post.status ],
+
+          official_status: [ convertToString(post.official_status) ],
+          language: [ post.language ]
         });
 
       properties = _.merge(properties,
@@ -117,7 +126,7 @@ var createOrUpdateItem = function (postId, date, callback) {
 };
 
 var createAction = function (targetEntityId, userId, date, action, callback) {
-  client = getClient(ACTIVE_CITIZEN_PIO_APP_ID);
+  var client = getClient(ACTIVE_CITIZEN_PIO_APP_ID);
 
   getPost(targetEntityId, function (post) {
     if (post) {
@@ -158,46 +167,51 @@ var createUser = function (user, callback) {
 };
 
 var generateRecommendationEvent = function (activity, callback) {
-  log.info('Events Manager generateRecommendationEvent', {type: activity.type, userId: activity.user_id });
-  switch (activity.type) {
-    case "activity.post.new":
-      createOrUpdateItem(activity.Post.id, activity.Post.created_at.toISOString(), callback);
-      break;
-    case "activity.post.endorsement.new":
-      createAction(activity.Post.id, activity.user_id, activity.created_at.toISOString(), 'endorse', callback);
-      break;
-    case "activity.post.opposition.new":
-      createAction(activity.Post.id, activity.user_id, activity.created_at.toISOString(), 'oppose', callback);
-      break;
-    case "activity.point.new":
-      if (activity.Point) {
-        if (activity.Point.value==0 && activity.Point.Post) {
-          createAction(activity.Point.Post.id, activity.user_id, activity.created_at.toISOString(), 'point-comment-new', callback);
-        } else if (activity.Point.Post) {
-          createAction(activity.Point.Post.id, activity.user_id, activity.created_at.toISOString(), 'point-new', callback);
+  if (process.env.PIOEventUrl) {
+    log.info('Events Manager generateRecommendationEvent', {type: activity.type, userId: activity.user_id });
+    switch (activity.type) {
+      case "activity.post.new":
+        createOrUpdateItem(activity.Post.id, activity.Post.created_at.toISOString(), callback);
+        break;
+      case "activity.post.endorsement.new":
+        createAction(activity.Post.id, activity.user_id, activity.created_at.toISOString(), 'endorse', callback);
+        break;
+      case "activity.post.opposition.new":
+        createAction(activity.Post.id, activity.user_id, activity.created_at.toISOString(), 'oppose', callback);
+        break;
+      case "activity.point.new":
+        if (activity.Point) {
+          if (activity.Point.value==0 && activity.Point.Post) {
+            createAction(activity.Point.Post.id, activity.user_id, activity.created_at.toISOString(), 'point-comment-new', callback);
+          } else if (activity.Point.Post) {
+            createAction(activity.Point.Post.id, activity.user_id, activity.created_at.toISOString(), 'point-new', callback);
+          } else {
+            callback();
+          }
         } else {
           callback();
         }
-      } else {
+        break;
+      case "activity.point.helpful.new":
+        if (activity.Point.Post) {
+          createAction(activity.Point.Post.id, activity.user_id, activity.created_at.toISOString(), 'point-helpful', callback);
+        } else {
+          callback();
+        }
+        break;
+      case "activity.point.unhelpful.new":
+        if (activity.Point.Post) {
+          createAction(activity.Point.Post.id, activity.user_id, activity.created_at.toISOString(), 'point-unhelpful', callback);
+        } else {
+          callback();
+        }
+        break;
+      default:
         callback();
-      }
-      break;
-    case "activity.point.helpful.new":
-      if (activity.Point.Post) {
-        createAction(activity.Point.Post.id, activity.user_id, activity.created_at.toISOString(), 'point-helpful', callback);
-      } else {
-        callback();
-      }
-      break;
-    case "activity.point.unhelpful.new":
-      if (activity.Point.Post) {
-        createAction(activity.Point.Post.id, activity.user_id, activity.created_at.toISOString(), 'point-unhelpful', callback);
-      } else {
-        callback();
-      }
-      break;
-    default:
-      callback();
+    }
+  } else {
+    log.warn("No PIOEventUrl, no action taken in generateRecommendationEvent");
+    callback();
   }
 };
 
@@ -233,6 +247,14 @@ var getRecommendationFor = function (userId, dateRange, options, callback, userL
       bias: -1
     });
   }
+
+  var officialStatus = options.official_status ? options.official_status : 0;
+
+  fields.push({
+    name: 'official_status',
+    values: [ officialStatus ],
+    bias: -1
+  });
 
   if (!options.group_id && !options.community_id) {
     fields.push({
@@ -287,7 +309,8 @@ var getRecommendationFor = function (userId, dateRange, options, callback, userL
       callback(error);
     });
   } else {
-    callback("Engine not avilable");
+    log.warn("Pio engine not available getRecommendationFor");
+    callback();
   }
 };
 

@@ -17,7 +17,7 @@ var convertToString = function(integer) {
 };
 
 var processDots = function() {
-  if (lineCrCounter>242) {
+  if (lineCrCounter>250) {
     process.stdout.write("\n");
     lineCrCounter = 1;
   } else {
@@ -89,7 +89,7 @@ var updateAllPosts = function (done) {
   var client = getClient(ACTIVE_CITIZEN_PIO_APP_ID);
   log.info('AcImportAllPosts', {});
 
-  models.Post.unscoped().findAll(
+  models.Post.findAll(
     {
       include: [
         {
@@ -106,16 +106,10 @@ var updateAllPosts = function (done) {
         {
           model: models.Group,
           required: true,
-          where: {
-            access: models.Group.ACCESS_PUBLIC
-          },
           include: [
             {
               model: models.Community,
               required: true,
-              where: {
-                access: models.Community.ACCESS_PUBLIC
-              },
               include: [
                 {
                   model: models.Domain,
@@ -128,7 +122,7 @@ var updateAllPosts = function (done) {
       ]
     }).then(function (posts) {
     lineCrCounter = 0;
-    async.eachSeries(posts, function (post, callback) {
+    async.eachOfLimit(posts, 42,function (post, index, callback) {
 
       var properties = {};
 
@@ -142,17 +136,22 @@ var updateAllPosts = function (done) {
         {
           domain: [ convertToString(post.Group.Community.Domain.id) ],
           domainLocale: [ post.Group.Community.Domain.default_locale ],
+
           community: [ convertToString(post.Group.Community.id) ],
           communityAccess: [ convertToString(post.Group.Community.access) ],
           communityStatus: [ post.Group.Community.status ],
           communityLocale: [ (post.Group.Community.default_locale && post.Group.Community.default_locale!='')  ?
                                post.Group.Community.default_locale :
                                post.Group.Community.Domain.default_locale ],
+
           group: [ convertToString(post.Group.id) ],
           groupAccess: [ convertToString(post.Group.access) ],
-          groupStatus: [ post.Group.status ],
+          groupStatus: [ convertToString(post.Group.status) ],
+
           status: [ post.deleted ? 'deleted' : post.status ],
-          official_status: [ convertToString(post.official_status) ]
+
+          official_status: [ convertToString(post.official_status) ],
+          language: [ post.language ? post.language : "??" ]
         });
 
       properties = _.merge(properties,
@@ -194,18 +193,19 @@ var updateAllPosts = function (done) {
   });
 };
 
-var importAllActionsFor = function (model, where, include, action, done) {
+var importAllActionsFor = function (model, where, include, action, done, attributes) {
   var client = getClient(ACTIVE_CITIZEN_PIO_APP_ID);
   log.info('AcImportAllActionsFor', {action:action, model: model, where: where, include: include});
 
   model.findAll(
     {
       where: where,
-      include: include
+      include: include,
+      attributes: attributes
     }
   ).then(function (objects) {
     lineCrCounter = 0;
-    async.eachSeries(objects, function (object, callback) {
+    async.eachOfLimit(objects, 42, (object, index, callback) => {
       var targetEntityId;
       if (action.indexOf('help') > -1) {
         targetEntityId = object.Point.Post.id;
@@ -251,40 +251,42 @@ var importAll = function(done) {
       });
     },
     function(callback){
-      importAllActionsFor(models.Endorsement, { value: { $gt: 0 } }, [ models.Post ], 'endorse', function () {
+      importAllActionsFor(models.Endorsement, { value: { $gt: 0 } }, [ { model: models.Post, attributes: ['id'] }  ], 'endorse', function () {
         callback();
-      });
+      }, ['id','user_id','created_at','value']);
     },
     function(callback){
-      importAllActionsFor(models.Endorsement, { value: { $lt: 0 } }, [ models.Post ], 'oppose', function () {
+      importAllActionsFor(models.Endorsement, { value: { $lt: 0 } }, [  { model: models.Post, attributes: ['id'] } ], 'oppose', function () {
         callback();
-      });
+      }, ['id','user_id','created_at','value']);
     },
     function(callback){
-      importAllActionsFor(models.Point, { value: { $ne: 0 }}, [ models.Post ], 'new-point', function () {
+      importAllActionsFor(models.Point, { value: { $ne: 0 }}, [ { model: models.Post, attributes: ['id'] } ], 'new-point', function () {
         callback();
-      });
+      }, ['id','user_id','created_at','value']);
     },
     function(callback){
-      importAllActionsFor(models.Point, { value: 0 },  [ models.Post ], 'new-point-comment', function () {
+      importAllActionsFor(models.Point, { value: 0 },  [{ model: models.Post, attributes: ['id'] } ], 'new-point-comment', function () {
         callback();
-      });
+      }, ['id','user_id','created_at','value']);
     },
     function(callback){
       importAllActionsFor(models.PointQuality, { value: { $gt: 0 } }, [{
           model: models.Point,
-          include: [ models.Post ]
+          attributes: ['id','value'],
+          include: [{ model: models.Post, attributes: ['id'] } ]
         }], 'point-helpful', function () {
         callback();
-      });
+      }, ['id','user_id','created_at','value']);
     },
     function(callback){
       importAllActionsFor(models.PointQuality, { value: { $lt: 0 } }, [{
         model: models.Point,
+        attributes: ['id','value'],
         include: [ models.Post ]
       }], 'point-unhelpful', function () {
         callback();
-      });
+      }, ['id','user_id','created_at','value']);
     },
     function(callback){
       updateAllPosts(function () {
