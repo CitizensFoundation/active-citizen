@@ -310,10 +310,10 @@ const estimateToxicityScoreForPoint = (options, callback) => {
     }).then( point => {
       if (point) {
         let doNotStoreValue = true;
-        if (point.Group.access===0 && point.Group.Community.access === 0)
+        if (point.Group && point.Group.access===0 && point.Group.Community.access === 0)
           doNotStoreValue = false;
 
-        if (point.User.age_group && (point.User.age_group==="0-12" || point.User.age_group==="0"))
+        if (point.User && point.User.age_group && (point.User.age_group==="0-12" || point.User.age_group==="0"))
           doNotStoreValue = true;
 
         let textContent, textUsed;
