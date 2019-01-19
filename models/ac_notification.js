@@ -61,6 +61,9 @@ module.exports = function(sequelize, DataTypes) {
           status: 'active'
         }
       },
+      { name: 'notification_user_id_deleted_viewed',
+        fields: ['user_id', 'deleted', 'viewed']
+      },
       {
         name: 'notification_all_by_type',
         fields: ['type']
