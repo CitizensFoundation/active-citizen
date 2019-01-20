@@ -215,12 +215,14 @@ var activitiesDefaultIncludes = function (options) {
     community = {
       model: models.Community,
       required: true,
+      attributes: models.Community.defaultAttributesPublic,
       where: { access: models.Community.ACCESS_PUBLIC }
     };
 
     group = {
       model: models.Group,
       required: true,
+      attributes: models.Group.defaultPublicAttributes,
       where: { access: models.Group.ACCESS_PUBLIC },
       include: [
         {
@@ -232,13 +234,24 @@ var activitiesDefaultIncludes = function (options) {
   } else if (options.community_id) {
     community = {
       model: models.Community,
+      attributes: models.Community.defaultAttributesPublic,
       required: false
     };
 
     group = {
       model: models.Group,
       required: true,
-      where: { access: models.Group.ACCESS_PUBLIC },
+      attributes: models.Group.defaultPublicAttributes,
+      where: {
+        $or: [
+          {
+            access: models.Group.ACCESS_PUBLIC
+          },
+          {
+            access: models.Group.ACCESS_OPEN_TO_COMMUNITY
+          }
+        ],
+      },
       include: [
         {
           model: models.Image, as: 'GroupLogoImages',
@@ -249,12 +262,14 @@ var activitiesDefaultIncludes = function (options) {
   } else {
     community = {
       model: models.Community,
+      attributes: models.Community.defaultAttributesPublic,
       required: false
     };
 
     group = {
       model: models.Group,
       required: false,
+      attributes: models.Group.defaultPublicAttributes,
       include: [
         {
           model: models.Image, as: 'GroupLogoImages',
