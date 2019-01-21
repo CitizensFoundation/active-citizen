@@ -38,16 +38,13 @@ module.exports = function(sequelize, DataTypes) {
 
     timestamps: true,
 
-    tableName: 'ac_followings',
-
-    classMethods: {
-
-      associate: function(models) {
-        AcFollowing.belongsTo(models.User);
-        AcFollowing.belongsTo(models.User, { as: 'OtherUser' });
-      }
-    }
+    tableName: 'ac_followings'
   });
+
+  AcFollowing.associate = function(models) {
+    AcFollowing.belongsTo(models.User);
+    AcFollowing.belongsTo(models.User, { as: 'OtherUser' });
+  };
 
   return AcFollowing;
 };
