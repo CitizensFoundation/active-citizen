@@ -151,7 +151,7 @@ var updateAllPosts = function (done) {
           status: [ post.deleted ? 'deleted' : post.status ],
 
           official_status: [ convertToString(post.official_status) ],
-          language: [ post.language ? post.language : "??" ]
+          language: [ (post.language && post.language!=='') ? post.language : "??" ]
         });
 
       properties = _.merge(properties,
