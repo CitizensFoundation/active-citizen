@@ -253,11 +253,11 @@ router.put('/groups/:id/getPostRecommendations', auth.can('view group'), functio
       }, req.user ? req.user.default_locale : null);
     } else {
       log.error("Group not found");
-      res.sendStatus(401);
+      res.send({recommendations: [], groupId: req.params.id });
     }
   }).catch(error => {
     log.error(error);
-    res.sendStatus(500);
+    res.send({recommendations: [], groupId: req.params.id });
   });
 });
 
