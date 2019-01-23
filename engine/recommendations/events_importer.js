@@ -6,6 +6,8 @@ var log = require('../../../utils/logger');
 
 var ACTIVE_CITIZEN_PIO_APP_ID = 1;
 
+let postUpdateAsyncLimit = 42;
+
 var getClient = function (appId) {
   return new predictionio.Events({appId: appId});
 };
@@ -122,7 +124,7 @@ var updateAllPosts = function (done) {
       ]
     }).then(function (posts) {
     lineCrCounter = 0;
-    async.eachOfLimit(posts, 42,function (post, index, callback) {
+    async.eachOfLimit(posts, postUpdateAsyncLimit,function (post, index, callback) {
 
       var properties = {};
 
@@ -304,6 +306,7 @@ getClient(ACTIVE_CITIZEN_PIO_APP_ID).status().then(function(status) {
   console.log(status);
   log.info('AcImportStarting', {});
   if (process.argv[2] && process.argv[2]=="onlyUpdatePosts") {
+    postUpdateAsyncLimit = 1;
     updateAllPosts(function () {
       console.log("Done updating posts");
       process.exit();
