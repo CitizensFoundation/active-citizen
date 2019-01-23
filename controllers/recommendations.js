@@ -41,108 +41,109 @@ var processRecommendations = function (levelType, req, res, recommendedItemIds, 
         }
       });
     }
+    res.send([]);
   } else {
     finalIds = _.shuffle(recommendedItemIds);
     if (finalIds.length>OVERALL_LIMIT) {
       finalIds = _.dropRight(finalIds, OVERALL_LIMIT);
     }
-  }
+    log.info("Recommendations domains status", { recommendedItemIds: recommendedItemIds });
 
-  log.info("Recommendations domains status", { recommendedItemIds: recommendedItemIds });
-
-  models.Post.findAll({
-    where: {
-      id: {
-        $in: finalIds
-      }
-    },
-    order: [
-      [ { model: models.Image, as: 'PostHeaderImages' } ,'updated_at', 'asc' ]
-    ],
-    attributes: ['id','name','description','public_data','status','content_type','official_status','counter_endorsements_up','cover_media_type',
-      'counter_endorsements_down','group_id','language','counter_points','counter_flags','location','created_at'],
-    include: [
-      {
-        // Category
-        model: models.Category,
-        required: false,
-        include: [
-          {
-            model: models.Image,
-            required: false,
-            as: 'CategoryIconImages'
-          }
-        ]
-      },
-      // Group
-      {
-        model: models.Group,
-        required: true,
-        where: {
-          status: {
-            $in: ['active','featured']
-          },
-          access: models.Group.ACCESS_PUBLIC
-        },
-        include: [
-          {
-            model: models.Category,
-            required: false
-          },
-          {
-            model: models.Community,
-            attributes: ['id','name','theme_id'],
-            required: false
-          }
-        ]
-      },
-      // User
-      {
-        model: models.User,
-        required: false,
-        attributes: models.User.defaultAttributesWithSocialMediaPublic
-      },
-      // Image
-      {
-        model: models.Image,
-        required: false,
-        as: 'PostHeaderImages'
-      },
-      // PointRevision
-      {
-        model: models.PostRevision,
-        required: false
-      }
-    ]
-  }).then(function(posts) {
-    res.send(posts);
-  }).catch(function(error) {
-    log.error("Recommendation Error "+levelType, { err: error, id: req.params.id, userId:  req.user ? req.user.id : -1, errorStatus: 500 });
-    if(airbrake) {
-      airbrake.notify(error, function(airbrakeErr, url) {
-        if (airbrakeErr) {
-          log.error("AirBrake Error", { context: 'airbrake', err: airbrakeErr, errorStatus: 500 });
+    models.Post.findAll({
+      where: {
+        id: {
+          $in: finalIds
         }
-        res.sendStatus(500);
-      });
-    } else {
-      res.sendStatus(500);
-    }
-    res.sendStatus(200);
-  });
+      },
+      order: [
+        [ { model: models.Image, as: 'PostHeaderImages' } ,'updated_at', 'asc' ]
+      ],
+      attributes: ['id','name','description','public_data','status','content_type','official_status','counter_endorsements_up','cover_media_type',
+        'counter_endorsements_down','group_id','language','counter_points','counter_flags','location','created_at'],
+      include: [
+        {
+          // Category
+          model: models.Category,
+          required: false,
+          include: [
+            {
+              model: models.Image,
+              required: false,
+              as: 'CategoryIconImages'
+            }
+          ]
+        },
+        // Group
+        {
+          model: models.Group,
+          required: true,
+          where: {
+            status: {
+              $in: ['active','featured']
+            },
+            access: models.Group.ACCESS_PUBLIC
+          },
+          include: [
+            {
+              model: models.Category,
+              required: false
+            },
+            {
+              model: models.Community,
+              attributes: ['id','name','theme_id'],
+              required: false
+            }
+          ]
+        },
+        // User
+        {
+          model: models.User,
+          required: false,
+          attributes: models.User.defaultAttributesWithSocialMediaPublic
+        },
+        // Image
+        {
+          model: models.Image,
+          required: false,
+          as: 'PostHeaderImages'
+        },
+        // PointRevision
+        {
+          model: models.PostRevision,
+          required: false
+        }
+      ]
+    }).then(function(posts) {
+      res.send(posts);
+    }).catch(function(error) {
+      log.error("Recommendation Error "+levelType, { err: error, id: req.params.id, userId:  req.user ? req.user.id : -1, errorStatus: 500 });
+      if(airbrake) {
+        airbrake.notify(error, function(airbrakeErr, url) {
+          if (airbrakeErr) {
+            log.error("AirBrake Error", { context: 'airbrake', err: airbrakeErr, errorStatus: 500 });
+          }
+          res.send([]);
+        });
+      } else {
+        res.send([]);
+      }
+    });
+  }
 };
 
 var processRecommendationsLight = function (groupId, req, res, recommendedItemIds, error) {
-  if (error) {
+  if (error || !recommendedItemIds) {
     log.error("processRecommendationsLight Error", { err: error, userId:  req.user ? req.user.id : -1, errorStatus:  500 });
     if(airbrake) {
       airbrake.notify(error, function(airbrakeErr, url) {
         if (airbrakeErr) {
           log.error("AirBrake Error", { context: 'airbrake', err: airbrakeErr, errorStatus: 500 });
         }
+        res.send({recommendations: [], groupId: groupId });
       });
+    } else {
+      res.send({recommendations: [], groupId: groupId });
     }
-    res.sendStatus(500);
   } else {
     log.info("processRecommendationsLight for group status", { recommendedItemIds: recommendedItemIds });
 
@@ -171,12 +172,11 @@ var processRecommendationsLight = function (groupId, req, res, recommendedItemId
           if (airbrakeErr) {
             log.error("AirBrake Error", { context: 'airbrake', err: airbrakeErr, errorStatus: 500 });
           }
-          res.sendStatus(500);
+          res.send({recommendations: [], groupId: groupId });
         });
       } else {
-        res.sendStatus(500);
+        res.send({recommendations: [], groupId: groupId });
       }
-      res.sendStatus(200);
     });
   }
 };
