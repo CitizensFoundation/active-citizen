@@ -165,14 +165,6 @@ module.exports = function(sequelize, DataTypes) {
         }
       },
       {
-        name: 'activity_active_by_type_and_user_id',
-        fields: ['type','user_id'],
-        where: {
-          status: 'active',
-          deleted: false
-        }
-      },
-      {
         name: 'activity_active_by_user_id',
         fields: ['user_id'],
         where: {
