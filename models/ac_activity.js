@@ -294,7 +294,9 @@ module.exports = function(sequelize, DataTypes) {
               });
             } else if (options.postId) {
               log.info("Looking for post, group and community START");
-              sequelize.models.Post.find({where: { id: options.postId },
+              sequelize.models.Post.find(
+                {where: { id: options.postId },
+                attributes: ['id','group_id'],
                 include: [
                   {
                     model: sequelize.models.Group,
