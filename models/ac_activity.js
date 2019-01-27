@@ -102,14 +102,6 @@ module.exports = function(sequelize, DataTypes) {
         }
       },
       {
-        name: 'activity_active_by_domain_id',
-        fields: ['domain_id'],
-        where: {
-          status: 'active',
-          deleted: false
-        }
-      },
-      {
         name: 'activity_public_and_active_by_community_id',
         fields: ['community_id'],
         where: {
@@ -159,14 +151,6 @@ module.exports = function(sequelize, DataTypes) {
       {
         name: 'activity_active_by_post_id',
         fields: ['post_id'],
-        where: {
-          status: 'active',
-          deleted: false
-        }
-      },
-      {
-        name: 'activity_active_by_user_id',
-        fields: ['user_id'],
         where: {
           status: 'active',
           deleted: false
