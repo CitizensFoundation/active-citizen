@@ -34,7 +34,7 @@ queue.on('job enqueue', function(id, type){
 }).on( 'job error', function( err, result ) {
   log.error('Job Error', { err: err, result: result } );
   if(airbrake) {
-    airbrake.notify(err, function(airbrakeErr, url) {
+    airbrake.notify(result ? result : err, function(airbrakeErr, url) {
       if (airbrakeErr) {
         log.error("AirBrake Error", { context: 'airbrake', err: airbrakeErr, errorStatus: 500 });
       }
