@@ -95,33 +95,26 @@ var updateAllPosts = function (done) {
     {
       include: [
         {
-          model: models.Point,
-          required: false,
-          where: {
-            status: 'published'
-          }
-        },
-        {
-          model: models.Category,
-          required: false
-        },
-        {
           model: models.Group,
           required: true,
+          attributes: ['id','access','status'],
           include: [
             {
               model: models.Community,
+              attributes: ['id','access','status','default_locale'],
               required: true,
               include: [
                 {
                   model: models.Domain,
+                  attributes: ['id','default_locale'],
                   required: true
                 }
               ]
             }
           ]
         }
-      ]
+      ],
+      attributes: ['id','group_id','category_id','status','deleted','language','created_at','user_id','official_status']
     }).then(function (posts) {
     lineCrCounter = 0;
     async.eachOfLimit(posts, postUpdateAsyncLimit,function (post, index, callback) {
