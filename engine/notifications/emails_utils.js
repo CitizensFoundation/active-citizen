@@ -138,7 +138,7 @@ var filterNotificationForDelivery = function (notification, user, template, subj
 };
 
 var sendOneEmail = function (emailLocals, callback) {
-  var template, fromEmail;
+  var template, fromEmail=null, sender=null, replyTo=null;
 
   if (!emailLocals.isReportingContent)
     emailLocals.isReportingContent = false;
@@ -188,6 +188,10 @@ var sendOneEmail = function (emailLocals, callback) {
         fromEmail = 'admin@yrpr.e-dem.nl';
       } else if (emailLocals.domain.domain_name.indexOf('idea-synergy.com') > -1) {
         fromEmail = 'ideasynergy@idea-synergy.com';
+      } else if (emailLocals.domain.domain_name.indexOf('smarter.nj.gov') > -1) {
+        fromEmail = null;
+        sender = "support@participation.smarter.nj.gov";
+        replyTo = "support@smarter.nj.gov";
       } else if (process.env.EMAIL_FROM) {
         fromEmail = process.env.EMAIL_FROM;
       } else {
@@ -241,7 +245,9 @@ var sendOneEmail = function (emailLocals, callback) {
               seriesCallback();
             } else {
               transport.sendMail({
-                from: fromEmail, // emailLocals.community.admin_email,
+                from: fromEmail,
+                sender: sender,
+                replyTo: replyTo,
                 to: emailLocals.user.email,
                 bcc: process.env.ADMIN_EMAIL_BCC ? process.env.ADMIN_EMAIL_BCC : null,
                 subject: translatedSubject,
