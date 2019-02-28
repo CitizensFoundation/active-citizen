@@ -338,8 +338,8 @@ module.exports = function(sequelize, DataTypes) {
           status: 'active',
           actor: { user: user },
           object: {
-            domain: domain,
-            community: community,
+            domainId: domain.id,
+            communityId: community ? community.id : null,
             token: token
           },
           domain_id: domain.id,
