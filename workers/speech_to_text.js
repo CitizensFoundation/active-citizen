@@ -366,7 +366,14 @@ const createTranscriptForVideo = (workPackage, callback) => {
         const flacUrl = videoUrl.slice(0, videoUrl.length-4)+'.flac';
         uploadFlacToGoogleCloud(flacUrl, (error, gsUri) => {
           if (error) {
-            callback(error);
+            log.warn('createTranscriptForVideo', { warn: 'Found no audio file' });
+            video.set('meta.transcript.error', 'Found no audio file');
+            video.save().then(() => {
+              log.info("createTranscriptForVideo: Video with transcript saved with error", { videoId: workPackage.videoId, error });
+              callback()
+            }).catch((error) => {
+              callback(error);
+            });
           } else {
             log.info("createTranscriptForVideo: have uploaded to Google Cloud");
             createTranscriptForFlac(gsUri, workPackage, (error, response) => {
