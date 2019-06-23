@@ -45,7 +45,7 @@ var processRecommendations = function (levelType, req, res, recommendedItemIds, 
   } else {
     finalIds = _.shuffle(recommendedItemIds);
     if (finalIds.length>OVERALL_LIMIT) {
-      finalIds = _.dropRight(finalIds, OVERALL_LIMIT);
+      finalIds = _.dropRight(finalIds, finalIds.length-OVERALL_LIMIT);
     }
     log.info("Recommendations domains status", { recommendedItemIds: recommendedItemIds });
 
