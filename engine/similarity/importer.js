@@ -238,6 +238,8 @@ var importAllPosts = function (done) {
       console.log("Language: "+language);
       console.log(description);
 
+      //TODO: Add access attribute and images + fallback group images
+
       properties = _.merge(properties,
         {
           domain_id: convertToString(post.Group.Community.Domain.id),
