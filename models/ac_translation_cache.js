@@ -43,6 +43,13 @@ module.exports = function(sequelize, DataTypes) {
             return modelInstance.content;
           case 'groupContent':
             return modelInstance.objectives;
+          case 'customRatingName':
+            if (modelInstance.Group.configuration.customRatings &&
+                modelInstance.Group.configuration.customRatings[modelInstance.custom_rating_index]) {
+              return modelInstance.Group.configuration.customRatings[modelInstance.custom_rating_index].name
+            } else {
+              return "Translation error";
+            }
           case 'categoryName':
             return modelInstance.name;
           case 'postTranscriptContent':
