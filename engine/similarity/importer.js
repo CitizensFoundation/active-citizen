@@ -6,7 +6,7 @@ const request = require('request');
 
 const ACTIVE_CITIZEN_PIO_APP_ID = 1;
 
-let updateAsyncLimit = 42;
+let updateAsyncLimit = 16;
 
 var getClient = function (appId) {
   return new predictionio.Events({appId: appId});
@@ -167,6 +167,79 @@ var importAllGroups = function (done) {
   });
 };
 
+const _getVideoURL = function(videos) {
+  if (videos &&
+      videos.length>0 &&
+      videos[0].formats &&
+      videos[0].formats.length>0) {
+    return videos[0].formats[0];
+  } else {
+    return null;
+  }
+};
+
+const _getAudioURL = function (audios) {
+  if (audios &&
+      audios.length>0 &&
+      audios[0].formats &&
+      audios[0].formats.length>0) {
+    return audios[0].formats[0];
+  } else {
+    return null;
+  }
+};
+
+const _getVideoPosterURL = function(videos, images, selectedImageIndex) {
+  if (videos &&
+      videos.length>0 &&
+      videos[0].VideoImages &&
+      videos[0].VideoImages.length>0) {
+    if (!selectedImageIndex)
+      selectedImageIndex = 0;
+    if (videos[0].public_meta && videos[0].public_meta.selectedVideoFrameIndex) {
+      selectedImageIndex = parseInt(videos[0].public_meta.selectedVideoFrameIndex);
+    }
+    if (selectedImageIndex>videos[0].VideoImages.length-1) {
+      selectedImageIndex = 0;
+    }
+    if (selectedImageIndex===-2 && images) {
+      return this.getImageFormatUrl(images, 0);
+    } else {
+      if (selectedImageIndex<0)
+        selectedImageIndex = 0;
+      return JSON.parse(videos[0].VideoImages[selectedImageIndex].formats)[0];
+    }
+  } else {
+    return null;
+  }
+};
+
+const _getImageFormatUrl = function(images, formatId) {
+  if (images && images.length>0) {
+    var formats = JSON.parse(images[images.length-1].formats);
+    if (formats && formats.length>0)
+      return formats[formatId];
+  } else {
+    return "";
+  }
+};
+
+
+const _hasCoverMediaType = function (post, mediaType) {
+  if (!post) {
+    console.info("No post for "+mediaType);
+    return false;
+  } else {
+    if (mediaType == 'none') {
+      return (!post.Category && (!post.cover_media_type || post.cover_media_type == 'none'));
+    } else  if ((mediaType=='category' && post.Category) && (!post.cover_media_type || post.cover_media_type == 'none')) {
+      return true;
+    } else {
+      return (post && post.cover_media_type == mediaType);
+    }
+  }
+};
+
 var importAllPosts = function (done) {
   log.info('AcSimilarityImport', {});
 
@@ -181,13 +254,23 @@ var importAllPosts = function (done) {
         {
           model: models.Group,
           required: true,
-          attributes: ['id','access','status'],
+          attributes: ['id','access','status','configuration'],
           include: [
+            {
+              attributes: ['id','formats'],
+              model: models.Image, as: 'GroupLogoImages',
+              required: false
+            },
             {
               model: models.Community,
               attributes: ['id','access','status','default_locale'],
               required: true,
               include: [
+                {
+                  attributes: ['id','formats'],
+                  model: models.Image, as: 'CommunityLogoImages',
+                  required: false
+                },
                 {
                   model: models.Domain,
                   attributes: ['id','default_locale'],
@@ -196,12 +279,42 @@ var importAllPosts = function (done) {
               ]
             }
           ]
+        },
+        {
+          model: models.Image,
+          required: false,
+          as: 'PostHeaderImages',
+          attributes: ['id','formats']
+        },
+        {
+          model: models.Video,
+          required: false,
+          attributes: ['id','formats','updated_at','viewable','public_meta'],
+          as: 'PostVideos',
+          include: [
+            {
+              model: models.Image,
+              as: 'VideoImages',
+              attributes:["formats",'updated_at'],
+              required: false
+            },
+          ]
+        },
+        {
+          model: models.Audio,
+          required: false,
+          attributes: ['id','formats','updated_at','listenable'],
+          as: 'PostAudios',
         }
       ],
       order: [
-        ['id', 'asc' ]
+        ['id', 'desc' ],
+        [ { model: models.Image, as: 'PostHeaderImages' } ,'updated_at', 'asc' ],
+        [ { model: models.Group }, { model: models.Image, as: 'GroupLogoImages' } , 'created_at', 'desc' ],
+        [ { model: models.Group }, { model: models.Community }, { model: models.Image, as: 'CommunityLogoImages' } , 'created_at', 'desc' ]
       ],
-      attributes: ['id','name','description','group_id','category_id','status','deleted','language','created_at','user_id','official_status',
+      attributes: ['id','name','description','group_id','category_id','status','deleted','language','created_at',
+                   'user_id','official_status','public_data',
                    'counter_endorsements_up','counter_endorsements_down','counter_points','counter_flags']
     }).then(function (posts) {
     lineCrCounter = 0;
@@ -235,10 +348,55 @@ var importAllPosts = function (done) {
         description=post.Points[0].content;
       }
 
+      if (post.public_data && post.public_data.structuredAnswers) {
+        const answers = post.public_data.structuredAnswers.split("%!#x");
+        description = answers.join(" ");
+      }
+
+      let publicAccess = false;
+
+      if ((post.Group.access===models.Group.ACCESS_PUBLIC &&
+          post.Group.Community.access===models.Community.ACCESS_PUBLIC) ||
+          (post.Group.access===models.Group.ACCESS_OPEN_TO_COMMUNITY &&
+          post.Group.Community.access===models.Community.ACCESS_PUBLIC)
+      ) {
+        publicAccess = true;
+      }
+
+      let communityAccess = false;
+
+      if (post.Group.access===models.Group.ACCESS_PUBLIC || post.Group.access===models.Group.ACCESS_OPEN_TO_COMMUNITY) {
+        communityAccess = true;
+      }
+
+      let formats, imageUrl, audioUrl, videoUrl;
+
+      if (_hasCoverMediaType(post, "image") && post.PostHeaderImages && post.PostHeaderImages.length>0) {
+        imageUrl = _getImageFormatUrl(post.PostHeaderImages, 0);
+      } else if (_hasCoverMediaType(post, "video") && post.Videos && post.Videos.length>0) {
+        imageUrl = _getVideoPosterURL(post.Videos, post.Images, 0);
+        videoUrl = _getVideoURL(post.Videos);
+      } else if (_hasCoverMediaType(post, "audio") && post.Audios && post.Audios.length>0) {
+        audioUrl = _getAudioURL(post.Audios);
+      }
+
+
+      if (!imageUrl) {
+        if (post.Group.GroupLogoImages && post.Group.GroupLogoImages.length>0) {
+          formats = JSON.parse(post.Group.GroupLogoImages[0].formats);
+          imageUrl = formats[0];
+        } else if (post.Group.Community.CommunityLogoImages && post.Group.Community.CommunityLogoImages.length>0) {
+          formats = JSON.parse(post.Group.Community.CommunityLogoImages[0].formats);
+          imageUrl = formats[0];
+        }
+      }
+
       console.log("Language: "+language);
+      console.log("Image URL: "+imageUrl);
       console.log(description);
 
-      //TODO: Add access attribute and images + fallback group images
+      //TODO: Add endorsements up and down for ratings for 3d maps
+      //TODO: Add English translation if there and make train english maps for all items
 
       properties = _.merge(properties,
         {
@@ -251,6 +409,11 @@ var importAllPosts = function (done) {
           counter_points: post.counter_points,
           counter_flags: post.counter_flags,
           name: post.name,
+          imageUrl: imageUrl,
+          videoUrl: videoUrl,
+          communityAccess: communityAccess,
+          audioUrl: audioUrl,
+          publicAccess: publicAccess,
           status: post.deleted ? 'deleted' : post.status,
           official_status: convertToString(post.official_status),
           language: language
@@ -269,10 +432,14 @@ var importAllPosts = function (done) {
         json: properties
       };
 
-      request.post(options, (response) => {
-        console.log(response);
+      if (true) {
+        request.post(options, (response) => {
+          console.log(response);
+          callback();
+        });
+      } else {
         callback();
-      });
+      }
     }, function () {
       console.log("Finished updating posts");
       done();
@@ -311,7 +478,7 @@ var importAll = function(done) {
 if (process.env["AC_SIMILARITY_API_KEY"] && process.env["AC_SIMILARITY_API_BASE_URL"] ) {
   log.info('AcSimilarityImportStarting', {});
   if (process.argv[2] && process.argv[2]=="onlyUpdatePosts") {
-    updateAsyncLimit = 10;
+    updateAsyncLimit = 8;
     importAllPosts(function () {
       console.log("Done updating posts");
       process.exit();
