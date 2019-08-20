@@ -314,7 +314,7 @@ var importAllPosts = function (done) {
         [ { model: models.Group }, { model: models.Community }, { model: models.Image, as: 'CommunityLogoImages' } , 'created_at', 'desc' ]
       ],
       attributes: ['id','name','description','group_id','category_id','status','deleted','language','created_at',
-                   'user_id','official_status','public_data',
+                   'user_id','official_status','public_data','cover_media_type',
                    'counter_endorsements_up','counter_endorsements_down','counter_points','counter_flags']
     }).then(function (posts) {
     lineCrCounter = 0;
@@ -369,7 +369,8 @@ var importAllPosts = function (done) {
         communityAccess = true;
       }
 
-      let formats, imageUrl, audioUrl, videoUrl;
+      let formats, audioUrl, videoUrl;
+      let imageUrl = null;
 
       if (_hasCoverMediaType(post, "image") && post.PostHeaderImages && post.PostHeaderImages.length>0) {
         imageUrl = _getImageFormatUrl(post.PostHeaderImages, 0);
@@ -379,6 +380,8 @@ var importAllPosts = function (done) {
       } else if (_hasCoverMediaType(post, "audio") && post.Audios && post.Audios.length>0) {
         audioUrl = _getAudioURL(post.Audios);
       }
+
+      console.log("Image URL before: "+imageUrl);
 
 
       if (!imageUrl) {
@@ -391,8 +394,8 @@ var importAllPosts = function (done) {
         }
       }
 
+      console.log("Image URL after: "+imageUrl);
       console.log("Language: "+language);
-      console.log("Image URL: "+imageUrl);
       console.log(description);
 
       //TODO: Add endorsements up and down for ratings for 3d maps
