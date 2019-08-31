@@ -168,16 +168,20 @@ var generateRecommendationEvent = function (activity, callback) {
     log.info('Events Manager generateRecommendationEvent', {type: activity.type, userId: activity.user_id });
     switch (activity.type) {
       case "activity.post.new":
+      case "activity.post.copied":
         createOrUpdateItem(activity.Post.id, activity.Post.created_at.toISOString(), callback);
         break;
       case "activity.post.endorsement.new":
+      case "activity.post.endorsement.copied":
       case "activity.post.rating.new":
+      case "activity.post.rating.copied":
         createAction(activity.Post.id, activity.user_id, activity.created_at.toISOString(), 'endorse', callback);
         break;
       case "activity.post.opposition.new":
         createAction(activity.Post.id, activity.user_id, activity.created_at.toISOString(), 'oppose', callback);
         break;
       case "activity.point.new":
+      case "activity.point.copied":
         if (activity.Point) {
           if (activity.Point.value==0 && activity.Point.Post) {
             createAction(activity.Point.Post.id, activity.user_id, activity.created_at.toISOString(), 'point-comment-new', callback);
@@ -191,6 +195,7 @@ var generateRecommendationEvent = function (activity, callback) {
         }
         break;
       case "activity.point.helpful.new":
+      case "activity.point.helpful.copied":
         if (activity.Point.Post) {
           createAction(activity.Point.Post.id, activity.user_id, activity.created_at.toISOString(), 'point-helpful', callback);
         } else {
@@ -198,6 +203,7 @@ var generateRecommendationEvent = function (activity, callback) {
         }
         break;
       case "activity.point.unhelpful.new":
+      case "activity.point.unhelpful.copied":
         if (activity.Point.Post) {
           createAction(activity.Point.Post.id, activity.user_id, activity.created_at.toISOString(), 'point-unhelpful', callback);
         } else {
