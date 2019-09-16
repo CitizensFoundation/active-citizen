@@ -1,18 +1,29 @@
 {
+  "yourPosts": "Deine Beiträge",
+  "yourPoints": "Deine Argumente",
+  "yourGroupPoints": "Deine Gruppenargumente",
+  "yourCommunityPoints": "Deine Community Argumente",
   "notification": {
+    "contentToBeAnonymized": "Deine Inhalte werden in 7 Tagen anonymisiert für",
+    "communityContentToBeAnonymized": "All Deine Inhalte in dieser Community werden in 7 Tagen anonymisiert und archiviert, danach kannst Du sie nicht mehr löschen oder ändern. Deine Inhalte werden unterhalb angezeigt.",
+    "groupContentToBeAnonymized": "All Deine Inhalte in dieser Gruppe werden in 7 Tagen anonymisiert und archiviert, danach kannst Du sie nicht mehr löschen oder ändern. Deine Inhalte werden unterhalb angezeigt.",
     "post": {
       "statusChangeSubject": "Der Status des Beitrags wurde aktualisiert."
     },
     "email": {
+      "automaticToxicityDetection": "Dieser Inhalt wurde automatisch als giftig markiert von KI-Algorithmen die den Giftigkeitsgrad von Inhalten schätzen. Du kannst den Inhalt löschen falls notwendig.",
+      "automaticToxicityDetectionDisclaimer": "Manchmal berechnen die KI-Algorithmen eine falsche Punktezahl, in solchen Fällen brauchst Du Dir keine Sorgen machen und kannst diese Email auch einfach ignorieren ohne tätig zu werden.",
+      "automaticToxicityHowLikely": "Wie wahrscheinlich (%) es giftig ist",
+      "automaticToxicityEnglishText": "Englischer Text für Punktezahl benutzt",
       "newPointedAddedToThisIdea": "Zu der Idee wurde ein neues Argument hinzugefügt",
       "newPointedAddedToIdea": "Zu Ihrer Idee wurde ein neues Argument hinzugefügt",
-      "thisNewIdea": "Diese neue Idee",
+      "thisNewIdea": "Neue Idee",
       "hasBeenPosted": "wurde veröffentlicht",
       "thePointToIdea": "Dieses Argument zu der Idee",
       "yourPointToIdea": "Ihr Argument zu der Idee",
       "hasBeenMarkedUp": "wurde als hilfreich markiert",
       "hasBeenMarkedDown": "wurde als nicht hilfreich markiert",
-      "writtenByUser": "geschrieben vom User mit dem Namen",
+      "writtenByUser": "geschrieben von einem Benutzer namens",
       "hasBeenReported": "wurde als unangemessen gemeldet",
       "withKindRegards": "Mit freundlichen Grüßen",
       "youCanViewItHere": "Sie können Sich die Idee hier ansehen",

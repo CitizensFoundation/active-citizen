@@ -186,6 +186,11 @@ var sendOneEmail = function (emailLocals, callback) {
         fromEmail = 'Mine idéer Forbrukerrådet <mineideer@forbrukerradet.no>';
       } else if (emailLocals.domain.domain_name.indexOf('e-dem.nl') > -1) {
         fromEmail = 'admin@yrpr.e-dem.nl';
+      } else if (emailLocals.domain.domain_name.indexOf('parliament.scot') > -1) {
+        fromEmail = 'Engage Scottish Parliament <engage@parliament.scot>';
+        emailLocals['community'] = {
+          hostname: 'engage'
+        }
       } else if (emailLocals.domain.domain_name.indexOf('idea-synergy.com') > -1) {
         fromEmail = 'ideasynergy@idea-synergy.com';
       } else if (emailLocals.domain.domain_name.indexOf('smarter.nj.gov') > -1) {
