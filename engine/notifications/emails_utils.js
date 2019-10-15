@@ -194,9 +194,9 @@ var sendOneEmail = function (emailLocals, callback) {
       } else if (emailLocals.domain.domain_name.indexOf('idea-synergy.com') > -1) {
         fromEmail = 'ideasynergy@idea-synergy.com';
       } else if (emailLocals.domain.domain_name.indexOf('smarter.nj.gov') > -1) {
-        fromEmail = 'SmarterNJ <support@smarter.nj.gov>';
+        fromEmail = 'SmarterNJ <support@notifications.smarter.nj.gov>';
         sender = "support@notifications.smarter.nj.gov";
-        replyTo = "support@smarter.nj.gov";
+        replyTo = "support@notifications.smarter.nj.gov";
       } else if (process.env.EMAIL_FROM) {
         fromEmail = process.env.EMAIL_FROM;
       } else {
