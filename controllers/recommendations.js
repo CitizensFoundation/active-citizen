@@ -56,7 +56,8 @@ var processRecommendations = function (levelType, req, res, recommendedItemIds, 
         }
       },
       order: [
-        [ { model: models.Image, as: 'PostHeaderImages' } ,'updated_at', 'asc' ]
+        [ { model: models.Image, as: 'PostHeaderImages' } ,'updated_at', 'asc' ],
+        [ { model: models.Video, as: "PostVideos" }, { model: models.Image, as: 'VideoImages' } ,'updated_at', 'asc' ]
       ],
       attributes: ['id','name','description','public_data','status','content_type','official_status','counter_endorsements_up','cover_media_type',
         'counter_endorsements_down','group_id','language','counter_points','counter_flags','location','created_at'],
@@ -93,6 +94,20 @@ var processRecommendations = function (levelType, req, res, recommendedItemIds, 
               attributes: ['id','name','theme_id'],
               required: false
             }
+          ]
+        },
+        {
+          model: models.Video,
+          required: false,
+          attributes: ['id','formats','updated_at','viewable','public_meta'],
+          as: 'PostVideos',
+          include: [
+            {
+              model: models.Image,
+              as: 'VideoImages',
+              attributes:["formats",'updated_at'],
+              required: false
+            },
           ]
         },
         // User

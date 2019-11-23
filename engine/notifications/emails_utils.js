@@ -187,7 +187,9 @@ var sendOneEmail = function (emailLocals, callback) {
       } else if (emailLocals.domain.domain_name.indexOf('e-dem.nl') > -1) {
         fromEmail = 'admin@yrpr.e-dem.nl';
       } else if (emailLocals.domain.domain_name.indexOf('parliament.scot') > -1) {
-        fromEmail = 'Engage Scottish Parliament <engage@parliament.scot>';
+        fromEmail = 'Engage Scottish Parliament <engage@engage.parliament.scot>';
+        sender = "engage@engage.parliament.scot";
+        replyTo = "engage@parliament.scot";
         emailLocals['community'] = {
           hostname: 'engage'
         }
