@@ -7,6 +7,7 @@ var notification_delivery = require('./notification_delivery');
 var notification_news_feed = require('./notification_news_feed');
 var bulk_status_update = require('./bulk_status_update');
 var deletions = require('./deletions');
+var delayedJobs = require('./delayed_jobs');
 var anonymizations = require('./anonymizations');
 var moderation = require('./moderation');
 var email = require('./email');
@@ -20,7 +21,7 @@ var localesPath = path.resolve(__dirname, '../locales');
 i18n
   .use(Backend)
   .init({
-    preload: ['en', 'fr', 'it','da', 'kl', 'es', 'sq','uz','uk', 'ca', 'hr', 'pt_BR', 'hu', 'tr', 'is', 'nl','no', 'pl', 'zh_TW'],
+    preload: ['en', 'fr', 'it','da', 'kl', 'es', 'sv', 'sq','uz','uk', 'ca', 'hr', 'pt_BR', 'hu', 'tr', 'is', 'nl','no', 'pl', 'zh_TW'],
 
     fallbackLng:'en',
 
@@ -44,6 +45,10 @@ i18n
 
     queue.process('process-activity', 5, function(job, done) {
       activity.process(job.data, done);
+    });
+
+    queue.process('delayed-job', 5, function(job, done) {
+      delayedJobs.process(job.data, done);
     });
 
     queue.process('process-notification-delivery', 5, function(job, done) {
