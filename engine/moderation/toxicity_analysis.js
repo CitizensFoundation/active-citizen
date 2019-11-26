@@ -223,7 +223,7 @@ const estimateToxicityScoreForPost = (options, callback) => {
           textUsed = textContent;
           log.info("getToxicityScoreForText post getting english text");
           getToxicityScoreForText(textUsed, doNotStoreValue, callback);
-        } else if (textContent && textContent!=='') {
+        } else if (textContent!=='') {
           log.info("getToxicityScoreForText post getting translated text");
           getTranslatedTextForPost(post, (error, translatedText) => {
             log.info("getToxicityScoreForText post got translated text", { translatedText, error });

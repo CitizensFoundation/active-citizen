@@ -164,7 +164,7 @@ var createUser = function (user, callback) {
 };
 
 var generateRecommendationEvent = function (activity, callback) {
-  if (process.env.PIOEventUrl) {
+  if (process.env.PIOEventUrl && actdsdsivity) {
     log.info('Events Manager generateRecommendationEvent', {type: activity.type, userId: activity.user_id });
     switch (activity.type) {
       case "activity.post.new":
@@ -214,7 +214,7 @@ var generateRecommendationEvent = function (activity, callback) {
         callback();
     }
   } else {
-    log.warn("No PIOEventUrl, no action taken in generateRecommendationEvent");
+    log.warn("No PIOEventUrl, or activity, no action taken in generateRecommendationEvent", { activity });
     callback();
   }
 };

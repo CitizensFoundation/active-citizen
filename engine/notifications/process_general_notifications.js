@@ -78,7 +78,7 @@ const makeLinkToPoint = (point, community, domain) => {
     log.error("Can't find any content");
     content = "Unknown";
   }
-  return '<a href="'+url+'">'+truncate(point.content,80)+'</a>';
+  return '<a href="'+url+'">'+truncate(content,80)+'</a>';
 };
 
 const makeLinksForPoints = (pointsObject, community, domain) =>  {
