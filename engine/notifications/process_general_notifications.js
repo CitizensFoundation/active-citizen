@@ -70,7 +70,7 @@ const makeLinkToPoint = (point, community, domain) => {
     url = 'https://'+hostName+'.'+domain.domain_name+'/community/'+point.community_id+'/news/'+point.id;
   }
   let content;
-  if (!point.content & point.PointRevisions[0]) {
+  if (point.content==null & point.PointRevisions[0]) {
     content = point.PointRevisions[0].content
   } else if (point.content) {
     content = point.content;

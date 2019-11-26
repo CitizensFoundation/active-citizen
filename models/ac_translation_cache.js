@@ -1,9 +1,9 @@
+"use strict";
+
 var async = require("async");
 const { Translate }= require('@google-cloud/translate');
 const farmhash = require('farmhash');
 var log = require('../utils/logger');
-
-"use strict";
 
 module.exports = function(sequelize, DataTypes) {
   let AcTranslationCache = sequelize.define("AcTranslationCache", {
