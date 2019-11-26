@@ -103,25 +103,32 @@ module.exports = function(sequelize, DataTypes) {
       },
 
       getTranslation: function (req, modelInstance, callback) {
+        log.info("translatedText getTranslation 1");
         const contentToTranslate = AcTranslationCache.getContentToTranslate(req, modelInstance);
         if (contentToTranslate && contentToTranslate!=='' &&
             contentToTranslate.length>6 && isNaN(contentToTranslate)) {
+          log.info("translatedText getTranslation 2");
           const contentHash = farmhash.hash32(contentToTranslate).toString();
+          log.info("translatedText getTranslation 3");
           const textType = req.query.textType;
           let targetLanguage = req.query.targetLanguage.replace('_','-');
           if (targetLanguage!='zh-CN' && targetLanguage!='zh-TW') {
             targetLanguage = targetLanguage.split("-")[0];
           }
           let indexKey = `${textType}-${modelInstance.id}-${targetLanguage}-${contentHash}`;
+          log.info("translatedText getTranslation 4");
 
           AcTranslationCache.findOne({
             where: {
               index_key: indexKey
             }
           }).then(function (translationModel) {
+            log.info("translatedText getTranslation 5");
             if (translationModel) {
+              log.info("translatedText getTranslation 6");
               callback(null, { content: translationModel.content });
             } else {
+              log.info("translatedText getTranslation 7");
               AcTranslationCache.getTranslationFromGoogle(textType, indexKey, contentToTranslate, targetLanguage, modelInstance, callback);
             }
           }).catch(function (error) {
