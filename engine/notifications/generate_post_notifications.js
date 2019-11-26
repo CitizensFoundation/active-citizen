@@ -1,5 +1,4 @@
 var models = require("../../../models");
-var auth = require('../../authorization');
 var log = require('../../utils/logger');
 var toJson = require('../../utils/to_json');
 var async = require('async');
