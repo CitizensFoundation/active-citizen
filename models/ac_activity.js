@@ -252,7 +252,7 @@ module.exports = function(sequelize, DataTypes) {
         async.series([
           // Checking for missing values for community or group if its a post related event
           function (seriesCallback) {
-            if (!options.postId || (options.groupId && options.communityId)) {
+            if (options.postId==null || (options.groupId && options.communityId)) {
               seriesCallback();
             } else if (options.groupId) {
               sequelize.models.Group.find({where: { id: options.groupId },

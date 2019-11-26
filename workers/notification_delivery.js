@@ -95,8 +95,8 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
             }
           ]
         }).then(function(results) {
-          log.info("NotificationDeliveryWorker Debug 1", {results: results.dataValues});
           if (results) {
+            log.info("NotificationDeliveryWorker Debug 1", {results: results.dataValues});
             notification = results;
             group = notification.AcActivities[0].Group;
             if (notification.AcActivities[0].Domain) {
