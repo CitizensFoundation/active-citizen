@@ -164,7 +164,7 @@ var createUser = function (user, callback) {
 };
 
 var generateRecommendationEvent = function (activity, callback) {
-  if (process.env.PIOEventUrl && actdsdsivity) {
+  if (process.env.PIOEventUrl && activity) {
     log.info('Events Manager generateRecommendationEvent', {type: activity.type, userId: activity.user_id });
     switch (activity.type) {
       case "activity.post.new":
