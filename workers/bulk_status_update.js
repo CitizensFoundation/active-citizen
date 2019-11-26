@@ -401,8 +401,8 @@ BulkStatusUpdateWorker.prototype.process = function (bulkStatusUpdateInfo, callb
           }
         ]
       }).then(function(results) {
-        log.info("BulkStatusUpdateWorker Debug 1", {results: results.dataValues});
         if (results) {
+          log.info("BulkStatusUpdateWorker Debug 1", {results: results.dataValues});
           statusUpdate = results;
           seriesCallback();
         } else {

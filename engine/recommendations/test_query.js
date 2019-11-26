@@ -34,8 +34,8 @@ models.User.find({ where: {email:'robert@citizens.is'}}).then(function (user) {
     var array = [];
     async.eachSeries(results.itemScores, function (item, callback) {
       console.log("ITEM");
-      console.log(item.item);
       if (item && item.item) {
+        console.log(item.item);
         models.Post.find({where:{ id: item.item }}).then(function(post) {
           console.log(post.name);
           console.log(post.status);
