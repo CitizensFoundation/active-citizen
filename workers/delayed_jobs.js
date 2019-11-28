@@ -13,9 +13,130 @@ if(process.env.AIRBRAKE_PROJECT_ID) {
 
 let DelayedJobWorker = function () {};
 
+const delayedCreatePriorityActivity = (workPackage, callback) => {
+  const options = workPackage.workData;
+
+  var context, actor, object;
+
+  if (options.object)
+    object = options.object;
+  else
+    object = {};
+
+  if (options.context)
+    context = options.context;
+  else
+    context = {};
+
+  if (options.actor)
+    actor = options.actor;
+  else
+    actor = {};
+
+  if (options.userId)
+    actor['userId'] = options.userId;
+
+  if (options.domainId)
+    object['domainId'] = options.domainId;
+
+  if (options.communityId)
+    object['communityId'] = options.communityId;
+
+  if (options.groupId)
+    object['groupId'] = options.groupId;
+
+  if (options.postId)
+    object['postId'] = options.postId;
+
+  if (options.pointId)
+    object['pointId'] = options.pointId;
+
+  async.series([
+    // Checking for missing values for community or group if its a post related event
+    function (seriesCallback) {
+      if (options.postId==null || (options.groupId && options.communityId)) {
+        seriesCallback();
+      } else if (options.groupId) {
+        models.Group.find({where: { id: options.groupId },
+          attributes: ['id','community_id']
+        }).then(function(group) {
+          if (group) {
+            log.info("Found group info for post acitivity from app");
+            options.communityId = group.community_id;
+            seriesCallback();
+          } else {
+            seriesCallback("Can't find group");
+          }
+        }).catch(function(error) {
+          seriesCallback(error);
+        });
+      } else if (options.postId) {
+        log.info("Looking for post, group and community START");
+        models.Post.find(
+          {where: { id: options.postId },
+            attributes: ['id','group_id'],
+            include: [
+              {
+                model: models.Group,
+                attributes: ['id','community_id']
+              }
+            ]}).then(function(post) {
+          log.info("Looking for post, group and community END");
+          if (post) {
+            log.info("Found post info for post acitivity from app");
+            options.groupId = post.Group.id;
+            options.communityId = post.Group.community_id;
+            seriesCallback();
+          } else {
+            seriesCallback("Can't find post");
+          }
+        }).catch(function(error) {
+          seriesCallback(error);
+        });
+      } else {
+        seriesCallback("Strange state of create ac activity looking up community id");
+      }
+    }
+  ], function (error) {
+    if (error) {
+      callback(error);
+    } else {
+      models.AcActivity.build({
+        type: options.type,
+        status: 'active',
+        sub_type: options.subType,
+        actor: actor,
+        object: object,
+        context: context,
+        user_id: options.userId,
+        domain_id: options.domainId,
+        community_id: options.communityId,
+        group_id: options.groupId,
+        post_id: options.postId,
+        point_id: options.pointId,
+        post_status_change_id: options.postStatusChangeId,
+        access: !isNaN(options.access) ? options.access : models.AcActivity.ACCESS_PRIVATE
+      }).save().then(function(activity) {
+        if (activity) {
+          if (activity.type!='activity.fromApp') {
+            queue.create('process-activity', activity).priority('critical').removeOnComplete(true).save();
+          }
+          log.info('Activity Created', { activity: toJson(activity), userId: options.userId});
+          callback();
+        } else {
+          callback('Activity Not Found');
+        }
+      }).catch(function(error) {
+        log.error('Activity Created Error', { err: error });
+        callback(error);
+      });
+    }
+  });
+};
+
 const delayedCreateActivityFromApp = (workPackage, callback) => {
   const workData = workPackage.workData;
-  models.AcActivity.createActivity({
+  delayedCreatePriorityActivity({ workData: {
     type: 'activity.fromApp',
     sub_type: workData.body.type,
     actor: { appActor: workData.body.actor },
@@ -27,7 +148,7 @@ const delayedCreateActivityFromApp = (workPackage, callback) => {
     groupId: workData.groupId,
     communityId: workData.communityId,
     postId: workData.postId
-  }, function (error) {
+  }}, function (error) {
     if (error) {
       log.error('Create Activity Error', {context: 'createActivity', err: error, errorStatus: 500 });
       callback(error);
@@ -41,6 +162,9 @@ DelayedJobWorker.prototype.process = (workPackage, callback) => {
   switch (workPackage.type) {
     case 'create-activity-from-app':
       delayedCreateActivityFromApp(workPackage, callback);
+      break;
+    case 'create-priority-activity':
+      delayedCreatePriorityActivity(workPackage, callback);
       break;
     default:
       callback("Unknown type for workPackage: " + workPackage.type);
