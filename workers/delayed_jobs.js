@@ -136,25 +136,27 @@ const delayedCreatePriorityActivity = (workPackage, callback) => {
 
 const delayedCreateActivityFromApp = (workPackage, callback) => {
   const workData = workPackage.workData;
-  delayedCreatePriorityActivity({ workData: {
+
+  models.AcClientActivity.build({
     type: 'activity.fromApp',
     sub_type: workData.body.type,
     actor: { appActor: workData.body.actor },
     object: { name: workData.body.object, target: workData.body.target ? JSON.parse(workData.body.target) : null },
     context: { pathName: workData.body.path_name, name: workData.body.context, eventTime: workData.body.event_time,
       sessionId: workData.body.sessionId, userAgent: workData.body.user_agent, server_timestamp: workData.body.server_timestamp },
-    userId: workData.userId,
-    domainId: workData.domainId,
-    groupId: workData.groupId,
-    communityId: workData.communityId,
-    postId: workData.postId
-  }}, function (error) {
-    if (error) {
-      log.error('Create Activity Error', {context: 'createActivity', err: error, errorStatus: 500 });
-      callback(error);
-    } else {
-      callback();
+    user_id: workData.userId,
+    domain_od: workData.domainId,
+    group_id: workData.groupId,
+    community_id: workData.communityId,
+    post_id: workData.postId
+  }).save().then(function(clientActivity) {
+    if (!clientActivity) {
+      log.error('Client Activity not created', { context: 'createClientActivity', errorStatus: 500 });
     }
+    callback();
+  }).catch(function(error) {
+    log.error('Client Activity Created Error', { context: 'createClientActivity', err: error });
+    callback(error);
   });
 };
 
