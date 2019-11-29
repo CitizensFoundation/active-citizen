@@ -159,31 +159,6 @@ module.exports = function(sequelize, DataTypes) {
       {
         name: 'activity_all_by_type',
         fields: ['type']
-      },
-      {
-        fields: ['object'],
-        using: 'gin',
-        operator: 'jsonb_path_ops'
-      },
-      {
-        fields: ['actor'],
-        using: 'gin',
-        operator: 'jsonb_path_ops'
-      },
-      {
-        fields: ['target'],
-        using: 'gin',
-        operator: 'jsonb_path_ops'
-      },
-      {
-        fields: ['context'],
-        using: 'gin',
-        operator: 'jsonb_path_ops'
-      },
-      {
-        fields: ['user_interaction_profile'],
-        using: 'gin',
-        operator: 'jsonb_path_ops'
       }
     ]),
 
