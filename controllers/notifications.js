@@ -69,6 +69,7 @@ var getNotifications = function (req, res, options, callback) {
                 include: [
                   {
                     model: models.Image, as: 'UserProfileImages',
+                    attributes: ['id', 'formats'],
                     required: false
                   },
                   {
