@@ -40,10 +40,30 @@ var getNotifications = function (req, res, options, callback) {
 
   var notifications, unViewedCount;
 
-  async.parallel([
-    function (parallelCallback) {
+  async.series([
+    function (seriesCallback) {
       models.AcNotification.findAll({
         where: where,
+        attributes: ['id'],
+        order: [
+          ["updated_at", "desc"]
+        ],
+        limit: 20
+      }).then(function(inNotifications) {
+        notifications = inNotifications;
+        seriesCallback();
+      }).catch(function(error) {
+        seriesCallback(error);
+      });
+    },
+    function (seriesCallback) {
+      models.AcNotification.findAll({
+        where: {
+          id: {
+            $in: _.map(notifications, (item) => { return item.id })
+          }
+        },
+        attributes: ['id','type','created_at','updated_at','viewed'],
         order: [
           ["updated_at", "desc"],
           [ { model: models.AcActivity, as: 'AcActivities'} ,'created_at', 'desc' ],
@@ -54,7 +74,7 @@ var getNotifications = function (req, res, options, callback) {
           {
             model: models.AcActivity,
             as: 'AcActivities',
-            attributes: ['id','type','domain_id','object'],
+            attributes: ['id'],
             where: activityWhereOptions,
             required: true,
             include: [
@@ -106,16 +126,15 @@ var getNotifications = function (req, res, options, callback) {
               }
             ]
           }
-        ],
-        limit: 20
+        ]
       }).then(function(inNotifications) {
         notifications = inNotifications;
-        parallelCallback();
+        seriesCallback();
       }).catch(function(error) {
-        parallelCallback(error);
+        seriesCallback(error);
       });
     },
-    function (parallelCallback) {
+    function (seriesCallback) {
       models.AcNotification.count({
         where: {
           viewed: false,
@@ -123,20 +142,19 @@ var getNotifications = function (req, res, options, callback) {
         }
       }).then(function (count) {
         unViewedCount = count;
-        parallelCallback();
+        seriesCallback();
       }).catch(function (error) {
-        parallelCallback(error);
+        seriesCallback(error);
       });
     }
   ], function (error) {
     if (error) {
       callback(error);
     } else {
-      var slicedActivitesBecauseOfLimitBug = _.take(notifications, 20);
       res.send({
-        notifications: slicedActivitesBecauseOfLimitBug,
+        notifications: notifications,
         unViewedCount: unViewedCount,
-        oldestProcessedNotificationAt: slicedActivitesBecauseOfLimitBug.length>0 ? _.last(slicedActivitesBecauseOfLimitBug).created_at : null
+        oldestProcessedNotificationAt: notifications.length>0 ? _.last(notifications).created_at : null
       });
     }
   });
