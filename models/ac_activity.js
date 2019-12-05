@@ -76,36 +76,9 @@ module.exports = function(sequelize, DataTypes) {
 
     indexes: _.concat(commonIndexForActivitiesAndNewsFeeds('created_at'), [
       {
-        name: 'activity_public_and_active_by_type',
-        fields: ['type'],
-        where: {
-          access: 0,
-          status: 'active',
-          deleted: false
-        }
-      },
-      {
         name: 'activity_active_by_type',
         fields: ['type'],
         where: {
-          status: 'active',
-          deleted: false
-        }
-      },
-      {
-        name: 'activity_public_and_active_by_domain_id',
-        fields: ['domain_id'],
-        where: {
-          access: 0,
-          status: 'active',
-          deleted: false
-        }
-      },
-      {
-        name: 'activity_public_and_active_by_community_id',
-        fields: ['community_id'],
-        where: {
-          access: 0,
           status: 'active',
           deleted: false
         }
@@ -119,27 +92,13 @@ module.exports = function(sequelize, DataTypes) {
         }
       },
       {
-        name: 'activity_public_and_active_by_group_id',
-        fields: ['group_id'],
-        where: {
-          access: 0,
-          status: 'active',
-          deleted: false
-        }
+        name: 'ac_activities_idx_post_id_user_id_type_delete_status',
+        fields: ['post_id','user_id','type','deleted']
       },
       {
         name: 'activity_active_by_group_id',
         fields: ['group_id'],
         where: {
-          status: 'active',
-          deleted: false
-        }
-      },
-      {
-        name: 'activity_public_and_active_by_post_id',
-        fields: ['post_id'],
-        where: {
-          access: 0,
           status: 'active',
           deleted: false
         }

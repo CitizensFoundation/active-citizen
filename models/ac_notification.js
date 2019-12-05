@@ -30,43 +30,14 @@ module.exports = function(sequelize, DataTypes) {
 
     indexes: [
       {
-        name: 'notification_public_and_active_by_type',
-        fields: ['type'],
-        where: {
-          status: 'active'
-        }
-      },
-      {
-        name: 'notification_active_by_type',
-        fields: ['type'],
-        where: {
-          status: 'active'
-        }
-      },
-      {
-        name: 'notification_active_by_type_and_user_id',
-        fields: ['type','user_id'],
-        where: {
-          status: 'active'
-        }
-      },
-      {
         name: 'notification_by_type_and_user_id',
         fields: ['type','user_id']
-      },
-      {
-        name: 'notification_active_by_user_id',
-        fields: ['user_id'],
-        where: {
-          status: 'active'
-        }
       },
       { name: 'notification_user_id_deleted_viewed',
         fields: ['user_id', 'deleted', 'viewed']
       },
-      {
-        name: 'notification_all_by_type',
-        fields: ['type']
+      { name: 'ac_notifications_idx_user_id_type_deleted_created_at',
+        fields: ['user_id','type','deleted','created_at']
       },
       {
         fields: ['user_interaction_profile'],
@@ -175,7 +146,9 @@ module.exports = function(sequelize, DataTypes) {
         }
 
         queue.create('process-notification-delivery', notificationJson).priority(queuePriority).removeOnComplete(true).save();
-        queue.create('process-notification-news-feed', notificationJson).priority(queuePriority).removeOnComplete(true).save();
+
+        // Disabled for now
+        //queue.create('process-notification-news-feed', notificationJson).priority(queuePriority).removeOnComplete(true).save();
 
         // Its being updated and is not new
         if (callback) {
