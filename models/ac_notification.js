@@ -45,6 +45,10 @@ module.exports = function(sequelize, DataTypes) {
         operator: 'jsonb_path_ops'
       }
     ],
+
+    // Add following index manually for high throughput sites
+    // CREATE INDEX notification_activit_idx_ac_id ON notification_activities (ac_notification_id);
+    
     underscored: true,
 
     tableName: 'ac_notifications',
