@@ -263,7 +263,8 @@ const estimateToxicityScoreForPost = (options, callback) => {
       callback(error);
     })
   } else {
-    callback("No API key");
+    log.error("getToxicityScoreForText: No API key");
+    callback();
   }
 };
 
@@ -396,7 +397,8 @@ const estimateToxicityScoreForPoint = (options, callback) => {
       callback(error);
     })
   } else {
-    callback("No Google API key");
+    log.error("getToxicityScoreForText: No Google API key");
+    callback();
   }
 };
 

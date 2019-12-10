@@ -19,7 +19,7 @@ var ActivityWorker = function () {};
 
 ActivityWorker.prototype.process = function (activityJson, callback) {
   var activity;
-  log.info('Processing activity Started', { blah: blah.fsd.fwefew });
+  log.info('Processing activity Started', { blah: fdsfsd.dsfdsfds.fsdfsd });
   async.series([
     function (seriesCallback) {
       models.AcActivity.find({
