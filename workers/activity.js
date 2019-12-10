@@ -109,9 +109,9 @@ ActivityWorker.prototype.process = (activityJson, callback) => {
               seriesCallback(error);
             });
             break;
-          case "Xactivity.post.new":
-          case "Xactivity.post.opposition.new":
-          case "Xactivity.post.endorsement.new":
+          case "activity.post.new":
+          case "activity.post.opposition.new":
+          case "activity.post.endorsement.new":
             generatePostNotification(activity, activity.User,  (error) => {
               if (error) {
                 log.error('Processing activity.post.* Error', {type: activity.type, err: error});

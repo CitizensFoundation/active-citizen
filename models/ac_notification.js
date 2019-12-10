@@ -139,28 +139,25 @@ module.exports = function(sequelize, DataTypes) {
       },
 
       processNotification: function (notification, user, activity, callback) {
-        var notificationJson = notification.toJSON();
-        //notificationJson['activity'] = activity.toJSON();
-
-        var queuePriority;
+        let queuePriority;
         if (user.last_login_at && ((new Date().getDate()-5)<user.last_login_at)) {
           queuePriority = 'high';
         } else {
           queuePriority = 'medium';
         }
 
-        queue.create('process-notification-delivery', notificationJson).priority(queuePriority).removeOnComplete(true).save();
+        queue.create('process-notification-delivery', { id: notification.id }).priority(queuePriority).removeOnComplete(true).save();
 
         // Disabled for now
-        //queue.create('process-notification-news-feed', notificationJson).priority(queuePriority).removeOnComplete(true).save();
+        //queue.create('process-notification-news-feed', { id: notification.id }).priority(queuePriority).removeOnComplete(true).save();
 
         // Its being updated and is not new
         if (callback) {
           notification.viewed = false;
           notification.changed('updated_at', true);
-          notification.save().then(function (notificationIn) {
+          notification.save().then((notificationIn) => {
             callback();
-          }).catch(function (error) {
+          }).catch((error) => {
             callback(error);
           });
         }
@@ -264,7 +261,7 @@ module.exports = function(sequelize, DataTypes) {
         });
       },
 
-      createNotificationFromActivity: function(user, activity, type, notification_setting_type, priority, callback) {
+      createNotificationFromActivity: function (user, activity, type, notification_setting_type, priority, callback) {
         log.info('AcNotification Notification', {type: type, priority: priority });
 
         if (user==null) {
@@ -279,9 +276,6 @@ module.exports = function(sequelize, DataTypes) {
           user = { id: user };
         }
 
-        var domain = activity.object.domain;
-        var community = activity.object.community;
-
         //TODO: Check AcMute and mute if needed
 
        sequelize.models.AcNotification.build({
@@ -291,7 +285,7 @@ module.exports = function(sequelize, DataTypes) {
          ac_activity_id: activity.id,
          from_notification_setting: notification_setting_type,
          user_id: user.id
-       }).save().then(function(notification) {
+       }).save().then( (notification) => {
           if (notification) {
             notification.addAcActivities(activity).then(function (results) {
               if (results) {
@@ -306,7 +300,7 @@ module.exports = function(sequelize, DataTypes) {
             log.error('Notification Creation Error', { err: "No notification", user: user.id});
             callback("Notification Create Error");
           }
-        }).catch(function (error) {
+        }).catch((error) => {
          log.error('Notification Creation Error', { err: error, user: user.id});
          callback(error);
        });
