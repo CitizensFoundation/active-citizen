@@ -4,10 +4,14 @@ var log = require('../utils/logger');
 var email = require('./email');
 var activity = require('./activity');
 var toJson = require('../utils/to_json');
+const Airbrake = require('@airbrake/node');
 
 var airbrake = null;
 if(process.env.AIRBRAKE_PROJECT_ID) {
-  airbrake = require('../utils/airbrake');
+  airbrake = new Airbrake.Notifier({
+    projectId: process.env.AIRBRAKE_PROJECT_ID,
+    projectKey: process.env.AIRBRAKE_API_KEY,
+  });
 }
 
 // make sure we use the Heroku Redis To Go URL
