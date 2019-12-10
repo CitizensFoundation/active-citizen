@@ -47,15 +47,14 @@ i18n
       activity.process(job.data, done);
     });
 
-    queue.process('delayed-job', 5, function(job, done) {
-      delayedJobs.process(job.data, done);
-    });
-
     queue.process('process-notification-delivery', 5, function(job, done) {
       notification_delivery.process(job.data, done);
     });
-
  */
+
+    queue.process('delayed-job', 5, function(job, done) {
+      delayedJobs.process(job.data, done);
+    });
     queue.process('process-notification-news-feed', 5, function(job, done) {
       notification_news_feed.process(job.data, done);
     });
