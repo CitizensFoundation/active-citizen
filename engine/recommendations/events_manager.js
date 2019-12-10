@@ -7,7 +7,7 @@ var engine;
 
 var airbrake = null;
 if(process.env.AIRBRAKE_PROJECT_ID) {
-  airbrake = require('airbrake').createClient(process.env.AIRBRAKE_PROJECT_ID, process.env.AIRBRAKE_API_KEY);
+  airbrake = require('../../utils/airbrake');
 }
 
 var ACTIVE_CITIZEN_PIO_APP_ID = 1;
