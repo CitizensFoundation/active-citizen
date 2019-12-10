@@ -124,9 +124,9 @@ NotificationNewsFeedWorker.prototype.process = function (notificationJson, callb
     if (error) {
       log.error("NotificationNewsFeedWorker Error", {err: error});
       if(airbrake) {
-        airbrake.notify(error, function(airbrakeErr, url) {
-          if (airbrakeErr) {
-            log.error("AirBrake Error", { context: 'airbrake', err: airbrakeErr });
+        airbrake.notify(error).then((airbrakeErr)=> {
+          if (airbrakeErr.error) {
+            log.error("AirBrake Error", { context: 'airbrake', err: airbrakeErr.error });
           }
           callback(error);
         });

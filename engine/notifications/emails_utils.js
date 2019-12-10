@@ -293,9 +293,9 @@ var sendOneEmail = function (emailLocals, callback) {
     if (error) {
       log.error("EmailWorker Error", {err: error});
       if(airbrake) {
-        airbrake.notify(error, function(airbrakeErr, url) {
-          if (airbrakeErr) {
-            log.error("AirBrake Error", { context: 'airbrake', err: airbrakeErr, errorStatus: 500 });
+        airbrake.notify(error).then((airbrakeErr)=> {
+          if (airbrakeErr.error) {
+            log.error("AirBrake Error", { context: 'airbrake', err: airbrakeErr.error, errorStatus: 500 });
           }
           callback(error);
         });

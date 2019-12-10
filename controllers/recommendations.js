@@ -35,9 +35,9 @@ var processRecommendations = function (levelType, req, res, recommendedItemIds, 
     finalIds = [];
     log.error("Recommendation Error "+levelType, { err: error, id: req.params.id, userId:  req.user ? req.user.id : -1, errorStatus:  500 });
     if(airbrake) {
-      airbrake.notify(error, function(airbrakeErr, url) {
-        if (airbrakeErr) {
-          log.error("AirBrake Error", { context: 'airbrake', err: airbrakeErr, errorStatus: 500 });
+      airbrake.notify(error).then((airbrakeErr) => {
+        if (airbrakeErr.error) {
+          log.error("AirBrake Error", { context: 'airbrake', err: airbrakeErr.error, errorStatus: 500 });
         }
       });
     }
@@ -133,9 +133,9 @@ var processRecommendations = function (levelType, req, res, recommendedItemIds, 
     }).catch(function(error) {
       log.error("Recommendation Error "+levelType, { err: error, id: req.params.id, userId:  req.user ? req.user.id : -1, errorStatus: 500 });
       if(airbrake) {
-        airbrake.notify(error, function(airbrakeErr, url) {
-          if (airbrakeErr) {
-            log.error("AirBrake Error", { context: 'airbrake', err: airbrakeErr, errorStatus: 500 });
+        airbrake.notify(error).then((airbrakeErr)=> {
+          if (airbrakeErr.error) {
+            log.error("AirBrake Error", { context: 'airbrake', err: airbrakeErr.error, errorStatus: 500 });
           }
           res.send([]);
         });
@@ -150,9 +150,9 @@ var processRecommendationsLight = function (groupId, req, res, recommendedItemId
   if (error || !recommendedItemIds) {
     log.error("processRecommendationsLight Error", { err: error, userId:  req.user ? req.user.id : -1, errorStatus:  500 });
     if(airbrake) {
-      airbrake.notify(error, function(airbrakeErr, url) {
-        if (airbrakeErr) {
-          log.error("AirBrake Error", { context: 'airbrake', err: airbrakeErr, errorStatus: 500 });
+      airbrake.notify(error).then((airbrakeErr)=> {
+        if (airbrakeErr.error) {
+          log.error("AirBrake Error", { context: 'airbrake', err: airbrakeErr.error, errorStatus: 500 });
         }
         res.send({recommendations: [], groupId: groupId });
       });
@@ -183,9 +183,9 @@ var processRecommendationsLight = function (groupId, req, res, recommendedItemId
     }).catch(function(error) {
       log.error("processRecommendationsLight Error ", { err: error, userId:  req.user ? req.user.id : -1, errorStatus: 500 });
       if(airbrake) {
-        airbrake.notify(error, function(airbrakeErr, url) {
-          if (airbrakeErr) {
-            log.error("AirBrake Error", { context: 'airbrake', err: airbrakeErr, errorStatus: 500 });
+        airbrake.notify(error).then((airbrakeErr)=> {
+          if (airbrakeErr.error) {
+            log.error("AirBrake Error", { context: 'airbrake', err: airbrakeErr.error, errorStatus: 500 });
           }
           res.send({recommendations: [], groupId: groupId });
         });

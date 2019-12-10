@@ -329,9 +329,9 @@ isItemRecommended = function (itemId, userId, dateRange, options, callback) {
     if (error) {
       log.error("Recommendation Events Manager Error", { itemId: itemId, userId: userId, err: error });
       if(airbrake) {
-        airbrake.notify(error, function(airbrakeErr, url) {
-          if (airbrakeErr) {
-            log.error("AirBrake Error", { context: 'airbrake', err: airbrakeErr, errorStatus: 500 });
+        airbrake.notify(error).then((airbrakeErr)=> {
+          if (airbrakeErr.error) {
+            log.error("AirBrake Error", { context: 'airbrake', err: airbrakeErr.error, errorStatus: 500 });
           }
         });
       }

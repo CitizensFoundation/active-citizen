@@ -257,9 +257,9 @@ module.exports = function (notification, user, callback) {
     if (error) {
       log.error("Generate News Feed Notifications Error", { err: error });
       if(airbrake) {
-        airbrake.notify(error, function(airbrakeErr, url) {
-          if (airbrakeErr) {
-            log.error("AirBrake Error", { context: 'airbrake', user: toJson(req.user), err: airbrakeErr, errorStatus: 500 });
+        airbrake.notify(error).then((airbrakeErr)=> {
+          if (airbrakeErr.error) {
+            log.error("AirBrake Error", { context: 'airbrake', user: toJson(req.user), err: airbrakeErr.error, errorStatus: 500 });
           }
         });
       }

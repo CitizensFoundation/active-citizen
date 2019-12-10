@@ -167,9 +167,9 @@ ActivityWorker.prototype.process = function (activityJson, callback) {
     if (error) {
       log.error("Processing Activity Error", {err: error});
       if(airbrake) {
-        airbrake.notify(error, function(airbrakeErr, url) {
-          if (airbrakeErr) {
-            log.error("AirBrake Error", { context: 'airbrake', err: airbrakeErr, errorStatus: 500 });
+        airbrake.notify(error).then((airbrakeErr)=> {
+          if (airbrakeErr.error) {
+            log.error("AirBrake Error", { context: 'airbrake', err: airbrakeErr.error, errorStatus: 500 });
           }
           callback(error);
         });
