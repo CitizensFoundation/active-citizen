@@ -39,7 +39,7 @@ i18n
   }, function (err, t) {
     log.info("Have Loaded i18n", {err: err});
 
-/*    queue.process('send-one-email', 1, function(job, done) {
+    queue.process('send-one-email', 1, function(job, done) {
       email.sendOne(job.data, done);
     });
 
@@ -47,7 +47,6 @@ i18n
       notification_delivery.process(job.data, done);
     });
 
- */
     queue.process('process-activity', 5, function(job, done) {
       activity.process(job.data, done);
     });

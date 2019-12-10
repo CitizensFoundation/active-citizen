@@ -67,39 +67,54 @@ const generateNotificationsForNewPoint = (activity, callback) => {
       };
 
       if (activity.post_id) {
-        models.Post.find({
+        models.Point.findAll({
           where: {
-            id: activity.post_id
+            post_id: activity.post_id,
+            status: 'published'
           },
-          include: [
-            {
-              model: models.Point,
-              include: [
-                {
-                  model: models.User,
-                  attributes: ['id','notifications_settings','email'],
-                  where: userWhere,
-                  required: true
-                }
-              ]
-            }
-          ]
-        }).then((post) => {
-          if (post) {
-            const users = [];
-            const userIds = [];
-            async.eachSeries(post.Points, (point, innerSeriesCallback) => {
-              if (!_.includes(userIds, point.User.id)) {
-                users.push(point.User);
-                userIds.push(point.User.id);
+          attributes: ['id'],
+          order: [
+            models.sequelize.literal('(counter_quality_up-counter_quality_down) desc')
+          ],
+          limit: 2500
+        }).then((pointsIn) => {
+          models.Point.findAll({
+            where: {
+             id: {
+               $in: _.map(pointsIn, (pointIn) => { return pointIn.id })
+             }
+            },
+            attributes: ['id'],
+            include: [
+              {
+                model: models.User,
+                attributes: ['id','notifications_settings','email'],
+                where: userWhere,
+                required: true
               }
-              innerSeriesCallback();
-            },  (error) => {
-              addNotificationsForUsers(activity, users, notificationType, 'my_points', uniqueUserIds, seriesCallback);
-            });
-          } else {
-            seriesCallback();
-          }
+            ],
+            order: [
+              models.sequelize.literal('(counter_quality_up-counter_quality_down) desc')
+            ],
+          }).then((points) => {
+            if (points) {
+              const users = [];
+              const userIds = [];
+              async.eachSeries(points, (point, innerSeriesCallback) => {
+                if (!_.includes(userIds, point.User.id)) {
+                  users.push(point.User);
+                  userIds.push(point.User.id);
+                }
+                innerSeriesCallback();
+              },  (error) => {
+                addNotificationsForUsers(activity, users, notificationType, 'my_points', uniqueUserIds, seriesCallback);
+              });
+            } else {
+              seriesCallback();
+            }
+          }).catch((error) => {
+            seriesCallback(error);
+          });
         }).catch((error) => {
           seriesCallback(error);
         });
@@ -188,8 +203,7 @@ module.exports = (activity, user, callback) => {
       activity.type==='activity.point.comment.new') {
     generateNotificationsForNewPoint(activity, callback);
   } else if (activity.type==='activity.point.helpful.new' || activity.type==='activity.point.unhelpful.new') {
-//    generateNotificationsForHelpfulness(activity, callback)
-    callback();
+    generateNotificationsForHelpfulness(activity, callback)
   } else {
     callback("Unexpected type for generatePointNotification");
   }
