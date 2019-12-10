@@ -109,9 +109,9 @@ ActivityWorker.prototype.process = (activityJson, callback) => {
               seriesCallback(error);
             });
             break;
-          case "activity.post.new":
-          case "activity.post.opposition.new":
-          case "activity.post.endorsement.new":
+          case "Xactivity.post.new":
+          case "Xactivity.post.opposition.new":
+          case "Xactivity.post.endorsement.new":
             generatePostNotification(activity, activity.User,  (error) => {
               if (error) {
                 log.error('Processing activity.post.* Error', {type: activity.type, err: error});
@@ -122,11 +122,11 @@ ActivityWorker.prototype.process = (activityJson, callback) => {
               }
             });
             break;
-          case "activity.point.new":
-          case "activity.point.helpful.new":
-          case "activity.point.unhelpful.new":
-          case "activity.point.newsStory.new":
-          case "activity.point.comment.new":
+          case "Xactivity.point.new":
+          case "Xactivity.point.helpful.new":
+          case "Xactivity.point.unhelpful.new":
+          case "Xactivity.point.newsStory.new":
+          case "Xactivity.point.comment.new":
             generatePointNotification(activity, activity.User,  (error) => {
               if (error) {
                 log.error('Processing activity.point.* Completed', {type: activity.type, err: error});
