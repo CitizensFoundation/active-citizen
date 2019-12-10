@@ -1,27 +1,28 @@
 // https://gist.github.com/mojodna/1251812
 
-var models = require("../../models");
-var log = require('../utils/logger');
-var toJson = require('../utils/to_json');
-var async = require('async');
+const models = require("../../models");
+const log = require('../utils/logger');
+const toJson = require('../utils/to_json');
+const async = require('async');
 
-var airbrake = null;
+let airbrake = null;
+
 if(process.env.AIRBRAKE_PROJECT_ID) {
   airbrake = require('../utils/airbrake');
 }
 
-var generatePostNotification = require('../engine/notifications/generate_post_notifications.js');
-var generatePointNotification = require('../engine/notifications/generate_point_notifications.js');
-var generateRecommendationEvent = require('../engine/recommendations/events_manager').generateRecommendationEvent;
-var generatePostStatusChangeNotification = require('../engine/notifications/generate_post_status_change_notifications.js');
+const generatePostNotification = require('../engine/notifications/generate_post_notifications.js');
+const generatePointNotification = require('../engine/notifications/generate_point_notifications.js');
+const generateRecommendationEvent = require('../engine/recommendations/events_manager').generateRecommendationEvent;
+const generatePostStatusChangeNotification = require('../engine/notifications/generate_post_status_change_notifications.js');
 
-var ActivityWorker = function () {};
+const ActivityWorker = function () {};
 
-ActivityWorker.prototype.process = function (activityJson, callback) {
-  var activity;
+ActivityWorker.prototype.process = (activityJson, callback) => {
+  let activity;
   log.info('Processing activity Started');
   async.series([
-    function (seriesCallback) {
+    (seriesCallback) => {
       models.AcActivity.find({
         where: { id: activityJson.id },
         include: [
@@ -57,53 +58,53 @@ ActivityWorker.prototype.process = function (activityJson, callback) {
             ]
           }
         ]
-      }).then(function (results) {
+      }).then((results) => {
         if (results) {
           activity = results;
           seriesCallback();
         } else {
           seriesCallback('Activity not found');
         }
-      }).catch(function (error) {
+      }).catch((error) => {
         seriesCallback(error);
       });
     },
-    function (seriesCallback) {
+    (seriesCallback) => {
       log.info('Processing Activity Started', {type: activity.type});
       try {
         switch (activity.type) {
           case "activity.user.invite":
-            models.AcNotification.createNotificationFromActivity(activity.actor.user_id, activity, "notification.user.invite", "priority", 70, function (error) {
+            models.AcNotification.createNotificationFromActivity(activity.actor.user_id, activity, "notification.user.invite", "priority", 70, (error) => {
               log.info('Processing activity.user.invite Completed', {type: activity.type, err: error});
               seriesCallback(error);
             });
             break;
           case "activity.password.recovery":
-            models.AcNotification.createNotificationFromActivity(activity.actor.user, activity, "notification.password.recovery", "priority", 100, function (error) {
+            models.AcNotification.createNotificationFromActivity(activity.actor.user, activity, "notification.password.recovery", "priority", 100, (error) => {
               log.info('Processing activity.password.recovery Completed', {type: activity.type, err: error});
               seriesCallback(error);
             });
             break;
           case "activity.password.changed":
-            models.AcNotification.createNotificationFromActivity(activity.actor.user, activity, "notification.password.changed", "priority", 100, function (error) {
+            models.AcNotification.createNotificationFromActivity(activity.actor.user, activity, "notification.password.changed", "priority", 100, (error) => {
               log.info('Processing activity.password.changed Completed', {type: activity.type, err: error});
               seriesCallback(error);
             });
             break;
           case "activity.system.generalUserNotification":
-            models.AcNotification.createNotificationFromActivity(activity.actor.userId, activity, "notification.generalUserNotification", "priority", 100, function (error) {
+            models.AcNotification.createNotificationFromActivity(activity.actor.userId, activity, "notification.generalUserNotification", "priority", 100, (error) => {
               log.info('Processing activity.system.generalUserNotification', {type: activity.type, err: error});
               seriesCallback(error);
             });
             break;
           case "activity.report.content":
-            models.AcNotification.createReportNotifications(activity.actor.user, activity, function (error) {
+            models.AcNotification.createReportNotifications(activity.actor.user, activity, (error) => {
               log.info('Processing activity.report.content Completed', {type: activity.type, err: error});
               seriesCallback(error);
             });
             break;
           case "activity.bulk.status.update":
-            models.AcNotification.createNotificationFromActivity(activity.actor.user, activity, "notification.bulk.status.update", "priority", 100, function (error) {
+            models.AcNotification.createNotificationFromActivity(activity.actor.user, activity, "notification.bulk.status.update", "priority", 100,  (error) => {
               log.info('Processing activity.bulk.status.update Completed', {type: activity.type, err: error});
               seriesCallback(error);
             });
@@ -111,7 +112,7 @@ ActivityWorker.prototype.process = function (activityJson, callback) {
           case "activity.post.new":
           case "activity.post.opposition.new":
           case "activity.post.endorsement.new":
-            generatePostNotification(activity, activity.User, function (error) {
+            generatePostNotification(activity, activity.User,  (error) => {
               if (error) {
                 log.error('Processing activity.post.* Error', {type: activity.type, err: error});
                 seriesCallback(error);
@@ -126,7 +127,7 @@ ActivityWorker.prototype.process = function (activityJson, callback) {
           case "activity.point.unhelpful.new":
           case "activity.point.newsStory.new":
           case "activity.point.comment.new":
-            generatePointNotification(activity, activity.User, function (error) {
+            generatePointNotification(activity, activity.User,  (error) => {
               if (error) {
                 log.error('Processing activity.point.* Completed', {type: activity.type, err: error});
                 seriesCallback(error);
@@ -141,7 +142,7 @@ ActivityWorker.prototype.process = function (activityJson, callback) {
               log.info('Processing activity.post.status.change not creating notifications', {type: activity.type});
               seriesCallback();
             } else {
-              generatePostStatusChangeNotification(activity, activity.User, function (error) {
+              generatePostStatusChangeNotification(activity, activity.User, (error) => {
                 if (error) {
                   log.error('Processing activity.post.status.change Completed', {type: activity.type, err: error});
                   seriesCallback(error);
@@ -160,13 +161,14 @@ ActivityWorker.prototype.process = function (activityJson, callback) {
         seriesCallback(error);
       }
     },
-    function (seriesCallback) {
+
+    (seriesCallback) => {
       generateRecommendationEvent(activity, seriesCallback);
     }
-  ], function (error) {
+  ],  (error) => {
     if (error) {
       log.error("Processing Activity Error", {err: error});
-      if(airbrake) {
+      if (airbrake) {
         airbrake.notify(error).then((airbrakeErr)=> {
           if (airbrakeErr.error) {
             log.error("AirBrake Error", { context: 'airbrake', err: airbrakeErr.error, errorStatus: 500 });

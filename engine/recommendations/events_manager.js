@@ -1,30 +1,31 @@
-var predictionio = require('predictionio-driver');
-var models = require('../../../models');
-var _ = require('lodash');
-var async = require('async');
-var log = require('../../utils/logger');
-var engine;
+const predictionio = require('predictionio-driver');
+const models = require('../../../models');
+const _ = require('lodash');
+const async = require('async');
+const log = require('../../utils/logger');
 
-var airbrake = null;
+let engine = null;
+let airbrake = null;
+
 if(process.env.AIRBRAKE_PROJECT_ID) {
   airbrake = require('../../utils/airbrake');
 }
 
-var ACTIVE_CITIZEN_PIO_APP_ID = 1;
+const ACTIVE_CITIZEN_PIO_APP_ID = 1;
 
 if (process.env.PIOEngineUrl) {
   engine = new predictionio.Engine({url: process.env.PIOEngineUrl });
 }
 
-var getClient = function (appId) {
+const getClient = (appId) => {
   return new predictionio.Events({appId: appId});
 };
 
-var convertToString = function(integer) {
+const convertToString = (integer) => {
   return integer.toString();
 };
 
-var getPost = function (postId, callback) {
+const getPost = (postId, callback) => {
   models.Post.find(
     {
       where: {
@@ -53,23 +54,23 @@ var getPost = function (postId, callback) {
           ]
         }
       ]
-    }).then(function (post) {
+    }).then((post) => {
     if (post) {
       callback(post)
     } else {
       callback(null);
     }
-  }).catch(function (error) {
+  }).catch((error) => {
     log.error('Events Manager getPost Error', {postId: postId, err: "Could not find post" });
     callback(null);
   });
 };
 
-var createOrUpdateItem = function (postId, date, callback) {
-  var client = getClient(ACTIVE_CITIZEN_PIO_APP_ID);
-  getPost(postId, function (post) {
+const createOrUpdateItem = (postId, date, callback) => {
+  const client = getClient(ACTIVE_CITIZEN_PIO_APP_ID);
+  getPost(postId, (post) => {
     if (post) {
-      var properties = {};
+      let properties = {};
 
       if (post.category_id) {
         properties = _.merge(properties,
@@ -85,7 +86,7 @@ var createOrUpdateItem = function (postId, date, callback) {
           community: [ convertToString(post.Group.Community.id) ],
           communityAccess: [ convertToString(post.Group.Community.access) ],
           communityStatus: [ post.Group.Community.status ],
-          communityLocale: [ (post.Group.Community.default_locale && post.Group.Community.default_locale!='')  ?
+          communityLocale: [ (post.Group.Community.default_locale && post.Group.Community.default_locale!=='')  ?
             post.Group.Community.default_locale :
             post.Group.Community.Domain.default_locale ],
 
@@ -111,7 +112,7 @@ var createOrUpdateItem = function (postId, date, callback) {
         properties: properties,
         date: date,
         eventTime: new Date().toISOString()
-      }).then(function (result) {
+      }).then((result) => {
         log.info('Events Manager createOrUpdateItem', {postId: post.id, result: result});
         callback();
       });
@@ -122,10 +123,10 @@ var createOrUpdateItem = function (postId, date, callback) {
   })
 };
 
-var createAction = function (targetEntityId, userId, date, action, callback) {
-  var client = getClient(ACTIVE_CITIZEN_PIO_APP_ID);
+const createAction = (targetEntityId, userId, date, action, callback) => {
+  const client = getClient(ACTIVE_CITIZEN_PIO_APP_ID);
 
-  getPost(targetEntityId, function (post) {
+  getPost(targetEntityId, (post) => {
     if (post) {
       client.createAction({
         event: action,
@@ -133,11 +134,11 @@ var createAction = function (targetEntityId, userId, date, action, callback) {
         targetEntityId: targetEntityId,
         date: date,
         eventTime: date
-      }).then(function (result) {
+      }).then((result) => {
         log.info('Events Manager createAction', {action: action, postId: targetEntityId, userId: userId, result: result});
         callback();
         //createOrUpdateItem(targetEntityId, date, callback);
-      }).catch(function (error) {
+      }).catch((error) => {
         log.error('Events Manager createAction Error', {action: action, postId: targetEntityId, userId: userId, err: error});
         callback(error);
       });
@@ -148,22 +149,22 @@ var createAction = function (targetEntityId, userId, date, action, callback) {
   });
 };
 
-var createUser = function (user, callback) {
+const createUser = (user, callback) => {
   client = getClient(ACTIVE_CITIZEN_PIO_APP_ID);
   client.createUser( {
     appId: 1,
     uid: user.id,
     eventDate: user.created_at.toISOString()
-  }).then(function(result) {
+  }).then((result) => {
     log.info('Events Manager createUser', { userId: user.id, result: result});
     callback();
-  }).catch(function(error) {
+  }).catch((error) => {
     log.error('Events Manager createUser Error', { userId: user.id, err: error});
     callback(error);
   });
 };
 
-var generateRecommendationEvent = function (activity, callback) {
+const generateRecommendationEvent = (activity, callback) => {
   if (process.env.PIOEventUrl && activity) {
     log.info('Events Manager generateRecommendationEvent', {type: activity.type, userId: activity.user_id });
     switch (activity.type) {
@@ -220,13 +221,13 @@ var generateRecommendationEvent = function (activity, callback) {
         callback();
     }
   } else {
-    log.warn("No PIOEventUrl or no activity, no action taken in generateRecommendationEvent", { activity });
+    log.warn("No PIOEventUrl or no activity, no action taken in generateRecommendationEvent", { activityType: activity ? activity.type : null });
     callback();
   }
 };
 
-var getRecommendationFor = function (userId, dateRange, options, callback, userLocale) {
-  var fields = [];
+const getRecommendationFor = (userId, dateRange, options, callback, userLocale) => {
+  const fields = [];
 
   fields.push({
     name: 'status',
@@ -258,7 +259,7 @@ var getRecommendationFor = function (userId, dateRange, options, callback, userL
     });
   }
 
-  var officialStatus = options.official_status ? options.official_status : 0;
+  const officialStatus = options.official_status ? options.official_status : 0;
 
   fields.push({
     name: 'official_status',
@@ -307,15 +308,15 @@ var getRecommendationFor = function (userId, dateRange, options, callback, userL
       num: options.limit || 400,
       fields: fields,
       dateRange: dateRange
-    }).then(function (results) {
+    }).then((results) => {
       if (results) {
         log.info('Events Manager getRecommendationFor', { userId: userId });
-        var resultMap =  _.map(results.itemScores, function(item) { return item.item; });
+        const resultMap =  _.map(results.itemScores, (item) => { return item.item; });
         callback(null,resultMap);
       } else {
         callback("Not results for recommendations");
       }
-    }).catch(function (error) {
+    }).catch((error) => {
       callback(error);
     });
   } else {
@@ -324,8 +325,8 @@ var getRecommendationFor = function (userId, dateRange, options, callback, userL
   }
 };
 
-isItemRecommended = function (itemId, userId, dateRange, options, callback) {
-  getRecommendationFor(userId, dateRange, options, function (error, items) {
+const isItemRecommended = (itemId, userId, dateRange, options, callback) => {
+  getRecommendationFor(userId, dateRange, options,  (error, items) => {
     if (error) {
       log.error("Recommendation Events Manager Error", { itemId: itemId, userId: userId, err: error });
       if(airbrake) {

@@ -1,11 +1,11 @@
-var models = require("../../../models");
-var log = require('../../utils/logger');
-var toJson = require('../../utils/to_json');
-var async = require('async');
-var _ = require('lodash');
+const models = require("../../../models");
+const log = require('../../utils/logger');
+const toJson = require('../../utils/to_json');
+const async = require('async');
+const _ = require('lodash');
 
-var getModelAndUsersByType = function (model, userType, id, notification_setting_type, callback) {
-  var userWhere = {};
+const getModelAndUsersByType = (model, userType, id, notification_setting_type, callback) => {
+  const userWhere = {};
 
   userWhere["notifications_settings."+notification_setting_type+".method"] = {
     $gt: 0
@@ -23,36 +23,36 @@ var getModelAndUsersByType = function (model, userType, id, notification_setting
         where: userWhere
       }
     ]
-  }).then( function(results) {
+  }).then((results) => {
     log.info("Notification Processing found users", { numberOfUsers: results ? results.length : null, userWhere: userWhere });
     if (results) {
       callback(null, results)
     } else {
       callback();
     }
-  }).catch(function(error) {
+  }).catch( (error) => {
     callback(error);
   });
 };
 
-var addNotificationsForUsers = function (activity, users, notification_type, notification_setting_type, uniqueUserIds, callback) {
-  async.eachSeries(users, function (user, seriesCallback) {
+const addNotificationsForUsers = (activity, users, notification_type, notification_setting_type, uniqueUserIds, callback) => {
+  async.eachSeries(users,  (user, seriesCallback) => {
     if (_.includes(uniqueUserIds.users, user.id)) {
       seriesCallback();
     } else {
-      models.AcNotification.createNotificationFromActivity(user, activity, notification_type, notification_setting_type, 50, function (error) {
+      models.AcNotification.createNotificationFromActivity(user, activity, notification_type, notification_setting_type, 50, (error) => {
         uniqueUserIds.users.push(user.id);
         seriesCallback(error);
       });
     }
-  }, function (error) {
+  }, (error) => {
     callback(error);
   });
 };
 
 // type: 'notification.post.endorsement';
-var addOrPossiblyGroupNotification = function (model, notification_type, notification_setting_type, activity, user, priority, callback) {
-  var modelWhereOptions;
+const addOrPossiblyGroupNotification = (model, notification_type, notification_setting_type, activity, user, priority, callback) => {
+  let modelWhereOptions;
   if (model.$modelOptions.tableName=='posts') {
     modelWhereOptions = {
       post_id: model.id
@@ -86,8 +86,8 @@ var addOrPossiblyGroupNotification = function (model, notification_type, notific
         where: modelWhereOptions
       }
     ]
-  }).then(function(notifications) {
-    var notification = notifications[0];
+  }).then((notifications) => {
+    const notification = notifications[0];
     if (notification) {
       // We check for repeated activity by the same user on the same content and  then don't create or update the notification
       models.AcNotification.findAll({
@@ -113,18 +113,18 @@ var addOrPossiblyGroupNotification = function (model, notification_type, notific
             })
           }
         ]
-      }).then(function(specificNotifications) {
-        var specificNotification = specificNotifications[0];
+      }).then((specificNotifications) => {
+        const specificNotification = specificNotifications[0];
         if (specificNotification) {
           specificNotification.changed('viewed', false);
           specificNotification.changed('updated_at', true);
-          specificNotification.save().then(function () {
+          specificNotification.save().then(() => {
             callback();
-          }).catch(function (error) {
+          }).catch((error) => {
             callback(error);
           });
         } else {
-          notification.addAcActivities(activity).then(function (results) {
+          notification.addAcActivities(activity).then((results) => {
             if (results) {
               // Create events for the worker queue
               models.AcNotification.processNotification(notification, user, activity, callback);
@@ -136,7 +136,7 @@ var addOrPossiblyGroupNotification = function (model, notification_type, notific
       });
     } else {
       // If not already found and grouped we
-      models.AcNotification.createNotificationFromActivity(user, activity, notification_type, notification_setting_type, priority, function (error) {
+      models.AcNotification.createNotificationFromActivity(user, activity, notification_type, notification_setting_type, priority,(error) => {
         callback(error);
       });
     }

@@ -48,11 +48,9 @@ i18n
     });
 
  */
-
     queue.process('process-activity', 5, function(job, done) {
       activity.process(job.data, done);
     });
-
 
     queue.process('delayed-job', 5, function(job, done) {
       delayedJobs.process(job.data, done);

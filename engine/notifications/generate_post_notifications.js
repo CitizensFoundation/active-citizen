@@ -1,17 +1,20 @@
-var models = require("../../../models");
-var log = require('../../utils/logger');
-var toJson = require('../../utils/to_json');
-var async = require('async');
-var getModelAndUsersByType = require('./notifications_utils').getModelAndUsersByType;
-var addNotificationsForUsers = require('./notifications_utils').addNotificationsForUsers;
-var addOrPossiblyGroupNotification = require('./notifications_utils').addOrPossiblyGroupNotification;
+const models = require("../../../models");
+const log = require('../../utils/logger');
+const toJson = require('../../utils/to_json');
+const async = require('async');
+const getModelAndUsersByType = require('./notifications_utils').getModelAndUsersByType;
+const addNotificationsForUsers = require('./notifications_utils').addNotificationsForUsers;
+const addOrPossiblyGroupNotification = require('./notifications_utils').addOrPossiblyGroupNotification;
 
-var generateNotificationsForNewPost = function (activity, uniqueUserIds, callback) {
+const generateNotificationsForNewPost = (activity, callback) => {
+  // Make sure not to create duplicate notifications to the same user
+  const uniqueUserIds = { users: [] };
+
   async.series([
-    function(seriesCallback){
+    (seriesCallback) => {
       if (activity.Community) {
         // Notifications for all new posts in community
-        getModelAndUsersByType(models.Community, 'CommunityUsers', activity.Community.id, "all_community", function(error, community) {
+        getModelAndUsersByType(models.Community, 'CommunityUsers', activity.Community.id, "all_community", (error, community) => {
           if (error) {
             seriesCallback(error);
           } else if (community) {
@@ -25,9 +28,9 @@ var generateNotificationsForNewPost = function (activity, uniqueUserIds, callbac
         seriesCallback();
       }
     },
-    function(seriesCallback){
+    (seriesCallback) => {
       // Notifications for all new posts in group
-      getModelAndUsersByType(models.Group, 'GroupUsers', activity.Group.id, "all_group", function(error, group) {
+      getModelAndUsersByType(models.Group, 'GroupUsers', activity.Group.id, "all_group", (error, group) => {
         if (error) {
           seriesCallback(error);
         } else if (group) {
@@ -38,7 +41,7 @@ var generateNotificationsForNewPost = function (activity, uniqueUserIds, callbac
         }
       });
     }
-  ], function (error) {
+  ], (error) => {
     callback(error);
   });
 
@@ -46,7 +49,7 @@ var generateNotificationsForNewPost = function (activity, uniqueUserIds, callbac
   // TODO: Add AcFollowing
 };
 
-var generateNotificationsForEndorsements = function (activity, callback) {
+const generateNotificationsForEndorsements = (activity, callback) => {
   // Notifications for endorsement on posts I've created
   models.Post.find({
     where: { id: activity.post_id },
@@ -62,27 +65,23 @@ var generateNotificationsForEndorsements = function (activity, callback) {
         }
       }
     ]
-  }).then( function(post) {
+  }).then((post) => {
     if (post) {
       addOrPossiblyGroupNotification(post, 'notification.post.endorsement', 'my_posts_endorsements', activity, post.User, 50, callback);
     } else {
       log.warn("Generate Post Notification Not found or muted", { userId: activity.user_id, type: activity.type});
       callback();
     }
-  }).catch(function(error) {
+  }).catch((error) => {
     callback(error);
   });
 
   // TODO: Add AcWatching users
 };
 
-module.exports = function (activity, user, callback) {
-
-  // Make sure not to create duplicate notifications to the same user
-  var uniqueUserIds = { users: [] };
-
+module.exports = (activity, user, callback) => {
   if (activity.type=='activity.post.new') {
-    generateNotificationsForNewPost(activity, uniqueUserIds, callback);
+    generateNotificationsForNewPost(activity, callback);
   } else if (activity.type=='activity.post.endorsement.new' || activity.type=='activity.post.opposition.new') {
     generateNotificationsForEndorsements(activity, callback)
   }
