@@ -1,12 +1,18 @@
 if(process.env.AIRBRAKE_PROJECT_ID) {
   const Airbrake = require('@airbrake/node');
+  let airBrake = null;
 
-  const airbrake = new Airbrake.Notifier({
-    projectId: process.env.AIRBRAKE_PROJECT_ID,
-    projectKey: process.env.AIRBRAKE_API_KEY,
-  });
+  try {
+    airBrake = new Airbrake.Notifier({
+      projectId: process.env.AIRBRAKE_PROJECT_ID,
+      projectKey: process.env.AIRBRAKE_API_KEY,
+    });
+  } catch (error) {
+    airBrake = null;
+    console.error(error);
+  }
 
-  module.exports = airbrake;
+  module.exports = airBrake;
 }
 
 
