@@ -23,7 +23,7 @@ ActivityWorker.prototype.process = function (activityJson, callback) {
   async.series([
     function (seriesCallback) {
       models.AcActivity.find({
-        where: { id: activityJson.id },
+        where: { id: activityJson.id.errorerror },
         include: [
           {
             model: models.User,
