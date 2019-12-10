@@ -140,6 +140,8 @@ const generateNotificationsForNewPoint = (activity, callback) => {
             seriesCallback();
           }
         });
+      } else {
+        seriesCallback();
       }
     }
   ], (error) => {
@@ -184,10 +186,10 @@ module.exports = (activity, user, callback) => {
   if (activity.type==='activity.point.new' ||
       activity.type==='activity.point.newsStory.new' ||
       activity.type==='activity.point.comment.new') {
-    callback();
-//    generateNotificationsForNewPoint(activity, callback);
+    generateNotificationsForNewPoint(activity, callback);
   } else if (activity.type==='activity.point.helpful.new' || activity.type==='activity.point.unhelpful.new') {
-    generateNotificationsForHelpfulness(activity, callback)
+//    generateNotificationsForHelpfulness(activity, callback)
+    callback();
   } else {
     callback("Unexpected type for generatePointNotification");
   }
