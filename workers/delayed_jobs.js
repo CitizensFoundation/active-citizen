@@ -72,24 +72,24 @@ const delayedCreatePriorityActivity = (workPackage, callback) => {
         });
       } else if (options.postId) {
         log.info("Looking for post, group and community START");
-        models.Post.find(
-          {where: { id: options.postId },
-            attributes: ['id','group_id'],
-            include: [
-              {
-                model: models.Group,
-                attributes: ['id','community_id']
-              }
-            ]}).then(function(post) {
-          log.info("Looking for post, group and community END");
-          if (post) {
-            log.info("Found post info for post acitivity from app");
-            options.groupId = post.Group.id;
-            options.communityId = post.Group.community_id;
-            seriesCallback();
-          } else {
-            seriesCallback("Can't find post");
-          }
+        models.Post.find({
+          where: { id: options.postId },
+          attributes: ['id','group_id'],
+          include: [
+            {
+              model: models.Group,
+              attributes: ['id','community_id']
+            }
+          ]}).then(function(post) {
+            log.info("Looking for post, group and community END");
+            if (post) {
+              log.info("Found post info for post acitivity from app");
+              options.groupId = post.Group.id;
+              options.communityId = post.Group.community_id;
+              seriesCallback();
+            } else {
+              seriesCallback("Can't find post");
+            }
         }).catch(function(error) {
           seriesCallback(error);
         });
