@@ -22,7 +22,7 @@ const generateNotificationsForNewPoint = (activity, callback) => {
   }
 
   async.series([
-    function(seriesCallback){
+    (seriesCallback) => {
       // Notifications for my posts
       const userWhere = {};
 
@@ -184,7 +184,8 @@ module.exports = (activity, user, callback) => {
   if (activity.type==='activity.point.new' ||
       activity.type==='activity.point.newsStory.new' ||
       activity.type==='activity.point.comment.new') {
-    generateNotificationsForNewPoint(activity, callback);
+    callback();
+//    generateNotificationsForNewPoint(activity, callback);
   } else if (activity.type==='activity.point.helpful.new' || activity.type==='activity.point.unhelpful.new') {
     generateNotificationsForHelpfulness(activity, callback)
   } else {
