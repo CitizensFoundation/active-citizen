@@ -147,7 +147,7 @@ var processRecommendations = function (levelType, req, res, recommendedItemIds, 
 };
 
 var processRecommendationsLight = function (groupId, req, res, recommendedItemIds, error) {
-  if (error || !recommendedItemIds) {
+  if (error) {
     log.error("processRecommendationsLight Error", { err: error, userId:  req.user ? req.user.id : -1, errorStatus:  500 });
     if(airbrake) {
       airbrake.notify(error).then((airbrakeErr)=> {
@@ -159,6 +159,9 @@ var processRecommendationsLight = function (groupId, req, res, recommendedItemId
     } else {
       res.send({recommendations: [], groupId: groupId });
     }
+  } else if (!recommendedItemIds) {
+    log.error("processRecommendationsLight no recommendedItemIds", { userId:  req.user ? req.user.id : -1, errorStatus:  500 });
+    res.send({recommendations: [], groupId: groupId });
   } else {
     log.info("processRecommendationsLight for group status", { recommendedItemIds: recommendedItemIds });
 
