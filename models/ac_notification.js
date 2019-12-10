@@ -43,6 +43,10 @@ module.exports = function(sequelize, DataTypes) {
         fields: ['user_interaction_profile'],
         using: 'gin',
         operator: 'jsonb_path_ops'
+      },
+      {
+        name: 'ac_notifications_idx_deleted_id',
+        fields: ['deleted','id']
       }
     ],
 
