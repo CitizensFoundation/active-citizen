@@ -73,7 +73,7 @@ const anonymizePostActivities = (workPackage, callback) => {
       callback(error);
     });
   } else {
-    callback("No pointId or anonymousUserId for anonymizePointActivities");
+    callback("No pointId or anonymousUserId for anonymizePointActivities", { postId, workPackage });
   }
 };
 
