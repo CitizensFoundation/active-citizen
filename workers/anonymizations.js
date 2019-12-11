@@ -47,7 +47,7 @@ const anonymizePointActivities = (workPackage, callback) => {
       callback(error);
     });
   } else {
-    callback("No pointId, userId or anonymousUserId for anonymizePointActivities");
+    callback("No pointId, userId or anonymousUserId for anonymizePointActivities", { workPackage: workPackage });
   }
 };
 
@@ -73,7 +73,7 @@ const anonymizePostActivities = (workPackage, callback) => {
       callback(error);
     });
   } else {
-    callback("No pointId or anonymousUserId for anonymizePointActivities", { postId: postId, workPackage: workPackage });
+    callback("No postId or anonymousUserId for anonymizePointActivities", { postId: postId, workPackage: workPackage });
   }
 };
 
@@ -123,7 +123,7 @@ const anonymizePointContent = (workPackage, callback) => {
       callback(error);
     });
   } else {
-    callback("No pointId or anonymousUserId for anonymizePointContent");
+    callback("No pointId or anonymousUserId for anonymizePointContent", { workPackage: workPackage });
   }
 };
 
@@ -250,7 +250,7 @@ const anonymizePostContent = (workPackage, callback) => {
       }
     );
   } else {
-    callback("No postId for anonymizePostContent");
+    callback("No postId for anonymizePostContent", { workPackage: workPackage });
   }
 };
 
