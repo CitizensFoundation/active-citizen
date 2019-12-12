@@ -20,11 +20,16 @@ const getToxicityScoreForText = (text, doNotStore, callback) => {
         'TOXICITY', 'SEVERE_TOXICITY','IDENTITY_ATTACK',
         'THREAT','INSULT','PROFANITY','SEXUALLY_EXPLICIT',
         'FLIRTATION'] }).then( result => {
-      log.info("getToxicityScoreForText results", { result });
+      log.info("getToxicityScoreForText results");
       callback(null, result);
     }).catch( error => {
-      log.error("getToxicityScoreForText error", { error });
-      callback(error);
+      if (error && error.stack && error.stack.indexOf("ResponseError: Attribute") > -1) {
+        log.warn("getToxicityScoreForText warning", { error });
+        callback(error);
+      } else {
+        log.error("getToxicityScoreForText error", { error });
+        callback(error);
+      }
     });
   } else {
     callback("No text for toxicity score");

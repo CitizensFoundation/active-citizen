@@ -300,7 +300,7 @@ const getRecommendationFor = (userId, dateRange, options, callback, userLocale) 
     }
   }
   
-  log.info('Events Manager getRecommendationFor', { fields: fields, dateRange: dateRange });
+  //log.info('Events Manager getRecommendationFor', { fields: fields, dateRange: dateRange });
 
   if (engine) {
     engine.sendQuery({

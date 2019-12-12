@@ -293,7 +293,7 @@ var getRecommendationFor = function (userId, dateRange, options, callback, userL
     }
   }
   
-  log.info('Events Manager getRecommendationFor', { fields: fields, dateRange: dateRange });
+  //log.info('Events Manager getRecommendationFor', { fields: fields, dateRange: dateRange });
 
   if (engine) {
     engine.sendQuery({

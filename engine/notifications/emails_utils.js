@@ -84,7 +84,7 @@ var filterNotificationForDelivery = function (notification, user, template, subj
 
   if (method !== models.AcNotification.METHOD_MUTED) {
     if (frequency === models.AcNotification.FREQUENCY_AS_IT_HAPPENS) {
-      log.info("Notification Email Processing Sending eMail", {email: user.email, method: method, frequency: frequency});
+      log.info("Notification Email Processing Sending email", {email: user.email, method: method, frequency: frequency});
       queue.create('send-one-email', {
         subject: subject,
         template: template,
@@ -113,9 +113,9 @@ var filterNotificationForDelivery = function (notification, user, template, subj
         }
       }).spread(function(delayedNotification, created) {
         if (created) {
-          log.info('Notification Email Processing AcDelayedNotification Created', { delayedNotification: toJson(delayedNotification), context: 'create' });
+          log.info('Notification Email Processing AcDelayedNotification Created', { delayedNotificationId: delayedNotification ? delayedNotification.id : -1, context: 'create' });
         } else {
-          log.info('Notification Email Processing AcDelayedNotification Loaded', { delayedNotification: toJson(delayedNotification), context: 'loaded' });
+          log.info('Notification Email Processing AcDelayedNotification Loaded', { delayedNotificationId: delayedNotification ? delayedNotification.id : -1, context: 'loaded' });
         }
         delayedNotification.addAcNotifications(notification).then(function (results) {
           if (delayedNotification.delivered) {
@@ -165,8 +165,6 @@ var sendOneEmail = function (emailLocals, callback) {
     },
 
     function (seriesCallback) {
-      log.info("EmailWorker Started Setup", {});
-
       template = new EmailTemplate(path.join(templatesDir, emailLocals.template));
 
       emailLocals['t'] = i18nFilter;
@@ -210,7 +208,6 @@ var sendOneEmail = function (emailLocals, callback) {
     },
 
     function (seriesCallback) {
-      log.info("EmailWorker Started Locale", {});
       var locale;
 
       if (emailLocals.post && emailLocals.point && !emailLocals.point.Post) {

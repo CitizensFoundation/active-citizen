@@ -96,7 +96,6 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
           ]
         }).then(function(results) {
           if (results) {
-            log.info("NotificationDeliveryWorker Debug 1", {results: results.dataValues});
             notification = results;
             group = notification.AcActivities[0].Group;
             if (notification.AcActivities[0].Domain) {
@@ -105,11 +104,9 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
                        notification.AcActivities[0].Group.Community &&
                        notification.AcActivities[0].Group.Community.Domain) {
               domain = notification.AcActivities[0].Group.Community.Domain;
-              log.info("NotificationDeliveryWorker Debug 1a", {});
             } else {
               log.error("Couldn't find domain for NotificationDeliveryWorker");
             }
-            log.info("NotificationDeliveryWorker Debug 2", {notification: notification.dataValues });
             if (notification.AcActivities[0].Community) {
               community = notification.AcActivities[0].Community;
             } else if (notification.AcActivities[0].Group &&
@@ -118,7 +115,6 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
             } else {
               log.error("Couldn't find community for NotificationDeliveryWorker");
             }
-            log.info("NotificationDeliveryWorker Debug 4", {});
             seriesCallback();
           } else {
             seriesCallback('NotificationDeliveryWorker Notification not found');
@@ -134,12 +130,10 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
             attributes: ['id','notifications_settings','email','name','created_at']
           }).then(function(userResults) {
             if (userResults) {
-              log.info("NotificationDeliveryWorker Debug 5", {userResults: userResults.dataValues});
               user = userResults;
               seriesCallback();
             } else {
               if (notification.AcActivities[0].object.email) {
-                log.info("NotificationDeliveryWorker Debug 5.5", {});
                 seriesCallback();
               } else {
                 seriesCallback('User not found');
@@ -155,7 +149,6 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
       function(seriesCallback){
         if (user) {
           user.setLocale(i18n, domain, community, function () {
-            log.info("NotificationDeliveryWorker Debug 6", {});
             seriesCallback();
           });
         } else {

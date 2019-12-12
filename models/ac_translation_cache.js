@@ -1,6 +1,6 @@
 "use strict";
 
-const { Translate }= require('@google-cloud/translate');
+const { Translate }= require('@google-cloud/translate').v2;
 const farmhash = require('farmhash');
 const log = require('../utils/logger');
 
@@ -130,7 +130,6 @@ module.exports = (sequelize, DataTypes) => {
     } else {
       log.warn("Empty or short string for translation", {
         textType: req.query.textType,
-        modelInstance,
         targetLanguage: req.query.targetLanguage
       });
       if (!modelInstance.language) {

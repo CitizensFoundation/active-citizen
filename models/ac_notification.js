@@ -242,7 +242,7 @@ module.exports = (sequelize, DataTypes) => {
                 if (results) {
                   const notificationJson = { id: notification.id };
                   queue.create('process-notification-delivery', notificationJson).priority('high').removeOnComplete(true).save();
-                  log.info('Notification Created', { notification: toJson(notification), userId: admin.id});
+                  log.info('Notification Created', { notificationId: notification ?  notification.id : -1, userId: admin.id});
                   innerSeriesCallback();
                 } else {
                   innerSeriesCallback("Notification Error Can't add activity");
@@ -295,7 +295,7 @@ module.exports = (sequelize, DataTypes) => {
         notification.addAcActivities(activity).then((results) => {
           if (results) {
             sequelize.models.AcNotification.processNotification(notification, user, activity);
-            log.info('Notification Created', { notification: toJson(notification), userId: user.id});
+            log.info('Notification Created', { notificationId: notification ?  notification.id : -1, userId: user.id});
             callback();
           } else {
             callback("Notification Error Can't add activity");

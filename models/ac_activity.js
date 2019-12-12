@@ -125,7 +125,7 @@ module.exports = (sequelize, DataTypes) => {
     }).save().then((activity)=> {
       if (activity) {
         queue.create('process-activity', activity).priority('critical').removeOnComplete(true).save();
-        log.info('Activity Created', { activity: toJson(activity), user: toJson(user) });
+        log.info('Activity Created', { activityId: activity ? activity.id : -1, userId: user ? user.id : -1 });
         done(null);
       } else {
         done('Activity Not Found');
@@ -155,7 +155,7 @@ module.exports = (sequelize, DataTypes) => {
     }).save().then((activity) => {
       if (activity) {
         queue.create('process-activity', activity).priority('critical').removeOnComplete(true).save();
-        log.info('Activity Created', { activity: toJson(activity), userId: options.user_id, email: options.email });
+        log.info('Activity Created', { activityId: activity ? activity.id : -1, userId: options.user_id, email: options.email });
         done(null);
       } else {
         done('Activity Not Found');

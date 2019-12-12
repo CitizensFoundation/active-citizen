@@ -163,7 +163,7 @@ var processRecommendationsLight = function (groupId, req, res, recommendedItemId
     log.error("processRecommendationsLight no recommendedItemIds", { userId:  req.user ? req.user.id : -1, errorStatus:  500 });
     res.send({recommendations: [], groupId: groupId });
   } else {
-    log.info("processRecommendationsLight for group status", { recommendedItemIds: recommendedItemIds });
+    log.info("processRecommendationsLight for group status");
 
     models.Post.findAll({
       where: {

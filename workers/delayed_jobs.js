@@ -121,7 +121,7 @@ const delayedCreatePriorityActivity = (workPackage, callback) => {
           if (activity.type!='activity.fromApp') {
             queue.create('process-activity', activity).priority('critical').removeOnComplete(true).save();
           }
-          log.info('Activity Created', { activity: toJson(activity), userId: options.userId});
+          log.info('Activity Created', { activityOd: activity.id, userId: options.userId});
           callback();
         } else {
           callback('Activity Not Found');
