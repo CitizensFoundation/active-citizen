@@ -51,7 +51,7 @@ const generateNotificationsForNewPost = (activity, callback) => {
 
 const generateNotificationsForEndorsements = (activity, callback) => {
   // Notifications for endorsement on posts I've created
-  models.Post.find({
+  models.Post.findOne({
     where: { id: activity.post_id },
     include: [
       {

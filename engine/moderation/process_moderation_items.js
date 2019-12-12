@@ -17,7 +17,7 @@ const moderationItemActionMaster = (req, res, options) => {
       log.error("Error in getAnonymousUser in moderationItemsActionMaster", {error});
       res.sendStatus(500)
     } else {
-      options.model.unscoped().find({
+      options.model.unscoped().findOne({
         where: {
           deleted: false,
           id: options.itemId
@@ -94,7 +94,7 @@ const createActivityJob = (workPackage, model) => {
 
 const preProcessActivities = (workPackage, callback) => {
   async.forEachLimit(workPackage.itemIds, 20, (id, forEachCallback) => {
-    workPackage.model.unscoped().find(
+    workPackage.model.unscoped().findOne(
       {
         where: {
           id: id

@@ -21,7 +21,7 @@ var createItemFromNotification = function (notification, options, callback) {
   detail.user_id = notification.user_id;
   detail.latest_activity_at = _.last(notification.AcActivities).created_at;
 
-  models.AcNewsFeedItem.find({where: { ac_activity_id: detail.ac_activity_id }}).then(function(results){
+  models.AcNewsFeedItem.findOne({where: { ac_activity_id: detail.ac_activity_id }}).then(function(results){
     if (!results) {
       models.AcNewsFeedItem.create(_.merge(detail, options)).then(function (item) {
         if (item) {
@@ -54,7 +54,7 @@ var buildNewsFeedItems = function (notification, callback) {
         shouldInclude = true;
         seriesCallback();
       } else {
-        models.AcFollowing.find({
+        models.AcFollowing.findOne({
           where: {
             user_id: notification.user_id,
             other_user_id: activity.user_id
@@ -73,7 +73,7 @@ var buildNewsFeedItems = function (notification, callback) {
       if (shouldInclude || !activity.Post) {
         seriesCallback()
       } else {
-        models.Endorsement.find({
+        models.Endorsement.findOne({
           where: {
             user_id: notification.user_id,
             post_id: activity.Post.id
@@ -224,7 +224,7 @@ module.exports = function (notification, user, callback) {
   async.series([
     // See if news item for same notification exists and set updated time if needed
     function (seriesCallback) {
-      models.AcNewsFeedItem.find({
+      models.AcNewsFeedItem.findOne({
         where: {
           ac_notification_id: notification.id
         }

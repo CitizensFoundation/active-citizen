@@ -164,7 +164,7 @@ const getTranslatedTextForPoint = (point, callback) => {
 const estimateToxicityScoreForPost = (options, callback) => {
   if (process.env.GOOGLE_PERSPECTIVE_API_KEY) {
     log.info("getToxicityScoreForText post preparing");
-    models.Post.find({
+    models.Post.findOne({
       where: {
         id: options.postId
       },
@@ -271,7 +271,7 @@ const estimateToxicityScoreForPost = (options, callback) => {
 const estimateToxicityScoreForPoint = (options, callback) => {
   if (process.env.GOOGLE_PERSPECTIVE_API_KEY) {
     log.info("getToxicityScoreForText preparing");
-    models.Point.find({
+    models.Point.findOne({
       attributes: ['id','language','data','post_id','group_id'],
       where: {
         id: options.pointId
@@ -341,7 +341,7 @@ const estimateToxicityScoreForPoint = (options, callback) => {
                   point.save().then(() => {
                     if (hasModelBreachedToxicityThreshold(point)) {
                       if (point.post_id) {
-                        models.Post.find({
+                        models.Post.findOne({
                           where: {
                             id: point.post_id
                           },

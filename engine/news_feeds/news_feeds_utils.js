@@ -149,7 +149,7 @@ var getModelDate = function(model, options, callback) {
     });
   }
 
-  model.find({
+  model.findOne({
     where: where,
     attributes: [dateColumn],
     order: [
@@ -190,7 +190,7 @@ var getProcessedRange = function(options, callback) {
     order = [['latest_activity_at', 'DESC']]
   }
 
-  models.AcNewsFeedProcessedRange.find({
+  models.AcNewsFeedProcessedRange.findOne({
     where: where,
     attributes: ['id','latest_activity_at', 'oldest_activity_at', 'deleted'],
     order: [

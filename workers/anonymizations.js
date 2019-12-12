@@ -176,7 +176,7 @@ const anonymizePostContent = (workPackage, callback) => {
         })
       },
       (seriesCallback) => {
-        models.Post.find({
+        models.Post.findOne({
             where: {
               id: postId,
               data: {
@@ -212,7 +212,7 @@ const anonymizePostContent = (workPackage, callback) => {
         })
       }], (error) => {
         if (!workPackage.skipNotification) {
-          models.Post.find({
+          models.Post.findOne({
             where: { id: postId },
             attributes: ['id'],
             include: [
@@ -382,7 +382,7 @@ const anonymizeGroupContent = (workPackage, callback) => {
         })
       }], (error) => {
         if (!workPackage.skipNotification) {
-          models.Group.find(
+          models.Group.findOne(
             { where: { id: groupId },
               attributes: ['id','community_id'],
               include: [
@@ -449,7 +449,7 @@ const anonymizeCommunityContent = (workPackage, callback) => {
         })
       }], (error) => {
         const notificationType = error ? 'anonymizeCommunityContentError' : 'anonymizeCommunityContentDone';
-        models.Community.find({
+        models.Community.findOne({
           where: { id: communityId },
           attributes: ['id','domain_id']
         }).then(function (community) {
@@ -662,7 +662,7 @@ const notifyGroupUsers = (workPackage, callback) => {
       });
     },
     (seriesCallback) => {
-      models.Group.find(
+      models.Group.findOne(
         {
           where: {id: workPackage.groupId },
           attributes: ['id', 'community_id'],
@@ -705,7 +705,7 @@ const notifyCommunityUsers = (workPackage, callback) => {
 
   async.series([
     (seriesCallback) => {
-      models.Community.find({
+      models.Community.findOne({
         attributes: ['id','domain_id'],
         where: {
           id: workPackage.communityId

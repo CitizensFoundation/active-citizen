@@ -220,7 +220,7 @@ var sendNotificationEmail = function (delayedNotification, callback) {
   var email;
 
   async.forEach(delayedNotification.AcNotifications, function (notificationWithId, seriesCallback) {
-    models.AcNotification.find({
+    models.AcNotification.findOne({
       where: {
         id: notificationWithId.id
       },

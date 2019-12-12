@@ -25,7 +25,7 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
 
   async.series([
       function(seriesCallback){
-        models.AcNotification.find({
+        models.AcNotification.findOne({
           where: { id: notificationJson.id },
           include: [
             {
@@ -129,7 +129,7 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
       },
       function(seriesCallback){
         if (notification.user_id) {
-          models.User.find({
+          models.User.findOne({
             where: { id: notification.user_id },
             attributes: ['id','notifications_settings','email','name','created_at']
           }).then(function(userResults) {
@@ -283,7 +283,7 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
           case "notification.bulk.status.update":
             var bulkStatusUpdateId = notification.AcActivities[0].object.bulkStatusUpdateId;
             var groupUpdate = notification.AcActivities[0].object.groupUpdate;
-            models.BulkStatusUpdate.find({
+            models.BulkStatusUpdate.findOne({
               where: {
                 id: bulkStatusUpdateId
               }

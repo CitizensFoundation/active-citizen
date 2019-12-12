@@ -354,7 +354,7 @@ const uploadFlacToGoogleCloud = (flacUrl, callback) => {
 
 const createTranscriptForVideo = (workPackage, callback) => {
   log.info("In createTranscriptForVideo");
-  models.Video.find({
+  models.Video.findOne({
     where: workPackage.videoId
   }).then((video) => {
     if (video) {
@@ -416,7 +416,7 @@ const createTranscriptForVideo = (workPackage, callback) => {
 
 const createTranscriptForAudio = (workPackage, callback) => {
   log.info("In createTranscriptForAudio");
-  models.Audio.find({
+  models.Audio.findOne({
     where: workPackage.audioId,
     include: [
       {

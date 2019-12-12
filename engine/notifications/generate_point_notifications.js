@@ -31,7 +31,7 @@ const generateNotificationsForNewPoint = (activity, callback) => {
       };
 
       if (activity.post_id) {
-        models.Post.find({
+        models.Post.findOne({
           where: {
             id: activity.post_id
           },
@@ -168,7 +168,7 @@ const generateNotificationsForNewPoint = (activity, callback) => {
 
 const generateNotificationsForHelpfulness = (activity, callback) => {
   // Notifications for quality on posts I've created
-  models.Point.find({
+  models.Point.findOne({
     where: { id: activity.point_id },
     include: [
       {

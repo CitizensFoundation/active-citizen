@@ -19,7 +19,7 @@ const getGroupAndUser = (groupId, userId, userEmail, callback) => {
 
   async.series([
     (seriesCallback) => {
-      models.Group.find({
+      models.Group.findOne({
         where: {
           id: groupId
         }
@@ -34,7 +34,7 @@ const getGroupAndUser = (groupId, userId, userEmail, callback) => {
     },
     (seriesCallback) => {
       if (userId) {
-        models.User.find({
+        models.User.findOne({
           where: {
             id: userId
           },
@@ -53,7 +53,7 @@ const getGroupAndUser = (groupId, userId, userEmail, callback) => {
     },
     (seriesCallback) => {
       if (userEmail) {
-        models.User.find({
+        models.User.findOne({
           where: {
             email: userEmail
           },
@@ -84,7 +84,7 @@ var getCommunityAndUser = function (communityId, userId, userEmail, callback) {
 
   async.series([
     function (seriesCallback) {
-      models.Community.find({
+      models.Community.findOne({
         where: {
           id: communityId
         }
@@ -99,7 +99,7 @@ var getCommunityAndUser = function (communityId, userId, userEmail, callback) {
     },
     function (seriesCallback) {
       if (userId) {
-        models.User.find({
+        models.User.findOne({
           where: {
             id: userId
           },
@@ -118,7 +118,7 @@ var getCommunityAndUser = function (communityId, userId, userEmail, callback) {
     },
     function (seriesCallback) {
       if (userEmail) {
-        models.User.find({
+        models.User.findOne({
           where: {
             email: userEmail
           },
@@ -149,7 +149,7 @@ var getDomainAndUser = function (domainId, userId, userEmail, callback) {
 
   async.series([
     function (seriesCallback) {
-      models.Domain.find({
+      models.Domain.findOne({
         where: {
           id: domainId
         }
@@ -164,7 +164,7 @@ var getDomainAndUser = function (domainId, userId, userEmail, callback) {
     },
     function (seriesCallback) {
       if (userId) {
-        models.User.find({
+        models.User.findOne({
           where: {
             id: userId
           },
@@ -183,7 +183,7 @@ var getDomainAndUser = function (domainId, userId, userEmail, callback) {
     },
     function (seriesCallback) {
       if (userEmail) {
-        models.User.find({
+        models.User.findOne({
           where: {
             email: userEmail
           },
@@ -245,7 +245,7 @@ const recountPost = (postId, callback) => {
       });
     },
     (seriesCallback) => {
-      models.Post.find({
+      models.Post.findOne({
         where: {
           id: postId
         },
@@ -311,7 +311,7 @@ const recountGroup = (workPackage, callback) => {
     if (error) {
       callback(error);
     } else {
-      models.Group.find({
+      models.Group.findOne({
         where: { id: groupId },
         attributes: ['id', 'community_id','counter_posts', 'counter_points','counter_users'],
         include: [
@@ -345,7 +345,7 @@ const recountGroup = (workPackage, callback) => {
 };
 
 const recountCommunity = (workPackage, callback) => {
-  models.Community.find({
+  models.Community.findOne({
     attributes: ['id','counter_posts', 'counter_points', 'counter_users'],
     where: {
       id: workPackage.communityId
@@ -413,7 +413,7 @@ const recountCommunity = (workPackage, callback) => {
 
 const recountDomain = (workPackage, callback) => {
   log.info("recountDomain started");
-  models.Domain.find({
+  models.Domain.findOne({
     attributes: ['id','counter_posts','counter_points','counter_users'],
     where: {
       id: workPackage.domainId
@@ -458,7 +458,7 @@ const recountGroupFromPostId = (postId, callback) => {
   let postsCount = 0;
   let pointsCount = 0;
 
-  models.Post.unscoped().find({
+  models.Post.unscoped().findOne({
     where: { id: postId },
     attributes: ['id', 'group_id']
   }).then((post) => {
@@ -498,7 +498,7 @@ const recountGroupFromPostId = (postId, callback) => {
         if (error) {
           callback(error);
         } else {
-          models.Group.find({
+          models.Group.findOne({
             where: { id: groupId },
             attributes: ['id', 'community_id', 'counter_posts', 'counter_points']
           }).then((group) => {
@@ -531,7 +531,7 @@ const recountGroupFromPostId = (postId, callback) => {
 
 const resetCountForCommunityForGroup = (groupId, callback) => {
   let totalPosts=0, totalPoints = 0;
-  models.Group.unscoped().find({
+  models.Group.unscoped().findOne({
     where: { id: groupId },
     attributes: ['id', 'community_id']
   }).then((group) => {
@@ -778,7 +778,7 @@ const deletePostContent = (workPackage, callback) => {
         }
       }], (error) => {
         if (workPackage.useNotification) {
-          models.Post.find({
+          models.Post.findOne({
             where: { id: postId },
             attributes: ['id', 'group_id'],
             include: [
@@ -878,7 +878,7 @@ const deleteGroupContent = (workPackage, callback) => {
         }
       }], (error) => {
         if (workPackage.useNotification) {
-          models.Group.find({
+          models.Group.findOne({
             where: { id: groupId },
             attributes: ['id', 'community_id'],
             include: [
@@ -971,7 +971,7 @@ const deleteCommunityContent = (workPackage, callback) => {
         })
       }], (error) => {
         if (workPackage.useNotification) {
-          models.Community.find({
+          models.Community.findOne({
             where: { id: communityId },
             attributes: ['id', 'domain_id']
           }).then((community) => {
@@ -1202,7 +1202,7 @@ const recountAllFromGroup = (workPackage, callback) => {
   async.series([
     (seriesCallback) => {
       log.info("RecountAllFromGroup start");
-      models.Group.find({
+      models.Group.findOne({
         where: {
           id: workPackage.groupId
         },
@@ -1250,7 +1250,7 @@ const recountAllFromCommunity = (workPackage, callback) => {
   let domainId;
   async.series([
     (seriesCallback) => {
-      models.Community.find({
+      models.Community.findOne({
         where: {
           id: workPackage.communityId
         },
@@ -1283,7 +1283,7 @@ const recountAllFromCommunity = (workPackage, callback) => {
 const recountAllFromDomain = (workPackage, callback) => {
   async.series([
     (seriesCallback) => {
-      models.Domain.find({
+      models.Domain.findOne({
         where: {
           id: workPackage.domainId
         },
@@ -1409,7 +1409,7 @@ const deleteUserGroupContent = (workPackage, callback) => {
 
 const deleteUserCommunityContent = (workPackage, callback) => {
   if (workPackage.userId && workPackage.anonymousUserId && workPackage.communityId) {
-    models.Community.find({
+    models.Community.findOne({
       attributes: ['id'],
       where: {
         id: workPackage.communityId
@@ -1449,7 +1449,7 @@ const deleteUserCommunityContent = (workPackage, callback) => {
 
 const deleteUserDomainContent = (workPackage, callback) => {
   if (workPackage.userId && workPackage.anonymousUserId && workPackage.domainId) {
-    models.Domain.find({
+    models.Domain.findOne({
       attributes: ['id'],
       where: {
         id: workPackage.domainId
@@ -1700,7 +1700,7 @@ const removeManyCommunityUsersAndDeleteContent = (workPackage, callback) => {
         removeManyCommunityUsers(_.merge(workPackage, { skipRecount: true }), seriesCallback);
       },
       (seriesCallback) => {
-        models.Community.find({
+        models.Community.findOne({
           where: {
             id: workPackage.communityId
           },
@@ -1750,7 +1750,7 @@ const removeManyDomainUsersAndDeleteContent = (workPackage, callback) => {
         });
       },
       (seriesCallback) => {
-        models.Domain.find({
+        models.Domain.findOne({
           where: {
             id: workPackage.domainId
           },
@@ -1768,7 +1768,7 @@ const removeManyDomainUsersAndDeleteContent = (workPackage, callback) => {
                 removeManyCommunityUsers( _.merge(workPackage, { communityId: community.id, skipRecount: true }), innerSeriesCallback);
               },
               (innerSeriesCallback) => {
-                models.Community.find({
+                models.Community.findOne({
                   where: {
                     id: community.id
                   },

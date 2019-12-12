@@ -21,7 +21,7 @@ var movePostToGroupId = function (postId, toGroupId, done) {
   var group, post, communityId, domainId;
   async.series([
     function (callback) {
-      models.Group.find({
+      models.Group.findOne({
         where: {
           id: toGroupId
         },
@@ -47,7 +47,7 @@ var movePostToGroupId = function (postId, toGroupId, done) {
       });
     },
     function (callback) {
-      models.Post.find({
+      models.Post.findOne({
         where: {
           id: postid
         }
@@ -103,7 +103,7 @@ var movePostToGroupId = function (postId, toGroupId, done) {
 };
 
 var createStatusUpdateForPostId = function(postId, official_status, content, userId, callback) {
-  models.Post.find({
+  models.Post.findOne({
     where: {
       id: postId
     },
@@ -252,7 +252,7 @@ var changeStatusOfAllPost = function (config, userId, callback) {
     });
   });
   async.eachSeries(allPosts, function (configPost, seriesCallback) {
-    models.Post.find({
+    models.Post.findOne({
       where: {
         id: configPost.id
       },
@@ -282,7 +282,7 @@ var changeStatusOfAllPost = function (config, userId, callback) {
 var moveNeededPosts = function (config, callback) {
   async.eachSeries(config.groups, function (configGroup, groupSeriesCallback) {
     async.eachSeries(configGroup, function (configPost, postSeriesCallback) {
-      models.Post.find({
+      models.Post.findOne({
         where: {
           id: configPost.id
         },
@@ -307,7 +307,7 @@ var moveNeededPosts = function (config, callback) {
 };
 
 createBulkStatusUpdates = function (statusUpdateJson, users, callback) {
-  models.BulkStatusUpdate.find({
+  models.BulkStatusUpdate.findOne({
     where: {
       id: statusUpdateJson.id
     },
@@ -388,7 +388,7 @@ BulkStatusUpdateWorker.prototype.process = function (bulkStatusUpdateInfo, callb
   async.series([
     // Get Bulk Status Update
     function(seriesCallback){
-      models.BulkStatusUpdate.find({
+      models.BulkStatusUpdate.findOne({
         where: { id: bulkStatusUpdateInfo.bulkStatusUpdateId },
         include: [
           {

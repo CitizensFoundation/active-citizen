@@ -23,7 +23,7 @@ ActivityWorker.prototype.process = (activityJson, callback) => {
   log.info('Processing activity Started');
   async.series([
     (seriesCallback) => {
-      models.AcActivity.find({
+      models.AcActivity.findOne({
         where: { id: activityJson.id },
         include: [
           {

@@ -135,7 +135,7 @@ async.series([
   function(callback) {
     classesCategoriesCsv = [];
     async.eachSeries(categoriesIds, function (category_id, seriesCallback) {
-      models.Category.find({
+      models.Category.findOne({
         where: {id: category_id}
       }).then(function (category) {
         classesCategoriesCsv.push(category.id + ',' + category.name);

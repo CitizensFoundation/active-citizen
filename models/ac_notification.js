@@ -174,7 +174,7 @@ module.exports = (sequelize, DataTypes) => {
 
     async.series([
       (seriesCallback) => {
-        sequelize.models.AcActivity.find({
+        sequelize.models.AcActivity.findOne({
           where: { id: activity.id },
           include: [
             {

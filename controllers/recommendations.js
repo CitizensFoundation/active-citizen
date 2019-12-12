@@ -246,7 +246,7 @@ router.put('/groups/:id/getPostRecommendations', auth.can('view group'), functio
     limit: 100
   });
 
-  models.Group.find({
+  models.Group.findOne({
     where: {
       id: req.params.id
     },

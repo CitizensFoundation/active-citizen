@@ -22,7 +22,7 @@ NotificationNewsFeedWorker.prototype.process = function (notificationJson, callb
 
   async.series([
     function(seriesCallback){
-      models.AcNotification.find({
+      models.AcNotification.findOne({
         where: { id: notificationJson.id },
         order: [
           [ { model: models.AcActivity, as: 'AcActivities' } ,'updated_at', 'asc' ]
@@ -80,7 +80,7 @@ NotificationNewsFeedWorker.prototype.process = function (notificationJson, callb
       });
     },
     function(seriesCallback){
-      models.User.find({
+      models.User.findOne({
         where: { id: notification.user_id },
         attributes: ['id','notifications_settings','email','name','created_at']
       }).then(function(userResults) {

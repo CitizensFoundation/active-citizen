@@ -13,7 +13,7 @@ const getModelAndUsersByType = (model, userType, id, notification_setting_type, 
 
   log.info("Notification Processing getModelAndUsersByType", { notification_setting_type: notification_setting_type, userWhere: userWhere });
   // TODO: Use streams when ready https://github.com/sequelize/sequelize/issues/2454
-  model.find({
+  model.findOne({
     where: { id: id },
     include: [
       {

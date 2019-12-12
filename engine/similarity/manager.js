@@ -25,7 +25,7 @@ var convertToString = function(integer) {
 };
 
 var getPost = function (postId, callback) {
-  models.Post.find(
+  models.Post.findOne(
     {
       where: {
         id: postId,

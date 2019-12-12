@@ -57,7 +57,7 @@ const delayedCreatePriorityActivity = (workPackage, callback) => {
       if (options.postId==null || (options.groupId && options.communityId)) {
         seriesCallback();
       } else if (options.groupId) {
-        models.Group.find({where: { id: options.groupId },
+        models.Group.findOne({where: { id: options.groupId },
           attributes: ['id','community_id']
         }).then(function(group) {
           if (group) {
@@ -72,7 +72,7 @@ const delayedCreatePriorityActivity = (workPackage, callback) => {
         });
       } else if (options.postId) {
         log.info("Looking for post, group and community START");
-        models.Post.find({
+        models.Post.findOne({
           where: { id: options.postId },
           attributes: ['id','group_id'],
           include: [

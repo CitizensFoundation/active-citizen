@@ -8,7 +8,7 @@ var getClient = function (appId) {
   return new predictionio.Events({appId: appId});
 };
 
-models.User.find({ where: {email:'robert@citizens.is'}}).then(function (user) {
+models.User.findOne({ where: {email:'robert@citizens.is'}}).then(function (user) {
   engine.sendQuery({
     user: user.id,
     fields: [
@@ -36,7 +36,7 @@ models.User.find({ where: {email:'robert@citizens.is'}}).then(function (user) {
       console.log("ITEM");
       if (item && item.item) {
         console.log(item.item);
-        models.Post.find({where:{ id: item.item }}).then(function(post) {
+        models.Post.findOne({where:{ id: item.item }}).then(function(post) {
           console.log(post.name);
           console.log(post.status);
           console.log(post.created_at);
