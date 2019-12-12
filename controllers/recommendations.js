@@ -146,7 +146,7 @@ var processRecommendations = function (levelType, req, res, recommendedItemIds, 
   }
 };
 
-var processRecommendationsLight = function (groupId, req, res, recommendedItemIds, error) {
+var processRecommendationsLight = function (groupId, req, res, recommendedItemIds, error, redisCacheKey) {
   if (error) {
     log.error("processRecommendationsLight Error", { err: error, userId:  req.user ? req.user.id : -1, errorStatus:  500 });
     if(airbrake) {
@@ -182,7 +182,11 @@ var processRecommendationsLight = function (groupId, req, res, recommendedItemId
         }
       ]
     }).then(function(posts) {
-      res.send({recommendations: posts, groupId: groupId });
+      const recommendationsInfo = {recommendations: posts, groupId: groupId };
+      if (redisCacheKey) {
+        req.redisClient.setex(redisCacheKey, process.env.RECOMMENDATIONS_CACHE_TTL ? parseInt(process.env.RECOMMENDATIONS_CACHE_TTL) : 60, JSON.stringify(recommendationsInfo));
+      }
+      res.send(recommendationsInfo);
     }).catch(function(error) {
       log.error("processRecommendationsLight Error ", { err: error, userId:  req.user ? req.user.id : -1, errorStatus: 500 });
       if(airbrake) {
@@ -239,43 +243,53 @@ router.get('/groups/:id', auth.can('view group'), function(req, res) {
 });
 
 router.put('/groups/:id/getPostRecommendations', auth.can('view group'), function(req, res) {
-  var options = setupOptions(req);
-
-  options = _.merge(options, {
-    group_id: req.params.id,
-    limit: 100
-  });
-
-  models.Group.findOne({
-    where: {
-      id: req.params.id
-    },
-    attributes: [
-      'id','configuration'
-    ]
-  }).then( group => {
-    if (group) {
-      var dateOptions = DATE_OPTIONS_YEAR;
-      if (group.configuration && group.configuration.maxDaysBackForRecommendations && group.configuration.maxDaysBackForRecommendations) {
-        var maxDays = parseInt(group.configuration.maxDaysBackForRecommendations);
-        dateOptions = { name:"date", after: moment().add(-Math.abs(maxDays), 'days').toISOString() };
-      }
-
-      getRecommendationFor(options.user_id, dateOptions, options, function (error, recommendedItemIds) {
-        if (!error) {
-          processRecommendationsLight(req.params.id, req, res, recommendedItemIds, error);
-        } else {
-          log.error("Error from getRecommendationFor", { error });
-          res.send({recommendations: [], groupId: req.params.id });
-        }
-      }, req.user ? req.user.default_locale : null);
+  const redisCacheKey = "cache:getPostRecommendations:"+req.params.id+":userId:"+(req.user ? req.user.id : "notLoggedIn");
+  req.redisClient.get(redisCacheKey, (error, recommendations) => {
+    if (error) {
+      log.error(error);
+      res.send({recommendations: [], groupId: req.params.id});
+    } else if (recommendations) {
+      res.send(JSON.parse(recommendations));
     } else {
-      log.error("Group not found");
-      res.send({recommendations: [], groupId: req.params.id });
+      var options = setupOptions(req);
+
+      options = _.merge(options, {
+        group_id: req.params.id,
+        limit: 100
+      });
+
+      models.Group.findOne({
+        where: {
+          id: req.params.id
+        },
+        attributes: [
+          'id', 'configuration'
+        ]
+      }).then(group => {
+        if (group) {
+          var dateOptions = DATE_OPTIONS_YEAR;
+          if (group.configuration && group.configuration.maxDaysBackForRecommendations && group.configuration.maxDaysBackForRecommendations) {
+            var maxDays = parseInt(group.configuration.maxDaysBackForRecommendations);
+            dateOptions = {name: "date", after: moment().add(-Math.abs(maxDays), 'days').toISOString()};
+          }
+
+          getRecommendationFor(options.user_id, dateOptions, options, function (error, recommendedItemIds) {
+            if (!error) {
+              processRecommendationsLight(req.params.id, req, res, recommendedItemIds, error, redisCacheKey);
+            } else {
+              log.error("Error from getRecommendationFor", {error});
+              res.send({recommendations: [], groupId: req.params.id});
+            }
+          }, req.user ? req.user.default_locale : null);
+        } else {
+          log.error("Group not found");
+          res.send({recommendations: [], groupId: req.params.id});
+        }
+      }).catch(error => {
+        log.error(error);
+        res.send({recommendations: [], groupId: req.params.id});
+      });
     }
-  }).catch(error => {
-    log.error(error);
-    res.send({recommendations: [], groupId: req.params.id });
   });
 });
 
