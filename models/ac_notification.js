@@ -1,13 +1,13 @@
 "use strict";
 
-var async = require("async");
-var log = require('../utils/logger');
-var toJson = require('../utils/to_json');
-var _ = require('lodash');
-var queue = require('../workers/queue');
+const async = require("async");
+const log = require('../utils/logger');
+const toJson = require('../utils/to_json');
+const _ = require('lodash');
+const queue = require('../workers/queue');
 
-module.exports = function(sequelize, DataTypes) {
-  var AcNotification = sequelize.define("AcNotification", {
+module.exports = (sequelize, DataTypes) => {
+  const AcNotification = sequelize.define("AcNotification", {
     priority: { type: DataTypes.INTEGER, allowNull: false },
     type: { type: DataTypes.STRING, allowNull: false },
     status: { type: DataTypes.STRING, allowNull: false, defaultValue: 'active' },
@@ -55,262 +55,259 @@ module.exports = function(sequelize, DataTypes) {
 
     underscored: true,
 
-    tableName: 'ac_notifications',
+    tableName: 'ac_notifications'
+  });
 
-    classMethods: {
+  AcNotification.associate = (models) => {
+    AcNotification.belongsToMany(models.AcActivity, { as: 'AcActivities', through: 'notification_activities' });
+    AcNotification.belongsToMany(models.AcDelayedNotification, { as: 'AcDelayedNotifications', through: 'delayed_notifications' });
+    AcNotification.belongsTo(models.User);
+  };
 
-      METHOD_MUTED: 0,
-      METHOD_BROWSER: 1,
-      METHOD_EMAIL: 2,
-      METHOD_PUSH: 3,
-      METHOD_SMS: 4,
+  AcNotification.METHOD_MUTED = 0;
+  AcNotification.METHOD_BROWSER = 1;
+  AcNotification.METHOD_EMAIL = 2;
+  AcNotification.METHOD_PUSH = 3;
+  AcNotification.METHOD_SMS = 4;
 
-      FREQUENCY_AS_IT_HAPPENS: 0,
-      FREQUENCY_HOURLY: 1,
-      FREQUENCY_DAILY: 2,
-      FREQUENCY_WEEKLY: 3,
-      FREQUENCY_BI_WEEKLY: 4,
-      FREQUENCY_MONTHLY: 5,
+  AcNotification.FREQUENCY_AS_IT_HAPPENS = 0;
+  AcNotification.FREQUENCY_HOURLY = 1;
+  AcNotification.FREQUENCY_DAILY = 2;
+  AcNotification.FREQUENCY_WEEKLY = 3;
+  AcNotification.FREQUENCY_BI_WEEKLY = 4;
+  AcNotification.FREQUENCY_MONTHLY = 5;
 
-      defaultNotificationSettings: {
-        my_posts: {
-          method: 2,
-          frequency: 0
-        },
-        my_posts_endorsements: {
-          method: 2,
-          frequency: 2
-        },
-        my_points: {
-          method: 2,
-          frequency: 1
-        },
-        my_points_endorsements: {
-          method: 2,
-          frequency: 2
-        },
-        all_community: {
-          method: 0,
-          frequency: 3
-        },
-        all_group: {
-          method: 0,
-          frequency: 3
-        },
-        newsletter: {
-          method: 2,
-          frequency: 4
-        }
-      },
+  AcNotification.defaultNotificationSettings = {
+    my_posts: {
+      method: 2,
+        frequency: 0
+    },
+    my_posts_endorsements: {
+      method: 2,
+        frequency: 2
+    },
+    my_points: {
+      method: 2,
+        frequency: 1
+    },
+    my_points_endorsements: {
+      method: 2,
+        frequency: 2
+    },
+    all_community: {
+      method: 0,
+        frequency: 3
+    },
+    all_group: {
+      method: 0,
+        frequency: 3
+    },
+    newsletter: {
+      method: 2,
+        frequency: 4
+    }
+  };
 
-      anonymousNotificationSettings: {
-        my_posts: {
-          method: 0,
-          frequency: 2
-        },
-        my_posts_endorsements: {
-          method: 0,
-          frequency: 2
-        },
-        my_points: {
-          method: 0,
-          frequency: 2
-        },
-        my_points_endorsements: {
-          method: 0,
-          frequency: 2
-        },
-        all_community: {
-          method: 0,
-          frequency: 3
-        },
-        all_group: {
-          method: 0,
-          frequency: 3
-        },
-        newsletter: {
-          method: 0,
-          frequency: 4
-        }
-      },
+  AcNotification.anonymousNotificationSettings = {
+    my_posts: {
+      method: 0,
+        frequency: 2
+    },
+    my_posts_endorsements: {
+      method: 0,
+        frequency: 2
+    },
+    my_points: {
+      method: 0,
+        frequency: 2
+    },
+    my_points_endorsements: {
+      method: 0,
+        frequency: 2
+    },
+    all_community: {
+      method: 0,
+        frequency: 3
+    },
+    all_group: {
+      method: 0,
+        frequency: 3
+    },
+    newsletter: {
+      method: 0,
+        frequency: 4
+    }
+  };
 
-      ENDORSEMENT_GROUPING_TTL: 6 * 60 * 60 * 1000, // milliseconds
+  AcNotification.ENDORSEMENT_GROUPING_TTL = 6 * 60 * 60 * 1000; // milliseconds
 
-      associate: function(models) {
-        AcNotification.belongsToMany(models.AcActivity, { as: 'AcActivities', through: 'notification_activities' });
-        AcNotification.belongsToMany(models.AcDelayedNotification, { as: 'AcDelayedNotifications', through: 'delayed_notifications' });
-        AcNotification.belongsTo(models.User);
-      },
+  AcNotification.processNotification = (notification, user, activity, callback) => {
+    let queuePriority;
+    if (user.last_login_at && ((new Date().getDate()-5)<user.last_login_at)) {
+      queuePriority = 'high';
+    } else {
+      queuePriority = 'medium';
+    }
 
-      processNotification: function (notification, user, activity, callback) {
-        let queuePriority;
-        if (user.last_login_at && ((new Date().getDate()-5)<user.last_login_at)) {
-          queuePriority = 'high';
-        } else {
-          queuePriority = 'medium';
-        }
+    queue.create('process-notification-delivery', { id: notification.id }).priority(queuePriority).removeOnComplete(true).save();
 
-        queue.create('process-notification-delivery', { id: notification.id }).priority(queuePriority).removeOnComplete(true).save();
+    // Disabled for now
+    //queue.create('process-notification-news-feed', { id: notification.id }).priority(queuePriority).removeOnComplete(true).save();
 
-        // Disabled for now
-        //queue.create('process-notification-news-feed', { id: notification.id }).priority(queuePriority).removeOnComplete(true).save();
+    // Its being updated and is not new
+    if (callback) {
+      notification.viewed = false;
+      notification.changed('updated_at', true);
+      notification.save().then((notificationIn) => {
+        callback();
+      }).catch((error) => {
+        callback(error);
+      });
+    }
+  };
 
-        // Its being updated and is not new
-        if (callback) {
-          notification.viewed = false;
-          notification.changed('updated_at', true);
-          notification.save().then((notificationIn) => {
-            callback();
-          }).catch((error) => {
-            callback(error);
-          });
-        }
-      },
+  AcNotification.createReportNotifications = (user, activity, callback) => {
+    log.info('createReportNotifications');
 
-      createReportNotifications: function(user, activity, callback) {
-        log.info('createReportNotifications');
+    let activityWithAdmins;
+    let allAdmins;
 
-        var activityWithAdmins;
-        var allAdmins;
-
-        async.series([
-          function (seriesCallback) {
-            sequelize.models.AcActivity.find({
-              where: { id: activity.id },
+    async.series([
+      (seriesCallback) => {
+        sequelize.models.AcActivity.find({
+          where: { id: activity.id },
+          include: [
+            {
+              model: sequelize.models.Community,
+              required: true,
               include: [
                 {
-                  model: sequelize.models.Community,
-                  required: true,
-                  include: [
-                    {
-                      model: sequelize.models.User,
-                      attributes: _.concat(sequelize.models.User.defaultAttributesWithSocialMediaPublicAndEmail, ['created_at', 'last_login_at']),
-                      as: 'CommunityAdmins',
-                      required: false
-                    }
-                  ]
-                },
-                {
-                  model: sequelize.models.Group,
-                  required: true,
-                  include: [
-                    {
-                      model: sequelize.models.User,
-                      attributes: _.concat(sequelize.models.User.defaultAttributesWithSocialMediaPublicAndEmail, ['created_at', 'last_login_at']),
-                      as: 'GroupAdmins',
-                      required: false
-                    }
-                  ]
-                },
-                {
-                  model: sequelize.models.Post,
-                  required: false
-                },
-                {
-                  model: sequelize.models.Point,
+                  model: sequelize.models.User,
+                  attributes: _.concat(sequelize.models.User.defaultAttributesWithSocialMediaPublicAndEmail, ['created_at', 'last_login_at']),
+                  as: 'CommunityAdmins',
                   required: false
                 }
               ]
-            }).then(function (results) {
-              if (results && (results.Community.CommunityAdmins || results.Community.GroupAdmins)) {
-                activityWithAdmins = results;
-                seriesCallback();
-              } else {
-                seriesCallback('Activity not found');
-              }
-            }).catch(function (error) {
-              seriesCallback(error);
-            });
-          },
-          function (seriesCallback) {
-            allAdmins = _.concat(activityWithAdmins.Community.CommunityAdmins, activityWithAdmins.Group.GroupAdmins);
-            allAdmins = _.uniqBy(allAdmins, function (admin) {
-              return admin.email;
-            });
-            async.eachSeries(allAdmins, function (admin, innerSeriesCallback) {
-              sequelize.models.AcNotification.build({
-                type: 'notification.report.content',
-                priority: 100,
-                status: 'active',
-                ac_activity_id: activity.id,
-                from_notification_setting: "reportContent",
-                user_id: admin.id
-              }).save().then(function(notification) {
-                if (notification) {
-                  notification.addAcActivities(activity).then(function (results) {
-                    if (results) {
-                      var notificationJson = { id: notification.id };
-                      queue.create('process-notification-delivery', notificationJson).priority('high').removeOnComplete(true).save();
-                      log.info('Notification Created', { notification: toJson(notification), userId: admin.id});
-                      innerSeriesCallback();
-                    } else {
-                      innerSeriesCallback("Notification Error Can't add activity");
-                    }
-                  });
-                } else {
-                  log.error('Notification Creation Error', { err: "No notification", user: user.id});
-                  innerSeriesCallback("Could not create notification");
+            },
+            {
+              model: sequelize.models.Group,
+              required: true,
+              include: [
+                {
+                  model: sequelize.models.User,
+                  attributes: _.concat(sequelize.models.User.defaultAttributesWithSocialMediaPublicAndEmail, ['created_at', 'last_login_at']),
+                  as: 'GroupAdmins',
+                  required: false
                 }
-              }).catch(function (error) {
-                log.error('Notification Creation Error', { err: error, user: user.id});
-                innerSeriesCallback(error)
-              });
-
-            }, function (error) {
-              seriesCallback(error);
-            });
-          }
-        ], function (error) {
-          callback(error);
-        });
-      },
-
-      createNotificationFromActivity: function (user, activity, type, notification_setting_type, priority, callback) {
-        log.info('AcNotification Notification', {type: type, priority: priority });
-
-        if (user==null) {
-          user = { id: null };
-        }
-
-        if (typeof user == "number") {
-          user = { id: user };
-        }
-
-        if (typeof user == "string" && user.length>0) {
-          user = { id: user };
-        }
-
-        //TODO: Check AcMute and mute if needed
-
-       sequelize.models.AcNotification.build({
-         type: type,
-         priority: priority,
-         status: 'active',
-         ac_activity_id: activity.id,
-         from_notification_setting: notification_setting_type,
-         user_id: user.id
-       }).save().then( (notification) => {
-          if (notification) {
-            notification.addAcActivities(activity).then(function (results) {
-              if (results) {
-                sequelize.models.AcNotification.processNotification(notification, user, activity);
-                log.info('Notification Created', { notification: toJson(notification), userId: user.id});
-                callback();
-              } else {
-                callback("Notification Error Can't add activity");
-              }
-            });
+              ]
+            },
+            {
+              model: sequelize.models.Post,
+              required: false
+            },
+            {
+              model: sequelize.models.Point,
+              required: false
+            }
+          ]
+        }).then((results) => {
+          if (results && (results.Community.CommunityAdmins || results.Community.GroupAdmins)) {
+            activityWithAdmins = results;
+            seriesCallback();
           } else {
-            log.error('Notification Creation Error', { err: "No notification", user: user.id});
-            callback("Notification Create Error");
+            seriesCallback('Activity not found');
           }
         }).catch((error) => {
-         log.error('Notification Creation Error', { err: error, user: user.id});
-         callback(error);
-       });
+          seriesCallback(error);
+        });
+      },
+      (seriesCallback)  =>{
+        allAdmins = _.concat(activityWithAdmins.Community.CommunityAdmins, activityWithAdmins.Group.GroupAdmins);
+        allAdmins = _.uniqBy(allAdmins, (admin) => {
+          return admin.email;
+        });
+        async.eachSeries(allAdmins, (admin, innerSeriesCallback) => {
+          sequelize.models.AcNotification.build({
+            type: 'notification.report.content',
+            priority: 100,
+            status: 'active',
+            ac_activity_id: activity.id,
+            from_notification_setting: "reportContent",
+            user_id: admin.id
+          }).save().then((notification) => {
+            if (notification) {
+              notification.addAcActivities(activity).then((results) => {
+                if (results) {
+                  const notificationJson = { id: notification.id };
+                  queue.create('process-notification-delivery', notificationJson).priority('high').removeOnComplete(true).save();
+                  log.info('Notification Created', { notification: toJson(notification), userId: admin.id});
+                  innerSeriesCallback();
+                } else {
+                  innerSeriesCallback("Notification Error Can't add activity");
+                }
+              });
+            } else {
+              log.error('Notification Creation Error', { err: "No notification", user: user.id});
+              innerSeriesCallback("Could not create notification");
+            }
+          }).catch((error) => {
+            log.error('Notification Creation Error', { err: error, user: user.id});
+            innerSeriesCallback(error)
+          });
+
+        }, (error) => {
+          seriesCallback(error);
+        });
       }
+    ],  (error) => {
+      callback(error);
+    });
+  };
+
+  AcNotification.createNotificationFromActivity = (user, activity, type, notification_setting_type, priority, callback) => {
+    log.info('AcNotification Notification', {type: type, priority: priority });
+
+    if (user==null) {
+      user = { id: null };
     }
-  });
+
+    if (typeof user == "number") {
+      user = { id: user };
+    }
+
+    if (typeof user == "string" && user.length>0) {
+      user = { id: user };
+    }
+
+    //TODO: Check AcMute and mute if needed
+
+    sequelize.models.AcNotification.build({
+      type: type,
+      priority: priority,
+      status: 'active',
+      ac_activity_id: activity.id,
+      from_notification_setting: notification_setting_type,
+      user_id: user.id
+    }).save().then( (notification) => {
+      if (notification) {
+        notification.addAcActivities(activity).then((results) => {
+          if (results) {
+            sequelize.models.AcNotification.processNotification(notification, user, activity);
+            log.info('Notification Created', { notification: toJson(notification), userId: user.id});
+            callback();
+          } else {
+            callback("Notification Error Can't add activity");
+          }
+        });
+      } else {
+        log.error('Notification Creation Error', { err: "No notification", user: user.id});
+        callback("Notification Create Error");
+      }
+    }).catch((error) => {
+      log.error('Notification Creation Error', { err: error, user: user.id});
+      callback(error);
+    });
+  };
 
   return AcNotification;
 };

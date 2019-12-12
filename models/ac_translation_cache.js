@@ -1,11 +1,10 @@
 "use strict";
 
-var async = require("async");
 const { Translate }= require('@google-cloud/translate');
 const farmhash = require('farmhash');
-var log = require('../utils/logger');
+const log = require('../utils/logger');
 
-module.exports = function(sequelize, DataTypes) {
+module.exports = (sequelize, DataTypes) => {
   let AcTranslationCache = sequelize.define("AcTranslationCache", {
     index_key: { type: DataTypes.STRING, allowNull: false },
     content: { type: DataTypes.TEXT, allowNull: false },
@@ -26,7 +25,7 @@ module.exports = function(sequelize, DataTypes) {
 
     classMethods: {
 
-      getContentToTranslate: function (req, modelInstance) {
+      getContentToTranslate: (req, modelInstance) => {
         switch(req.query.textType) {
           case 'postName':
           case 'domainName':
@@ -61,13 +60,13 @@ module.exports = function(sequelize, DataTypes) {
         }
       },
 
-      getTranslationFromGoogle: function (textType, indexKey, contentToTranslate, targetLanguage, modelInstance, callback) {
+      getTranslationFromGoogle: (textType, indexKey, contentToTranslate, targetLanguage, modelInstance, callback) => {
         const translateAPI = new Translate({
           credentials: JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)
         });
 
         translateAPI.translate(contentToTranslate, targetLanguage)
-          .then( function (results) {
+          .then((results) => {
             const translationResults = results[1];
             if (translationResults && translationResults.data
                 && translationResults.data.translations &&
@@ -76,7 +75,7 @@ module.exports = function(sequelize, DataTypes) {
               AcTranslationCache.create({
                 index_key: indexKey,
                 content: translation.translatedText
-              }).then(function () {
+              }).then(() => {
                 if (textType==='postTranscriptContent') {
                   modelInstance.set('public_data.transcript.language', translation.detectedSourceLanguage);
                   modelInstance.save().then( () => {
@@ -87,29 +86,29 @@ module.exports = function(sequelize, DataTypes) {
                 } else {
                   modelInstance.update({
                     language: translation.detectedSourceLanguage
-                  }).then(function () {
+                  }).then(() => {
                     callback(null, { content: translation.translatedText });
                   });
                 }
-              }).catch(function (error) {
+              }).catch((error) => {
                 callback(error);
               });
             } else {
               callback("No translations");
             }
-          }).catch(function (error) {
+          }).catch((error) => {
           callback(error);
         });
       },
 
-      getTranslation: function (req, modelInstance, callback) {
+      getTranslation: (req, modelInstance, callback) => {
         const contentToTranslate = AcTranslationCache.getContentToTranslate(req, modelInstance);
         if (contentToTranslate && contentToTranslate!=='' &&
             contentToTranslate.length>6 && isNaN(contentToTranslate)) {
           const contentHash = farmhash.hash32(contentToTranslate).toString();
           const textType = req.query.textType;
           let targetLanguage = req.query.targetLanguage.replace('_','-');
-          if (targetLanguage!='zh-CN' && targetLanguage!='zh-TW') {
+          if (targetLanguage!=='zh-CN' && targetLanguage!=='zh-TW') {
             targetLanguage = targetLanguage.split("-")[0];
           }
           let indexKey = `${textType}-${modelInstance.id}-${targetLanguage}-${contentHash}`;
@@ -118,13 +117,13 @@ module.exports = function(sequelize, DataTypes) {
             where: {
               index_key: indexKey
             }
-          }).then(function (translationModel) {
+          }).then((translationModel) => {
             if (translationModel) {
               callback(null, { content: translationModel.content });
             } else {
               AcTranslationCache.getTranslationFromGoogle(textType, indexKey, contentToTranslate, targetLanguage, modelInstance, callback);
             }
-          }).catch(function (error) {
+          }).catch((error) => {
             callback(error);
           });
         } else {
@@ -136,7 +135,7 @@ module.exports = function(sequelize, DataTypes) {
           if (!modelInstance.language) {
             modelInstance.update({
               language: '??'
-            }).then(function () {
+            }).then(() => {
               callback(null, { content: contentToTranslate });
             }).catch( error => {
               callback(error);

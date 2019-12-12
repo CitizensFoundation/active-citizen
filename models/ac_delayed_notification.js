@@ -1,9 +1,7 @@
 "use strict";
 
-// Notify user about this object
-
-module.exports = function(sequelize, DataTypes) {
-  var AcDelayedNotification = sequelize.define("AcDelayedNotification", {
+module.exports = (sequelize, DataTypes) => {
+  const AcDelayedNotification = sequelize.define("AcDelayedNotification", {
     method: { type: DataTypes.INTEGER, allowNull: false },
     frequency: { type: DataTypes.INTEGER, allowNull: false },
     type: { type: DataTypes.STRING, allowNull: false },
@@ -38,16 +36,13 @@ module.exports = function(sequelize, DataTypes) {
 
     timestamps: true,
 
-    tableName: 'ac_delayed_notifications',
-
-    classMethods: {
-
-      associate: function(models) {
-        AcDelayedNotification.belongsToMany(models.AcNotification, { as: 'AcNotifications', through: 'delayed_notifications' });
-        AcDelayedNotification.belongsTo(models.User);
-      }
-    }
+    tableName: 'ac_delayed_notifications'
   });
+
+  AcDelayedNotification.associate = (models) => {
+    AcDelayedNotification.belongsToMany(models.AcNotification, { as: 'AcNotifications', through: 'delayed_notifications' });
+    AcDelayedNotification.belongsTo(models.User);
+  };
 
   return AcDelayedNotification;
 };
