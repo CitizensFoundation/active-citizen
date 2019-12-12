@@ -28,6 +28,8 @@ module.exports = (sequelize, DataTypes) => {
     },
 
     timestamps: true,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
 
     indexes: _.concat(commonIndexForActivitiesAndNewsFeeds('created_at'), [
       {
@@ -82,15 +84,15 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   AcActivity.associate = (models) => {
-    AcActivity.belongsTo(models.Domain);
-    AcActivity.belongsTo(models.Community);
-    AcActivity.belongsTo(models.Group);
-    AcActivity.belongsTo(models.Post);
-    AcActivity.belongsTo(models.Point);
-    AcActivity.belongsTo(models.Invite);
-    AcActivity.belongsTo(models.User);
-    AcActivity.belongsTo(models.Image);
-    AcActivity.belongsTo(models.PostStatusChange);
+    AcActivity.belongsTo(models.Domain,{ foreignKey: 'domain_id' });
+    AcActivity.belongsTo(models.Community,{ foreignKey: 'community_id' });
+    AcActivity.belongsTo(models.Group,{ foreignKey: 'group_id' });
+    AcActivity.belongsTo(models.Post,{ foreignKey: 'post_id' });
+    AcActivity.belongsTo(models.Point,{ foreignKey: 'point_id' });
+    AcActivity.belongsTo(models.Invite,{ foreignKey: 'invite_id' });
+    AcActivity.belongsTo(models.User,{ foreignKey: 'user_id' });
+    AcActivity.belongsTo(models.Image,{ foreignKey: 'parent_id' });
+    AcActivity.belongsTo(models.PostStatusChange,{ foreignKey: 'parent_id' });
     AcActivity.belongsToMany(models.User, { through: 'other_users' });
     AcActivity.belongsToMany(models.AcNotification, { as: 'AcActivities', through: 'notification_activities' });
   };

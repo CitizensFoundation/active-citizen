@@ -20,6 +20,8 @@ module.exports = (sequelize, DataTypes) => {
     underscored: true,
 
     timestamps: true,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
 
     tableName: 'translation_cache',
 
