@@ -23,13 +23,13 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   AcWatching.associate = (models) => {
-    AcWatching.belongsTo(models.Domain);
-    AcWatching.belongsTo(models.Community);
-    AcWatching.belongsTo(models.Group);
-    AcWatching.belongsTo(models.Post);
-    AcWatching.belongsTo(models.Point);
+    AcWatching.belongsTo(models.Domain,{ foreignKey: 'domain_id' });
+    AcWatching.belongsTo(models.Community,{ foreignKey: 'community_id' });
+    AcWatching.belongsTo(models.Group,{ foreignKey: 'group_id' });
+    AcWatching.belongsTo(models.Post,{ foreignKey: 'post_id' });
+    AcWatching.belongsTo(models.Point,{ foreignKey: 'point_id' });
+    AcWatching.belongsTo(models.User,{ foreignKey: 'user_id' });
     AcWatching.belongsTo(models.User, { as: 'WatchingUser' });
-    AcWatching.belongsTo(models.User);
   };
 
   AcWatching.watchCommunity = function(community, user) {

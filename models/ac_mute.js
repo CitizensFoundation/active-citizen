@@ -21,13 +21,13 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   AcMute.associate = (models) => {
-    AcMute.belongsTo(models.Domain);
-    AcMute.belongsTo(models.Community);
-    AcMute.belongsTo(models.Group);
-    AcMute.belongsTo(models.Post);
-    AcMute.belongsTo(models.Point);
-    AcMute.belongsTo(models.User, { as: 'OtherUser' });
-    AcMute.belongsTo(models.User);
+    AcMute.belongsTo(models.Domain,{ foreignKey: 'domain_id' });
+    AcMute.belongsTo(models.Community,{ foreignKey: 'community_id' });
+    AcMute.belongsTo(models.Group,{ foreignKey: 'group_id' });
+    AcMute.belongsTo(models.Post,{ foreignKey: 'post_id' });
+    AcMute.belongsTo(models.Point,{ foreignKey: 'point_id' });
+    AcMute.belongsTo(models.User,{ foreignKey: 'user_id' });
+    AcMute.belongsTo(models.User,{ as: 'OtherUser' });
   };
 
   return AcMute;

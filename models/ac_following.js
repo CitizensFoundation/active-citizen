@@ -41,9 +41,8 @@ module.exports = (sequelize, DataTypes) => {
     tableName: 'ac_followings'
   });
 
-
   AcFollowing.associate = (models) => {
-    AcFollowing.belongsTo(models.User);
+    AcFollowing.belongsTo(models.User,{ foreignKey: 'user_id' });
     AcFollowing.belongsTo(models.User, { as: 'OtherUser' });
   };
 

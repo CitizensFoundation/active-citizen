@@ -91,8 +91,8 @@ module.exports = (sequelize, DataTypes) => {
     AcActivity.belongsTo(models.Point,{ foreignKey: 'point_id' });
     AcActivity.belongsTo(models.Invite,{ foreignKey: 'invite_id' });
     AcActivity.belongsTo(models.User,{ foreignKey: 'user_id' });
-    AcActivity.belongsTo(models.Image,{ foreignKey: 'parent_id' });
-    AcActivity.belongsTo(models.PostStatusChange,{ foreignKey: 'parent_id' });
+    AcActivity.belongsTo(models.Image,{ foreignKey: 'image_id' });
+    AcActivity.belongsTo(models.PostStatusChange,{ foreignKey: 'post_status_change_id' });
     AcActivity.belongsToMany(models.User, { through: 'other_users' });
     AcActivity.belongsToMany(models.AcNotification, { as: 'AcActivities', through: 'notification_activities' });
   };

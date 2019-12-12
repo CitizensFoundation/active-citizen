@@ -63,7 +63,7 @@ module.exports = (sequelize, DataTypes) => {
   AcNotification.associate = (models) => {
     AcNotification.belongsToMany(models.AcActivity, { as: 'AcActivities', through: 'notification_activities' });
     AcNotification.belongsToMany(models.AcDelayedNotification, { as: 'AcDelayedNotifications', through: 'delayed_notifications' });
-    AcNotification.belongsTo(models.User);
+    AcNotification.belongsTo(models.User,{ foreignKey: 'user_id' });
   };
 
   AcNotification.METHOD_MUTED = 0;

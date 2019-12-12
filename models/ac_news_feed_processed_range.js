@@ -56,11 +56,11 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   AcNewsFeedProcessedRange.associate = (models) => {
-    AcNewsFeedProcessedRange.belongsTo(models.Domain);
-    AcNewsFeedProcessedRange.belongsTo(models.Community);
-    AcNewsFeedProcessedRange.belongsTo(models.Group);
-    AcNewsFeedProcessedRange.belongsTo(models.Post);
-    AcNewsFeedProcessedRange.belongsTo(models.User);
+    AcNewsFeedProcessedRange.belongsTo(models.Domain,{ foreignKey: 'domain_id' });
+    AcNewsFeedProcessedRange.belongsTo(models.Community,{ foreignKey: 'community_id' });
+    AcNewsFeedProcessedRange.belongsTo(models.Group,{ foreignKey: 'group_id' });
+    AcNewsFeedProcessedRange.belongsTo(models.Post,{ foreignKey: 'post_id' });
+    AcNewsFeedProcessedRange.belongsTo(models.User,{ foreignKey: 'user_id' });
   };
 
   return AcNewsFeedProcessedRange;

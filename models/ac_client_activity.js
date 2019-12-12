@@ -10,7 +10,6 @@ module.exports = (sequelize, DataTypes) => {
     user_id: { type: DataTypes.INTEGER, allowNull: true },
     post_id: { type: DataTypes.INTEGER, allowNull: true },
 
-
     object: DataTypes.JSONB,
     actor: DataTypes.JSONB,
     target: DataTypes.JSONB,

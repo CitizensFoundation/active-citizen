@@ -52,15 +52,16 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   AcNewsFeedItem.associate = (models) => {
-    AcNewsFeedItem.belongsTo(models.Domain);
-    AcNewsFeedItem.belongsTo(models.Community);
-    AcNewsFeedItem.belongsTo(models.Group);
-    AcNewsFeedItem.belongsTo(models.Post);
-    AcNewsFeedItem.belongsTo(models.Point);
-    AcNewsFeedItem.belongsTo(models.Promotion);
-    AcNewsFeedItem.belongsTo(models.AcNotification);
-    AcNewsFeedItem.belongsTo(models.AcActivity);
-    AcNewsFeedItem.belongsTo(models.User);
+    AcNewsFeedItem.belongsTo(models.Domain,{ foreignKey: 'domain_id' });
+    AcNewsFeedItem.belongsTo(models.Community,{ foreignKey: 'community_id' });
+    AcNewsFeedItem.belongsTo(models.Group,{ foreignKey: 'group_id' });
+    AcNewsFeedItem.belongsTo(models.Post,{ foreignKey: 'post_id' });
+    AcNewsFeedItem.belongsTo(models.Point,{ foreignKey: 'point_id' });
+    AcNewsFeedItem.belongsTo(models.User,{ foreignKey: 'user_id' });
+
+    AcNewsFeedItem.belongsTo(models.Promotion,{ foreignKey: 'promotion_id' });
+    AcNewsFeedItem.belongsTo(models.AcNotification,{ foreignKey: 'ac_notification_id' });
+    AcNewsFeedItem.belongsTo(models.AcActivity,{ foreignKey: 'ac_activity_id' });
   };
 
   return AcNewsFeedItem;
