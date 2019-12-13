@@ -190,7 +190,6 @@ const getPushItem = (type, model) => {
 };
 
 const getItems = (posts, points, options) => {
-  log.info("get_moderation_items getItems 1");
   let items = [];
   _.forEach(posts, post => {
     items.push(getPushItem('post', post));
@@ -199,15 +198,12 @@ const getItems = (posts, points, options) => {
   // Free memory
   posts = null;
 
-  log.info("get_moderation_items getItems 2");
   _.forEach(points, point => {
     items.push(getPushItem('point', point));
   });
 
   // Free memory
   points = null;
-
-  log.info("get_moderation_items getItems 3");
 
   if (options.allContent) {
     items = _.orderBy(items,['created_at'], ['desc']);
