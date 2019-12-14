@@ -1,3 +1,7 @@
+const _ = require('lodash');
+const request = require('request');
+const models = require('../../../models');
+
 const convertToString = (integer) => {
   return integer.toString();
 };
@@ -268,6 +272,7 @@ const importPoint = (point, done) => {
       counter_quality_down: point.counter_quality_down,
       counter_flags: point.counter_flags,
       name: point.name,
+      value: point.value,
       videoUrl: videoUrl,
       audioUrl: audioUrl,
       communityAccess: communityAccess,
@@ -280,12 +285,12 @@ const importPoint = (point, done) => {
 
   properties = _.merge(properties,
     {
-      date: post.created_at.toISOString()
+      date: point.created_at.toISOString()
     }
   );
 
   const options = {
-    url: process.env["AC_ANALYTICS_BASE_URL"]+"posts/"+process.env.AC_ANALYTICS_CLUSTER_ID+"/"+post.id,
+    url: process.env["AC_ANALYTICS_BASE_URL"]+"points/"+process.env.AC_ANALYTICS_CLUSTER_ID+"/"+post.id,
     headers: {
       'X-API-Key': process.env["AC_ANALYTICS_KEY"]
     },

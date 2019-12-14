@@ -2,11 +2,11 @@ const models = require('../../../models');
 const _ = require('lodash');
 const async = require('async');
 const log = require('../../../utils/logger');
-const importDomain = require('utils').importDomain;
-const importCommunity = require('utils').importCommunity;
-const importGroup = require('utils').importGroup;
-const importPost = require('utils').importPost;
-const importPoint = require('utils').importPoint;
+const importDomain = require('./utils').importDomain;
+const importCommunity = require('./utils').importCommunity;
+const importGroup = require('./utils').importGroup;
+const importPost = require('./utils').importPost;
+const importPoint = require('./utils').importPoint;
 
 let updateAsyncLimit = 16;
 
@@ -25,7 +25,7 @@ const processDots = () => {
 const importAllDomains = (done) => {
   log.info('AcSimilarityDomainImport', {});
 
-  models.Domain.unscoped.findAll({
+  models.Domain.unscoped().findAll({
         attributes: ['id','name','default_locale'],
         order: [
           ['id', 'asc' ]
@@ -46,7 +46,7 @@ const importAllDomains = (done) => {
 const importAllCommunities = (done) => {
   log.info('AcSimilarityCommunityImport', {});
 
-  models.Community.unscoped.findAll({
+  models.Community.unscoped().findAll({
     include: [
       {
         model: models.Domain,
@@ -74,7 +74,7 @@ const importAllCommunities = (done) => {
 const importAllGroups = (done) => {
   log.info('AcSimilarityGroupImport', {});
 
-  models.Group.unscoped.findAll({
+  models.Group.unscoped().findAll({
     include: [
       {
         model: models.Community,
@@ -109,7 +109,7 @@ const importAllGroups = (done) => {
 const importAllPosts = (done) => {
   log.info('AcSimilarityImport', {});
 
-  models.Post.unscoped.findAll(
+  models.Post.unscoped().findAll(
     {
       include: [
         {
@@ -196,7 +196,7 @@ const importAllPosts = (done) => {
 };
 
 const importAllPoints = (done) => {
-  models.Point.unscoped.findAll({
+  models.Point.unscoped().findAll({
     attributes: ['id', 'name', 'content', 'user_id', 'post_id', 'value', 'status', 'counter_quality_up', 'counter_quality_down', 'language', 'created_at'],
     order: [
       [models.PointRevision, 'created_at', 'asc'],
@@ -223,7 +223,7 @@ const importAllPoints = (done) => {
       },
       {
         model: models.Post,
-        attributes: ['id', 'group_id', 'category_id','official_status','status'],
+        attributes: ['id', 'group_id','created_at','category_id','official_status','status'],
         required: true,
         include: [
           {
@@ -278,6 +278,7 @@ const importAll = (done) => {
         callback(error);
       });
     },
+    /*
     (callback) => {
       importAllPosts((error) => {
         callback(error);
@@ -287,7 +288,7 @@ const importAll = (done) => {
       importAllPoints((error) => {
         callback(error);
       });
-    }
+    }*/
   ], (error) => {
     console.log("Finished importing all");
     if (error)

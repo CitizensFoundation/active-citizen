@@ -10,7 +10,7 @@ const importPoint = require('./utils').importPoint;
 const updateDomain = (domainId, done) => {
   log.info('updateDomain');
 
-  models.Domain.unscoped.findOne({
+  models.Domain.unscoped().findOne({
     where: {
       id: domainId
     },
@@ -32,7 +32,7 @@ const updateDomain = (domainId, done) => {
 const updateCommunity = (communityId, done) => {
   log.info('updateCommunity');
 
-  models.Community.unscoped.findOne({
+  models.Community.unscoped().findOne({
     where: {
       id: communityId
     },
@@ -61,7 +61,7 @@ const updateCommunity = (communityId, done) => {
 const updateGroup = (groupId, done) => {
   log.info('updateGroup');
 
-  models.Group.unscoped.findOne({
+  models.Group.unscoped().findOne({
     where: {
       id: groupId
     },
@@ -97,7 +97,7 @@ const updateGroup = (groupId, done) => {
 const updatePost = (postId, done) => {
   log.info('updatePost');
 
-  models.Post.unscoped.findOne(
+  models.Post.unscoped().findOne(
     {
       where: {
         id: postId
@@ -187,7 +187,7 @@ const updatePost = (postId, done) => {
 const updatePoint = (pointId, done) => {
   log.info('updatePoint');
 
-  models.Point.unscoped.findOne({
+  models.Point.unscoped().findOne({
     where: {
       id: pointId
     },
@@ -217,7 +217,7 @@ const updatePoint = (pointId, done) => {
       },
       {
         model: models.Post,
-        attributes: ['id', 'group_id', 'category_id','official_status','status'],
+        attributes: ['id', 'group_id','created_at','category_id','official_status','status'],
         required: true,
         include: [
           {
@@ -257,18 +257,18 @@ const updateCollection = (workPackage, done) => {
   if (process.env.AC_ANALYTICS_KEY &&
       process.env.AC_ANALYTICS_CLUSTER_ID &&
       process.env.AC_ANALYTICS_BASE_URL) {
-    if (workPackage.domain_id) {
-      updateDomain(workPackage.domain_id, done)
-    } else if (workPackage.community_id) {
-      updateCommunity(workPackage.community_id, done)
-    } else if (workPackage.group_id) {
-      updateGroup(workPackage.group_id, done)
-    } else if (workPackage.post_id) {
-      updatePost(workPackage.post_id, done)
-    } else if (workPackage.point_id) {
-      updatePoint(workPackage.point_id, done)
+    if (workPackage.domainId) {
+      updateDomain(workPackage.domainId, done)
+    } else if (workPackage.communityId) {
+      updateCommunity(workPackage.communityId, done)
+    } else if (workPackage.groupId) {
+      updateGroup(workPackage.groupId, done)
+    } else if (workPackage.postId) {
+      updatePost(workPackage.postId, done)
+    } else if (workPackage.pointId) {
+      updatePoint(workPackage.pointId, done)
     } else {
-      done("Couldn't find any collection to update similarities for");
+      done("Couldn't find any collection to update similarities", { workPackage });
     }
   } else {
     log.warn("Can't find AC_ANALYTICS_KEY, AC_ANALYTICS_CLUSTER_ID & AC_ANALYTICS_BASE_URL for the similarities engine");
