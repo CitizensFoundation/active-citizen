@@ -1,11 +1,11 @@
 const models = require('../../../models');
 const _ = require('lodash');
 const log = require('../../../utils/logger');
-const importDomain = require('utils').importDomain;
-const importCommunity = require('utils').importCommunity;
-const importGroup = require('utils').importGroup;
-const importPost = require('utils').importPost;
-const importPoint = require('utils').importPoint;
+const importDomain = require('./utils').importDomain;
+const importCommunity = require('./utils').importCommunity;
+const importGroup = require('./utils').importGroup;
+const importPost = require('./utils').importPost;
+const importPoint = require('./utils').importPoint;
 
 const updateDomain = (domainId, done) => {
   log.info('updateDomain');
@@ -254,21 +254,28 @@ const updatePoint = (pointId, done) => {
 };
 
 const updateCollection = (workPackage, done) => {
-  if (workPackage.domain_id) {
-    updateDomain(workPackage.domain_id, done)
-  } else if (workPackage.community_id) {
-    updateCommunity(workPackage.community_id, done)
-  } else if (workPackage.group_id) {
-    updateGroup(workPackage.group_id, done)
-  } else if (workPackage.post_id) {
-    updatePost(workPackage.post_id, done)
-  } else if (workPackage.point_id) {
-    updatePoint(workPackage.point_id, done)
+  if (process.env.AC_ANALYTICS_KEY &&
+      process.env.AC_ANALYTICS_CLUSTER_ID &&
+      process.env.AC_ANALYTICS_BASE_URL) {
+    if (workPackage.domain_id) {
+      updateDomain(workPackage.domain_id, done)
+    } else if (workPackage.community_id) {
+      updateCommunity(workPackage.community_id, done)
+    } else if (workPackage.group_id) {
+      updateGroup(workPackage.group_id, done)
+    } else if (workPackage.post_id) {
+      updatePost(workPackage.post_id, done)
+    } else if (workPackage.point_id) {
+      updatePoint(workPackage.point_id, done)
+    } else {
+      done("Couldn't find any collection to update similarities for");
+    }
   } else {
-    done("Couldn't find any collection to update similarities for");
+    log.warn("Can't find AC_ANALYTICS_KEY, AC_ANALYTICS_CLUSTER_ID & AC_ANALYTICS_BASE_URL for the similarities engine");
+    done();
   }
 };
 
 module.exports = {
-  updateDomain, updateCommunity, updateGroup, updatePost, updatePoint, updateCollection
+  updateCollection
 };

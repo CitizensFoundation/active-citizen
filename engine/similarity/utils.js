@@ -13,7 +13,7 @@ const importDomain = (domain, done) => {
     });
 
   const options = {
-    url: process.env["AC_ANALYTICS_BASE_URL"]+"domains/"+domain.id,
+    url: process.env["AC_ANALYTICS_BASE_URL"]+"domains/"+process.env.AC_ANALYTICS_CLUSTER_ID+"/"+domain.id,
     headers: {
       'X-API-Key': process.env["AC_ANALYTICS_KEY"]
     },
@@ -36,7 +36,7 @@ const importCommunity = (community, done) => {
     });
 
   const options = {
-    url: process.env["AC_ANALYTICS_BASE_URL"]+"communities/"+community.id,
+    url: process.env["AC_ANALYTICS_BASE_URL"]+"communities/"+process.env.AC_ANALYTICS_CLUSTER_ID+"/"+community.id,
     headers: {
       'X-API-Key': process.env["AC_ANALYTICS_KEY"]
     },
@@ -59,7 +59,7 @@ const importGroup = (group, done) => {
     });
 
   const options = {
-    url: process.env["AC_ANALYTICS_BASE_URL"]+"groups/"+group.id,
+    url: process.env["AC_ANALYTICS_BASE_URL"]+"groups/"+process.env.AC_ANALYTICS_CLUSTER_ID+"/"+group.id,
     headers: {
       'X-API-Key': process.env["AC_ANALYTICS_KEY"]
     },
@@ -180,7 +180,7 @@ const importPost = (post, done) => {
   );
 
   const options = {
-    url: process.env["AC_ANALYTICS_BASE_URL"]+"posts/"+post.id,
+    url: process.env["AC_ANALYTICS_BASE_URL"]+"posts/"+process.env.AC_ANALYTICS_CLUSTER_ID+"/"+post.id,
     headers: {
       'X-API-Key': process.env["AC_ANALYTICS_KEY"]
     },
@@ -285,7 +285,7 @@ const importPoint = (point, done) => {
   );
 
   const options = {
-    url: process.env["AC_ANALYTICS_BASE_URL"]+"posts/"+post.id,
+    url: process.env["AC_ANALYTICS_BASE_URL"]+"posts/"+process.env.AC_ANALYTICS_CLUSTER_ID+"/"+post.id,
     headers: {
       'X-API-Key': process.env["AC_ANALYTICS_KEY"]
     },
