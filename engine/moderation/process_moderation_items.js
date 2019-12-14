@@ -46,6 +46,7 @@ const moderationItemActionMaster = (req, res, options) => {
                 queue.create('process-deletion', { type: 'delete-point-activities', pointId: options.itemId }).
                 priority('high').removeOnComplete(true).save();
               }
+              queue.create('process-similarities', { type: 'update-collection', pointId: options.itemId }).delay(5000).priority('low').removeOnComplete(true).save();
             } else if (options.itemType==='post') {
               if (options.actionType==='anonymize') {
                 queue.create('process-anonymization', { type: 'anonymize-post-activities', pointId: options.itemId }).
@@ -54,6 +55,7 @@ const moderationItemActionMaster = (req, res, options) => {
                 queue.create('process-deletion', { type: 'delete-post-activities', postId: options.itemId }).
                 priority('high').removeOnComplete(true).save();
               }
+              queue.create('process-similarities', { type: 'update-collection', postId: options.itemId }).delay(5000).priority('low').removeOnComplete(true).save();
             }
             res.sendStatus(200);
           }).catch( error => {
@@ -259,6 +261,18 @@ const performManyModerationActions = (workPackage, callback) => {
       }
     }
     ], error => {
+      if (!error) {
+        if (pointIds) {
+          _.map(pointIds, (pointId) => {
+            queue.create('process-similarities', { type: 'update-collection', pointId: pointId }).delay(5000).priority('low').removeOnComplete(true).save();
+          });
+        }
+        if (postIds) {
+          _.map(postIds, (postId) => {
+            queue.create('process-similarities', { type: 'update-collection', postId: postId }).delay(5000).priority('low').removeOnComplete(true).save();
+          });
+        }
+      }
       callback(error);
     }
   );

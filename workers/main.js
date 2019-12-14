@@ -13,6 +13,7 @@ var moderation = require('./moderation');
 var email = require('./email');
 var queue = require('./queue');
 var speechToText = require('./speech_to_text');
+const similarities = require('./similarities');
 
 log.info("Dirname", {dirname: __dirname});
 
@@ -77,6 +78,10 @@ i18n
 
     queue.process('process-moderation', 1, function(job, done) {
       moderation.process(job.data, done);
+    });
+
+    queue.process('process-similarities', 1, function(job, done) {
+      similarities.process(job.data, done);
     });
   });
 

@@ -1,24 +1,18 @@
 const models = require('../../../models');
-var _ = require('lodash');
+const _ = require('lodash');
 const async = require('async');
 const log = require('../../../utils/logger');
-const request = require('request');
-
-const ACTIVE_CITIZEN_PIO_APP_ID = 1;
+const importDomain = require('utils').importDomain;
+const importCommunity = require('utils').importCommunity;
+const importGroup = require('utils').importGroup;
+const importPost = require('utils').importPost;
+const importPoint = require('utils').importPoint;
 
 let updateAsyncLimit = 16;
 
-var getClient = function (appId) {
-  return new predictionio.Events({appId: appId});
-};
+let lineCrCounter = 0;
 
-var lineCrCounter = 0;
-
-var convertToString = function(integer) {
-  return integer.toString();
-};
-
-var processDots = function() {
+const processDots = () => {
   if (lineCrCounter>250) {
     process.stdout.write("\n");
     lineCrCounter = 1;
@@ -28,50 +22,31 @@ var processDots = function() {
   }
 };
 
-var importAllDomains = function (done) {
+const importAllDomains = (done) => {
   log.info('AcSimilarityDomainImport', {});
 
-  models.Domain.findAll({
+  models.Domain.unscoped.findAll({
         attributes: ['id','name','default_locale'],
         order: [
           ['id', 'asc' ]
         ]
-      }).then(function (domains) {
+      }).then((domains) => {
     lineCrCounter = 0;
-    async.eachOfLimit(domains, updateAsyncLimit,function (domain, index, callback) {
-
-      var properties = {};
-
-      properties = _.merge(properties,
-          {
-            name: domain.name,
-            language: domain.default_locale
-          });
-
-      console.log("Domain language: "+properties.language);
-
-      const options = {
-        url: process.env["AC_SIMILARITY_API_BASE_URL"]+"domains/"+domain.id,
-        headers: {
-          'X-API-Key': process.env["AC_SIMILARITY_API_KEY"]
-        },
-        json: properties
-      };
-
-      request.post(options, (response) => {
-        callback();
-      });
-    }, function () {
+    async.eachOfLimit(domains, updateAsyncLimit, (domain, index, callback) => {
+      importDomain(domain, callback);
+    }, () => {
       console.log("Finished updating domains");
       done();
     });
+  }).catch(function (error) {
+    done(error);
   });
 };
 
-var importAllCommunities = function (done) {
+const importAllCommunities = (done) => {
   log.info('AcSimilarityCommunityImport', {});
 
-  models.Community.findAll({
+  models.Community.unscoped.findAll({
     include: [
       {
         model: models.Domain,
@@ -83,41 +58,23 @@ var importAllCommunities = function (done) {
     order: [
       ['id', 'asc' ]
     ]
-  }).then(function (communities) {
+  }).then((communities) => {
     lineCrCounter = 0;
-    async.eachOfLimit(communities, updateAsyncLimit,function (community, index, callback) {
-
-      var properties = {};
-
-      properties = _.merge(properties,
-          {
-            name: community.name,
-            language: community.default_locale ? community.default_locale : community.Domain.default_locale
-          });
-      console.log("Community language: "+properties.language);
-
-      const options = {
-        url: process.env["AC_SIMILARITY_API_BASE_URL"]+"communities/"+community.id,
-        headers: {
-          'X-API-Key': process.env["AC_SIMILARITY_API_KEY"]
-        },
-        json: properties
-      };
-
-      request.post(options, (response) => {
-        callback();
-      });
-    }, function () {
+    async.eachOfLimit(communities, updateAsyncLimit, (community, index, callback) => {
+      importCommunity(community, callback);
+    }, () => {
       console.log("Finished updating communities");
       done();
     });
+  }).catch(function (error) {
+    done(error);
   });
 };
 
-var importAllGroups = function (done) {
+const importAllGroups = (done) => {
   log.info('AcSimilarityGroupImport', {});
 
-  models.Group.findAll({
+  models.Group.unscoped.findAll({
     include: [
       {
         model: models.Community,
@@ -136,114 +93,23 @@ var importAllGroups = function (done) {
     order: [
       ['id', 'asc' ]
     ]
-  }).then(function (groups) {
+  }).then((groups) => {
     lineCrCounter = 0;
-    async.eachOfLimit(groups, updateAsyncLimit,function (group, index, callback) {
-
-      var properties = {};
-
-      properties = _.merge(properties,
-          {
-            name: group.name,
-            language: group.Community.default_locale ? group.Community.default_locale : group.Community.Domain.default_locale
-          });
-      console.log("Group language: "+properties.language);
-
-      const options = {
-        url: process.env["AC_SIMILARITY_API_BASE_URL"]+"groups/"+group.id,
-        headers: {
-          'X-API-Key': process.env["AC_SIMILARITY_API_KEY"]
-        },
-        json: properties
-      };
-
-      request.post(options, (response) => {
-        callback();
-      });
-    }, function () {
+    async.eachOfLimit(groups, updateAsyncLimit, (group, index, callback) => {
+      importGroup(group, callback);
+    }, () => {
       console.log("Finished updating communities");
       done();
     });
+  }).catch(function (error) {
+    done(error);
   });
 };
 
-const _getVideoURL = function(videos) {
-  if (videos &&
-      videos.length>0 &&
-      videos[0].formats &&
-      videos[0].formats.length>0) {
-    return videos[0].formats[0];
-  } else {
-    return null;
-  }
-};
-
-const _getAudioURL = function (audios) {
-  if (audios &&
-      audios.length>0 &&
-      audios[0].formats &&
-      audios[0].formats.length>0) {
-    return audios[0].formats[0];
-  } else {
-    return null;
-  }
-};
-
-const _getVideoPosterURL = function(videos, images, selectedImageIndex) {
-  if (videos &&
-      videos.length>0 &&
-      videos[0].VideoImages &&
-      videos[0].VideoImages.length>0) {
-    if (!selectedImageIndex)
-      selectedImageIndex = 0;
-    if (videos[0].public_meta && videos[0].public_meta.selectedVideoFrameIndex) {
-      selectedImageIndex = parseInt(videos[0].public_meta.selectedVideoFrameIndex);
-    }
-    if (selectedImageIndex>videos[0].VideoImages.length-1) {
-      selectedImageIndex = 0;
-    }
-    if (selectedImageIndex===-2 && images) {
-      return this.getImageFormatUrl(images, 0);
-    } else {
-      if (selectedImageIndex<0)
-        selectedImageIndex = 0;
-      return JSON.parse(videos[0].VideoImages[selectedImageIndex].formats)[0];
-    }
-  } else {
-    return null;
-  }
-};
-
-const _getImageFormatUrl = function(images, formatId) {
-  if (images && images.length>0) {
-    var formats = JSON.parse(images[images.length-1].formats);
-    if (formats && formats.length>0)
-      return formats[formatId];
-  } else {
-    return "";
-  }
-};
-
-
-const _hasCoverMediaType = function (post, mediaType) {
-  if (!post) {
-    console.info("No post for "+mediaType);
-    return false;
-  } else {
-    if (mediaType == 'none') {
-      return (!post.Category && (!post.cover_media_type || post.cover_media_type == 'none'));
-    } else  if ((mediaType=='category' && post.Category) && (!post.cover_media_type || post.cover_media_type == 'none')) {
-      return true;
-    } else {
-      return (post && post.cover_media_type == mediaType);
-    }
-  }
-};
-
-var importAllPosts = function (done) {
+const importAllPosts = (done) => {
   log.info('AcSimilarityImport', {});
 
-  models.Post.findAll(
+  models.Post.unscoped.findAll(
     {
       include: [
         {
@@ -316,183 +182,135 @@ var importAllPosts = function (done) {
       attributes: ['id','name','description','group_id','category_id','status','deleted','language','created_at',
                    'user_id','official_status','public_data','cover_media_type',
                    'counter_endorsements_up','counter_endorsements_down','counter_points','counter_flags']
-    }).then(function (posts) {
+    }).then((posts) => {
     lineCrCounter = 0;
-    async.eachOfLimit(posts, updateAsyncLimit,function (post, index, callback) {
-
-      var properties = {};
-
-      if (post.category_id) {
-        properties = _.merge(properties,
-          {
-            category_id: convertToString(post.category_id)
-          });
-      }
-
-      let language;
-      if (post.language && post.language!=="??") {
-        language=post.language;
-      } else if (post.Group.default_locale) {
-        language=post.Group.default_locale;
-      } else if (post.Group.Community.default_locale) {
-        language=post.Group.Community.default_locale;
-      } else if (post.Group.Community.Domain.default_locale) {
-        language=post.Group.Community.Domain.default_locale;
-      }
-
-      let description="";
-
-      if (post.description) {
-        description=post.description;
-      } else if (post.Points[0]) {
-        description=post.Points[0].content;
-      }
-
-      if (post.public_data && post.public_data.structuredAnswers) {
-        const answers = post.public_data.structuredAnswers.split("%!#x");
-        description = answers.join(" ");
-      }
-
-      let publicAccess = false;
-
-      if ((post.Group.access===models.Group.ACCESS_PUBLIC &&
-          post.Group.Community.access===models.Community.ACCESS_PUBLIC) ||
-          (post.Group.access===models.Group.ACCESS_OPEN_TO_COMMUNITY &&
-          post.Group.Community.access===models.Community.ACCESS_PUBLIC)
-      ) {
-        publicAccess = true;
-      }
-
-      let communityAccess = false;
-
-      if (post.Group.access===models.Group.ACCESS_PUBLIC || post.Group.access===models.Group.ACCESS_OPEN_TO_COMMUNITY) {
-        communityAccess = true;
-      }
-
-      let formats, audioUrl, videoUrl;
-      let imageUrl = null;
-
-      if (_hasCoverMediaType(post, "image") && post.PostHeaderImages && post.PostHeaderImages.length>0) {
-        imageUrl = _getImageFormatUrl(post.PostHeaderImages, 0);
-      } else if (_hasCoverMediaType(post, "video") && post.Videos && post.Videos.length>0) {
-        imageUrl = _getVideoPosterURL(post.Videos, post.Images, 0);
-        videoUrl = _getVideoURL(post.Videos);
-      } else if (_hasCoverMediaType(post, "audio") && post.Audios && post.Audios.length>0) {
-        audioUrl = _getAudioURL(post.Audios);
-      }
-
-      console.log("Image URL before: "+imageUrl);
-
-
-      if (!imageUrl) {
-        if (post.Group.GroupLogoImages && post.Group.GroupLogoImages.length>0) {
-          formats = JSON.parse(post.Group.GroupLogoImages[0].formats);
-          imageUrl = formats[0];
-        } else if (post.Group.Community.CommunityLogoImages && post.Group.Community.CommunityLogoImages.length>0) {
-          formats = JSON.parse(post.Group.Community.CommunityLogoImages[0].formats);
-          imageUrl = formats[0];
-        }
-      }
-
-      console.log("Image URL after: "+imageUrl);
-      console.log("Language: "+language);
-      console.log(description);
-
-      //TODO: Add endorsements up and down for ratings for 3d maps
-      //TODO: Add English translation if there and make train english maps for all items
-
-      properties = _.merge(properties,
-        {
-          domain_id: convertToString(post.Group.Community.Domain.id),
-          community_id: convertToString(post.Group.Community.id),
-          group_id: convertToString(post.Group.id),
-          description: description,
-          counter_endorsements_up: post.counter_endorsements_up,
-          counter_endorsements_down: post.counter_endorsements_down,
-          counter_points: post.counter_points,
-          counter_flags: post.counter_flags,
-          name: post.name,
-          imageUrl: imageUrl,
-          videoUrl: videoUrl,
-          communityAccess: communityAccess,
-          audioUrl: audioUrl,
-          publicAccess: publicAccess,
-          status: post.deleted ? 'deleted' : post.status,
-          official_status: convertToString(post.official_status),
-          language: language
-        });
-
-      properties = _.merge(properties,
-        {
-          date: post.created_at.toISOString()
-        }
-      );
-      const options = {
-        url: process.env["AC_SIMILARITY_API_BASE_URL"]+"posts/"+post.id,
-        headers: {
-          'X-API-Key': process.env["AC_SIMILARITY_API_KEY"]
-        },
-        json: properties
-      };
-
-      if (true) {
-        request.post(options, (response) => {
-          console.log(response);
-          callback();
-        });
-      } else {
-        callback();
-      }
-    }, function () {
+    async.eachOfLimit(posts, updateAsyncLimit, (post, index, callback) => {
+      importPost(post, callback);
+    }, () => {
       console.log("Finished updating posts");
       done();
     });
+  }).catch(function (error) {
+    done(error);
   });
 };
 
-var importAll = function(done) {
+const importAllPoints = (done) => {
+  models.Point.unscoped.findAll({
+    attributes: ['id', 'name', 'content', 'user_id', 'post_id', 'value', 'status', 'counter_quality_up', 'counter_quality_down', 'language', 'created_at'],
+    order: [
+      [models.PointRevision, 'created_at', 'asc'],
+      [{model: models.Video, as: "PointVideos"}, 'updated_at', 'desc'],
+      [{model: models.Audio, as: "PointAudios"}, 'updated_at', 'desc'],
+    ],
+    include: [
+      {
+        model: models.PointRevision,
+        attributes: ['content', 'value', 'created_at'],
+        required: false
+      },
+      {
+        model: models.Video,
+        required: false,
+        attributes: ['id', 'formats'],
+        as: 'PointVideos'
+      },
+      {
+        model: models.Audio,
+        required: false,
+        attributes: ['id', 'formats'],
+        as: 'PointAudios'
+      },
+      {
+        model: models.Post,
+        attributes: ['id', 'group_id', 'category_id','official_status','status'],
+        required: true,
+        include: [
+          {
+            model: models.Group,
+            attributes: ['id','access','status','configuration'],
+            required: true,
+            include: [
+              {
+                model: models.Community,
+                attributes: ['id','access','status','default_locale'],
+                required: true,
+                include: [
+                  {
+                    model: models.Domain,
+                    attributes: ['id','default_locale'],
+                    required: true
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }).then(function (points) {
+    lineCrCounter = 0;
+    async.eachOfLimit(points, updateAsyncLimit, (point, index, callback) => {
+      importPoint(point, callback);
+    }, () => {
+      console.log("Finished updating posts");
+      done();
+    });
+  }).catch(function (error) {
+    done(error);
+  });
+};
+
+const importAll = (done) => {
   async.series([
-    function(callback){
-      importAllDomains(function () {
-        callback();
+    (callback) => {
+      importAllDomains((error) => {
+        callback(error);
       });
     },
-    function(callback){
-      importAllCommunities(function () {
-        callback();
+    (callback) => {
+      importAllCommunities((error) => {
+        callback(error);
       });
     },
-    function(callback){
-      importAllGroups(function () {
-        callback();
+    (callback) => {
+      importAllGroups((error) => {
+        callback(error);
       });
     },
-    function(callback){
-      importAllPosts(function () {
-        callback();
+    (callback) => {
+      importAllPosts((error) => {
+        callback(error);
+      });
+    },
+    (callback) => {
+      importAllPoints((error) => {
+        callback(error);
       });
     }
-  ], function () {
-    console.log("FIN");
+  ], (error) => {
+    console.log("Finished importing all");
+    if (error)
+      console.error(error);
     done();
   });
 };
 
-if (process.env["AC_SIMILARITY_API_KEY"] && process.env["AC_SIMILARITY_API_BASE_URL"] ) {
+if (process.env["AC_ANALYTICS_KEY"] && process.env["AC_ANALYTICS_BASE_URL"] ) {
   log.info('AcSimilarityImportStarting', {});
-  if (process.argv[2] && process.argv[2]=="onlyUpdatePosts") {
+  if (process.argv[2] && process.argv[2]==="onlyUpdatePosts") {
     updateAsyncLimit = 8;
-    importAllPosts(function () {
+    importAllPosts(() => {
       console.log("Done updating posts");
       process.exit();
     });
   } else {
-    importAll(function () {
+    importAll(() => {
       console.log("Done importing all");
       process.exit();
     });
   }
 } else {
-  console.error("NO AC_SIMILARITY_API_KEY");
+  console.error("NO AC_ANALYTICS_KEY");
   process.exit();
 }

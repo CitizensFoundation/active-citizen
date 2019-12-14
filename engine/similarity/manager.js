@@ -1,344 +1,274 @@
-var predictionio = require('predictionio-driver');
-var models = require('../../../models');
-var _ = require('lodash');
-var async = require('async');
-var log = require('../../utils/logger');
-var engine;
+const models = require('../../../models');
+const _ = require('lodash');
+const log = require('../../../utils/logger');
+const importDomain = require('utils').importDomain;
+const importCommunity = require('utils').importCommunity;
+const importGroup = require('utils').importGroup;
+const importPost = require('utils').importPost;
+const importPoint = require('utils').importPoint;
 
-var airbrake = null;
-if(process.env.AIRBRAKE_PROJECT_ID) {
-  airbrake = require('../../utils/airbrake');
-}
+const updateDomain = (domainId, done) => {
+  log.info('updateDomain');
 
-var ACTIVE_CITIZEN_PIO_APP_ID = 1;
-
-if (process.env.PIOEngineUrl) {
-  engine = new predictionio.Engine({url: process.env.PIOEngineUrl });
-}
-
-var getClient = function (appId) {
-  return new predictionio.Events({appId: appId});
+  models.Domain.unscoped.findOne({
+    where: {
+      id: domainId
+    },
+    attributes: ['id','name','default_locale'],
+    order: [
+      ['id', 'asc' ]
+    ]
+  }).then((domain) => {
+    if (domain) {
+      importDomain(domain, done);
+    } else {
+      done("Can't find domain for similarities import");
+    }
+  }).catch((error) => {
+    done(error);
+  });
 };
 
-var convertToString = function(integer) {
-  return integer.toString();
+const updateCommunity = (communityId, done) => {
+  log.info('updateCommunity');
+
+  models.Community.unscoped.findOne({
+    where: {
+      id: communityId
+    },
+    include: [
+      {
+        model: models.Domain,
+        attributes: ['id','default_locale'],
+        required: true
+      }
+    ],
+    attributes: ['id','name','default_locale'],
+    order: [
+      ['id', 'asc' ]
+    ]
+  }).then((community) => {
+    if (community) {
+      importCommunity(community, done);
+    } else {
+      done("Can't find community for similarities import");
+    }
+  }).catch(function (error) {
+    done(error);
+  });
 };
 
-var getPost = function (postId, callback) {
-  models.Post.findOne(
+const updateGroup = (groupId, done) => {
+  log.info('updateGroup');
+
+  models.Group.unscoped.findOne({
+    where: {
+      id: groupId
+    },
+    include: [
+      {
+        model: models.Community,
+        attributes: ['id','access','status','default_locale'],
+        required: true,
+        include: [
+          {
+            model: models.Domain,
+            attributes: ['id','default_locale'],
+            required: true
+          }
+        ]
+      }
+    ],
+    attributes: ['id','name'],
+    order: [
+      ['id', 'asc' ]
+    ]
+  }).then((group) => {
+    if (group) {
+      importGroup(group, done);
+    } else {
+      done("Can't find group for similarities import");
+    }
+  }).catch(function (error) {
+    done(error);
+  });
+};
+
+const updatePost = (postId, done) => {
+  log.info('updatePost');
+
+  models.Post.unscoped.findOne(
     {
       where: {
-        id: postId,
-        status: 'published'
+        id: postId
       },
       include: [
         {
-          model: models.Category,
-          required: false
+          model: models.Point,
+          required: false,
+          attributes: ['id','content'],
         },
         {
           model: models.Group,
           required: true,
+          attributes: ['id','access','status','configuration'],
           include: [
             {
+              attributes: ['id','formats'],
+              model: models.Image, as: 'GroupLogoImages',
+              required: false
+            },
+            {
               model: models.Community,
+              attributes: ['id','access','status','default_locale'],
               required: true,
               include: [
                 {
+                  attributes: ['id','formats'],
+                  model: models.Image, as: 'CommunityLogoImages',
+                  required: false
+                },
+                {
                   model: models.Domain,
+                  attributes: ['id','default_locale'],
                   required: true
                 }
               ]
             }
           ]
+        },
+        {
+          model: models.Image,
+          required: false,
+          as: 'PostHeaderImages',
+          attributes: ['id','formats']
+        },
+        {
+          model: models.Video,
+          required: false,
+          attributes: ['id','formats','updated_at','viewable','public_meta'],
+          as: 'PostVideos',
+          include: [
+            {
+              model: models.Image,
+              as: 'VideoImages',
+              attributes:["formats",'updated_at'],
+              required: false
+            },
+          ]
+        },
+        {
+          model: models.Audio,
+          required: false,
+          attributes: ['id','formats','updated_at','listenable'],
+          as: 'PostAudios',
         }
-      ]
-    }).then(function (post) {
-    if (post) {
-      callback(post)
+      ],
+      order: [
+        ['id', 'desc' ],
+        [ { model: models.Image, as: 'PostHeaderImages' } ,'updated_at', 'asc' ],
+        [ { model: models.Group }, { model: models.Image, as: 'GroupLogoImages' } , 'created_at', 'desc' ],
+        [ { model: models.Group }, { model: models.Community }, { model: models.Image, as: 'CommunityLogoImages' } , 'created_at', 'desc' ]
+      ],
+      attributes: ['id','name','description','group_id','category_id','status','deleted','language','created_at',
+        'user_id','official_status','public_data','cover_media_type',
+        'counter_endorsements_up','counter_endorsements_down','counter_points','counter_flags']
+    }).then((post) => {
+      if (post) {
+        importPost(post, done);
+      } else {
+        done("Can't find post for similarities import");
+      }
+  }).catch(function (error) {
+    done(error);
+  });
+};
+
+const updatePoint = (pointId, done) => {
+  log.info('updatePoint');
+
+  models.Point.unscoped.findOne({
+    where: {
+      id: pointId
+    },
+    attributes: ['id', 'name', 'content', 'user_id', 'post_id', 'value', 'status', 'counter_quality_up', 'counter_quality_down', 'language', 'created_at'],
+    order: [
+      [models.PointRevision, 'created_at', 'asc'],
+      [{model: models.Video, as: "PointVideos"}, 'updated_at', 'desc'],
+      [{model: models.Audio, as: "PointAudios"}, 'updated_at', 'desc'],
+    ],
+    include: [
+      {
+        model: models.PointRevision,
+        attributes: ['content', 'value', 'created_at'],
+        required: false
+      },
+      {
+        model: models.Video,
+        required: false,
+        attributes: ['id', 'formats'],
+        as: 'PointVideos'
+      },
+      {
+        model: models.Audio,
+        required: false,
+        attributes: ['id', 'formats'],
+        as: 'PointAudios'
+      },
+      {
+        model: models.Post,
+        attributes: ['id', 'group_id', 'category_id','official_status','status'],
+        required: true,
+        include: [
+          {
+            model: models.Group,
+            attributes: ['id','access','status','configuration'],
+            required: true,
+            include: [
+              {
+                model: models.Community,
+                attributes: ['id','access','status','default_locale'],
+                required: true,
+                include: [
+                  {
+                    model: models.Domain,
+                    attributes: ['id','default_locale'],
+                    required: true
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }).then(function (point) {
+    if (point) {
+      importPoint(point, done);
     } else {
-      callback(null);
+      done("Can't find point for similarities import");
     }
   }).catch(function (error) {
-    log.error('Events Manager getPost Error', {postId: postId, err: "Could not find post" });
-    callback(null);
+    done(error);
   });
 };
 
-var createOrUpdateItem = function (postId, date, callback) {
-  var client = getClient(ACTIVE_CITIZEN_PIO_APP_ID);
-  getPost(postId, function (post) {
-    if (post) {
-      var properties = {};
-
-      if (post.category_id) {
-        properties = _.merge(properties,
-          {
-            category: [ convertToString(post.category_id) ]
-          });
-      }
-      properties = _.merge(properties,
-        {
-          domain: [ convertToString(post.Group.Community.Domain.id) ],
-          domainLocale: [ post.Group.Community.Domain.default_locale ],
-
-          community: [ convertToString(post.Group.Community.id) ],
-          communityAccess: [ convertToString(post.Group.Community.access) ],
-          communityStatus: [ post.Group.Community.status ],
-          communityLocale: [ (post.Group.Community.default_locale && post.Group.Community.default_locale!='')  ?
-            post.Group.Community.default_locale :
-            post.Group.Community.Domain.default_locale ],
-
-          group: [ convertToString(post.Group.id) ],
-          groupAccess: [ convertToString(post.Group.access) ],
-          groupStatus: [ convertToString(post.Group.status) ],
-
-          status: [ post.deleted ? 'deleted' : post.status ],
-
-          official_status: [ convertToString(post.official_status) ],
-          language: [ (post.language && post.language!=='') ? post.language : "??" ]
-        });
-
-      properties = _.merge(properties,
-        {
-          date: date,
-          createdAt: post.created_at.toISOString()
-        }
-      );
-
-      client.createItem({
-        entityId: post.id,
-        properties: properties,
-        date: date,
-        eventTime: new Date().toISOString()
-      }).then(function (result) {
-        log.info('Events Manager createOrUpdateItem', {postId: post.id, result: result});
-        callback();
-      });
-    } else {
-      log.error('Events Manager createOrUpdateItem error could not find post', {postId: postId, err: "Could not find post" });
-      callback();
-    }
-  })
-};
-
-var createAction = function (targetEntityId, userId, date, action, callback) {
-  var client = getClient(ACTIVE_CITIZEN_PIO_APP_ID);
-
-  getPost(targetEntityId, function (post) {
-    if (post) {
-      client.createAction({
-        event: action,
-        uid: userId,
-        targetEntityId: targetEntityId,
-        date: date,
-        eventTime: date
-      }).then(function (result) {
-        log.info('Events Manager createAction', {action: action, postId: targetEntityId, userId: userId, result: result});
-        callback();
-        //createOrUpdateItem(targetEntityId, date, callback);
-      }).catch(function (error) {
-        log.error('Events Manager createAction Error', {action: action, postId: targetEntityId, userId: userId, err: error});
-        callback(error);
-      });
-    } else {
-      log.error('Events Manager createAction Error', { action: action, postId: targetEntityId, userId: userId, err: "Could not find post" });
-      callback();
-    }
-  });
-};
-
-var createUser = function (user, callback) {
-  client = getClient(ACTIVE_CITIZEN_PIO_APP_ID);
-  client.createUser( {
-    appId: 1,
-    uid: user.id,
-    eventDate: user.created_at.toISOString()
-  }).then(function(result) {
-    log.info('Events Manager createUser', { userId: user.id, result: result});
-    callback();
-  }).catch(function(error) {
-    log.error('Events Manager createUser Error', { userId: user.id, err: error});
-    callback(error);
-  });
-};
-
-var generateRecommendationEvent = function (activity, callback) {
-  if (process.env.PIOEventUrl && activity) {
-    log.info('Events Manager generateRecommendationEvent', {type: activity.type, userId: activity.user_id });
-    switch (activity.type) {
-      case "activity.post.new":
-        createOrUpdateItem(activity.Post.id, activity.Post.created_at.toISOString(), callback);
-        break;
-      case "activity.post.endorsement.new":
-      case "activity.post.rating.new":
-        createAction(activity.Post.id, activity.user_id, activity.created_at.toISOString(), 'endorse', callback);
-        break;
-      case "activity.post.opposition.new":
-        createAction(activity.Post.id, activity.user_id, activity.created_at.toISOString(), 'oppose', callback);
-        break;
-      case "activity.point.new":
-        if (activity.Point) {
-          if (activity.Point.value==0 && activity.Point.Post) {
-            createAction(activity.Point.Post.id, activity.user_id, activity.created_at.toISOString(), 'point-comment-new', callback);
-          } else if (activity.Point.Post) {
-            createAction(activity.Point.Post.id, activity.user_id, activity.created_at.toISOString(), 'point-new', callback);
-          } else {
-            callback();
-          }
-        } else {
-          callback();
-        }
-        break;
-      case "activity.point.helpful.new":
-        if (activity.Point.Post) {
-          createAction(activity.Point.Post.id, activity.user_id, activity.created_at.toISOString(), 'point-helpful', callback);
-        } else {
-          callback();
-        }
-        break;
-      case "activity.point.unhelpful.new":
-        if (activity.Point.Post) {
-          createAction(activity.Point.Post.id, activity.user_id, activity.created_at.toISOString(), 'point-unhelpful', callback);
-        } else {
-          callback();
-        }
-        break;
-      case "activity.post.status.change":
-        if (activity && activity.Post) {
-          createOrUpdateItem(activity.Post.id, activity.Post.created_at.toISOString(), callback);
-        } else {
-          callback();
-        }
-      default:
-        callback();
-    }
+const updateCollection = (workPackage, done) => {
+  if (workPackage.domain_id) {
+    updateDomain(workPackage.domain_id, done)
+  } else if (workPackage.community_id) {
+    updateCommunity(workPackage.community_id, done)
+  } else if (workPackage.group_id) {
+    updateGroup(workPackage.group_id, done)
+  } else if (workPackage.post_id) {
+    updatePost(workPackage.post_id, done)
+  } else if (workPackage.point_id) {
+    updatePoint(workPackage.point_id, done)
   } else {
-    log.warn("No PIOEventUrl, or activity, no action taken in generateRecommendationEvent", { activity });
-    callback();
+    done("Couldn't find any collection to update similarities for");
   }
-};
-
-var getRecommendationFor = function (userId, dateRange, options, callback, userLocale) {
-  var fields = [];
-
-  fields.push({
-    name: 'status',
-    values: ['published'],
-    bias: -1
-  });
-
-  if (options.domain_id) {
-    fields.push({
-      name: 'domain',
-      values: [ options.domain_id ],
-      bias: -1
-    });
-  }
-
-  if (options.community_id) {
-    fields.push({
-      name: 'community',
-      values: [ options.community_id ],
-      bias: -1
-    });
-  }
-
-  if (options.group_id) {
-    fields.push({
-      name: 'group',
-      values: [ options.group_id ],
-      bias: -1
-    });
-  }
-
-  var officialStatus = options.official_status ? options.official_status : 0;
-
-  fields.push({
-    name: 'official_status',
-    values: [ officialStatus.toString() ],
-    bias: -1
-  });
-
-  if (!options.group_id && !options.community_id) {
-    fields.push({
-      name: 'groupStatus',
-      values: [ "active", "featured"],
-      bias: -1
-    });
-    fields.push({
-      name: 'communityStatus',
-      values: [ "active", "featured"],
-      bias: -1
-    });
-    if (userLocale) {
-      fields.push({
-        name: 'communityLocale',
-        values: [ userLocale ],
-        bias: 0.9 // High boost for the selected user locale
-      });
-    }
-  } else if (!options.group_id) {
-    fields.push({
-      name: 'groupStatus',
-      values: [ "active","featured"],
-      bias: -1
-    });
-    if (userLocale) {
-      fields.push({
-        name: 'communityLocale',
-        values: [ userLocale ],
-        bias: 0.9 // High boost for the selected user locale
-      });
-    }
-  }
-  
-  //log.info('Events Manager getRecommendationFor', { fields: fields, dateRange: dateRange });
-
-  if (engine) {
-    engine.sendQuery({
-      user: userId,
-      num: options.limit || 400,
-      fields: fields,
-      dateRange: dateRange
-    }).then(function (results) {
-      if (results) {
-        log.info('Events Manager getRecommendationFor', { userId: userId });
-        var resultMap =  _.map(results.itemScores, function(item) { return item.item; });
-        callback(null,resultMap);
-      } else {
-        callback("Not results for recommendations");
-      }
-    }).catch(function (error) {
-      callback(error);
-    });
-  } else {
-    log.warn("Pio engine not available getRecommendationFor");
-    callback();
-  }
-};
-
-isItemRecommended = function (itemId, userId, dateRange, options, callback) {
-  getRecommendationFor(userId, dateRange, options, function (error, items) {
-    if (error) {
-      log.error("Recommendation Events Manager Error", { itemId: itemId, userId: userId, err: error });
-      if(airbrake) {
-        airbrake.notify(error).then((airbrakeErr)=> {
-          if (airbrakeErr.error) {
-            log.error("AirBrake Error", { context: 'airbrake', err: airbrakeErr.error, errorStatus: 500 });
-          }
-        });
-      }
-      callback(_.includes([], itemId.toString()));
-    } else {
-      log.info('Events Manager isItemRecommended', { itemId: itemId, userId: userId });
-      callback(_.includes(items, itemId.toString()));
-    }
-  });
 };
 
 module.exports = {
-  generateRecommendationEvent: generateRecommendationEvent,
-  getRecommendationFor: getRecommendationFor,
-  isItemRecommended: isItemRecommended
+  updateDomain, updateCommunity, updateGroup, updatePost, updatePoint, updateCollection
 };
