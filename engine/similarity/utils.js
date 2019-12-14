@@ -24,8 +24,8 @@ const importDomain = (domain, done) => {
     json: properties
   };
 
-  request.post(options, (response) => {
-    done();
+  request.post(options, (error) => {
+    done(error);
   });
 };
 
@@ -47,8 +47,8 @@ const importCommunity = (community, done) => {
     json: properties
   };
 
-  request.post(options, (response) => {
-    done();
+  request.post(options, (error) => {
+    done(error);
   });
 };
 
@@ -70,8 +70,8 @@ const importGroup = (group, done) => {
     json: properties
   };
 
-  request.post(options, (response) => {
-    done();
+  request.post(options, (error) => {
+    done(error);
   });
 };
 
@@ -191,8 +191,8 @@ const importPost = (post, done) => {
     json: properties
   };
 
-  request.post(options, (response) => {
-    done();
+  request.post(options, (error) => {
+    done(error);
   });
 };
 
@@ -297,8 +297,8 @@ const importPoint = (point, done) => {
     json: properties
   };
 
-  request.post(options, (response) => {
-    done();
+  request.post(options, (error) => {
+    done(error);
   });
 };
 
