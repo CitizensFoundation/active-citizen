@@ -137,7 +137,6 @@ const createAction = (targetEntityId, userId, date, action, callback) => {
       }).then((result) => {
         log.info('Events Manager createAction', {action: action, postId: targetEntityId, userId: userId, result: result});
         callback();
-        //createOrUpdateItem(targetEntityId, date, callback);
       }).catch((error) => {
         log.error('Events Manager createAction Error', {action: action, postId: targetEntityId, userId: userId, err: error});
         callback(error);
@@ -217,6 +216,7 @@ const generateRecommendationEvent = (activity, callback) => {
         } else {
           callback();
         }
+        break;
       default:
         callback();
     }

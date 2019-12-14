@@ -3,7 +3,11 @@ const request = require('request');
 const models = require('../../../models');
 
 const convertToString = (integer) => {
-  return integer.toString();
+  if (integer) {
+    return integer.toString();
+  } else {
+    console.error("Cant find integer to string");
+  }
 };
 
 const importDomain = (domain, done) => {
@@ -161,6 +165,7 @@ const importPost = (post, done) => {
       domain_id: convertToString(post.Group.Community.Domain.id),
       community_id: convertToString(post.Group.Community.id),
       group_id: convertToString(post.Group.id),
+      user_id: convertToString(post.user_id),
       description: description,
       counter_endorsements_up: post.counter_endorsements_up,
       counter_endorsements_down: post.counter_endorsements_down,
@@ -267,6 +272,7 @@ const importPoint = (point, done) => {
       community_id: convertToString(post.Group.Community.id),
       group_id: convertToString(post.Group.id),
       post_id: convertToString(post.id),
+      user_id: convertToString(point.user_id),
       content: content,
       counter_quality_up: point.counter_quality_up,
       counter_quality_down: point.counter_quality_down,

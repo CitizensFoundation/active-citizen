@@ -263,7 +263,6 @@ const importAllPoints = (done) => {
 
 const importAll = (done) => {
   async.series([
-    /*
     (callback) => {
       importAllDomains((error) => {
         callback(error);
@@ -279,7 +278,6 @@ const importAll = (done) => {
         callback(error);
       });
     },
-    */
     (callback) => {
       importAllPosts((error) => {
         callback(error);
