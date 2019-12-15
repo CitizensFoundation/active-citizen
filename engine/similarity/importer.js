@@ -8,7 +8,7 @@ const importGroup = require('./utils').importGroup;
 const importPost = require('./utils').importPost;
 const importPoint = require('./utils').importPoint;
 
-let updateAsyncLimit = 16;
+let updateAsyncLimit = 6;
 
 let lineCrCounter = 0;
 
@@ -223,7 +223,7 @@ const importAllPoints = (done) => {
       },
       {
         model: models.Post,
-        attributes: ['id', 'group_id','created_at','category_id','official_status','status'],
+        attributes: ['id', 'group_id','created_at','category_id','official_status','status','language'],
         required: true,
         include: [
           {

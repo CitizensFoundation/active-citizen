@@ -2,11 +2,11 @@ const _ = require('lodash');
 const request = require('request');
 const models = require('../../../models');
 
-const convertToString = (integer) => {
+const convertToString = (integer, type) => {
   if (integer) {
     return integer.toString();
   } else {
-    console.error("Cant find integer to string");
+    console.error("Cant find integer to string for: "+type);
   }
 };
 
@@ -23,7 +23,7 @@ const importDomain = (domain, done) => {
   const options = {
     url: process.env["AC_ANALYTICS_BASE_URL"]+"domains/"+process.env.AC_ANALYTICS_CLUSTER_ID+"/"+domain.id,
     headers: {
-      'X-API-Key': process.env["AC_ANALYTICS_KEY"]
+      'X-API-KEY': process.env["AC_ANALYTICS_KEY"]
     },
     json: properties
   };
@@ -46,7 +46,7 @@ const importCommunity = (community, done) => {
   const options = {
     url: process.env["AC_ANALYTICS_BASE_URL"]+"communities/"+process.env.AC_ANALYTICS_CLUSTER_ID+"/"+community.id,
     headers: {
-      'X-API-Key': process.env["AC_ANALYTICS_KEY"]
+      'X-API-KEY': process.env["AC_ANALYTICS_KEY"]
     },
     json: properties
   };
@@ -69,7 +69,7 @@ const importGroup = (group, done) => {
   const options = {
     url: process.env["AC_ANALYTICS_BASE_URL"]+"groups/"+process.env.AC_ANALYTICS_CLUSTER_ID+"/"+group.id,
     headers: {
-      'X-API-Key': process.env["AC_ANALYTICS_KEY"]
+      'X-API-KEY': process.env["AC_ANALYTICS_KEY"]
     },
     json: properties
   };
@@ -162,10 +162,10 @@ const importPost = (post, done) => {
 
   properties = _.merge(properties,
     {
-      domain_id: convertToString(post.Group.Community.Domain.id),
-      community_id: convertToString(post.Group.Community.id),
-      group_id: convertToString(post.Group.id),
-      user_id: convertToString(post.user_id),
+      domain_id: convertToString(post.Group.Community.Domain.id, 'domain_id'),
+      community_id: convertToString(post.Group.Community.id, 'community_id'),
+      group_id: convertToString(post.Group.id, 'group_id'),
+      user_id: convertToString(post.user_id, 'user_id'),
       description: description,
       counter_endorsements_up: post.counter_endorsements_up,
       counter_endorsements_down: post.counter_endorsements_down,
@@ -178,7 +178,7 @@ const importPost = (post, done) => {
       audioUrl: audioUrl,
       publicAccess: publicAccess,
       status: post.deleted ? 'deleted' : post.status,
-      official_status: convertToString(post.official_status),
+      official_status: convertToString(post.official_status, 'official_status'),
       language: language
     });
 
@@ -191,7 +191,7 @@ const importPost = (post, done) => {
   const options = {
     url: process.env["AC_ANALYTICS_BASE_URL"]+"posts/"+process.env.AC_ANALYTICS_CLUSTER_ID+"/"+post.id,
     headers: {
-      'X-API-Key': process.env["AC_ANALYTICS_KEY"]
+      'X-API-KEY': process.env["AC_ANALYTICS_KEY"]
     },
     json: properties
   };
@@ -261,18 +261,18 @@ const importPoint = (point, done) => {
   }
 
   console.log("Language: "+language);
-  console.log(content);
+  console.log(point.id);
 
   //TODO: Add endorsements up and down for ratings for 3d maps
   //TODO: Add English translation if there and make train english maps for all items
 
   properties = _.merge(properties,
     {
-      domain_id: convertToString(post.Group.Community.Domain.id),
-      community_id: convertToString(post.Group.Community.id),
-      group_id: convertToString(post.Group.id),
-      post_id: convertToString(post.id),
-      user_id: convertToString(point.user_id),
+      domain_id: convertToString(post.Group.Community.Domain.id, 'domainId'),
+      community_id: convertToString(post.Group.Community.id, 'community_id'),
+      group_id: convertToString(post.Group.id, 'group_id'),
+      post_id: convertToString(post.id, 'post_id'),
+      user_id: convertToString(point.user_id, 'user_id'),
       content: content,
       counter_quality_up: point.counter_quality_up,
       counter_quality_down: point.counter_quality_down,
@@ -285,7 +285,7 @@ const importPoint = (point, done) => {
       publicAccess: publicAccess,
       status: point.deleted ? 'deleted' : point.status,
       post_status: post.deleted ? 'deleted' : post.status,
-      post_official_status: convertToString(post.official_status),
+      post_official_status: convertToString(post.official_status, 'post_official_status'),
       language: language
     });
 
@@ -296,9 +296,9 @@ const importPoint = (point, done) => {
   );
 
   const options = {
-    url: process.env["AC_ANALYTICS_BASE_URL"]+"points/"+process.env.AC_ANALYTICS_CLUSTER_ID+"/"+post.id,
+    url: process.env["AC_ANALYTICS_BASE_URL"]+"points/"+process.env.AC_ANALYTICS_CLUSTER_ID+"/"+point.id,
     headers: {
-      'X-API-Key': process.env["AC_ANALYTICS_KEY"]
+      'X-API-KEY': process.env["AC_ANALYTICS_KEY"]
     },
     json: properties
   };
