@@ -199,6 +199,7 @@ const importAllPoints = (done) => {
   models.Point.unscoped().findAll({
     attributes: ['id', 'name', 'content', 'user_id', 'post_id', 'value', 'status', 'counter_quality_up', 'counter_quality_down', 'language', 'created_at'],
     order: [
+      ['id', 'desc' ],
       [models.PointRevision, 'created_at', 'asc'],
       [{model: models.Video, as: "PointVideos"}, 'updated_at', 'desc'],
       [{model: models.Audio, as: "PointAudios"}, 'updated_at', 'desc'],
