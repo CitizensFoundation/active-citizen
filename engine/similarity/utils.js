@@ -39,6 +39,7 @@ const importCommunity = (community, done) => {
   properties = _.merge(properties,
     {
       name: community.name,
+      domain_id: community.Domain.id,
       language: community.default_locale ? community.default_locale : community.Domain.default_locale,
       status: community.deleted ? 'deleted' : 'published'
     });
@@ -62,6 +63,7 @@ const importGroup = (group, done) => {
   properties = _.merge(properties,
     {
       name: group.name,
+      community_id: group.Community.id,
       language: group.Community.default_locale ? group.Community.default_locale : group.Community.Domain.default_locale,
       status: group.deleted ? 'deleted' : 'published'
     });
