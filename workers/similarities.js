@@ -6,7 +6,7 @@ const i18n = require('../utils/i18n');
 const toJson = require('../utils/to_json');
 const _ = require('lodash');
 const fs = require('fs');
-const updateSimilaritiesCollection = require('../engine/similarity/manager').updateCollection;
+const updateSimilaritiesCollection = require('../engine/analytics/manager').updateCollection;
 
 let SimilaritiesWorker = function () {};
 
