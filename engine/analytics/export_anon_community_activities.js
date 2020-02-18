@@ -4,13 +4,22 @@ const async = require('async');
 const log = require('../../../utils/logger');
 const crypto = require('crypto');
 const algorithm = 'aes-256-cbc';
+const fs = require('fs');
+
 //const request = require('request');
 
 const request = {
   post: (data, done) => {
-      console.log(JSON.stringify(data));
+      console.log(JSON.stringify(data, null, 4));
       done();
   }
+};
+
+const clean = (text) => {
+  //console.log("Before: "+ text);
+  var newText = text.replace('"',"'").replace('\n','').replace('\r','').replace(/(\r\n|\n|\r)/gm,"").replace(/"/gm,"'").replace(/,/,';').trim();
+  //console.log("After:" + newText);
+  return newText.replace(/´/g,'');
 };
 
 const getEncryptedId = (id, key, iv) => {
@@ -20,6 +29,8 @@ const getEncryptedId = (id, key, iv) => {
   return encrypted.toString('hex');
 };
 
+let csvPostsTxt = "Id,Date,Name,NameEn,Description,DescriptionEn,ToxicityScore\n";
+
 const saveAnonymousPost = (post, accessKey, done) => {
   let expiryDate = new Date();
   expiryDate.setDate(expiryDate.getDate() + 7);
@@ -27,12 +38,16 @@ const saveAnonymousPost = (post, accessKey, done) => {
   const properties = {
     id: post.id,
     name: post.name,
+    name_en: post.name_en,
     date: post.created_at.toISOString(),
     description: post.description,
     description_en: post.description_en,
+    toxicity_score: post.toxicity_score,
     access_key: accessKey,
     access_expires_at: expiryDate.toISOString()
   };
+
+  csvPostsTxt += post.id+','+properties.date+',"'+clean(post.name)+'","'+clean(post.name_en)+'",'+'"'+clean(post.description)+'",'+'"'+clean(post.description_en)+'",'+post.toxicity_score+'\n'
 
   const options = {
     url: process.env["AC_ANALYTICS_BASE_URL"]+"anonPosts/"+process.env.AC_ANALYTICS_CLUSTER_ID+"/"+`${accessKey}${post.id}`,
@@ -47,6 +62,8 @@ const saveAnonymousPost = (post, accessKey, done) => {
   });
 };
 
+let csvPointsTxt = "Id,Date,Content,ContentEn,Value,ToxicityScore\n";
+
 const saveAnonymousPoint = (point, accessKey, done) => {
   let expiryDate = new Date();
   expiryDate.setDate(expiryDate.getDate() + 7);
@@ -56,9 +73,13 @@ const saveAnonymousPoint = (point, accessKey, done) => {
     date: point.created_at.toISOString(),
     content: point.content,
     content_en: point.content_en,
+    value: point.value,
     access_key: accessKey,
+    toxicity_score: point.toxicity_score,
     access_expires_at: expiryDate.toISOString()
   };
+
+  csvPointsTxt += point.id+','+properties.date+',"'+clean(point.content)+'",'+'"'+clean(point.content_en)+'",'+point.value+','+point.toxicity_score+'\n';
 
   const options = {
     url: process.env["AC_ANALYTICS_BASE_URL"]+"anonPoints/"+process.env.AC_ANALYTICS_CLUSTER_ID+"/"+`${accessKey}${point.id}`,
@@ -72,6 +93,8 @@ const saveAnonymousPoint = (point, accessKey, done) => {
     done(error);
   });
 };
+
+let csvActivitiesTxt = "Id,Date,Type,PointId,PostId,UserId\n";
 
 const saveActivity = (activity, accessKey, done) => {
   let expiryDate = new Date();
@@ -88,6 +111,8 @@ const saveActivity = (activity, accessKey, done) => {
     access_expires_at: expiryDate.toISOString()
   };
 
+  csvActivitiesTxt += activity.id+','+properties.date+',"'+activity.type+'",'+'"'+activity.point_id+'",'+'"'+activity.post_id+'",'+'"'+activity.user_id+'"\n';
+
   const options = {
     url: process.env["AC_ANALYTICS_BASE_URL"]+"anonActivities/"+process.env.AC_ANALYTICS_CLUSTER_ID+"/"+`${accessKey}${activity.id}`,
     headers: {
@@ -101,6 +126,8 @@ const saveActivity = (activity, accessKey, done) => {
   });
 };
 
+let csvUsersTxt = "Id\n";
+
 const saveAnonymousUser = (user, accessKey, done) => {
   let expiryDate = new Date();
   expiryDate.setDate(expiryDate.getDate() + 7);
@@ -110,6 +137,8 @@ const saveAnonymousUser = (user, accessKey, done) => {
     access_key: accessKey,
     access_expires_at: expiryDate.toISOString()
   };
+
+  csvUsersTxt += user.id+'\n';
 
   const options = {
     url: process.env["AC_ANALYTICS_BASE_URL"]+"anonUsers/"+process.env.AC_ANALYTICS_CLUSTER_ID+"/"+`${accessKey}${user.id}`,
@@ -126,17 +155,22 @@ const saveAnonymousUser = (user, accessKey, done) => {
 
 const collectAllPostsAndPoints = (activities, collectedPostIds, collectedPointIds) => {
   activities.forEach((item)=>{
+
     if (item.Post) {
       collectedPostIds.push(item.Post.id);
-    } else if (item.Point) {
-      collectedPointIds.push(item.Post.id);
-    } else {
-      log.Error("Can't find post or point id for activity in anonymous export");
+    }
+
+    if (item.Point) {
+      collectedPointIds.push(item.Point.id);
+    }
+
+    if (!item.Point && !item.Post) {
+      log.warn("Can't find post or point id for activity in anonymous export", { item });
     }
   });
 };
 
-const sendAllCollectedPostAndPoints = (collectedPostIds, collectedPointIds, encryptionKey, encryptionIv, done) => {
+const sendAllCollectedPostAndPoints = (accessKey, collectedPostIds, collectedPointIds, encryptionKey, encryptionIv, done) => {
   collectedPostIds = _.uniq(collectedPostIds);
   collectedPointIds = _.uniq(collectedPointIds);
 
@@ -147,7 +181,7 @@ const sendAllCollectedPostAndPoints = (collectedPostIds, collectedPointIds, encr
           where: {
             id: postId
           },
-          attributes: ['id','name','description','public_data']
+          attributes: ['id','name','description','public_data','created_at','data']
         }).then((post)=>{
           let req = {
             query: {
@@ -166,10 +200,11 @@ const sendAllCollectedPostAndPoints = (collectedPostIds, collectedPointIds, encr
               saveAnonymousPost({
                 id: getEncryptedId((post.id), encryptionKey, encryptionIv),
                 name: post.name,
-                name_en: nameEn,
+                name_en: nameEn ? nameEn.content : 'no translation',
                 created_at: post.created_at,
+                toxicity_score: (post.data && post.data.moderation) ? post.data.moderation.toxicityScore : null,
                 description: post.description,
-                description_en: descriptionEn
+                description_en: descriptionEn ? descriptionEn.content : 'no translation',
               }, accessKey, forEachSeriesCallback);
             });
           });
@@ -189,7 +224,7 @@ const sendAllCollectedPostAndPoints = (collectedPostIds, collectedPointIds, encr
           order: [
             [ models.PointRevision, 'created_at', 'asc' ],
           ],
-          attributes: ['id','created_at','content'],
+          attributes: ['id','created_at','content','value','data'],
           include: [
             {
               model: models.PointRevision,
@@ -207,10 +242,11 @@ const sendAllCollectedPostAndPoints = (collectedPostIds, collectedPointIds, encr
             saveAnonymousPoint({
               id: getEncryptedId((point.id), encryptionKey, encryptionIv),
               content: point.content,
+              value: point.value,
+              toxicity_score: (point.data && point.data.moderation) ? point.data.moderation.toxicityScore : null,
               created_at: point.created_at,
-              content_en: contentEn
+              content_en: contentEn ? contentEn.content : 'no translation'
             }, accessKey, forEachSeriesCallback);
-
           });
         }).catch((error)=> {
           forEachSeriesCallback(error);
@@ -224,41 +260,47 @@ const sendAllCollectedPostAndPoints = (collectedPostIds, collectedPointIds, encr
   })
 };
 
-const sendAllUserActivitiesWithContent = (userId, collectedPostIds, collectedPointIds, encryptionKey, encryptionIv, accessKey, done) => {
+const sendAllUserActivitiesWithContent = (userId, communityId, collectedPostIds, collectedPointIds, encryptionKey, encryptionIv, accessKey, done) => {
   models.AcActivity.findAll({
     where: {
       user_id: userId,
+      community_id: communityId,
       type: {
         $in: [
           "activity.post.new","activity.post.opposition.new","activity.post.endorsement.new",
           "activity.point.new","activity.point.helpful.new","activity.point.unhelpful.new"
         ]
+      }
+    },
+    attributes: ['id','type','created_at','user_id','post_id','point_id'],
+    include: [
+      {
+        model: models.Post,
+        required: false,
+        attributes: ['id']
       },
-      attributes: ['id','type','created_at','user_id'],
-      include: [
-        {
-          model: models.Post,
-          required: false,
-          attributes: ['id']
-        },
-        {
-          model: models.Point,
-          required: false,
-          attributes: ['id']
-        }
-      ]
-    }
+      {
+        model: models.Point,
+        required: false,
+        attributes: ['id']
+      }
+    ]
   }).then((activities) => {
     collectAllPostsAndPoints(activities, collectedPostIds, collectedPointIds);
     async.forEachSeries(activities, (activity, forEachSeriesCallback) => {
-      saveActivity({
-        id: getEncryptedId(activity.id, encryptionKey, encryptionIv),
-        type: activity.type,
-        created_at: activity.created_at,
-        post_id: activity.Post ? getEncryptedId(activity.Post.id, encryptionKey, encryptionIv) : null,
-        point_id: activity.Point ? getEncryptedId(activity.Point.id, encryptionKey, encryptionIv) : null,
-        user_id: getEncryptedId(activity.user_id, encryptionKey, encryptionIv)
-      }, accessKey, forEachSeriesCallback);
+      if (activity.Post || activity.Point) {
+        saveActivity({
+          id: getEncryptedId(activity.id, encryptionKey, encryptionIv),
+          type: activity.type,
+          created_at: activity.created_at,
+          post_id: activity.Post ? getEncryptedId(activity.Post.id, encryptionKey, encryptionIv) : null,
+          point_id: activity.Point ? getEncryptedId(activity.Point.id, encryptionKey, encryptionIv) : null,
+          user_id: getEncryptedId(activity.user_id, encryptionKey, encryptionIv)
+        }, accessKey, forEachSeriesCallback);
+      } else {
+        log.warn("Can't find post or point for activity");
+        forEachSeriesCallback();
+      }
     }, (error) => {
       done(error);
     });
@@ -294,23 +336,33 @@ const importCommunityUsersAndActivities = (communityId, accessKey, done) => {
           if (error) {
             eachSeriesCallback(error);
           } else {
-            sendAllUserActivitiesWithContent(user.id, collectedPostIds, collectedPointIds, encryptionKey, encryptionIv, accessKey, eachSeriesCallback);
+            sendAllUserActivitiesWithContent(user.id, communityId, collectedPostIds, collectedPointIds, encryptionKey, encryptionIv, accessKey, eachSeriesCallback);
           }
         })
+      }, (error) => {
+        if (error) {
+          done(error);
+        } else {
+          sendAllCollectedPostAndPoints(accessKey, collectedPostIds, collectedPointIds, encryptionKey, encryptionIv, (error) => {
+            done(error);
+          })
+        }
       });
     } else {
       done("Could not find community");
     }
   }).catch(function (error) {
-    if (error) {
-      done(error);
-    } else {
-      sendAllCollectedPostAndPoints(collectedPostIds, collectedPointIds, encryptionKey, encryptionIv, (error) => {
-        done(error);
-      })
-    }
+    done(error);
   });
 };
+
+importCommunityUsersAndActivities(1017, "12345", ()=> {
+  fs.writeFileSync("/home/robert/Scratch/MMU/users.csv", csvUsersTxt);
+  fs.writeFileSync("/home/robert/Scratch/MMU/posts.csv", csvPostsTxt);
+  fs.writeFileSync("/home/robert/Scratch/MMU/points.csv", csvPointsTxt);
+  fs.writeFileSync("/home/robert/Scratch/MMU/activities.csv", csvActivitiesTxt);
+  process.exit();
+});
 
 module.exports = {
   importCommunityUsersAndActivities
