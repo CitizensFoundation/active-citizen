@@ -165,8 +165,6 @@ countModelRowsByTimePeriod(models.AcActivity, {
   var a = results;
 });
 
-*/
-
 countModelRowsByTimePeriod(models.AcActivity, {
   type: {
     $in: [
@@ -176,6 +174,56 @@ countModelRowsByTimePeriod(models.AcActivity, {
   domain_id: 1
 },[], (results) => {
   var a = results;
+});
+
+*/
+
+const getFromAnalyticsApi = (featureType, collectionType, collectionId, done) => {
+  const options = {
+    url: process.env["AC_ANALYTICS_BASE_URL"]+featureType+"/"+process.env.AC_ANALYTICS_CLUSTER_ID+"/"+collectionId,
+    headers: {
+      'X-API-KEY': process.env["AC_ANALYTICS_KEY"]
+    }
+  };
+
+  request.get(options, (error, content) => {
+    done(error, content);
+  });
+};
+
+router.get('/communities/:id/wordcloud', /*auth.can('edit community'),*/ function(req, res) {
+  getFromAnalyticsApi("wordcloud", "community", req.params.id, function (error, content) {
+    if (error) {
+      log.error("Analytics Wordcloud Error Community", { communityId: req.params.id, userId: req.user ? req.user.id : null, errorStatus:  500 });
+      res.sendStatus(500);
+    } else {
+      res.send(content);
+    }
+  });
+});
+
+router.get('/communities/:id/similarities_weights', /*auth.can('edit community'),*/ function(req, res) {
+  getFromAnalyticsApi("similarities_weights", "community", req.params.id, function (error, content) {
+    if (error) {
+      log.error("Analytics Wordcloud Error Community", { communityId: req.params.id, userId: req.user ? req.user.id : null, errorStatus:  500 });
+      res.sendStatus(500);
+    } else {
+      res.send(content);
+    }
+  });
+});
+
+router.get('/communities/:id/similarities_weights', auth.can('edit community'), function(req, res) {
+  const options = {
+    community_id: req.params.id,
+    noBulkOperations: true
+  };
+  getActivities(req, res, options, function (error) {
+    if (error) {
+      log.error("Activities Error Community", { communityId: req.params.id, userId: req.user ? req.user.id : null, errorStatus:  500 });
+      res.sendStatus(500);
+    }
+  });
 });
 
 router.get('/domains/:id', auth.can('view domain'), function(req, res) {
