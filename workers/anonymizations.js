@@ -718,9 +718,13 @@ const notifyCommunityUsers = (workPackage, callback) => {
         ]
       }).then( (community) => {
         communityRecord = community;
-        groupIds = _.map(community.Groups, (group) => {
-          return group.id
-        });
+        if (community.Groups) {
+          groupIds = _.map(community.Groups, (group) => {
+            return group.id
+          });
+        } else {
+          groupIds = [];
+        }
         seriesCallback();
       }).catch((error) => {
         seriesCallback(error);
