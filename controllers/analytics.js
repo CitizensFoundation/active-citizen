@@ -101,61 +101,63 @@ const countModelRowsByTimePeriod = (model, whereOptions, includeOptions, done) =
     where: whereOptions,
     include: includeOptions,
     attributes: ['created_at'],
-    order: ['created_at','ASC']
+    order: [['created_at','ASC']]
   }).then((results) => {
-    let startDate = moment(results[0].created_at);
+    const startDate = moment(results[0].created_at);
     const endDate = moment(results[results.length-1].created_at);
 
     const days = _.groupBy(results, function (item) {
-      return moment(item.created_at).format("DD/MM/YYYY");
+      return moment(item.created_at).format("YYYY/MM/DD");
     });
 
     const months = _.groupBy(results, function (item) {
-      return moment(item.created_at).format("MM/YYYY");
+      return moment(item.created_at).format("YYYY/MM");
     });
 
     const years = _.groupBy(results, function (item) {
       return moment(item.created_at).format("YYYY");
     });
 
-    let dayCounts = _.map(days, function (items) {
-      return { date: moment(items[0].created_at).format("YYYY/MM/DD"), count: items.length }
-    });
-
-    let monthsCounts = _.map(months, function (items) {
-      return { date: moment(items[0].created_at).format("YYYY/MM"), count: items.length }
-    });
-
-    let yearsCounts = _.map(years, function (items) {
-      return { date: moment(items[0].created_at).format("YYYY"), count: items.length }
-    });
-
-    const totalDaysCount = endDate.diff(startDate, 'd', false);
-    for (let i = 1; i < totalDaysCount; i++) {
-      dayCounts.splice(i,0, {"date" : startDate.add(1, 'd').toISOString(), count: 0})
+    const totalDaysCount = endDate.diff(startDate, 'days', false)+2;
+    let currentDate =  moment(results[0].created_at);
+    let finalDays = [];
+    for (let i = 0; i < totalDaysCount; i++) {
+      const currentDateText = currentDate.format("YYYY/MM/DD");
+      if (days[currentDateText]) {
+        finalDays.push({ x: currentDate.format("YYYY-MM-DD"), y: days[currentDateText].length })
+      } else {
+    //    finalDays.push({ x: currentDate.format("YYYY-MM-DD"), y: 0})
+      }
+      currentDate = currentDate.add(1, "days");
     }
 
-    startDate = moment(results[0].created_at);
-
-    const totalMonthsCount = endDate.diff(startDate, 'm', false);
-
-    for (let i = 1; i < totalMonthsCount; i++) {
-      months.splice(i,0, {"date" : startDate.add(1, 'm').toISOString(), count: 0})
+    const totalMonthsCount = endDate.diff(startDate, 'months', false)+2;
+    let currentMonth = moment(results[0].created_at);
+    let finalMonths = [];
+    for (let i = 0; i < totalMonthsCount; i++) {
+      const currentMonthText = currentMonth.format("YYYY/MM");
+      if (months[currentMonthText]) {
+        finalMonths.push({ x: currentMonth.format("YYYY-MM"), y: months[currentMonthText].length })
+      } else {
+    //    finalMonths.push({ x: currentMonth.format("YYYY-MM"), y: 0})
+      }
+      currentMonth = currentMonth.add(1, "months");
     }
 
-    startDate = moment(results[0].created_at);
-
-    const totalYearsCount = endDate.diff(startDate, 'y', false);
-
-    for (let i = 1; i < totalYearsCount; i++) {
-      months.splice(i,0, {"date" : startDate.add(1, 'y').toISOString(), count: 0})
+    const totalYearsCount = endDate.diff(startDate, 'years', false)+2;
+    let currentYear = moment(results[0].created_at);
+    let finalYears = [];
+    for (let i = 0; i < totalYearsCount; i++) {
+      const currentYearText = currentYear.format("YYYY");
+      if (years[currentYearText]) {
+        finalYears.push({ x: currentYearText, y: years[currentYearText].length })
+      } else {
+//        finalYears.push({ x: currentYearText, y: 0})
+      }
+      currentYear = currentYear.add(1, "years");
     }
 
-    dayCounts = _.orderBy(dayCounts, ['date'], ['asc']);
-    monthsCounts = _.orderBy(monthsCounts, ['date'], ['asc']);
-    yearsCounts = _.orderBy(yearsCounts, ['date'], ['asc']);
-
-    done(null, {dayCounts, monthsCounts, yearsCounts});
+    done(null, {finalDays, finalMonths, finalYears});
   }).catch((error)=>{
     done(error);
   });
@@ -209,12 +211,12 @@ const triggerSimilaritiesTraining = (collectionType, collectionId, done) => {
   });
 };
 
-const sendBackResultsOrError = (req,res,type,error,results) => {
+const sendBackResultsOrError = (req,res,error,results) => {
   if (error) {
     log.error("Analytics Error", { id: req.params.id, url: req.url, userId: req.user ? req.user.id : null, errorStatus:  500 });
     res.sendStatus(500);
   } else {
-    res.send(content);
+    res.send(results);
   }
 };
 
@@ -226,6 +228,7 @@ router.get('/domains/:id/wordcloud', /*auth.can('edit community'),*/ function(re
 });
 
 router.get('/communities/:id/wordcloud', /*auth.can('edit community'),*/ function(req, res) {
+  triggerSimilaritiesTraining("community", req.params.id, ()=>{})
   getFromAnalyticsApi("wordclouds", "community", req.params.id, function (error, content) {
     sendBackResultsOrError(req,res,error,content);
   });
@@ -258,7 +261,7 @@ router.get('/groups/:id/similarities_weights', /*auth.can('edit community'),*/ f
 
 // STATS
 router.get('/domains/:id/stats_posts', /*auth.can('edit community'),*/ function(req, res) {
-  countModelRowsByTimePeriod(models.Post, {}, getPostDomainIncludes(req.params.id), (error, results) => {
+  countModelRowsByTimePeriod(models.Post, {}, getDomainIncludes(req.params.id), (error, results) => {
     sendBackResultsOrError(req,res,error, results);
   });
 });
@@ -283,7 +286,7 @@ router.get('/domains/:id/stats_votes', /*auth.can('edit community'),*/ function(
 });
 
 router.get('/communities/:id/stats_posts', /*auth.can('edit community'),*/ function(req, res) {
-  countModelRowsByTimePeriod(models.Post, {}, getPostCommunityIncludes(req.params.id), (error, results) => {
+  countModelRowsByTimePeriod(models.Post, {}, getCommunityIncludes(req.params.id), (error, results) => {
     sendBackResultsOrError(req,res,error, results);
   });
 });
@@ -302,13 +305,13 @@ router.get('/communities/:id/stats_votes', /*auth.can('edit community'),*/ funct
         "activity.point.helpful.new","activity.point.unhelpful.new"
       ]
     }
-  }, getCommunityIncludes(req.params.id), 'day', (error, results) => {
+  }, getCommunityIncludes(req.params.id), (error, results) => {
     sendBackResultsOrError(req,res,error,results);
   });
 });
 
 router.get('/groups/:id/stats_posts', /*auth.can('edit community'),*/ function(req, res) {
-  countModelRowsByTimePeriod(models.Post, {}, getPostGroupIncludes(req.params.id), (error, results) => {
+  countModelRowsByTimePeriod(models.Post, {}, getGroupIncludes(req.params.id), (error, results) => {
     sendBackResultsOrError(req,res,error, results);
   });
 });
