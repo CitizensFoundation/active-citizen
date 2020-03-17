@@ -326,7 +326,7 @@ const uploadFlacToGoogleCloud = (flacUrl, callback) => {
       });
       const bucket = storage.bucket(process.env.GOOGLE_TRANSCODING_FLAC_BUCKET);
       if (bucket) {
-        bucket.upload(fileNameWithPath, (error, file, apiReponse) => {
+        bucket.upload(fileNameWithPath, (error, file, apiResponse) => {
           if (error) {
             log.error("Couldnt upload to s3 bucket", {error, apiResponse});
             fs.unlink(fileNameWithPath, unlinkError => {
