@@ -50,6 +50,20 @@ module.exports = (sequelize, DataTypes) => {
         } else {
           return "Translation error";
         }
+      case 'alternativeTextForNewIdeaButton':
+        return modelInstance.configuration.alternativeTextForNewIdeaButton;
+      case 'alternativeTextForNewIdeaButtonClosed':
+        return modelInstance.configuration.alternativeTextForNewIdeaButtonClosed;
+      case 'alternativeTextForNewIdeaButtonHeader':
+        return modelInstance.configuration.alternativeTextForNewIdeaButtonHeader;
+      case 'alternativePointForHeader':
+        return modelInstance.configuration.alternativePointForHeader;
+      case 'alternativePointAgainstHeader':
+        return modelInstance.configuration.alternativePointAgainstHeader;
+      case 'alternativePointForLabel':
+        return modelInstance.configuration.alternativePointForLabel;
+      case 'alternativePointAgainstLabel':
+        return modelInstance.configuration.alternativePointAgainstLabel;
       case 'categoryName':
         return modelInstance.name;
       case 'postTranscriptContent':
