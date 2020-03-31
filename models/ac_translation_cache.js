@@ -119,13 +119,22 @@ module.exports = (sequelize, DataTypes) => {
   AcTranslationCache.getTranslation = (req, modelInstance, callback) => {
     const contentToTranslate = sequelize.models.AcTranslationCache.getContentToTranslate(req, modelInstance);
     if (contentToTranslate && contentToTranslate!=='' &&
-      contentToTranslate.length>6 && isNaN(contentToTranslate)) {
+      contentToTranslate.length>4 && isNaN(contentToTranslate)) {
       const contentHash = farmhash.hash32(contentToTranslate).toString();
       const textType = req.query.textType;
-      let targetLanguage = req.query.targetLanguage.replace('_','-');
-      if (targetLanguage!=='zh-CN' && targetLanguage!=='zh-TW') {
+
+      let targetLanguage = req.query.targetLanguage;
+
+      targetLanguage = targetLanguage.replace('_','-');
+
+      if (targetLanguage!=='sr-latin' && targetLanguage!=='zh-CN' && targetLanguage!=='zh-TW') {
         targetLanguage = targetLanguage.split("-")[0];
       }
+
+      if (targetLanguage==='sr-latin') {
+        targetLanguage = 'sr-Latn';
+      }
+
       let indexKey = `${textType}-${modelInstance.id}-${targetLanguage}-${contentHash}`;
 
       sequelize.models.AcTranslationCache.findOne({
