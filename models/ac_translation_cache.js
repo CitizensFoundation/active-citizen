@@ -43,6 +43,14 @@ module.exports = (sequelize, DataTypes) => {
         return modelInstance.content;
       case 'groupContent':
         return modelInstance.objectives;
+      case 'pointAdminCommentContent':
+        if (modelInstance.public_data &&
+            modelInstance.public_data.admin_comment &&
+            modelInstance.public_data.admin_comment.text) {
+          return modelInstance.public_data.admin_comment.text;
+        } else {
+          return "Translation error";
+        }
       case 'customRatingName':
         if (modelInstance.Group.configuration.customRatings &&
           modelInstance.Group.configuration.customRatings[modelInstance.custom_rating_index]) {
