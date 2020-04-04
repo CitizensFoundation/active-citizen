@@ -99,8 +99,12 @@ module.exports = (sequelize, DataTypes) => {
             index_key: indexKey,
             content: translation.translatedText
           }).then(() => {
-            if (textType==='postTranscriptContent') {
-              modelInstance.set('public_data.transcript.language', translation.detectedSourceLanguage);
+            if (textType==='postTranscriptContent' || textType==='pointAdminCommentContent') {
+              if (textType==='postTranscriptContent') {
+                modelInstance.set('public_data.transcript.language', translation.detectedSourceLanguage);
+              } else {
+                modelInstance.set('public_data.admin_comment.language', translation.detectedSourceLanguage);
+              }
               modelInstance.save().then( () => {
                 callback(null, { content: translation.translatedText });
               }).catch( error => {
