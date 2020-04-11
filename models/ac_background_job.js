@@ -27,20 +27,18 @@ module.exports = (sequelize, DataTypes) => {
   }
 
   AcBackgroundJob.updateProgress = (id, progress, error, done) => {
-    sequelize.models.AcBackgroundJob.findOne(
+    sequelize.models.AcBackgroundJob.update(
+      {
+        process: process,
+        error : error
+      },
       {
         where: {
           id: id
         }
       }
-    ).then((job) => {
-      job.progress = progress;
-      job.error = error;
-      job.save().then(()=>{
-        done();
-      }).catch(error=>{
-        done(error);
-      });
+    ).then(() => {
+      done();
     }).catch(error=>{
       done(error);
     });
