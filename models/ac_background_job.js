@@ -24,17 +24,18 @@ module.exports = (sequelize, DataTypes) => {
     }).catch(error => {
       done(null, error)
     })
-  }
+  };
 
-  AcBackgroundJob.updateProgress = (id, progress, error, done) => {
+  AcBackgroundJob.update = (options, done) => {
     sequelize.models.AcBackgroundJob.update(
       {
-        process: process,
-        error : error
+        process: options.process,
+        error : options.error,
+        data: options.data
       },
       {
         where: {
-          id: id
+          id: options.jobId
         }
       }
     ).then(() => {

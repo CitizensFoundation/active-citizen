@@ -3,8 +3,201 @@ var async = require('async');
 var ip = require('ip');
 var _ = require('lodash');
 const moment = require('moment');
-var hostName;
-var skipEmail = false;
+const skipEmail = false;
+const aws = require('aws-sdk');
+
+const fs = require('fs');
+const path = require('path');
+
+const uploadToS3 = (userId, exportType, filename, data, callback) => {
+  const endPoint = process.env.S3_ENDPOINT || "s3.amazonaws.com";
+
+  const s3 = new aws.S3({
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    endpoint: endPoint,
+    region: process.env.S3_REGION || ((process.env.S3_ENDPOINT || process.env.S3_ACCELERATED_ENDPOINT) ? null : 'us-east-1'),
+  });
+
+  var keyName = "/"+exportType+"/"+userId+"/"+filename;
+
+  s3.upload({
+    Bucket: process.env.S3_REPORTS_BUCKET,
+    Key: keyName,
+    Body: data
+  }, (error, data) => {
+    if (error) {
+      callback(error);
+    } else {
+      s3.getSignedUrl('getObject',{
+        Bucket: process.env.S3_REPORTS_BUCKET,
+        Key: keyName,
+        Expires: 60*60
+      }, (error, url) => {
+        if (error) {
+          callback(error);
+        } else {
+          callback(null, url);
+        }
+      });
+    }
+  });
+};
+
+async function preparePosts(workPackage, callback) {
+  let customRatings;
+  const group = workPackage.group;
+  const hostName = workPackage.hostname;
+  const targetLanguage = workPackage.targetLanguage;
+  const jobId = workPackage.jobId;
+
+  if (group.configuration && group.configuration.customRatings) {
+    customRatings = group.configuration.customRatings;
+  }
+
+  if (targetLanguage) {
+    group.translatedName = await getTranslation(group,'groupName', targetLanguage);
+    group.translatedObjectives = await getTranslation(group,'groupContent', targetLanguage);
+    group.targetTranslationLanguage = targetLanguage;
+  }
+
+  getGroupPosts(group, hostName, async (postsIn, error, categories) => {
+    if (error) {
+      callback(error);
+    } else {
+      if (error) {
+        callback(error);
+      } else {
+        const posts = [];
+        const totalPosts = postsIn.length;
+
+        async.eachLimit(postsIn, 5, async (post) => {
+          if (!post.deleted) {
+            const postRatings = (post.public_data && post.public_data.ratings) ? post.public_data.ratings : null;
+
+            posts.push({
+              id: post.id,
+              name: clean(post.name),
+              translatedName: targetLanguage ? await getTranslation(post,'postName', targetLanguage) : null,
+              translatedDescription: targetLanguage ? await getTranslation(post,'postContent', targetLanguage) : null,
+              realPost: post,
+              url: getPostUrl(post, hostName),
+              category: getCategory(post),
+              userEmail: getUserEmail(post),
+              userName: post.User.name,
+              location: getLocation(post),
+              endorsementsUp: post.counter_endorsements_up,
+              endorsementsDown: post.counter_endorsements_down,
+              counterPoints: post.counter_points,
+              pointsUp: getPointsUp(post),
+              Points: post.Points,
+              translatedPoints: targetLanguage ? await getTranslatedPoints(post.Points, targetLanguage) : null,
+              images: getImages(post),
+              pointsDown: getPointsDown(post),
+              contactData: getContactData(post),
+              attachmentData: getAttachmentData(post),
+              mediaURLs: getMediaURLs(post),
+              mediaTranscripts: getMediaTranscripts(post),
+              postRatings: getPostRatings(customRatings, postRatings)
+            });
+          }
+//          seriesCallback();
+        }, function (error) {
+          if (error) {
+            callback(error)
+          } else {
+            callback(null,{ jobId, group, posts, customRatings, categories });
+          }
+        });
+      }
+    }
+  });
+};
+
+
+const getOrderedPosts = (posts) => {
+  return _.orderBy(posts,[post=> { return post.endorsementsUp-post.endorsementsDown }], ['desc']);
+};
+
+const updateJobStatusIfNeeded = (jobId, totalPosts, processedCount, lastReportedCount, done) => {
+  const countSinceLastSent = processedCount-lastReportedCount;
+  const percentOfTotalSinceLast = countSinceLastSent/totalPosts;
+  if (percentOfTotalSinceLast>=0.1) {
+    let progress = Math.round((processedCount/totalPosts)*100);
+    if (progress===100) {
+      progress = 95;
+    }
+    models.AcBackgroundJob.update({ jobId, progress }, (error) => {
+      done(processedCount, error);
+    });
+  } else {
+    done(processedCount);
+  }
+};
+
+const setJobError = (jobId, errorToUser, errorDetail, done) => {
+  log.error("Error in background job", { error: errorDetail });
+  models.AcBackgroundJob.update({ jobId, error: errorToUser, progress: 0 }, (error) => {
+    done(error);
+  });
+};
+
+const getImageFormatUrl = function(image, formatId) {
+  var formats = JSON.parse(image.formats);
+  if (formats && formats.length>0)
+    return formats[formatId];
+  else
+    return ""
+};
+
+const getImages = function (post) {
+  var imagesText = "";
+
+  if (post.PostHeaderImages && post.PostHeaderImages.length>0) {
+    imagesText += _.map(post.PostHeaderImages, function (image) {
+      return getImageFormatUrl(image, 0)+"\n";
+    });
+  }
+
+  if (post.PostUserImages && post.PostUserImages.length>0) {
+    imagesText += _.map(post.PostUserImages, function (image) {
+      return getImageFormatUrl(image, 0)+"\n";
+    });
+  }
+
+  return ''+imagesText.replace(/,/g,"")+'';
+};
+
+
+async function getTranslation(model, textType, targetLanguage) {
+  return await new Promise(resolve => {
+    models.AcTranslationCache.getTranslation({query: {textType, targetLanguage}}, model, async (error, translation) => {
+      if (error || !translation) {
+        resolve(null);
+      } else {
+        resolve(translation.content);
+      }
+    });
+  });
+};
+
+async function getTranslatedPoints(points, targetLanguage) {
+  const translatedPoints = {};
+  return await new Promise(resolve => {
+    async.eachSeries(points, (point, seriesCallback) => {
+      models.AcTranslationCache.getTranslation({query: {textType: "pointContent", targetLanguage}}, point, async (error, translation) => {
+        if (!error && translation) {
+          translatedPoints[point.id] = translation.content;
+        } else {
+          log.warn("Docx translation error or no translation", { error: error ? error : null });
+        }
+        seriesCallback();
+      });
+    }, (error) => {
+      resolve(translatedPoints);
+    });
+  });
+}
 
 const getPostUrl = function (post, hostname) {
   if (hostName) {
@@ -97,14 +290,6 @@ var getNewFromUsers = function (post) {
   return "";
 };
 
-const getImageFormatUrl = function(image, formatId) {
-  var formats = JSON.parse(image.formats);
-  if (formats && formats.length>0)
-    return formats[formatId];
-  else
-    return ""
-};
-
 const getMediaFormatUrl = function (media, formatId) {
   var formats = media.formats;
   if (formats && formats.length>0)
@@ -153,24 +338,6 @@ const getMediaTranscripts = function (post) {
   } else {
     return ""
   }
-};
-
-const getImages = function (post) {
-  var imagesText = "";
-
-  if (post.PostHeaderImages && post.PostHeaderImages.length>0) {
-    imagesText += _.map(post.PostHeaderImages, function (image) {
-      return getImageFormatUrl(image, 0)+"\n";
-    });
-  }
-
-  if (post.PostUserImages && post.PostUserImages.length>0) {
-    imagesText += _.map(post.PostUserImages, function (image) {
-      return getImageFormatUrl(image, 0)+"\n";
-    });
-  }
-
-  return '"'+imagesText.replace(/,/g,"")+'"';
 };
 
 const getCategory = function (post) {
@@ -516,5 +683,12 @@ module.exports = {
   getAttachmentData,
   getMediaURLs,
   getMediaTranscripts,
-  getPostRatings
+  getPostRatings,
+  updateJobStatusIfNeeded,
+  getTranslatedPoints,
+  getTranslation,
+  getOrderedPosts,
+  setJobError,
+  preparePosts,
+  uploadToS3
 };
