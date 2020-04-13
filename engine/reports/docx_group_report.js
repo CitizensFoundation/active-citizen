@@ -401,8 +401,9 @@ const exportToDocx = (options, callback) => {
             if (post.category===category) {
               addPostToDoc(doc, post, group);
               processedCount += 1;
-              updateJobStatusIfNeeded(jobId, totalPostCount, processedCount, lastReportedCount, (error) => {
-                lastReportedCount = processedCount;
+              updateJobStatusIfNeeded(jobId, totalPostCount, processedCount, lastReportedCount, (error, haveSent) => {
+                if (haveSent)
+                  lastReportedCount = processedCount;
                 eachCallback(error)
               })
             } else {
@@ -434,8 +435,9 @@ const exportToDocx = (options, callback) => {
           async.eachSeries(getOrderedPosts(postsWithoutCategories), (post, eachCallback) =>{
             addPostToDoc(doc, post, group);
             processedCount += 1;
-            updateJobStatusIfNeeded(jobId, totalPostCount, processedCount, lastReportedCount, (error) => {
-              lastReportedCount = processedCount;
+            updateJobStatusIfNeeded(jobId, totalPostCount, processedCount, lastReportedCount, (error, haveSent) => {
+              if (haveSent)
+                lastReportedCount = processedCount;
               seriesCallback(error)
             })
           }, (error) => {

@@ -10,7 +10,7 @@ const log = require('../../utils/logger');
 const fs = require('fs');
 const path = require('path');
 
-const uploadToS3 = (userId, exportType, filename, data, done) => {
+const uploadToS3 = (userId, filename, exportType, data, done) => {
   const endPoint = process.env.S3_ENDPOINT || "s3.amazonaws.com";
 
   const s3 = new aws.S3({
