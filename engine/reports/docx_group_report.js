@@ -384,7 +384,7 @@ const exportToDocx = (options, callback) => {
     async.series([
       (seriesCallback) => {
         categories = _.orderBy(categories, [category=>category]);
-        categories.forEach((category) => {
+        async.eachSeries(categories, (category, categoryCallback) => {
           const children = [
             new Paragraph({
               text: category,
@@ -402,16 +402,19 @@ const exportToDocx = (options, callback) => {
               addPostToDoc(doc, post, group);
               processedCount += 1;
               updateJobStatusIfNeeded(jobId, totalPostCount, processedCount, lastReportedCount, (error, haveSent) => {
-                if (haveSent)
+                if (haveSent) {
                   lastReportedCount = processedCount;
+                }
                 eachCallback(error)
               })
             } else {
               eachCallback();
             }
           }, (error) => {
-            seriesCallback(error);
+            categoryCallback(error);
           });
+        }, (error) => {
+          seriesCallback(error);
         });
       },
       (seriesCallback) => {
@@ -436,8 +439,9 @@ const exportToDocx = (options, callback) => {
             addPostToDoc(doc, post, group);
             processedCount += 1;
             updateJobStatusIfNeeded(jobId, totalPostCount, processedCount, lastReportedCount, (error, haveSent) => {
-              if (haveSent)
+              if (haveSent) {
                 lastReportedCount = processedCount;
+              }
               eachCallback(error)
             })
           }, (error) => {
