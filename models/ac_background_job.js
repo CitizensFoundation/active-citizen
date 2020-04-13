@@ -20,13 +20,13 @@ module.exports = (sequelize, DataTypes) => {
     sequelize.models.AcBackgroundJob.create({
       progress: 0
     }).then(job => {
-      done(job.id);
+      done(null, job.id);
     }).catch(error => {
-      done(null, error)
+      done(error)
     })
   };
 
-  AcBackgroundJob.update = (options, done) => {
+  AcBackgroundJob.updateJob = (options, done) => {
     sequelize.models.AcBackgroundJob.update(
       {
         process: options.process,
@@ -38,7 +38,7 @@ module.exports = (sequelize, DataTypes) => {
           id: options.jobId
         }
       }
-    ).then(() => {
+    ).spread(() => {
       done();
     }).catch(error=>{
       done(error);

@@ -35,6 +35,7 @@ const setJobError = require('./common_utils').setJobError;
 const preparePosts = require('./common_utils').preparePosts;
 
 const uploadToS3 =  require('./common_utils').uploadToS3;
+const sanitizeFilename = require("sanitize-filename");
 
 const createDocWithStyles = (title) => {
   return new Document({
@@ -343,11 +344,13 @@ const setupGroup = (doc, group, ratingsHeaders, title) => {
 
 const exportToDocx = (options, callback) => {
   const jobId = options.jobId;
+  const groupId = options.groupId;
   const group = options.group;
-  const posts = options.customRatings;
-  const categories = options.categories;
+  const posts = options.posts;
+  let categories = options.categories;
+  const customRatings = options.customRatings;
 
-  const title = "Export for Group Id: "+group.id;
+  const title = "Export for Group Id: "+groupId;
 
   const ratingsHeaders = getRatingHeaders(customRatings);
 
@@ -363,12 +366,19 @@ const exportToDocx = (options, callback) => {
     async.eachSeries(getOrderedPosts(posts), (post, eachCallback) =>{
       addPostToDoc(doc, post, group);
       processedCount += 1;
-      updateJobStatusIfNeeded(jobId, totalPostCount, processedCount, lastReportedCount, (error) => {
-        lastReportedCount = processedCount;
+      updateJobStatusIfNeeded(jobId, totalPostCount, processedCount, lastReportedCount, (error, haveSent) => {
+        if (haveSent)
+         lastReportedCount = processedCount;
         eachCallback(error)
       })
     }, (error) => {
-      callback(error);
+      if (error) {
+        callback(error);
+      } else {
+        Packer.toBase64String(doc).then(b64string=>{
+          callback(null, Buffer.from(b64string, 'base64'));
+        });
+      }
     });
   } else {
     async.series([
@@ -448,42 +458,68 @@ const exportToDocx = (options, callback) => {
 };
 
 const createDocxReport = (workPackage, callback) => {
-  preparePosts(workPackage, (error, options) => {
-    if (error) {
-      callback(error);
-    } else {
-      models.AcBackgroundJob.update({
+  let exportOptions, exportedData, filename;
+
+  async.series([
+    (seriesCallback) => {
+      models.Group.findOne({
+        where: {
+          id: workPackage.groupId
+        },
+        attributes: ['id','name','objectives','configuration','community_id']
+      }).then((group) => {
+        workPackage.group = group;
+        const dateString = moment(new Date()).format("DD_MM_YY_HH_mm");
+        const groupName = sanitizeFilename(group.name).replace(/ /g,'');
+        workPackage.filename = 'ideas_and_points_group_export_'+group.community_id+'_'+group.id+'_'+
+          groupName+'_'+dateString+'.'+workPackage.exportType;
+        seriesCallback();
+      }).catch( error => {
+        seriesCallback(error);
+      })
+    },
+    (seriesCallback) => {
+      preparePosts(workPackage, (error, options) => {
+        exportOptions = options;
+        seriesCallback(error);
+      });
+    },
+    (seriesCallback) => {
+      models.AcBackgroundJob.updateJob({
         jobId: workPackage.jobId,
         progress: 5
       }, (error) => {
+        seriesCallback(error);
+      });
+    },
+    (seriesCallback) => {
+      exportToDocx(exportOptions, (error, data) => {
+        exportedData = data;
+        seriesCallback(error);
+      });
+    },
+    (seriesCallback) => {
+      uploadToS3(workPackage.userId, workPackage.filename, workPackage.exportType, exportedData, (error, reportUrl) => {
         if (error) {
-          callback(error);
+          seriesCallback(error);
         } else {
-          exportToDocx(options, (error, data) => {
-            if (error) {
-              setJobError(workPackage.jobId, "errorDocxReportGeneration", error, dbError =>{
-                callback(dbError);
-              });
-            } else {
-              uploadToS3(workPackage.userId, workPackage.filename, data, (uploadError, reportUrl) => {
-                if (uploadError) {
-                  setJobError(workPackage.jobId, "errorDocxReportGeneration", uploadError, dbError =>{
-                    callback(uploadError);
-                  });
-                } else {
-                  models.AcBackgroundJob.update({
-                    jobId: workPackage.jobId,
-                    progress: 100,
-                    data: { reportUrl }
-                  }, (error) => {
-                    callback(error);
-                  })
-                }
-              });
-            }
-          });
+          models.AcBackgroundJob.updateJob({
+            jobId: workPackage.jobId,
+            progress: 100,
+            data: { reportUrl }
+          }, (dbError) => {
+            seriesCallback(dbError);
+          })
         }
       });
+    }
+  ], (error) => {
+    if (error) {
+      setJobError(workPackage.jobId, "errorDocxReportGeneration", error, dbError =>{
+        callback(dbError || error);
+      });
+    } else {
+      callback();
     }
   });
 };

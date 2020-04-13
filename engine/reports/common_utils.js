@@ -5,11 +5,12 @@ var _ = require('lodash');
 const moment = require('moment');
 const skipEmail = false;
 const aws = require('aws-sdk');
+const log = require('../../utils/logger');
 
 const fs = require('fs');
 const path = require('path');
 
-const uploadToS3 = (userId, exportType, filename, data, callback) => {
+const uploadToS3 = (userId, exportType, filename, data, done) => {
   const endPoint = process.env.S3_ENDPOINT || "s3.amazonaws.com";
 
   const s3 = new aws.S3({
@@ -19,7 +20,7 @@ const uploadToS3 = (userId, exportType, filename, data, callback) => {
     region: process.env.S3_REGION || ((process.env.S3_ENDPOINT || process.env.S3_ACCELERATED_ENDPOINT) ? null : 'us-east-1'),
   });
 
-  var keyName = "/"+exportType+"/"+userId+"/"+filename;
+  const keyName = "/"+exportType+"/"+userId+"/"+filename;
 
   s3.upload({
     Bucket: process.env.S3_REPORTS_BUCKET,
@@ -27,7 +28,7 @@ const uploadToS3 = (userId, exportType, filename, data, callback) => {
     Body: data
   }, (error, data) => {
     if (error) {
-      callback(error);
+      done(error);
     } else {
       s3.getSignedUrl('getObject',{
         Bucket: process.env.S3_REPORTS_BUCKET,
@@ -35,9 +36,9 @@ const uploadToS3 = (userId, exportType, filename, data, callback) => {
         Expires: 60*60
       }, (error, url) => {
         if (error) {
-          callback(error);
+          done(error);
         } else {
-          callback(null, url);
+          done(null, url);
         }
       });
     }
@@ -127,17 +128,17 @@ const updateJobStatusIfNeeded = (jobId, totalPosts, processedCount, lastReported
     if (progress===100) {
       progress = 95;
     }
-    models.AcBackgroundJob.update({ jobId, progress }, (error) => {
-      done(processedCount, error);
+    models.AcBackgroundJob.updateJob({ jobId, progress }, (error) => {
+      done(error, true);
     });
   } else {
-    done(processedCount);
+    done();
   }
 };
 
 const setJobError = (jobId, errorToUser, errorDetail, done) => {
   log.error("Error in background job", { error: errorDetail });
-  models.AcBackgroundJob.update({ jobId, error: errorToUser, progress: 0 }, (error) => {
+  models.AcBackgroundJob.updateJob({ jobId, error: errorToUser, progress: 0 }, (error) => {
     done(error);
   });
 };
@@ -200,8 +201,8 @@ async function getTranslatedPoints(points, targetLanguage) {
 }
 
 const getPostUrl = function (post, hostname) {
-  if (hostName) {
-    return 'https://'+hostName+'/post/'+post.id;
+  if (hostname) {
+    return 'https://'+hostname+'/post/'+post.id;
   } else {
     return "https://yrpri.org/post/"+post.id;
   }
