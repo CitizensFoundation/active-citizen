@@ -128,8 +128,12 @@ const updateJobStatusIfNeeded = (jobId, totalPosts, processedCount, lastReported
     if (progress===100) {
       progress = 95;
     }
-    models.AcBackgroundJob.updateJob({ jobId, progress }, (error) => {
-      done(error, true);
+    models.AcBackgroundJob.update(
+      { progress },
+      { where: { id: jobId } }).spread(()=>{
+      done(null, true);
+    }).catch((error)=>{
+      done(error)
     });
   } else {
     done();
@@ -138,8 +142,12 @@ const updateJobStatusIfNeeded = (jobId, totalPosts, processedCount, lastReported
 
 const setJobError = (jobId, errorToUser, errorDetail, done) => {
   log.error("Error in background job", { error: errorDetail });
-  models.AcBackgroundJob.updateJob({ jobId, error: errorToUser, progress: 0 }, (error) => {
-    done(error);
+  models.AcBackgroundJob.update(
+    {  error: errorToUser, progress: 0 },
+    { where: { id: jobId } }).then(()=>{
+    done();
+  }).catch((error)=>{
+    done(error)
   });
 };
 

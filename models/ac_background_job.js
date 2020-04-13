@@ -26,24 +26,5 @@ module.exports = (sequelize, DataTypes) => {
     })
   };
 
-  AcBackgroundJob.updateJob = (options, done) => {
-    sequelize.models.AcBackgroundJob.update(
-      {
-        process: options.process,
-        error : options.error,
-        data: options.data
-      },
-      {
-        where: {
-          id: options.jobId
-        }
-      }
-    ).spread(() => {
-      done();
-    }).catch(error=>{
-      done(error);
-    });
-  };
-
   return AcBackgroundJob;
 };

@@ -410,7 +410,7 @@ const exportToDocx = (options, callback) => {
               eachCallback();
             }
           }, (error) => {
-            callback(error);
+            seriesCallback(error);
           });
         });
       },
@@ -438,7 +438,7 @@ const exportToDocx = (options, callback) => {
             updateJobStatusIfNeeded(jobId, totalPostCount, processedCount, lastReportedCount, (error, haveSent) => {
               if (haveSent)
                 lastReportedCount = processedCount;
-              seriesCallback(error)
+              eachCallback(error)
             })
           }, (error) => {
             seriesCallback(error);
@@ -487,11 +487,15 @@ const createDocxReport = (workPackage, callback) => {
       });
     },
     (seriesCallback) => {
-      models.AcBackgroundJob.updateJob({
-        jobId: workPackage.jobId,
-        progress: 5
-      }, (error) => {
-        seriesCallback(error);
+      models.AcBackgroundJob.update(
+        {
+          progress: 5
+        }, {
+          where: { id: workPackage.jobId }
+        }).then(()=>{
+          seriesCallback();
+        }).catch((error)=>{
+         seriesCallback(error);
       });
     },
     (seriesCallback) => {
@@ -505,13 +509,17 @@ const createDocxReport = (workPackage, callback) => {
         if (error) {
           seriesCallback(error);
         } else {
-          models.AcBackgroundJob.updateJob({
-            jobId: workPackage.jobId,
-            progress: 100,
-            data: { reportUrl }
-          }, (dbError) => {
-            seriesCallback(dbError);
-          })
+          models.AcBackgroundJob.update(
+            {
+              progress: 100,
+              data: { reportUrl }
+            }, {
+              where: { id: workPackage.jobId }
+            }).then(()=>{
+            seriesCallback();
+          }).catch((error)=>{
+            seriesCallback(error);
+          });
         }
       });
     }
