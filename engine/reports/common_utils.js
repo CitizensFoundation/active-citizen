@@ -10,7 +10,7 @@ const log = require('../../utils/logger');
 const fs = require('fs');
 const path = require('path');
 
-const uploadToS3 = (userId, filename, exportType, data, done) => {
+const uploadToS3 = (jobId, userId, filename, exportType, data, done) => {
   const endPoint = process.env.S3_ENDPOINT || "s3.amazonaws.com";
 
   const s3 = new aws.S3({
@@ -42,6 +42,9 @@ const uploadToS3 = (userId, filename, exportType, data, done) => {
         }
       });
     }
+  }).on('httpUploadProgress', function (progress) {
+    updateUploadJobStatus(jobId, Math.round((progress.loaded/progress.total)*100));
+    console.error("BLASDFLIJFIJFI");
   });
 };
 
@@ -124,10 +127,7 @@ const updateJobStatusIfNeeded = (jobId, totalPosts, processedCount, lastReported
   const countSinceLastSent = processedCount-lastReportedCount;
   const percentOfTotalSinceLast = countSinceLastSent/totalPosts;
   if (percentOfTotalSinceLast>=0.1) {
-    let progress = Math.round((processedCount/totalPosts)*100);
-    if (progress===100) {
-      progress = 95;
-    }
+    let progress = Math.round(((processedCount/totalPosts)*100)/2);
     models.AcBackgroundJob.update(
       { progress },
       { where: { id: jobId } }).spread(()=>{
@@ -138,6 +138,16 @@ const updateJobStatusIfNeeded = (jobId, totalPosts, processedCount, lastReported
   } else {
     done();
   }
+};
+
+const updateUploadJobStatus = (jobId, uploadProgress) => {
+  let progress = Math.min(Math.round(50 + uploadProgress/2),95);
+  models.AcBackgroundJob.update(
+    { progress },
+    { where: { id: jobId } }).spread(()=>{
+  }).catch((error)=>{
+    log.error("updateUploadJobStatus", {error: error});
+  });
 };
 
 const setJobError = (jobId, errorToUser, errorDetail, done) => {

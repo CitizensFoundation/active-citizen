@@ -509,7 +509,7 @@ const createDocxReport = (workPackage, callback) => {
       });
     },
     (seriesCallback) => {
-      uploadToS3(workPackage.userId, workPackage.filename, workPackage.exportType, exportedData, (error, reportUrl) => {
+      uploadToS3(workPackage.jobId, workPackage.userId, workPackage.filename, workPackage.exportType, exportedData, (error, reportUrl) => {
         if (error) {
           seriesCallback(error);
         } else {
