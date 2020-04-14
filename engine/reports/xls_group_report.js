@@ -168,7 +168,7 @@ const addPostToSheet = (worksheet, post, group) => {
   if (!group.configuration.locationHidden && post.realPost.location) {
     _.merge(row, {
       latitude: post.realPost.location.latitude,
-      latitude: post.realPost.location.latitude,
+      longitude: post.realPost.location.longitude,
     })
   }
 
