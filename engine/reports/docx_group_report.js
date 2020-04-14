@@ -6,7 +6,9 @@ const moment = require('moment');
 const log = require('../../utils/logger');
 const _ = require('lodash');
 const docx = require('docx');
-const { Document, Packer, Paragraph, Table, TableCell, UnderlineType, HeadingLevel, AlignmentType, TableRow } = docx;
+const fs = require('fs');
+
+const { Document, Packer, Paragraph, Table, TableCell, UnderlineType, HeadingLevel, AlignmentType, Media, TableRow } = docx;
 
 const getGroupPosts = require('./common_utils').getGroupPosts;
 const getRatingHeaders = require('./common_utils').getRatingHeaders;
@@ -36,6 +38,8 @@ const preparePosts = require('./common_utils').preparePosts;
 
 const uploadToS3 =  require('./common_utils').uploadToS3;
 const sanitizeFilename = require("sanitize-filename");
+const getImageFromUrl =  require('./common_utils').getImageFromUrl;
+
 
 const createDocWithStyles = (title) => {
   return new Document({
@@ -300,46 +304,82 @@ const addPostToDoc = (doc, post, group) => {
   });
 };
 
-const setupGroup = (doc, group, ratingsHeaders, title) => {
-  const children = [
-    new Paragraph({
-      text: title,
-      heading: HeadingLevel.HEADING_1,
-    }),
-
-    new Paragraph({
-      text: group.translatedName ? group.translatedName : group.name,
-      heading: HeadingLevel.HEADING_1,
-    }),
-
-    new Paragraph(group.translatedObjectives ? group.translatedObjectives : group.objectives)
-  ];
-
-  if (ratingsHeaders && ratingsHeaders.length>5) {
-    children.push(
-      new Paragraph({
-        text: "Ratings options",
-        heading: HeadingLevel.HEADING_1,
-      }),
-
-      new Paragraph(ratingsHeaders)
-    );
+const setupGroup = (doc, group, ratingsHeaders, title, done) => {
+  let imageUrl, imageFilename;
+  if (group.GroupLogoImages && group.GroupLogoImages.length>0) {
+    const firstImageFormats =  JSON.parse(group.GroupLogoImages[0].formats);
+    imageUrl = firstImageFormats[1];
   }
 
-  if (group.targetTranslationLanguage) {
-    children.push(
-      new Paragraph(""),
-      new Paragraph({
-        text: "Automatically machine translated to locale: "+group.targetTranslationLanguage.toUpperCase(),
-        heading: HeadingLevel.HEADING_2,
-      }),
-      new Paragraph("")
-    )
-  }
+  async.series([
+    (seriesCallback) => {
+      if (imageUrl) {
+        getImageFromUrl(imageUrl, (error, imageFile) => {
+          if (error) {
+            seriesCallback(error)
+          } else {
+            imageFilename = imageFile;
+            seriesCallback();
+          }
+        })
+      } else {
+        seriesCallback();
+      }
+    },
 
-  doc.addSection({
-    children: children
-  });
+    (seriesCallback) => {
+      const children = [];
+
+      if (imageFilename) {
+        const image1 = Media.addImage(doc, fs.readFileSync(imageFilename), 432,243);
+        children.push(new Paragraph(image1));
+      }
+
+      children.push(
+        new Paragraph({
+          text: title,
+          heading: HeadingLevel.HEADING_1,
+        }),
+
+        new Paragraph({
+          text: group.translatedName ? group.translatedName : group.name,
+          heading: HeadingLevel.HEADING_1,
+        }),
+
+        new Paragraph(group.translatedObjectives ? group.translatedObjectives : group.objectives)
+      );
+
+      if (ratingsHeaders && ratingsHeaders.length>5) {
+        children.push(
+          new Paragraph({
+            text: "Ratings options",
+            heading: HeadingLevel.HEADING_1,
+          }),
+
+          new Paragraph(ratingsHeaders)
+        );
+      }
+
+      if (group.targetTranslationLanguage) {
+        children.push(
+          new Paragraph(""),
+          new Paragraph({
+            text: "Automatically machine translated to locale: "+group.targetTranslationLanguage.toUpperCase(),
+            heading: HeadingLevel.HEADING_2,
+          }),
+          new Paragraph("")
+        )
+      }
+
+      doc.addSection({
+        children: children
+      });
+
+      seriesCallback();
+    }
+  ],(error) => {
+    done(error);
+  })
 };
 
 const exportToDocx = (options, callback) => {
@@ -350,7 +390,7 @@ const exportToDocx = (options, callback) => {
   let categories = options.categories;
   const customRatings = options.customRatings;
 
-  const title = "Export for Group Id: "+groupId;
+  const title = "Export for Group Id: "+group.id;
 
   const ratingsHeaders = getRatingHeaders(customRatings);
 
@@ -360,107 +400,112 @@ const exportToDocx = (options, callback) => {
   let lastReportedCount = 0;
   const totalPostCount = posts.length;
 
-  setupGroup(doc, group, ratingsHeaders, title);
-
-  if (categories.length===0) {
-    async.eachSeries(getOrderedPosts(posts), (post, eachCallback) =>{
-      addPostToDoc(doc, post, group);
-      processedCount += 1;
-      updateJobStatusIfNeeded(jobId, totalPostCount, processedCount, lastReportedCount, (error, haveSent) => {
-        if (haveSent)
-         lastReportedCount = processedCount;
-        eachCallback(error)
-      })
-    }, (error) => {
-      if (error) {
-        callback(error);
-      } else {
-        Packer.toBase64String(doc).then(b64string=>{
-          callback(null, Buffer.from(b64string, 'base64'));
-        });
-      }
-    });
-  } else {
-    async.series([
-      (seriesCallback) => {
-        categories = _.orderBy(categories, [category=>category]);
-        async.eachSeries(categories, (category, categoryCallback) => {
-          const children = [
-            new Paragraph({
-              text: category,
-              heading: HeadingLevel.HEADING_3,
-              alignment: AlignmentType.CENTER
-            })
-          ];
-
-          doc.addSection({
-            children: children
-          });
-
-          async.eachSeries(getOrderedPosts(posts), (post, eachCallback) =>{
-            if (post.category===category) {
-              addPostToDoc(doc, post, group);
-              processedCount += 1;
-              updateJobStatusIfNeeded(jobId, totalPostCount, processedCount, lastReportedCount, (error, haveSent) => {
-                if (haveSent) {
-                  lastReportedCount = processedCount;
-                }
-                eachCallback(error)
-              })
-            } else {
-              eachCallback();
-            }
-          }, (error) => {
-            categoryCallback(error);
-          });
+  setupGroup(doc, group, ratingsHeaders, title, (error) => {
+    if (error) {
+      callback(error)
+    } else {
+      if (categories.length===0) {
+        async.eachSeries(getOrderedPosts(posts), (post, eachCallback) =>{
+          addPostToDoc(doc, post, group);
+          processedCount += 1;
+          updateJobStatusIfNeeded(jobId, totalPostCount, processedCount, lastReportedCount, (error, haveSent) => {
+            if (haveSent)
+              lastReportedCount = processedCount;
+            eachCallback(error)
+          })
         }, (error) => {
-          seriesCallback(error);
-        });
-      },
-      (seriesCallback) => {
-        const postsWithoutCategories = [];
-        posts.forEach((post) =>{
-          if (!post.category) {
-            postsWithoutCategories.push(post);
+          if (error) {
+            callback(error);
+          } else {
+            Packer.toBase64String(doc).then(b64string=>{
+              callback(null, Buffer.from(b64string, 'base64'));
+            });
           }
         });
-
-        if (postsWithoutCategories.length>0) {
-          doc.addSection({
-            children: [
-              new Paragraph({
-                text: "Posts without a category",
-                heading: HeadingLevel.HEADING_1,
-              })
-            ]
-          });
-
-          async.eachSeries(getOrderedPosts(postsWithoutCategories), (post, eachCallback) =>{
-            addPostToDoc(doc, post, group);
-            processedCount += 1;
-            updateJobStatusIfNeeded(jobId, totalPostCount, processedCount, lastReportedCount, (error, haveSent) => {
-              if (haveSent) {
-                lastReportedCount = processedCount;
-              }
-              eachCallback(error)
-            })
-          }, (error) => {
-            seriesCallback(error);
-          });
-        } else {
-          seriesCallback();
-        }
-      },
-    ], (error) => {
-      if (error) {
-        callback(error);
       } else {
-        Packer.toBase64String(doc).then(b64string=>{
-          callback(null, Buffer.from(b64string, 'base64'));
+        async.series([
+          (seriesCallback) => {
+            categories = _.orderBy(categories, [category=>category]);
+            async.eachSeries(categories, (category, categoryCallback) => {
+              const children = [
+                new Paragraph({
+                  text: category,
+                  heading: HeadingLevel.HEADING_3,
+                  alignment: AlignmentType.CENTER
+                })
+              ];
+
+              doc.addSection({
+                children: children
+              });
+
+              async.eachSeries(getOrderedPosts(posts), (post, eachCallback) =>{
+                if (post.category===category) {
+                  addPostToDoc(doc, post, group);
+                  processedCount += 1;
+                  updateJobStatusIfNeeded(jobId, totalPostCount, processedCount, lastReportedCount, (error, haveSent) => {
+                    if (haveSent) {
+                      lastReportedCount = processedCount;
+                    }
+                    eachCallback(error)
+                  })
+                } else {
+                  eachCallback();
+                }
+              }, (error) => {
+                categoryCallback(error);
+              });
+            }, (error) => {
+              seriesCallback(error);
+            });
+          },
+          (seriesCallback) => {
+            const postsWithoutCategories = [];
+            posts.forEach((post) =>{
+              if (!post.category) {
+                postsWithoutCategories.push(post);
+              }
+            });
+
+            if (postsWithoutCategories.length>0) {
+              doc.addSection({
+                children: [
+                  new Paragraph({
+                    text: "Posts without a category",
+                    heading: HeadingLevel.HEADING_1,
+                  })
+                ]
+              });
+
+              async.eachSeries(getOrderedPosts(postsWithoutCategories), (post, eachCallback) =>{
+                addPostToDoc(doc, post, group);
+                processedCount += 1;
+                updateJobStatusIfNeeded(jobId, totalPostCount, processedCount, lastReportedCount, (error, haveSent) => {
+                  if (haveSent) {
+                    lastReportedCount = processedCount;
+                  }
+                  eachCallback(error)
+                })
+              }, (error) => {
+                seriesCallback(error);
+              });
+            } else {
+              seriesCallback();
+            }
+          },
+        ], (error) => {
+          if (error) {
+            callback(error);
+          } else {
+            Packer.toBase64String(doc).then(b64string=>{
+              callback(null, Buffer.from(b64string, 'base64'));
+            });
+          }
         });
       }
-    });
-  }
+    }
+
+  });
 };
 
 const createDocxReport = (workPackage, callback) => {
@@ -472,7 +517,18 @@ const createDocxReport = (workPackage, callback) => {
         where: {
           id: workPackage.groupId
         },
-        attributes: ['id','name','objectives','configuration','community_id']
+        attributes: ['id','name','objectives','configuration','community_id'],
+        include: [
+          {
+            model: models.Image,
+            as: 'GroupLogoImages',
+            attributes:  models.Image.defaultAttributesPublic,
+            required: false
+          }
+        ],
+        order: [
+          [ { model: models.Image, as: 'GroupLogoImages' } , 'created_at', 'desc' ],
+        ]
       }).then((group) => {
         workPackage.group = group;
         const dateString = moment(new Date()).format("DD_MM_YY_HH_mm");

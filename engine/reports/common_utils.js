@@ -6,9 +6,35 @@ const moment = require('moment');
 const skipEmail = false;
 const aws = require('aws-sdk');
 const log = require('../../utils/logger');
-
+const request = require('request');
 const fs = require('fs');
 const path = require('path');
+
+const downloadImage = (uri, filename, callback) => {
+  request.head(uri, (err, res, body) => {
+    request(uri).pipe(fs.createWriteStream(filename)).on('close', callback);
+  });
+};
+
+const getImageFromUrl = (url, done) => {
+  const tmpFilename = "/tmp/"+Math.random(232132132)+(url.replace("http://","").replace(/\//g,''));
+
+  downloadImage(url, tmpFilename, () => {
+    done(null, tmpFilename);
+  });
+  /*  const options = {
+    url: url,
+  };
+  request.get(options, (error, response, body) => {
+    if (error || (response && response.statusCode!==200)) {
+      done("Error getting image");
+    } else {
+//      const data = "data:" + response.headers["content-type"] + ";base64," + new Buffer(body).toString('base64');
+      const data = new Buffer(body);
+      done(null, new Uint8Array(body));
+    }
+  });*/
+};
 
 const uploadToS3 = (jobId, userId, filename, exportType, data, done) => {
   const endPoint = process.env.S3_ENDPOINT || "s3.amazonaws.com";
@@ -44,7 +70,6 @@ const uploadToS3 = (jobId, userId, filename, exportType, data, done) => {
     }
   }).on('httpUploadProgress', function (progress) {
     updateUploadJobStatus(jobId, Math.round((progress.loaded/progress.total)*100));
-    console.error("BLASDFLIJFIJFI");
   });
 };
 
@@ -709,5 +734,6 @@ module.exports = {
   getOrderedPosts,
   setJobError,
   preparePosts,
-  uploadToS3
+  uploadToS3,
+  getImageFromUrl
 };
