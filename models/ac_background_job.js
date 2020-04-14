@@ -18,7 +18,7 @@ module.exports = (sequelize, DataTypes) => {
 
   AcBackgroundJob.createJob = (done) => {
     sequelize.models.AcBackgroundJob.create({
-      progress: 0
+      progress: 5
     }).then(job => {
       done(null, job.id);
     }).catch(error => {

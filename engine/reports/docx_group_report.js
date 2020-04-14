@@ -533,7 +533,7 @@ const createDocxReport = (workPackage, callback) => {
         workPackage.group = group;
         const dateString = moment(new Date()).format("DD_MM_YY_HH_mm");
         const groupName = sanitizeFilename(group.name).replace(/ /g,'');
-        workPackage.filename = 'ideas_and_points_group_export_'+group.community_id+'_'+group.id+'_'+
+        workPackage.filename = 'Ideas_and_Points_Group_Export_'+group.community_id+'_'+group.id+'_'+
           groupName+'_'+dateString+'.'+workPackage.exportType;
         seriesCallback();
       }).catch( error => {

@@ -100,7 +100,7 @@ async function preparePosts(workPackage, callback) {
         const posts = [];
         const totalPosts = postsIn.length;
 
-        async.eachLimit(postsIn, 5, async (post) => {
+        async.eachLimit(postsIn, 1, async (post) => {
           if (!post.deleted) {
             const postRatings = (post.public_data && post.public_data.ratings) ? post.public_data.ratings : null;
 
@@ -319,7 +319,7 @@ const getPointsUpOrDown = function (post, value) {
       return point.value < 0;
     }
   });
-  return points.map((point) => { return {content: point.content, id: point.id, created_at: point.created_at, PointRevisions: point.PointRevisions, User: point.User  }});
+  return points.map((point) => { return {content: point.content, id: point.id, public_data: point.public_data, created_at: point.created_at, PointRevisions: point.PointRevisions, User: point.User  }});
 };
 
 const getPointsUp = function (post) {

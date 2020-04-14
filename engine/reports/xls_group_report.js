@@ -53,10 +53,10 @@ const setDescriptions = (group, post, builtPost) => {
     if (post.public_data && post.public_data.structuredAnswers && post.public_data.structuredAnswers!=="") {
       var answers = post.public_data.structuredAnswers.split("%!#x");
       for (i=0 ; i<answers.length; i+=1) {
-        if (structuredAnswers[i]) {
-          const answer = {};
-          answer[`${questionKeys[i]}`] = answers[i].trim();
-          _.merge(structuredAnswers, answer);
+        if (answers[i]) {
+          const answerObject = {};
+          answerObject[`${questionKeys[i]}`] = answers[i].trim();
+          _.merge(structuredAnswers, answerObject);
         }
       }
     }
@@ -80,12 +80,11 @@ const getPointTextWithEverything = (post, point) => {
   outText += pointContent+"\n\n";
 
   if (point.public_data && point.public_data.admin_comment) {
-    outText += "\n\n";
-    outText += "Admin comment\ņ";
+    outText += "Admin comment\n";
     if (point.public_data.admin_comment.createdAt) {
       outText += moment(point.created_at).format("DD/MM/YY HH:mm")+" - "+point.public_data.admin_comment.userName+"\n\n";
     }
-    outText += point.public_data.admin_comment.text;
+    outText += point.public_data.admin_comment.text+"\n\n";
   }
 
   return outText;
@@ -266,33 +265,33 @@ async function exportToXls (options, callback) {
 
   const worksheet = workbook.addWorksheet(group.translatedName ? group.translatedName : group.name);
 
-  const columns = [
+  let columns = [
     { header: 'Created', key: 'createdAt', width: 15 },
-    { header: 'Post Id', key: 'postId', width: 10 },
-    { header: 'User name', key: 'userName', width: 20 },
-    { header: 'Email', key: 'email', width: 20 }
+    { header: 'Post Id', key: 'postId', width: 15 },
+    { header: 'User name', key: 'userName', width: 30 },
+    { header: 'Email', key: 'email', width: 30 }
   ];
 
   if (group.configuration.moreContactInformation) {
     columns.push(
-      { header: 'Contact Name', key: 'contactName', width: 20 },
-      { header: 'Contact Email', key: 'contactEmail', width: 15 },
-      { header: 'Contact telephone', key: 'contactTelephone', width: 10 }
+      { header: 'Contact Name', key: 'contactName', width: 30 },
+      { header: 'Contact Email', key: 'contactEmail', width: 30 },
+      { header: 'Contact telephone', key: 'contactTelephone', width: 20 }
     );
   }
 
   if (group.configuration.attachmentsEnabled) {
     columns.push(
-      { header: 'Attachment URL', key: 'attachmentUrl', width: 15 },
-      { header: 'Attachment filename', key: 'attachmentFilename', width: 15 }
+      { header: 'Attachment URL', key: 'attachmentUrl', width: 30 },
+      { header: 'Attachment filename', key: 'attachmentFilename', width: 30 }
     );
   }
 
   columns.push(
-    { header: 'Post name', key: 'postName', width: 30, style: { numFmt: '@' }  }
+    { header: 'Post name', key: 'postName', width: 45, style: { numFmt: '@' }  }
   );
 
-  columns.push(getDescriptionHeaders(group));
+  columns = columns.concat(getDescriptionHeaders(group));
 
   columns.push(
     { header: 'Locale', key: 'postLocale', width: 10 }
@@ -313,7 +312,7 @@ async function exportToXls (options, callback) {
   );
 
   if (ratingsHeaders) {
-    columns.push(ratingsHeaders);
+    columns = columns.concat(ratingsHeaders);
   }
 
   let pointForHeader = group.configuration.alternativePointForHeader || 'Points For';
@@ -438,7 +437,7 @@ const createXlsReport = (workPackage, callback) => {
         workPackage.group = group;
         const dateString = moment(new Date()).format("DD_MM_YY_HH_mm");
         const groupName = sanitizeFilename(group.name).replace(/ /g,'');
-        workPackage.filename = 'ideas_and_points_group_export_'+group.community_id+'_'+group.id+'_'+
+        workPackage.filename = 'Ideas_and_Points_Group_Export_'+group.community_id+'_'+group.id+'_'+
           groupName+'_'+dateString+'.'+workPackage.exportType;
         seriesCallback();
       }).catch( error => {
