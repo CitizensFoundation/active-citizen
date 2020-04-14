@@ -319,7 +319,7 @@ const getPointsUpOrDown = function (post, value) {
       return point.value < 0;
     }
   });
-  return points.map((point) => { return {content: point.content, id: point.id }});
+  return points.map((point) => { return {content: point.content, id: point.id, created_at: point.created_at, PointRevisions: point.PointRevisions, User: point.User  }});
 };
 
 const getPointsUp = function (post) {
@@ -488,7 +488,7 @@ const getGroupPosts = (group, hostName, callback) => {
     where: {
       group_id: group.id
     },
-    attributes: ['id','counter_endorsements_down','counter_endorsements_up','counter_points','public_data','name','description','language','location','data'],
+    attributes: ['id','counter_endorsements_down','counter_endorsements_up','counter_points','public_data','name','description','language','location','data','created_at'],
     order: [
       ['created_at', 'asc' ]
     ],
@@ -508,9 +508,14 @@ const getGroupPosts = (group, hostName, callback) => {
       },
       {
         model: models.Point,
-        attributes: ['id','content','value','language','public_data'],
+        attributes: ['id','content','value','language','created_at','public_data'],
         required: false,
         include: [
+          {
+            model: models.User,
+            required: true,
+            attributes:['id','name','email']
+          },
           {
             model: models.Audio,
             as: 'PointAudios',
@@ -536,7 +541,8 @@ const getGroupPosts = (group, hostName, callback) => {
       },
       {
         model: models.User,
-        required: true
+        required: true,
+        attributes:['id','name','email']
       },
       {
         model: models.Audio,
