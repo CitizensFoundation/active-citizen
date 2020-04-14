@@ -77,7 +77,7 @@ async function preparePosts(workPackage, callback) {
   let customRatings;
   const group = workPackage.group;
   const hostName = workPackage.hostname;
-  const targetLanguage = workPackage.targetLanguage;
+  const targetLanguage = workPackage.translateLanguage;
   const jobId = workPackage.jobId;
 
   if (group.configuration && group.configuration.customRatings) {
