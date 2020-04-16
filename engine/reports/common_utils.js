@@ -88,6 +88,15 @@ async function preparePosts(workPackage, callback) {
     group.translatedName = await getTranslation(group,'groupName', targetLanguage);
     group.translatedObjectives = await getTranslation(group,'groupContent', targetLanguage);
     group.targetTranslationLanguage = targetLanguage;
+
+    if (group.configuration) {
+      if (group.configuration.alternativePointForHeader) {
+        group.translatedAlternativePointForHeader =  await getTranslation(group,'alternativePointForHeader', targetLanguage);
+      }
+      if (group.configuration.alternativePointForHeader) {
+        group.translatedAlternativePointAgainstHeader =  await getTranslation(group,'alternativePointAgainstHeader', targetLanguage);
+      }
+    }
   }
 
   getGroupPosts(group, hostName, async (postsIn, error, categories) => {
@@ -232,10 +241,25 @@ async function getTranslatedPoints(points, targetLanguage) {
       models.AcTranslationCache.getTranslation({query: {textType: "pointContent", targetLanguage}}, point, async (error, translation) => {
         if (!error && translation) {
           translatedPoints[point.id] = translation.content;
+
+          if (point.public_data && point.public_data.admin_comments) {
+            models.AcTranslationCache.getTranslation({query: {textType: "pointAdminCommentContent", targetLanguage}}, point, async (error, translation) => {
+              if (!error && translation) {
+                translatedPoints[point.id + "adminComments"] = translation.content;
+                seriesCallback();
+              } else {
+                log.warn("Docx translation error or no translation", {error: error ? error : null});
+                seriesCallback();
+              }
+            });
+          } else {
+            seriesCallback();
+          }
+
         } else {
           log.warn("Docx translation error or no translation", { error: error ? error : null });
+          seriesCallback();
         }
-        seriesCallback();
       });
     }, (error) => {
       resolve(translatedPoints);
@@ -489,9 +513,12 @@ const getGroupPosts = (group, hostName, callback) => {
       group_id: group.id
     },
     attributes: ['id','counter_endorsements_down','counter_endorsements_up','counter_points','public_data','name','description','language','location','data','created_at'],
+
     order: [
-      ['created_at', 'asc' ]
+      ['created_at', 'asc' ],
+      [ { model: models.Point }, 'counter_quality_up', 'desc']
     ],
+
     include: [
       {
         model: models.Category,
@@ -508,7 +535,7 @@ const getGroupPosts = (group, hostName, callback) => {
       },
       {
         model: models.Point,
-        attributes: ['id','content','value','language','created_at','public_data'],
+        attributes: ['id','content','value','language','created_at','public_data','counter_quality_up','counter_quality_down'],
         required: false,
         include: [
           {

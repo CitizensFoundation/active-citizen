@@ -79,12 +79,15 @@ const getPointTextWithEverything = (post, point) => {
   outText += moment(point.created_at).format("DD/MM/YY HH:mm")+" - "+point.User.name+" - "+point.User.email+"\n\n";
   outText += pointContent+"\n\n";
 
-  if (point.public_data && point.public_data.admin_comment) {
+  if (point.public_data && point.public_data.admin_comment && point.public_data.admin_comment.text) {
     outText += "Admin comment\n";
     if (point.public_data.admin_comment.createdAt) {
       outText += moment(point.created_at).format("DD/MM/YY HH:mm")+" - "+point.public_data.admin_comment.userName+"\n\n";
     }
-    outText += point.public_data.admin_comment.text+"\n\n";
+
+    let text = (post.translatedPoints && post.translatedPoints[point.id + "adminComments"]) || point.public_data.admin_comment.text || "";
+
+    outText += text+"\n\n";
   }
 
   return outText;
@@ -315,8 +318,8 @@ async function exportToXls (options, callback) {
     columns = columns.concat(ratingsHeaders);
   }
 
-  let pointForHeader = group.configuration.alternativePointForHeader || 'Points For';
-  let pointAgainstHeader =  group.configuration.alternativePointAgainstHeader || 'Points Against';
+  let pointForHeader = group.translatedAlternativePointForHeader || group.configuration.alternativePointForHeader || 'Points For';
+  let pointAgainstHeader =  group.translatedAlternativePointAgainstHeader || group.configuration.alternativePointAgainstHeader || 'Points Against';
 
   columns.push(
     { header: 'Points Count', key: 'pointsCount', width: 15},

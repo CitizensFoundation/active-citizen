@@ -182,7 +182,7 @@ const setDescriptions = (group, post, builtPost, children) => {
   }
 };
 
-const addPointTranslationIfNeeded = (post, point, children) => {
+const addPointTranslationIfNeeded = (group, post, point, children) => {
   if (post.translatedPoints && post.translatedPoints[point.id]) {
     children.push(
       new Paragraph(post.translatedPoints[point.id])
@@ -192,6 +192,23 @@ const addPointTranslationIfNeeded = (post, point, children) => {
       new Paragraph(point.content)
     );
   }
+
+  if (point.public_data && point.public_data.admin_comment && point.public_data.admin_comment.text) {
+    children.push(
+      new Paragraph("")
+    );
+
+    children.push(
+      new Paragraph("Admin comment")
+    );
+
+    let text = (post.translatedPoints && post.translatedPoints[point.id + "adminComments"]) || point.public_data.admin_comment.text || "";
+
+    children.push(
+      new Paragraph(text)
+    );
+  }
+
   children.push(
     new Paragraph("")
   );
@@ -277,26 +294,29 @@ const addPostToDoc = (doc, post, group) => {
 
   const pointsUp = getPointsUp(post);
 
+  let pointForText = group.translatedAlternativePointForHeader || group.configuration.alternativePointForHeader || 'Points for';
+  let pointAgainstHeader =  group.translatedAlternativePointAgainstHeader || group.configuration.alternativePointAgainstHeader || 'Points against';
+
   children.push(
     new Paragraph({
-      text: pointsUp.length>0 ? (pointsUp.length===1 ? "Point for" : "Points for") : "No points for",
+      text: pointsUp.length>0 ? pointForText : "No points for",
       heading: HeadingLevel.HEADING_2,
     }));
 
   pointsUp.forEach((point) => {
-    addPointTranslationIfNeeded(post, point, children);
+    addPointTranslationIfNeeded(group, post, point, children);
   });
 
   const pointsDown = getPointsDown(post);
   children.push(
     new Paragraph({
-      text: pointsDown.length>0 ? (pointsDown.length===1 ? "Point against" : "Points against") : "No points against",
+      text: pointsDown.length>0 ? pointAgainstHeader : "No points against",
       heading: HeadingLevel.HEADING_2,
     }),
   );
 
   pointsDown.forEach((point) => {
-    addPointTranslationIfNeeded(post, point, children);
+    addPointTranslationIfNeeded(group, post, point, children);
   });
 
   doc.addSection({
