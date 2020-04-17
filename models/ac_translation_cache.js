@@ -66,6 +66,8 @@ module.exports = (sequelize, DataTypes) => {
         return modelInstance.configuration.alternativeTextForNewIdeaButtonHeader;
       case 'customThankYouTextNewPosts':
         return modelInstance.configuration.customThankYouTextNewPosts;
+      case 'customAdminCommentsTitle':
+        return modelInstance.configuration.customAdminCommentsTitle;
       case 'alternativePointForHeader':
         return modelInstance.configuration.alternativePointForHeader;
       case 'alternativePointAgainstHeader':

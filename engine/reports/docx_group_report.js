@@ -199,7 +199,7 @@ const addPointTranslationIfNeeded = (group, post, point, children) => {
     );
 
     children.push(
-      new Paragraph("Admin comment")
+      new Paragraph(group.translatedCustomAdminCommentsTitle || group.configuration.customAdminCommentsTitle || "Admin comment")
     );
 
     let text = (post.translatedPoints && post.translatedPoints[point.id + "adminComments"]) || point.public_data.admin_comment.text || "";

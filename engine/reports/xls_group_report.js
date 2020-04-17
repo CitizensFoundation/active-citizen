@@ -67,7 +67,7 @@ const setDescriptions = (group, post, builtPost) => {
   }
 };
 
-const getPointTextWithEverything = (post, point) => {
+const getPointTextWithEverything = (group, post, point) => {
   let pointContent;
   let outText = "";
   if (post.translatedPoints && post.translatedPoints[point.id]) {
@@ -80,7 +80,8 @@ const getPointTextWithEverything = (post, point) => {
   outText += pointContent+"\n\n";
 
   if (point.public_data && point.public_data.admin_comment && point.public_data.admin_comment.text) {
-    outText += "Admin comment\n";
+    outText += (group.translatedCustomAdminCommentsTitle || group.configuration.customAdminCommentsTitle || "Admin comment")+ "\n";
+
     if (point.public_data.admin_comment.createdAt) {
       outText += moment(point.created_at).format("DD/MM/YY HH:mm")+" - "+point.public_data.admin_comment.userName+"\n\n";
     }
@@ -179,14 +180,14 @@ const addPostToSheet = (worksheet, post, group) => {
   const pointsUp = getPointsUp(post);
 
   pointsUp.forEach((point) => {
-    pointsUpText += getPointTextWithEverything(post, point);
+    pointsUpText += getPointTextWithEverything(group, post, point);
   });
 
   let pointsDownText = "";
   const pointsDown = getPointsDown(post);
 
   pointsDown.forEach((point) => {
-    pointsDownText += getPointTextWithEverything(post, point);
+    pointsDownText += getPointTextWithEverything(group, post, point);
   });
 
   _.merge(row, {
