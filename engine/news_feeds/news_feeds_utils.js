@@ -223,7 +223,12 @@ var activitiesDefaultIncludes = function (options) {
       model: models.Group,
       required: true,
       attributes: models.Group.defaultPublicAttributes,
-      where: { access: models.Group.ACCESS_PUBLIC },
+      where: {
+        $or: [
+          { access: models.Group.ACCESS_PUBLIC },
+          { access: models.Group.ACCESS_OPEN_TO_COMMUNITY },
+        ],
+      },
       include: [
         {
           model: models.Image, as: 'GroupLogoImages',
