@@ -37,31 +37,62 @@ const uploadToS3 =  require('./common_utils').uploadToS3;
 const sanitizeFilename = require("sanitize-filename");
 const getImageFromUrl =  require('./common_utils').getImageFromUrl;
 
+const setDescriptionsNewStyle = (group, post, buildPost) => {
+  const structuredAnswers = {};
+  const questionKeys = [];
 
-const setDescriptions = (group, post, builtPost) => {
-  if (group && group.configuration && group.configuration.structuredQuestions && group.configuration.structuredQuestions!=="" &&
-      post.public_data.structuredAnswers && post.public_data.structuredAnswers!=="") {
-    const structuredAnswers = {};
-    const questionKeys = [];
+  var questionComponents = group.configuration.structuredQuestionsJson;
+  for (var i=0 ; i<questionComponents.length; i++) {
+    if (questionComponents.uniqueId) {
 
-    var questionComponents = group.configuration.structuredQuestions.split(",");
-    for (var i=0 ; i<questionComponents.length; i+=2) {
-      const question = questionComponents[i];
-      questionKeys.push(question.replace(/ /g,''));
     }
+    questionKeys.push(questionComponents.uniqueId);
+  }
 
-    if (post.public_data && post.public_data.structuredAnswers && post.public_data.structuredAnswers!=="") {
-      var answers = post.public_data.structuredAnswers.split("%!#x");
-      for (i=0 ; i<answers.length; i+=1) {
-        if (answers[i]) {
-          const answerObject = {};
-          answerObject[`${questionKeys[i]}`] = answers[i].trim();
-          _.merge(structuredAnswers, answerObject);
-        }
+  var answers = post.public_data.structuredAnswersJson;
+  for (i=0 ; i<answers.length; i+=1) {
+    if (answers[i]) {
+      if (answers[i].value) {
+        structuredAnswers[answers[i].uniqueId] = answers[i].value.trim();
+      } else {
+        structuredAnswers[answers[i].uniqueId] = null;
       }
     }
+  }
 
-    return structuredAnswers;
+  return structuredAnswers;
+}
+
+const setDescriptionsOldStyle = (group, post, buildPost) => {
+  const structuredAnswers = {};
+  const questionKeys = [];
+
+  var questionComponents = group.configuration.structuredQuestions.split(",");
+  for (var i=0 ; i<questionComponents.length; i+=2) {
+    const question = questionComponents[i];
+    questionKeys.push(question.replace(/ /g,''));
+  }
+
+  var answers = post.public_data.structuredAnswers.split("%!#x");
+  for (i=0 ; i<answers.length; i+=1) {
+    if (answers[i]) {
+      const answerObject = {};
+      answerObject[`${questionKeys[i]}`] = answers[i].trim();
+      _.merge(structuredAnswers, answerObject);
+    }
+  }
+
+  return structuredAnswers;
+}
+
+const setDescriptions = (group, post, builtPost) => {
+  if (group && group.configuration && group.configuration.structuredQuestionsJson &&
+    post.public_data.structuredAnswersJson) {
+    return setDescriptionsNewStyle(group, post, builtPost);
+  } else if (group && group.configuration && group.configuration.structuredQuestions &&
+      group.configuration.structuredQuestions!=="" && typeof group.configuration.structuredQuestions==="string" &&
+      post.public_data.structuredAnswers && post.public_data.structuredAnswers!=="") {
+    return setDescriptionsOldStyle(group, post, builtPost);
   } else {
     return { description: builtPost.translatedDescription ? builtPost.translatedDescription : post.description}
   }
@@ -198,28 +229,49 @@ const addPostToSheet = (worksheet, post, group) => {
   worksheet.addRow(row);
 };
 
-const getDescriptionHeaders = (group) => {
-  if (group && group.configuration.structuredQuestions && group.configuration.structuredQuestions!=="") {
-    var structuredQuestions = [];
 
-    var questionComponents = group.configuration.structuredQuestions.split(",");
-    for (var i=0 ; i<questionComponents.length; i+=2) {
-      var question = questionComponents[i];
-      var maxLength = questionComponents[i+1];
-      structuredQuestions.push({
-        translatedQuestion: question,
-        question: question,
-        maxLength: maxLength, value: ""
-      });
+const getDescriptionHeadersNewStyle = (group) => {
+  var questionComponents = group.configuration.structuredQuestionsJson;
+  let columnsStrings = [];
+
+  for (var i=0 ; i<questionComponents.length; i++) {
+    var question = questionComponents[i];
+    if (question.uniqueId) {
+      columnsStrings.push({ header: question.text, key: question.uniqueId, width: 45, style: { numFmt: '@' }  });
     }
+  }
 
-    let columnsStrings = [];
+  return columnsStrings;
+};
 
-    structuredQuestions.forEach((question) => {
-      columnsStrings.push({ header: question.translatedQuestion, key: question.translatedQuestion.replace(/ /g,''), width: 45, style: { numFmt: '@' }  });
+const getDescriptionHeadersOldStyle = (group) => {
+  var structuredQuestions = [];
+
+  var questionComponents = group.configuration.structuredQuestions.split(",");
+  for (var i=0 ; i<questionComponents.length; i+=2) {
+    var question = questionComponents[i];
+    var maxLength = questionComponents[i+1];
+    structuredQuestions.push({
+      translatedQuestion: question,
+      question: question,
+      maxLength: maxLength, value: ""
     });
+  }
 
-    return columnsStrings;
+  let columnsStrings = [];
+
+  structuredQuestions.forEach((question) => {
+    columnsStrings.push({ header: question.translatedQuestion, key: question.translatedQuestion.replace(/ /g,''), width: 45, style: { numFmt: '@' }  });
+  });
+
+  return columnsStrings;
+};
+
+const getDescriptionHeaders = (group) => {
+  if (group && group.configuration.structuredQuestionsJson) {
+    return getDescriptionHeadersNewStyle(group);
+  } else if (group && group.configuration.structuredQuestions && group.configuration.structuredQuestions!=="") {
+    return getDescriptionHeadersOldStyle(group);
   } else {
     return { header: 'Description', key: 'description', width: 45, style: { numFmt: '@' }  };
   }
