@@ -151,7 +151,7 @@ const supportedGoogleLanguges = [
 ];
 
 const transformYrpriCode = (code) => {
-  return code.replace('_','-').replace('zh_TW','cmn-Hant-TW').replace('no','nb-NO');
+  return code.replace('_','-').replace('zh_TW','cmn-Hant-TW').replace('no','nb-NO').replace('ro-MD','ro-RO').replace('ro_MD','ro-RO');
 };
 
 const exactLanguageMatch = (code) => {
