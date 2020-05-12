@@ -126,11 +126,12 @@ const getPointTextWithEverything = (group, post, point) => {
 };
 
 const getContactDataRow = function (post) {
-  if (post.data && post.data.contact && (post.data.contact.name || post.data.contact.email || post.data.contact.telephone)) {
+  if (post.data && post.data.contact && (post.data.contact.name || post.data.contact.email || post.data.contact.address || post.data.contact.telephone)) {
     return {
       contactName: post.data.contact.name,
       contactEmail: post.data.contact.email,
       contactTelephone: post.data.contact.telephone,
+      contactAddress: post.data.contact.address
     }
   } else {
     return {};
@@ -333,6 +334,12 @@ async function exportToXls (options, callback) {
       { header: 'Contact Name', key: 'contactName', width: 30 },
       { header: 'Contact Email', key: 'contactEmail', width: 30 },
       { header: 'Contact telephone', key: 'contactTelephone', width: 20 }
+    );
+  }
+
+  if (group.configuration.moreContactInformationAddress) {
+    columns.push(
+      { header: 'Contact Address', key: 'contactAddress', width: 50 }
     );
   }
 
