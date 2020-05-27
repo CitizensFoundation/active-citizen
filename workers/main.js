@@ -15,6 +15,7 @@ var queue = require('./queue');
 var speechToText = require('./speech_to_text');
 const similarities = require('./similarities');
 const reports = require('./reports');
+const marketing = require('./marketing');
 
 log.info("Dirname", {dirname: __dirname});
 
@@ -87,6 +88,10 @@ i18n
 
     queue.process('process-reports', 1, function(job, done) {
       reports.process(job.data, done);
+    });
+
+    queue.process('process-marketing', 1, function(job, done) {
+      marketing.process(job.data, done);
     });
   });
 
