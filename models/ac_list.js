@@ -30,11 +30,7 @@ module.exports = (sequelize, DataTypes) => {
         group_id: groupId
       },
       defaults: {
-        data: {
-          openCount: 0,
-          completeCount: 0,
-          lastError: null,
-        }
+        group_id: groupId
       }
     }).then(list=>{
       done(null, list);
@@ -55,13 +51,14 @@ module.exports = (sequelize, DataTypes) => {
             ac_list_id: listId,
             data: {
               openCount: 0,
+              sentCount: 0,
               completeCount: 0
             }
           },
           transaction: t
-        }).then(list=>{
+        }).then(() => {
           seriesCallback();
-        }).catch(error=>{
+        }).catch(error => {
           seriesCallback(error);
         });
       }, (error) => {
@@ -69,7 +66,9 @@ module.exports = (sequelize, DataTypes) => {
       });
     } catch (error) {
       await t.rollback();
-      done();
+      done(error);
     }
+  };
+
   return AcList;
 };
