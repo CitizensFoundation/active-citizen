@@ -25,4 +25,4 @@ MarketingWorker.prototype.process = (workPackage, callback) => {
   }
 };
 
-module.exports = new ReportsWorker();
+module.exports = new MarketingWorker();
