@@ -6,6 +6,7 @@ const importCommunity = require('./utils').importCommunity;
 const importGroup = require('./utils').importGroup;
 const importPost = require('./utils').importPost;
 const importPoint = require('./utils').importPoint;
+const request = require('request');
 
 const updateDomain = (domainId, done) => {
   log.info('updateDomain');
@@ -276,6 +277,53 @@ const updateCollection = (workPackage, done) => {
   }
 };
 
+const getFromAnalyticsApi = (featureType, collectionType, collectionId, done) => {
+  //TODO: Implement cache
+  const options = {
+    url: process.env["AC_ANALYTICS_BASE_URL"]+featureType+"/"+collectionType+"/"+process.env.AC_ANALYTICS_CLUSTER_ID+"/"+collectionId,
+    headers: {
+      'X-API-KEY': process.env["AC_ANALYTICS_KEY"]
+    }
+  };
+
+  request.get(options, (error, content) => {
+    if (content && content.statusCode!=200) {
+      error = content.statusCode;
+    }
+    done(error, content);
+  });
+};
+
+const triggerSimilaritiesTraining = (collectionType, collectionId, done) => {
+  const options = {
+    url: process.env["AC_ANALYTICS_BASE_URL"]+"trigger_similarities_training"+"/"+collectionType+"/"+process.env.AC_ANALYTICS_CLUSTER_ID+"/"+collectionId,
+    headers: {
+      'X-API-KEY': process.env["AC_ANALYTICS_KEY"]
+    },
+    json: {}
+  };
+
+  request.put(options, (error, content) => {
+    if (content && content.statusCode!=200) {
+      error = content.statusCode;
+    }
+    done(error, content);
+  });
+};
+
+
+const sendBackAnalyticsResultsOrError = (req,res,error,results) => {
+  if (error) {
+    log.error("Analytics Error", { id: req.params.id, url: req.url, userId: req.user ? req.user.id : null, errorStatus:  500 });
+    res.sendStatus(500);
+  } else {
+    res.send(results);
+  }
+};
+
 module.exports = {
-  updateCollection
+  updateCollection,
+  getFromAnalyticsApi,
+  triggerSimilaritiesTraining,
+  sendBackAnalyticsResultsOrError
 };
