@@ -299,7 +299,7 @@ const importAll = (done) => {
 
 if (process.env["AC_ANALYTICS_KEY"] && process.env["AC_ANALYTICS_BASE_URL"] ) {
   log.info('AcSimilarityImportStarting', {});
-  if (process.argv[2] && process.argv[2]==="onlyUpdatePosts") {
+  if (true || process.argv[2] && process.argv[2]==="onlyUpdatePosts") {
     updateAsyncLimit = 8;
     importAllPosts(() => {
       console.log("Done updating posts");
