@@ -311,10 +311,21 @@ const triggerSimilaritiesTraining = (collectionType, collectionId, done) => {
   });
 };
 
+const getParsedSimilaritiesContent = (content) => {
+  let results;
+  if (content && content.body) {
+    try {
+      results = JSON.parse(content.body);
+    } catch (error) {
+      log.error("Can't parse JSON from similarities");
+    }
+  }
+  return results;
+};
 
 const sendBackAnalyticsResultsOrError = (req,res,error,results) => {
   if (error) {
-    log.error("Analytics Error", { id: req.params.id, url: req.url, userId: req.user ? req.user.id : null, errorStatus:  500 });
+    log.error("Analytics Error", { id: req.params.id, url: req.url, userId: req.user ? req.user.id : null, errorStatus:  500, error });
     res.sendStatus(500);
   } else {
     res.send(results);
@@ -325,5 +336,6 @@ module.exports = {
   updateCollection,
   getFromAnalyticsApi,
   triggerSimilaritiesTraining,
-  sendBackAnalyticsResultsOrError
+  sendBackAnalyticsResultsOrError,
+  getParsedSimilaritiesContent
 };

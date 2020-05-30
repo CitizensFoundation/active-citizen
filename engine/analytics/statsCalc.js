@@ -15,7 +15,7 @@ const getPointDomainIncludes = (id) => {
   ]
 };
 
-export const getDomainIncludes = (id) => {
+const getDomainIncludes = (id) => {
   return [
     {
       model: models.Group,
@@ -51,7 +51,7 @@ const getPointCommunityIncludes = (id) => {
   ]
 };
 
-export const getCommunityIncludes = (id) => {
+const getCommunityIncludes = (id) => {
   return [
     {
       model: models.Group,
@@ -80,7 +80,7 @@ const getPointGroupIncludes = (id) => {
   ]
 };
 
-export const getGroupIncludes = (id) => {
+const getGroupIncludes = (id) => {
   return [
     {
       model: models.Group,
@@ -91,7 +91,7 @@ export const getGroupIncludes = (id) => {
   ]
 };
 
-export const countModelRowsByTimePeriod = (model, whereOptions, includeOptions, done) => {
+const countModelRowsByTimePeriod = (model, whereOptions, includeOptions, done) => {
   //TODO: Add 5 minute caching
   model.findAll({
     where: whereOptions,
@@ -172,3 +172,13 @@ countModelRowsByTimePeriod(models.AcActivity, {
 });
 
 */
+
+module.exports = {
+  getPointDomainIncludes,
+  getDomainIncludes,
+  getPointCommunityIncludes,
+  getCommunityIncludes,
+  getPointGroupIncludes,
+  getGroupIncludes,
+  countModelRowsByTimePeriod
+};
