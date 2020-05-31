@@ -91,71 +91,86 @@ const getGroupIncludes = (id) => {
   ]
 };
 
-const countModelRowsByTimePeriod = (model, whereOptions, includeOptions, done) => {
-  //TODO: Add 5 minute caching
-  model.findAll({
-    where: whereOptions,
-    include: includeOptions,
-    attributes: ['created_at'],
-    order: [['created_at','ASC']]
-  }).then((results) => {
-    const startDate = moment(results[0].created_at);
-    const endDate = moment(results[results.length-1].created_at);
-
-    const days = _.groupBy(results, function (item) {
-      return moment(item.created_at).format("YYYY/MM/DD");
-    });
-
-    const months = _.groupBy(results, function (item) {
-      return moment(item.created_at).format("YYYY/MM");
-    });
-
-    const years = _.groupBy(results, function (item) {
-      return moment(item.created_at).format("YYYY");
-    });
-
-    const totalDaysCount = endDate.diff(startDate, 'days', false)+2;
-    let currentDate =  moment(results[0].created_at);
-    let finalDays = [];
-    for (let i = 0; i < totalDaysCount; i++) {
-      const currentDateText = currentDate.format("YYYY/MM/DD");
-      if (days[currentDateText]) {
-        finalDays.push({ x: currentDate.format("YYYY-MM-DD"), y: days[currentDateText].length })
-      } else {
-        //    finalDays.push({ x: currentDate.format("YYYY-MM-DD"), y: 0})
+const countModelRowsByTimePeriod = (req, cacheKey, model, whereOptions, includeOptions, done) => {
+  const redisKey = "cachev4:"+cacheKey;
+  req.redisClient.get(redisKey, (error, results) => {
+    if (!error && results) {
+      done(null, results);
+    } else {
+      if (error) {
+        log.error('Could not get stats from redis', {
+          err: error,
+          context: 'countModelRowsByTimePeriod',
+          userId: req.user ? req.user.id : null
+        });
       }
-      currentDate = currentDate.add(1, "days");
-    }
+      model.findAll({
+        where: whereOptions,
+        include: includeOptions,
+        attributes: ['created_at'],
+        order: [['created_at', 'ASC']]
+      }).then((results) => {
+        const startDate = moment(results[0].created_at);
+        const endDate = moment(results[results.length - 1].created_at);
 
-    const totalMonthsCount = endDate.diff(startDate, 'months', false)+2;
-    let currentMonth = moment(results[0].created_at);
-    let finalMonths = [];
-    for (let i = 0; i < totalMonthsCount; i++) {
-      const currentMonthText = currentMonth.format("YYYY/MM");
-      if (months[currentMonthText]) {
-        finalMonths.push({ x: currentMonth.format("YYYY-MM"), y: months[currentMonthText].length })
-      } else {
-        //    finalMonths.push({ x: currentMonth.format("YYYY-MM"), y: 0})
-      }
-      currentMonth = currentMonth.add(1, "months");
-    }
+        const days = _.groupBy(results, function (item) {
+          return moment(item.created_at).format("YYYY/MM/DD");
+        });
 
-    const totalYearsCount = endDate.diff(startDate, 'years', false)+2;
-    let currentYear = moment(results[0].created_at);
-    let finalYears = [];
-    for (let i = 0; i < totalYearsCount; i++) {
-      const currentYearText = currentYear.format("YYYY");
-      if (years[currentYearText]) {
-        finalYears.push({ x: currentYearText, y: years[currentYearText].length })
-      } else {
+        const months = _.groupBy(results, function (item) {
+          return moment(item.created_at).format("YYYY/MM");
+        });
+
+        const years = _.groupBy(results, function (item) {
+          return moment(item.created_at).format("YYYY");
+        });
+
+        const totalDaysCount = endDate.diff(startDate, 'days', false) + 2;
+        let currentDate = moment(results[0].created_at);
+        let finalDays = [];
+        for (let i = 0; i < totalDaysCount; i++) {
+          const currentDateText = currentDate.format("YYYY/MM/DD");
+          if (days[currentDateText]) {
+            finalDays.push({x: currentDate.format("YYYY-MM-DD"), y: days[currentDateText].length})
+          } else {
+            //    finalDays.push({ x: currentDate.format("YYYY-MM-DD"), y: 0})
+          }
+          currentDate = currentDate.add(1, "days");
+        }
+
+        const totalMonthsCount = endDate.diff(startDate, 'months', false) + 2;
+        let currentMonth = moment(results[0].created_at);
+        let finalMonths = [];
+        for (let i = 0; i < totalMonthsCount; i++) {
+          const currentMonthText = currentMonth.format("YYYY/MM");
+          if (months[currentMonthText]) {
+            finalMonths.push({x: currentMonth.format("YYYY-MM"), y: months[currentMonthText].length})
+          } else {
+            //    finalMonths.push({ x: currentMonth.format("YYYY-MM"), y: 0})
+          }
+          currentMonth = currentMonth.add(1, "months");
+        }
+
+        const totalYearsCount = endDate.diff(startDate, 'years', false) + 2;
+        let currentYear = moment(results[0].created_at);
+        let finalYears = [];
+        for (let i = 0; i < totalYearsCount; i++) {
+          const currentYearText = currentYear.format("YYYY");
+          if (years[currentYearText]) {
+            finalYears.push({x: currentYearText, y: years[currentYearText].length})
+          } else {
 //        finalYears.push({ x: currentYearText, y: 0})
-      }
-      currentYear = currentYear.add(1, "years");
-    }
+          }
+          currentYear = currentYear.add(1, "years");
+        }
 
-    done(null, {finalDays, finalMonths, finalYears});
-  }).catch((error)=>{
-    done(error);
+        const finalResults = {finalDays, finalMonths, finalYears};
+        req.redisClient.setex(redisKey, process.env.STATS_CACHE_TTL ? parseInt(process.env.STATS_CACHE_TTL) : 5 * 60, JSON.stringify(finalResults));
+        done(null, finalResults);
+      }).catch((error) => {
+        done(error);
+      });
+    }
   });
 };
 

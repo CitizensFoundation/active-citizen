@@ -277,24 +277,40 @@ const updateCollection = (workPackage, done) => {
   }
 };
 
-const getFromAnalyticsApi = (featureType, collectionType, collectionId, done) => {
-  //TODO: Implement cache
-  const options = {
-    url: process.env["AC_ANALYTICS_BASE_URL"]+featureType+"/"+collectionType+"/"+process.env.AC_ANALYTICS_CLUSTER_ID+"/"+collectionId,
-    headers: {
-      'X-API-KEY': process.env["AC_ANALYTICS_KEY"]
-    }
-  };
+const getFromAnalyticsApi = (req, featureType, collectionType, collectionId, done) => {
+  const redisKey = "cachev2:getAnalytics:"+featureType+":"+collectionType+":"+collectionId;
+  req.redisClient.get(redisKey, (error, content) => {
+    if (!error && content) {
+      done(null, content);
+    } else {
+      if (error) {
+        log.error('Could not get pages for group from redis', {
+          err: error,
+          context: 'redis',
+          userId: req.user ? req.user.id : null
+        });
+      }
 
-  request.get(options, (error, content) => {
-    if (content && content.statusCode!=200) {
-      error = content.statusCode;
+      const options = {
+        url: process.env["AC_ANALYTICS_BASE_URL"]+featureType+"/"+collectionType+"/"+process.env.AC_ANALYTICS_CLUSTER_ID+"/"+collectionId,
+        headers: {
+          'X-API-KEY': process.env["AC_ANALYTICS_KEY"]
+        }
+      };
+
+      request.get(options, (error, content) => {
+        if (content && content.statusCode!=200) {
+          error = content.statusCode;
+        } else {
+          req.redisClient.setex(redisKey, process.env.SIMILARITIES_CACHE_TTL ? parseInt(process.env.SIMILARITIES_CACHE_TTL) : 5*60, JSON.stringify(content));
+        }
+        done(error, content);
+      });
     }
-    done(error, content);
   });
 };
 
-const triggerSimilaritiesTraining = (collectionType, collectionId, done) => {
+const triggerSimilaritiesTraining = (req, collectionType, collectionId, done) => {
   const options = {
     url: process.env["AC_ANALYTICS_BASE_URL"]+"trigger_similarities_training"+"/"+collectionType+"/"+process.env.AC_ANALYTICS_CLUSTER_ID+"/"+collectionId,
     headers: {
