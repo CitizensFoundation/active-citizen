@@ -8,7 +8,7 @@ const importGroup = require('./utils').importGroup;
 const importPost = require('./utils').importPost;
 const importPoint = require('./utils').importPoint;
 
-let updateAsyncLimit = 6;
+let updateAsyncLimit = 5;
 
 let lineCrCounter = 0;
 
@@ -299,8 +299,8 @@ const importAll = (done) => {
 
 if (process.env["AC_ANALYTICS_KEY"] && process.env["AC_ANALYTICS_BASE_URL"] ) {
   log.info('AcSimilarityImportStarting', {});
-  if (true || process.argv[2] && process.argv[2]==="onlyUpdatePosts") {
-    updateAsyncLimit = 8;
+  if (process.argv[2] && process.argv[2]==="onlyUpdatePosts") {
+    updateAsyncLimit = 5;
     importAllPosts(() => {
       console.log("Done updating posts");
       process.exit();
