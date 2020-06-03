@@ -278,7 +278,7 @@ const updateCollection = (workPackage, done) => {
 };
 
 const getFromAnalyticsApi = (req, featureType, collectionType, collectionId, done) => {
-  const redisKey = "cachev3:getAnalytics:"+featureType+":"+collectionType+":"+collectionId;
+  const redisKey = "cachev4:getAnalytics:"+featureType+":"+collectionType+":"+collectionId;
   req.redisClient.get(redisKey, (error, content) => {
     if (!error && content) {
       done(null, JSON.parse(content));
