@@ -342,7 +342,7 @@ const getParsedSimilaritiesContent = (content) => {
 const sendBackAnalyticsResultsOrError = (req,res,error,results) => {
   if (error) {
     log.error("Analytics Error", { id: req.params.id, url: req.url, userId: req.user ? req.user.id : null, errorStatus:  500, error });
-    res.sendStatus(500);
+    res.send({ nodata: true });
   } else {
     res.send(results);
   }
