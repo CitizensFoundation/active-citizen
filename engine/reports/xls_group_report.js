@@ -238,7 +238,7 @@ const getDescriptionHeadersNewStyle = (group) => {
   for (var i=0 ; i<questionComponents.length; i++) {
     var question = questionComponents[i];
     if (question.uniqueId) {
-      columnsStrings.push({ header: question.text, key: question.uniqueId, width: 45, style: { numFmt: '@' }  });
+      columnsStrings.push({ header: question.uniqueId+"-"+question.text, key: question.uniqueId, width: 45, style: { numFmt: '@' }  });
     }
   }
 
