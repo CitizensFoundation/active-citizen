@@ -6,6 +6,11 @@ const fs = require('fs');
 const request = require('request');
 const farmhash = require('farmhash');
 
+//const communityId = "1264"; //process.argv[2];
+//const communityId = "1402"; //process.argv[2];
+//const communityId = "1321"; //process.argv[2];
+//const communityId = "1403"; //process.argv[2];
+
 const communityId = process.argv[2];
 const targetLocale = process.argv[3];
 const urlToConfig =  process.argv[4];
@@ -14,6 +19,8 @@ let config;
 let changeCount = 0;
 
 const searchAndReplaceTranslation = (textType, id, content, done) => {
+  if (!content)
+    done();
   const indexKey = `${textType}-${id}-${targetLocale}-${farmhash.hash32(content).toString()}`;
   models.AcTranslationCache.findOne({
     where: {
@@ -21,21 +28,23 @@ const searchAndReplaceTranslation = (textType, id, content, done) => {
     }
   }).then((result) => {
     if (result) {
-      const newContent = result.content;
+      let newContent = result.content;
       config.split('\r\n').forEach(searchLine => {
-        const searchLineSplit = searchLine.split(",");
-        if (newContent.indexOf(searchLineSplit[0]) > -1) {
-          const regExp = new RegExp(searchLineSplit[0], 'g');
-          newContent.replace(regExp, searchLineSplit[1]);
-          changeCount += 1;
+        if (searchLine && searchLine!=="") {
+          const searchLineSplit = searchLine.split(",");
+          if (newContent.indexOf(searchLineSplit[0]) > -1) {
+            const regExp = new RegExp(searchLineSplit[0], 'g');
+            newContent = newContent.replace(regExp, searchLineSplit[1]);
+            changeCount += 1;
+          }
         }
       });
 
-      if (false && newContent!==result.content) {
+      if (newContent!==result.content) {
         result.set('content', newContent);
-        result.save().then(function () {
+        result.save().then(() => {
           console.log(`Updated ${result.index_key} to ${result.content}`);
-          done;
+          done();
         }).catch(error => {
           done(error);
         })
@@ -55,16 +64,45 @@ const updateTranslationForPosts = (posts, done) => {
   async.forEachSeries(posts, (post, forEachCallback) => {
     searchAndReplaceTranslation('postName', post.id, post.name, (error) => {
       if (error) {
-        done(error)
+        forEachCallback(error)
       } else {
         searchAndReplaceTranslation('postContent', post.id, post.description, (error) => {
-          done(error);
+          forEachCallback(error);
         });
       }
     });
   }, error => {
     done(error);
   })
+};
+
+const updateTranslationForGroups = (groups, done) => {
+  async.forEachSeries(groups, (group, forEachCallback) => {
+    searchAndReplaceTranslation('groupName', group.id, group.name, (error) => {
+      if (error) {
+        forEachCallback(error)
+      } else {
+        searchAndReplaceTranslation('groupContent', group.id, group.objectives, (error) => {
+          forEachCallback(error);
+        });
+      }
+    });
+  }, error => {
+    done(error);
+  })
+};
+
+
+const updateTranslationForCommunity = (community, done) => {
+  searchAndReplaceTranslation('communityName', community.id, community.name, (error) => {
+    if (error) {
+      done(error)
+    } else {
+      searchAndReplaceTranslation('communityContent', community.id, community.description, (error) => {
+        done(error);
+      });
+    }
+  });
 };
 
 async.series([
@@ -108,27 +146,24 @@ async.series([
           innerSeriesCallback(error);
         })
       },
-      (innerSeries) => {
+      (innerSeriesCallback) => {
         models.Group.findAll({
-          attributes: ['id','name','objective'],
-          include: [
-            {
-              model: models.Community,
-              attributes: ['id'],
-              where: {
-                id: communityId
-              }
-            }
-          ]
+          attributes: ['id','name','objectives'],
+          where: {
+            community_id: communityId
+          }
         }).then(groups=>{
           updateTranslationForGroups(groups, innerSeriesCallback);
         }).catch(error=>{
           innerSeriesCallback(error);
         })
       },
-      (innerSeries) => {
-        models.Community.find({
+      (innerSeriesCallback) => {
+        models.Community.findOne({
           attributes: ['id','name','description'],
+          where: {
+            id: communityId
+          }
         }).then(community=>{
           updateTranslationForCommunity(community, innerSeriesCallback);
         }).catch(error=>{
