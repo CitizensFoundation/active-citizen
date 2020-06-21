@@ -519,7 +519,8 @@ const getGroupPosts = (group, hostName, callback) => {
 
     order: [
       ['created_at', 'asc' ],
-      [ { model: models.Point }, 'counter_quality_up', 'desc']
+      [ { model: models.Point }, 'counter_quality_up', 'desc'],
+      [ { model: models.Point }, models.PointRevision, 'created_at', 'asc' ],
     ],
 
     include: [

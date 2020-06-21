@@ -206,7 +206,7 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
               template = 'post_activity';
               translateToken = 'notification.email.postReport';
               const post = notification.AcActivities[0].Post;
-              if (post.data && post.data.moderation) {
+              if (post && post.data && post.data.moderation) {
                 moderation = post.data.moderation;
                 if (moderation.lastReportedBy && moderation.lastReportedBy.length>0) {
                   source =  moderation.lastReportedBy[0].source;

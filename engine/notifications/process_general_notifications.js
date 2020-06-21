@@ -30,6 +30,9 @@ const getPointsGroupedByModel = (pointIds, includeModel, whereIn, callback) => {
   models.Point.findAll({
     where: mergedWhere,
     attributes: ['id', 'content', 'post_id','group_id','community_id','data'],
+    order: [
+      [ models.PointRevision, 'created_at', 'asc' ]
+    ],
     include: [
       {
         model: models[includeModel],

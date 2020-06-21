@@ -224,11 +224,7 @@ const estimateToxicityScoreForPost = (options, callback) => {
 
         textContent = `${post.name} ${post.description} ${transcriptText? transcriptText : ''}`;
 
-        if (post.language && post.language.substring(0,2)==="en") {
-          textUsed = textContent;
-          log.info("getToxicityScoreForText post getting english text");
-          getToxicityScoreForText(textUsed, doNotStoreValue, callback);
-        } else if (textContent!=='') {
+        if (textContent!=='') {
           log.info("getToxicityScoreForText post getting translated text");
           getTranslatedTextForPost(post, (error, translatedText) => {
             log.info("getToxicityScoreForText post got translated text", { translatedText, error });
@@ -281,6 +277,9 @@ const estimateToxicityScoreForPoint = (options, callback) => {
       where: {
         id: options.pointId
       },
+      order: [
+        [ models.PointRevision, 'created_at', 'asc' ],
+      ],
       include: [
         {
           model: models.Audio,
@@ -326,11 +325,7 @@ const estimateToxicityScoreForPoint = (options, callback) => {
 
         textContent = point.PointRevisions[point.PointRevisions.length-1].content;
 
-        if (point.language && point.language.substring(0,2)==="en") {
-          textUsed = textContent;
-          log.info("getToxicityScoreForText getting english text");
-          getToxicityScoreForText(textContent, doNotStoreValue, callback);
-        } else if (textContent && textContent!=='') {
+        if (textContent && textContent!=='') {
           log.info("getToxicityScoreForText getting translated text");
           getTranslatedTextForPoint(point, (error, translatedText) => {
             log.info("getToxicityScoreForText got translated text", { translatedText, error });
