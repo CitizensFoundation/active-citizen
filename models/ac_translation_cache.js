@@ -135,7 +135,7 @@ module.exports = (sequelize, DataTypes) => {
   AcTranslationCache.getTranslation = (req, modelInstance, callback) => {
     const contentToTranslate = sequelize.models.AcTranslationCache.getContentToTranslate(req, modelInstance);
     if (contentToTranslate && contentToTranslate!=='' &&
-      contentToTranslate.length>4 && isNaN(contentToTranslate)) {
+      contentToTranslate.length>1 && isNaN(contentToTranslate)) {
       const contentHash = farmhash.hash32(contentToTranslate).toString();
       const textType = req.query.textType;
 
