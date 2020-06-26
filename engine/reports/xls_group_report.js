@@ -42,12 +42,6 @@ const setDescriptionsNewStyle = (group, post, buildPost) => {
   const questionKeys = [];
 
   var questionComponents = group.configuration.structuredQuestionsJson;
-  for (var i=0 ; i<questionComponents.length; i++) {
-    if (questionComponents.uniqueId) {
-
-    }
-    questionKeys.push(questionComponents.uniqueId);
-  }
 
   var answers = post.public_data.structuredAnswersJson;
   for (i=0 ; i<answers.length; i+=1) {
