@@ -46,7 +46,7 @@ const addItem = (targetLocale, items, textType, id, content, done) => {
   }
 };
 
-const updateTranslationForPosts = (targetLocale, items, posts, done) => {
+const addTranslationsForPosts = (targetLocale, items, posts, done) => {
   async.forEachSeries(posts, (post, forEachCallback) => {
     addItem(targetLocale, items, 'postName', post.id, post.name, (error) => {
       if (error) {
@@ -62,7 +62,7 @@ const updateTranslationForPosts = (targetLocale, items, posts, done) => {
   })
 };
 
-const updateTranslationForGroups = (targetLocale, items, groups, done) => {
+const addTranslationsForGroups = (targetLocale, items, groups, done) => {
   async.forEachSeries(groups, (group, forEachCallback) => {
     addItem(targetLocale, items, 'groupName', group.id, group.name, (error) => {
       if (error) {
@@ -78,7 +78,7 @@ const updateTranslationForGroups = (targetLocale, items, groups, done) => {
   })
 };
 
-const updateTranslationForCommunity = (targetLocale, items, community, done) => {
+const addTranslationsForCommunity = (targetLocale, items, community, done) => {
   addItem(targetLocale, items, 'communityName', community.id, community.name, (error) => {
     if (error) {
       done(error)
@@ -117,7 +117,7 @@ const getTranslatedTextsForCommunity = (targetLocale, communityId, done) => {
               }
             ]
           }).then(posts=>{
-            updateTranslationForPosts(targetLocale, postItems, posts, innerSeriesCallback);
+            addTranslationsForPosts(targetLocale, postItems, posts, innerSeriesCallback);
           }).catch(error=>{
             innerSeriesCallback(error);
           })
@@ -129,7 +129,7 @@ const getTranslatedTextsForCommunity = (targetLocale, communityId, done) => {
               community_id: communityId
             }
           }).then(groups=>{
-            updateTranslationForGroups(targetLocale, groupItems, groups, innerSeriesCallback);
+            addTranslationsForGroups(targetLocale, groupItems, groups, innerSeriesCallback);
           }).catch(error=>{
             innerSeriesCallback(error);
           })
@@ -141,7 +141,7 @@ const getTranslatedTextsForCommunity = (targetLocale, communityId, done) => {
               id: communityId
             }
           }).then(community=>{
-            updateTranslationForCommunity(targetLocale, communityItems, community, innerSeriesCallback);
+            addTranslationsForCommunity(targetLocale, communityItems, community, innerSeriesCallback);
           }).catch(error=>{
             innerSeriesCallback(error);
           })
@@ -159,7 +159,119 @@ const getTranslatedTextsForCommunity = (targetLocale, communityId, done) => {
   });
 }
 
-const updateTranslation = (communityId, item, done) => {
+const getTranslatedTextsForGroup = (targetLocale, groupId, done) => {
+  const groupItems = [];
+  const postItems = [];
+
+  async.parallel([
+    (seriesCallback) => {
+      async.series([
+        (innerSeriesCallback) => {
+          models.Post.findAll({
+            attributes: ['id','name','description'],
+            include: [
+              {
+                model: models.Group,
+                attributes: ['id'],
+                where: {
+                  id: groupId
+                }
+              }
+            ]
+          }).then(posts=>{
+            addTranslationsForPosts(targetLocale, postItems, posts, innerSeriesCallback);
+          }).catch(error=>{
+            innerSeriesCallback(error);
+          })
+        },
+        (innerSeriesCallback) => {
+          models.Group.findAll({
+            attributes: ['id','name','objectives'],
+            where: {
+              id: groupId
+            }
+          }).then(groups=>{
+            addTranslationsForGroups(targetLocale, groupItems, groups, innerSeriesCallback);
+          }).catch(error=>{
+            innerSeriesCallback(error);
+          })
+        }
+      ], (error) => {
+        seriesCallback(error);
+      })
+    },
+  ], error => {
+    if (error) {
+      done(null, error);
+    } else {
+      done(groupItems.concat(postItems));
+    }
+  });
+}
+
+const updateTranslation = (item, done) => {
+  let targetLocale = getTargetLocale(item.targetLocale);
+
+  const indexKey = `${item.textType}-${item.contentId}-${targetLocale}-${farmhash.hash32(item.content).toString()}`;
+  models.AcTranslationCache.findOrCreate({
+    where: {
+      index_key: indexKey
+    },
+    defaults: {
+      index_key: indexKey,
+      content: item.translatedText
+    }
+  }).then((result) => {
+    if (result && result.length>0) {
+      result[0].content = item.translatedText;
+      result[0].save().then(()=>{
+        done();
+      }).catch(error => seriesCallback(error));
+    } else {
+      seriesCallback("Cant find or create translation");
+    }
+  }).catch(error => done(error));
+}
+
+const updateTranslationForGroup = (groupId, item, done) => {
+  async.series([
+    (seriesCallback) => {
+      if (["groupName","groupContent"].indexOf(item.textType)>-1) {
+        seriesCallback(groupId==item.contentId ? null : 'Access denied')
+      } else {
+        seriesCallback();
+      }
+    },
+    (seriesCallback) => {
+      if (["postName","postContent"].indexOf(item.textType)>-1) {
+        models.Post.findOne({
+          where: {
+            id: item.contentId
+          },
+          attributes: ["id"],
+          include: [
+            {
+              model: models.Group,
+              required: true,
+              where: { id: groupId }
+            }
+          ]
+        }).then( post => {
+          seriesCallback( post ? null : 'Access denied')
+        }).catch(error => seriesCallback(error));
+      } else {
+        seriesCallback();
+      }
+    },
+    (seriesCallback) => {
+      updateTranslation(item, seriesCallback);
+    },
+  ], error => {
+    done(error);
+  })
+};
+
+const updateTranslationForCommunity = (communityId, item, done) => {
   async.series([
     (seriesCallback) => {
       if (["communityName","communityContent"].indexOf(item.textType)>-1) {
@@ -217,27 +329,7 @@ const updateTranslation = (communityId, item, done) => {
       }
     },
     (seriesCallback) => {
-      let targetLocale = getTargetLocale(item.targetLocale);
-
-      const indexKey = `${item.textType}-${item.contentId}-${targetLocale}-${farmhash.hash32(item.content).toString()}`;
-      models.AcTranslationCache.findOrCreate({
-        where: {
-          index_key: indexKey
-        },
-        defaults: {
-          index_key: indexKey,
-          content: item.translatedText
-        }
-      }).then((result) => {
-        if (result && result.length>0) {
-          result[0].content = item.translatedText;
-          result[0].save().then(()=>{
-            done();
-          }).catch(error => seriesCallback(error));
-        } else {
-          seriesCallback("Cant find or create translation");
-        }
-      }).catch(error => done(error));
+      updateTranslation(item, seriesCallback);
     },
   ], error => {
     done(error);
@@ -246,5 +338,7 @@ const updateTranslation = (communityId, item, done) => {
 
 module.exports = {
   getTranslatedTextsForCommunity,
-  updateTranslation
+  getTranslatedTextsForGroup,
+  updateTranslationForCommunity,
+  updateTranslationForGroup
 };
