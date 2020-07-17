@@ -213,14 +213,17 @@ const estimateToxicityScoreForCollection = (options, callback) => {
     const model = options.collectionType === "community" ? models.community : models.Group;
 
     let collectionIncludes = [];
+    let attributes = ['id','language','name'];
 
-    if (options.collectionType === "community") {
+    if (options.collectionType === "group") {
       collectionIncludes = [
         {
           model: models.Communtity,
-          attributes: ['id', 'access']
+          attributes: ['id', 'access','domain_id']
         }
       ]
+    } else {
+      attributes = ['id','language','name','domain_id'];
     }
 
     models.model.findOne({
@@ -228,7 +231,7 @@ const estimateToxicityScoreForCollection = (options, callback) => {
         id: options.collectionId
       },
       include: collectionIncludes,
-      attributes: ['id','language','name']
+      attributes: attributes
     }).then( collection => {
       if ( 'description') {
         let doNotStoreValue = collection.access===0;
@@ -253,8 +256,8 @@ const estimateToxicityScoreForCollection = (options, callback) => {
               } else {
                 setupModelPublicDataScore(collection, textUsed, results);
                 collection.save().then(() => {
-                  if (hasModelBreachedToxicityThreshold(post)) {
-                    collection.report({ disableNotification: !hasModelBreachedToxicityEmailThreshold(post) },
+                  if (hasModelBreachedToxicityThreshold(collection)) {
+                    collection.report({ disableNotification: !hasModelBreachedToxicityEmailThreshold(collection) },
                       "perspectiveAPI",
                       callback);
                   } else {
