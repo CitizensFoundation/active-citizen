@@ -94,14 +94,71 @@ const hasModelBreachedToxicityEmailThreshold = model => {
   }
 };
 
+const getTranslatedTextForCollection = (collectionType, model, callback) => {
+  let name, content;
+  async.parallel([
+    (parallelCallback) => {
+      const req = { query: {
+        textType: collectionType === 'community' ? 'communityName' : 'groupName',
+        targetLanguage: 'en'
+      }};
+      models.AcTranslationCache.getTranslation(req, model, (error, translation) => {
+        if (error) {
+          parallelCallback(error);
+        } else {
+          name = translation;
+          parallelCallback();
+        }
+      });
+    },
+    (parallelCallback) => {
+      const req = { query: {
+        textType: collectionType === 'community' ? 'communityContent' : 'groupContent',
+        targetLanguage: 'en'
+      }};
+      models.AcTranslationCache.getTranslation(req, model, (error, translation) => {
+        if (error) {
+          parallelCallback(error);
+        } else {
+          content = translation;
+          parallelCallback();
+        }
+      });
+    }
+  ], error => {
+    if (name && content) {
+      callback(error, `${name.content} ${content.content}`);
+    } else {
+      log.error("No collection name or content for toxicity!", { error });
+      callback(error);
+    }
+  });
+};
+
+const getTranslatedTextForPoint = (point, callback) => {
+  const req = {
+    query: {
+      textType: 'pointContent',
+      targetLanguage: 'en'
+    }
+  };
+  models.AcTranslationCache.getTranslation(req, point, (error, translation) => {
+    if (error) {
+      callback(error);
+    } else {
+      callback(null, translation);
+    }
+  });
+};
+
 const getTranslatedTextForPost = (post, callback) => {
   let postName, postDescription, postTranscript;
   async.parallel([
     (parallelCallback) => {
       const req = { query: {
-        textType: 'postName',
-        targetLanguage: 'en'
-      }};
+          textType: 'postName',
+          targetLanguage: 'en'
+        }};
       models.AcTranslationCache.getTranslation(req, post, (error, translation) => {
         if (error) {
           parallelCallback(error);
@@ -113,9 +170,9 @@ const getTranslatedTextForPost = (post, callback) => {
     },
     (parallelCallback) => {
       const req = { query: {
-        textType: 'postContent',
-        targetLanguage: 'en'
-      }};
+          textType: 'postContent',
+          targetLanguage: 'en'
+        }};
       models.AcTranslationCache.getTranslation(req, post, (error, translation) => {
         if (error) {
           parallelCallback(error);
@@ -150,20 +207,81 @@ const getTranslatedTextForPost = (post, callback) => {
   });
 };
 
-const getTranslatedTextForPoint = (point, callback) => {
-  const req = {
-    query: {
-      textType: 'pointContent',
-      targetLanguage: 'en'
+const estimateToxicityScoreForCollection = (options, callback) => {
+  if (process.env.GOOGLE_PERSPECTIVE_API_KEY) {
+    log.info("getToxicityScoreForText collection preparing", {options});
+    const model = options.collectionType === "community" ? models.community : models.Group;
+
+    let collectionIncludes = [];
+
+    if (options.collectionType === "community") {
+      collectionIncludes = [
+        {
+          model: models.Communtity,
+          attributes: ['id', 'access']
+        }
+      ]
     }
-  };
-  models.AcTranslationCache.getTranslation(req, point, (error, translation) => {
-    if (error) {
+
+    models.model.findOne({
+      where: {
+        id: options.collectionId
+      },
+      include: collectionIncludes,
+      attributes: ['id','language','name']
+    }).then( collection => {
+      if ( 'description') {
+        let doNotStoreValue = collection.access===0;
+        if (options.collectionType === "group" && collection.Community.access===0)
+          doNotStoreValue = true;
+
+        let textContent, textUsed, transcriptText
+
+        textContent = `${collection.name}`;
+
+        if (textContent!=='') {
+          log.info("getToxicityScoreForText collection getting translated text");
+          getTranslatedTextForCollection(options.collectionType, collection, (error, translatedText) => {
+            log.info("getToxicityScoreForText collection got translated text", { translatedText, error });
+            if (error)
+              callback(error);
+            else
+              textUsed = translatedText;
+            getToxicityScoreForText(textUsed, doNotStoreValue, (error, results) => {
+              if (error) {
+                callback(error);
+              } else {
+                setupModelPublicDataScore(collection, textUsed, results);
+                collection.save().then(() => {
+                  if (hasModelBreachedToxicityThreshold(post)) {
+                    collection.report({ disableNotification: !hasModelBreachedToxicityEmailThreshold(post) },
+                      "perspectiveAPI",
+                      callback);
+                  } else {
+                    callback();
+                  }
+                }).catch( error => {
+                  callback(error);
+                })
+              }
+            });
+          });
+        } else {
+          log.warn("getToxicityScoreForText collection No text for toxicity");
+          callback();
+        }
+      } else {
+        log.error("getToxicityScoreForText collection could not find collection");
+        callback("Could not find collection");
+      }
+    }).catch( error => {
+      log.error("getToxicityScoreForText collection error", { error });
       callback(error);
-    } else {
-      callback(null, translation);
-    }
-  });
+    })
+  } else {
+    log.error("getToxicityScoreForText: No API key");
+    callback();
+  }
 };
 
 const estimateToxicityScoreForPost = (options, callback) => {
@@ -404,5 +522,6 @@ const estimateToxicityScoreForPoint = (options, callback) => {
 
 module.exports = {
   estimateToxicityScoreForPoint,
-  estimateToxicityScoreForPost
+  estimateToxicityScoreForPost,
+  estimateToxicityScoreForCollection
 };

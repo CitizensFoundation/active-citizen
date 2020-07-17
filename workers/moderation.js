@@ -8,6 +8,7 @@ const _ = require('lodash');
 const fs = require('fs');
 const estimateToxicityScoreForPost = require('../engine/moderation/toxicity_analysis').estimateToxicityScoreForPost;
 const estimateToxicityScoreForPoint = require('../engine/moderation/toxicity_analysis').estimateToxicityScoreForPoint;
+const estimateToxicityScoreForCollection = require('../engine/moderation/toxicity_analysis').estimateToxicityScoreForCollection;
 const performManyModerationActions = require("../engine/moderation/process_moderation_items").performManyModerationActions;
 
 let airbrake = null;
@@ -24,6 +25,9 @@ ModerationWorker.prototype.process = (workPackage, callback) => {
       break;
     case 'estimate-point-toxicity':
       estimateToxicityScoreForPoint(workPackage, callback);
+      break;
+    case 'estimate-collection-toxicity':
+      estimateToxicityScoreForCollection(workPackage, callback);
       break;
     case 'perform-many-moderation-actions':
       performManyModerationActions(workPackage, callback);
