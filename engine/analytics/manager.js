@@ -348,10 +348,28 @@ const sendBackAnalyticsResultsOrError = (req,res,error,results) => {
   }
 };
 
+const convertDocxSurveyToJson = (formData, done) => {
+  const options = {
+    url: process.env["AC_ANALYTICS_BASE_URL"]+"convert_doc_x_survey_to_json",
+    headers: {
+      'X-API-KEY': process.env["AC_ANALYTICS_KEY"]
+    },
+    formData: formData,
+  };
+
+  request.put(options, (error, content) => {
+    if (content && content.statusCode!=200) {
+      error = content.statusCode;
+    }
+    done(error, content);
+  });
+}
+
 module.exports = {
   updateCollection,
   getFromAnalyticsApi,
   triggerSimilaritiesTraining,
   sendBackAnalyticsResultsOrError,
-  getParsedSimilaritiesContent
+  getParsedSimilaritiesContent,
+  convertDocxSurveyToJson
 };

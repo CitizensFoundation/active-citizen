@@ -210,30 +210,31 @@ const getTranslatedTextForPost = (post, callback) => {
 const estimateToxicityScoreForCollection = (options, callback) => {
   if (process.env.GOOGLE_PERSPECTIVE_API_KEY) {
     log.info("getToxicityScoreForText collection preparing", {options});
-    const model = options.collectionType === "community" ? models.community : models.Group;
+    const model = options.collectionType === "community" ? models.Community : models.Group;
 
     let collectionIncludes = [];
-    let attributes = ['id','language','name'];
+    let attributes = [];
 
     if (options.collectionType === "group") {
       collectionIncludes = [
         {
-          model: models.Communtity,
-          attributes: ['id', 'access','domain_id']
+          model: models.Community,
+          attributes: ['id', 'access', 'domain_id']
         }
       ]
+      attributes = ['id','language','name','objectives'];
     } else {
-      attributes = ['id','language','name','domain_id'];
+      attributes = ['id','language','name','domain_id', 'description'];
     }
 
-    models.model.findOne({
+    model.findOne({
       where: {
         id: options.collectionId
       },
       include: collectionIncludes,
       attributes: attributes
     }).then( collection => {
-      if ( 'description') {
+      if (collection) {
         let doNotStoreValue = collection.access===0;
         if (options.collectionType === "group" && collection.Community.access===0)
           doNotStoreValue = true;
