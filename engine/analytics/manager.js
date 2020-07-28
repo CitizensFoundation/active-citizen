@@ -15,7 +15,7 @@ const updateDomain = (domainId, done) => {
     where: {
       id: domainId
     },
-    attributes: ['id','name','default_locale'],
+    attributes: ['id','name','default_locale','created_at', 'updated_at'],
     order: [
       ['id', 'asc' ]
     ]
@@ -44,7 +44,7 @@ const updateCommunity = (communityId, done) => {
         required: true
       }
     ],
-    attributes: ['id','name','default_locale'],
+    attributes: ['id','name','default_locale','created_at', 'updated_at'],
     order: [
       ['id', 'asc' ]
     ]
@@ -69,7 +69,7 @@ const updateGroup = (groupId, done) => {
     include: [
       {
         model: models.Community,
-        attributes: ['id','access','status','default_locale'],
+        attributes: ['id','access','status','default_locale','created_at', 'updated_at'],
         required: true,
         include: [
           {
@@ -80,7 +80,7 @@ const updateGroup = (groupId, done) => {
         ]
       }
     ],
-    attributes: ['id','name'],
+    attributes: ['id','name','created_at', 'updated_at'],
     order: [
       ['id', 'asc' ]
     ]
@@ -171,7 +171,7 @@ const updatePost = (postId, done) => {
         [ { model: models.Group }, { model: models.Image, as: 'GroupLogoImages' } , 'created_at', 'desc' ],
         [ { model: models.Group }, { model: models.Community }, { model: models.Image, as: 'CommunityLogoImages' } , 'created_at', 'desc' ]
       ],
-      attributes: ['id','name','description','group_id','category_id','status','deleted','language','created_at',
+      attributes: ['id','name','description','group_id','category_id','status','deleted','language','created_at', 'updated_at',
         'user_id','official_status','public_data','cover_media_type',
         'counter_endorsements_up','counter_endorsements_down','counter_points','counter_flags']
     }).then((post) => {
@@ -192,7 +192,7 @@ const updatePoint = (pointId, done) => {
     where: {
       id: pointId
     },
-    attributes: ['id', 'name', 'content', 'user_id', 'post_id', 'value', 'status', 'counter_quality_up', 'counter_quality_down', 'language', 'created_at'],
+    attributes: ['id', 'name', 'content', 'user_id', 'post_id', 'value', 'status', 'counter_quality_up', 'counter_quality_down', 'language','created_at', 'updated_at'],
     order: [
       [models.PointRevision, 'created_at', 'asc'],
       [{model: models.Video, as: "PointVideos"}, 'updated_at', 'desc'],

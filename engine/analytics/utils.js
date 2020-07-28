@@ -17,6 +17,8 @@ const importDomain = (domain, done) => {
     {
       name: domain.name,
       language: domain.default_locale,
+      created_at: domain.created_at,
+      updated_at: domain.updated_at,
       status: domain.deleted ? 'deleted' : 'published'
     });
 
@@ -40,6 +42,8 @@ const importCommunity = (community, done) => {
     {
       name: community.name,
       domain_id: community.Domain.id,
+      created_at: community.created_at,
+      updated_at: community.updated_at,
       language: community.default_locale ? community.default_locale : community.Domain.default_locale,
       status: community.deleted ? 'deleted' : 'published'
     });
@@ -64,6 +68,8 @@ const importGroup = (group, done) => {
     {
       name: group.name,
       community_id: group.Community.id,
+      created_at: group.created_at,
+      updated_at: group.updated_at,
       language: group.Community.default_locale ? group.Community.default_locale : group.Community.Domain.default_locale,
       status: group.deleted ? 'deleted' : 'published'
     });
@@ -173,6 +179,8 @@ const importPost = (post, done) => {
       counter_endorsements_down: post.counter_endorsements_down,
       counter_points: post.counter_points,
       counter_flags: post.counter_flags,
+      created_at: post.created_at,
+      updated_at: post.updated_at,
       name: post.name,
       imageUrl: imageUrl,
       videoUrl: videoUrl,

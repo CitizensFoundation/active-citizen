@@ -26,7 +26,7 @@ const importAllDomains = (done) => {
   log.info('AcSimilarityDomainImport', {});
 
   models.Domain.unscoped().findAll({
-        attributes: ['id','name','default_locale'],
+        attributes: ['id','name','default_locale','created_at', 'updated_at'],
         order: [
           ['id', 'asc' ]
         ]
@@ -50,11 +50,11 @@ const importAllCommunities = (done) => {
     include: [
       {
         model: models.Domain,
-        attributes: ['id','default_locale'],
+        attributes: ['id','default_locale','created_at', 'updated_at'],
         required: true
       }
     ],
-    attributes: ['id','name','default_locale'],
+    attributes: ['id','name','default_locale','created_at', 'updated_at'],
     order: [
       ['id', 'asc' ]
     ]
@@ -78,18 +78,18 @@ const importAllGroups = (done) => {
     include: [
       {
         model: models.Community,
-        attributes: ['id','access','status','default_locale'],
+        attributes: ['id','access','status','default_locale','created_at', 'updated_at'],
         required: true,
         include: [
           {
             model: models.Domain,
-            attributes: ['id','default_locale'],
+            attributes: ['id','default_locale','created_at', 'updated_at'],
             required: true
           }
         ]
       }
     ],
-    attributes: ['id','name'],
+    attributes: ['id','name','created_at', 'updated_at'],
     order: [
       ['id', 'asc' ]
     ]
@@ -179,7 +179,7 @@ const importAllPosts = (done) => {
         [ { model: models.Group }, { model: models.Image, as: 'GroupLogoImages' } , 'created_at', 'desc' ],
         [ { model: models.Group }, { model: models.Community }, { model: models.Image, as: 'CommunityLogoImages' } , 'created_at', 'desc' ]
       ],
-      attributes: ['id','name','description','group_id','category_id','status','deleted','language','created_at',
+      attributes: ['id','name','description','group_id','category_id','status','deleted','language','created_at', 'updated_at',
                    'user_id','official_status','public_data','cover_media_type',
                    'counter_endorsements_up','counter_endorsements_down','counter_points','counter_flags']
     }).then((posts) => {
@@ -197,7 +197,7 @@ const importAllPosts = (done) => {
 
 const importAllPoints = (done) => {
   models.Point.unscoped().findAll({
-    attributes: ['id', 'name', 'content', 'user_id', 'post_id', 'value', 'status', 'counter_quality_up', 'counter_quality_down', 'language', 'created_at'],
+    attributes: ['id', 'name', 'content', 'user_id', 'post_id', 'value', 'status', 'counter_quality_up', 'counter_quality_down', 'language', 'created_at', 'updated_at'],
     order: [
       ['id', 'desc' ],
       [models.PointRevision, 'created_at', 'asc'],

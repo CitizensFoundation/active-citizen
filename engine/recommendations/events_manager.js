@@ -3,6 +3,7 @@ const models = require('../../../models');
 const _ = require('lodash');
 const async = require('async');
 const log = require('../../utils/logger');
+const request = require('request');
 
 let engine = null;
 let airbrake = null;
@@ -11,166 +12,51 @@ if(process.env.AIRBRAKE_PROJECT_ID) {
   airbrake = require('../../utils/airbrake');
 }
 
-const ACTIVE_CITIZEN_PIO_APP_ID = 1;
+const createAction = (postId, userId, date, action, callback) => {
+  var properties = {};
 
-if (process.env.PIOEngineUrl) {
-  engine = new predictionio.Engine({url: process.env.PIOEngineUrl });
-}
+  const esId = `${postId}-${userId}-${action}`;
 
-const getClient = (appId) => {
-  return new predictionio.Events({appId: appId});
-};
-
-const convertToString = (integer) => {
-  return integer.toString();
-};
-
-const getPost = (postId, callback) => {
-  models.Post.findOne(
+  properties = _.merge(properties,
     {
-      where: {
-        id: postId,
-        status: 'published'
-      },
-      include: [
-        {
-          model: models.Category,
-          required: false
-        },
-        {
-          model: models.Group,
-          required: true,
-          include: [
-            {
-              model: models.Community,
-              required: true,
-              include: [
-                {
-                  model: models.Domain,
-                  required: true
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    }).then((post) => {
-    if (post) {
-      callback(post)
-    } else {
-      callback(null);
-    }
-  }).catch((error) => {
-    log.error('Events Manager getPost Error', {postId: postId, err: "Could not find post" });
-    callback(null);
+      postId,
+      userId,
+      date,
+      action,
+      esId
+    });
+
+  const options = {
+    url: process.env["AC_ANALYTICS_BASE_URL"]+"addPostAction/"+process.env.AC_ANALYTICS_CLUSTER_ID,
+    headers: {
+      'X-API-KEY': process.env["AC_ANALYTICS_KEY"]
+    },
+    json: properties
+  };
+
+  request.post(options, (error) => {
+    callback(error);
   });
 };
 
-const createOrUpdateItem = (postId, date, callback) => {
-  const client = getClient(ACTIVE_CITIZEN_PIO_APP_ID);
-  getPost(postId, (post) => {
-    if (post) {
-      let properties = {};
+const createManyActions = (posts, callback) => {
+  const options = {
+    url: process.env["AC_ANALYTICS_BASE_URL"]+"addManyPostActions/"+process.env.AC_ANALYTICS_CLUSTER_ID,
+    headers: {
+      'X-API-KEY': process.env["AC_ANALYTICS_KEY"]
+    },
+    json: { posts: posts }
+  };
 
-      if (post.category_id) {
-        properties = _.merge(properties,
-          {
-            category: [ convertToString(post.category_id) ]
-          });
-      }
-      properties = _.merge(properties,
-        {
-          domain: [ convertToString(post.Group.Community.Domain.id) ],
-          domainLocale: [ post.Group.Community.Domain.default_locale ],
-
-          community: [ convertToString(post.Group.Community.id) ],
-          communityAccess: [ convertToString(post.Group.Community.access) ],
-          communityStatus: [ post.Group.Community.status ],
-          communityLocale: [ (post.Group.Community.default_locale && post.Group.Community.default_locale!=='')  ?
-            post.Group.Community.default_locale :
-            post.Group.Community.Domain.default_locale ],
-
-          group: [ convertToString(post.Group.id) ],
-          groupAccess: [ convertToString(post.Group.access) ],
-          groupStatus: [ convertToString(post.Group.status) ],
-
-          status: [ post.deleted ? 'deleted' : post.status ],
-
-          official_status: [ convertToString(post.official_status) ],
-          language: [ (post.language && post.language!=='') ? post.language : "??" ]
-        });
-
-      properties = _.merge(properties,
-        {
-          date: date,
-          createdAt: post.created_at.toISOString()
-        }
-      );
-
-      client.createItem({
-        entityId: post.id,
-        properties: properties,
-        date: date,
-        eventTime: new Date().toISOString()
-      }).then((result) => {
-        log.info('Events Manager createOrUpdateItem', {postId: post.id, result: result});
-        callback();
-      });
-    } else {
-      log.error('Events Manager createOrUpdateItem error could not find post', {postId: postId, err: "Could not find post" });
-      callback();
-    }
-  })
-};
-
-const createAction = (targetEntityId, userId, date, action, callback) => {
-  const client = getClient(ACTIVE_CITIZEN_PIO_APP_ID);
-
-  getPost(targetEntityId, (post) => {
-    if (post) {
-      client.createAction({
-        event: action,
-        uid: userId,
-        targetEntityId: targetEntityId,
-        date: date,
-        eventTime: date
-      }).then((result) => {
-        log.info('Events Manager createAction', {action: action, postId: targetEntityId, userId: userId, result: result});
-        callback();
-      }).catch((error) => {
-        log.error('Events Manager createAction Error', {action: action, postId: targetEntityId, userId: userId, err: error});
-        callback(error);
-      });
-    } else {
-      log.error('Events Manager createAction Error', { action: action, postId: targetEntityId, userId: userId, err: "Could not find post" });
-      callback();
-    }
-  });
-};
-
-const createUser = (user, callback) => {
-  client = getClient(ACTIVE_CITIZEN_PIO_APP_ID);
-  client.createUser( {
-    appId: 1,
-    uid: user.id,
-    eventDate: user.created_at.toISOString()
-  }).then((result) => {
-    log.info('Events Manager createUser', { userId: user.id, result: result});
-    callback();
-  }).catch((error) => {
-    log.error('Events Manager createUser Error', { userId: user.id, err: error});
+  request.post(options, (error) => {
     callback(error);
   });
 };
 
 const generateRecommendationEvent = (activity, callback) => {
-  if (process.env.PIOEventUrl && activity) {
+  if (process.env["AC_ANALYTICS_BASE_URL"] && activity) {
     log.info('Events Manager generateRecommendationEvent', {type: activity.type, userId: activity.user_id });
     switch (activity.type) {
-      case "activity.post.new":
-      case "activity.post.copied":
-        createOrUpdateItem(activity.Post.id, activity.Post.created_at.toISOString(), callback);
-        break;
       case "activity.post.endorsement.new":
       case "activity.post.endorsement.copied":
       case "activity.post.rating.new":
@@ -206,13 +92,6 @@ const generateRecommendationEvent = (activity, callback) => {
       case "activity.point.unhelpful.copied":
         if (activity.Point.Post) {
           createAction(activity.Point.Post.id, activity.user_id, activity.created_at.toISOString(), 'point-unhelpful', callback);
-        } else {
-          callback();
-        }
-        break;
-      case "activity.post.status.change":
-        if (activity && activity.Post) {
-          createOrUpdateItem(activity.Post.id, activity.Post.created_at.toISOString(), callback);
         } else {
           callback();
         }
@@ -345,7 +224,9 @@ const isItemRecommended = (itemId, userId, dateRange, options, callback) => {
 };
 
 module.exports = {
-  generateRecommendationEvent: generateRecommendationEvent,
-  getRecommendationFor: getRecommendationFor,
-  isItemRecommended: isItemRecommended
+  generateRecommendationEvent,
+  getRecommendationFor,
+  isItemRecommended,
+  createAction,
+  createManyActions
 };
