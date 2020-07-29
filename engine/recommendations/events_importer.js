@@ -67,7 +67,7 @@ const importAllActionsFor = function (model, where, include, action, done, attri
             userId: object.user_id,
             date: object.created_at.toISOString(),
             user_agent: object.user_agent,
-            ip_address: object.user_agent,
+            ip_address: object.ip_address,
             action,
             esId
           });
