@@ -66,6 +66,8 @@ const importAllActionsFor = function (model, where, include, action, done, attri
             postId,
             userId: object.user_id,
             date: object.created_at.toISOString(),
+            user_agent: object.user_agent,
+            ip_address: object.user_agent,
             action,
             esId
           });
@@ -94,27 +96,27 @@ var importAll = function(done) {
     function(callback){
       importAllActionsFor(models.Post, {}, [], 'new-post', function () {
         callback();
-      });
+      }, ['id','user_id','created_at','ip_address','user_agent']);
     },
     function(callback){
       importAllActionsFor(models.Endorsement, { value: { $gt: 0 } }, [ { model: models.Post, attributes: ['id'] }  ], 'endorse', function () {
         callback();
-      }, ['id','user_id','created_at','value']);
+      }, ['id','user_id','created_at','value','ip_address','user_agent']);
     },
     function(callback){
       importAllActionsFor(models.Endorsement, { value: { $lt: 0 } }, [  { model: models.Post, attributes: ['id'] } ], 'oppose', function () {
         callback();
-      }, ['id','user_id','created_at','value']);
+      }, ['id','user_id','created_at','value','ip_address','user_agent']);
     },
     function(callback){
       importAllActionsFor(models.Point, { value: { $ne: 0 }}, [ { model: models.Post, attributes: ['id'] } ], 'new-point', function () {
         callback();
-      }, ['id','user_id','created_at','value']);
+      }, ['id','user_id','created_at','value','ip_address','user_agent']);
     },
     function(callback){
       importAllActionsFor(models.Point, { value: 0 },  [{ model: models.Post, attributes: ['id'] } ], 'new-point-comment', function () {
         callback();
-      }, ['id','user_id','created_at','value']);
+      }, ['id','user_id','created_at','value','ip_address','user_agent']);
     },
     function(callback){
       importAllActionsFor(models.PointQuality, { value: { $gt: 0 } }, [{
@@ -123,7 +125,7 @@ var importAll = function(done) {
           include: [{ model: models.Post, attributes: ['id'] } ]
         }], 'point-helpful', function () {
         callback();
-      }, ['id','user_id','created_at','value']);
+      }, ['id','user_id','created_at','value','ip_address','user_agent']);
     },
     function(callback){
       importAllActionsFor(models.PointQuality, { value: { $lt: 0 } }, [{
@@ -132,7 +134,7 @@ var importAll = function(done) {
         include: [ models.Post ]
       }], 'point-unhelpful', function () {
         callback();
-      }, ['id','user_id','created_at','value']);
+      }, ['id','user_id','created_at','value','ip_address','user_agent']);
     }
   ], function () {
     console.log("FIN");
