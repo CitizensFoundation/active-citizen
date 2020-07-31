@@ -16,6 +16,7 @@ const importDomain = (domain, done) => {
   properties = _.merge(properties,
     {
       name: domain.name,
+      description: domain.description,
       language: domain.default_locale,
       created_at: domain.created_at,
       updated_at: domain.updated_at,
@@ -41,6 +42,7 @@ const importCommunity = (community, done) => {
   properties = _.merge(properties,
     {
       name: community.name,
+      description: community.description,
       domain_id: community.Domain.id,
       created_at: community.created_at,
       updated_at: community.updated_at,
@@ -67,6 +69,7 @@ const importGroup = (group, done) => {
   properties = _.merge(properties,
     {
       name: group.name,
+      objectives: group.objectives,
       community_id: group.Community.id,
       created_at: group.created_at,
       updated_at: group.updated_at,

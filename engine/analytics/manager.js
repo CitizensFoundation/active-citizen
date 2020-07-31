@@ -15,7 +15,7 @@ const updateDomain = (domainId, done) => {
     where: {
       id: domainId
     },
-    attributes: ['id','name','default_locale','created_at', 'updated_at'],
+    attributes: ['id','name','description','default_locale','created_at', 'updated_at'],
     order: [
       ['id', 'asc' ]
     ]
@@ -44,7 +44,7 @@ const updateCommunity = (communityId, done) => {
         required: true
       }
     ],
-    attributes: ['id','name','default_locale','created_at', 'updated_at'],
+    attributes: ['id','name','description','default_locale','created_at', 'updated_at'],
     order: [
       ['id', 'asc' ]
     ]
@@ -80,7 +80,7 @@ const updateGroup = (groupId, done) => {
         ]
       }
     ],
-    attributes: ['id','name','created_at', 'updated_at'],
+    attributes: ['id','name','created_at', 'objectives', 'updated_at'],
     order: [
       ['id', 'asc' ]
     ]

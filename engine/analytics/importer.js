@@ -8,7 +8,7 @@ const importGroup = require('./utils').importGroup;
 const importPost = require('./utils').importPost;
 const importPoint = require('./utils').importPoint;
 
-let updateAsyncLimit = 5;
+let updateAsyncLimit = 1;
 
 let lineCrCounter = 0;
 
@@ -26,7 +26,7 @@ const importAllDomains = (done) => {
   log.info('AcSimilarityDomainImport', {});
 
   models.Domain.unscoped().findAll({
-        attributes: ['id','name','default_locale','created_at', 'updated_at'],
+        attributes: ['id','name','description','default_locale','created_at', 'updated_at'],
         order: [
           ['id', 'asc' ]
         ]
@@ -54,7 +54,7 @@ const importAllCommunities = (done) => {
         required: true
       }
     ],
-    attributes: ['id','name','default_locale','created_at', 'updated_at'],
+    attributes: ['id','name','description','default_locale','created_at', 'updated_at'],
     order: [
       ['id', 'asc' ]
     ]
@@ -89,7 +89,7 @@ const importAllGroups = (done) => {
         ]
       }
     ],
-    attributes: ['id','name','created_at', 'updated_at'],
+    attributes: ['id','name','created_at', 'objectives', 'updated_at'],
     order: [
       ['id', 'asc' ]
     ]
