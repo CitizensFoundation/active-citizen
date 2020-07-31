@@ -174,7 +174,7 @@ const generateRecommendationEvent = (activity, callback) => {
   }
 };
 
-const getRecommendationFor = (req, userId, dateRange, options, callback, userLocale) => {
+const getRecommendationFor = (req, userId, dateOptions, options, callback, userLocale) => {
   let collectionType, collectionId;
 
   //log.info('Events Manager getRecommendationFor', { fields: fields, dateRange: dateRange });
@@ -196,7 +196,7 @@ const getRecommendationFor = (req, userId, dateRange, options, callback, userLoc
       headers: {
         'X-API-KEY': process.env["AC_ANALYTICS_KEY"]
       },
-      json: { user_agent: req.useragent.source, ip_address: req.clientIp }
+      json: { user_agent: req.useragent.source, ip_address: req.clientIp, date_options: dateOptions }
     };
 
     request.put(options, (error, content) => {
