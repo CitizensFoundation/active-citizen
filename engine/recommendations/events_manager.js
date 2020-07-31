@@ -121,7 +121,7 @@ const generateRecommendationEvent = (activity, callback) => {
           activity.Post.id,
           activity.user_id,
           activity.created_at.toISOString(),
-          'post-new', callback);
+          'new-post', callback);
         break;
       case "activity.point.new":
       case "activity.point.copied":
@@ -133,7 +133,7 @@ const generateRecommendationEvent = (activity, callback) => {
               activity.Point.Post.id,
               activity.user_id,
               activity.created_at.toISOString(),
-              'point-comment-new', callback);
+              'new-point-comment', callback);
           } else if (activity.Point.Post) {
             createAction(
               activity.Point.user_agent,
@@ -141,7 +141,7 @@ const generateRecommendationEvent = (activity, callback) => {
               activity.Point.Post.id,
               activity.user_id,
               activity.created_at.toISOString(),
-              'point-new', callback);
+              'new-point', callback);
           } else {
             callback();
           }
