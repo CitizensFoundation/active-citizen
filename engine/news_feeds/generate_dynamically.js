@@ -109,7 +109,7 @@ var filterRecommendations = function (allActivities, options, callback) {
     dateRange = { name: 'date', before: options.beforeDate }
   }
 
-  getRecommendationFor(options.user_id, dateRange, options, function (error, recommendedItemIds) {
+  getRecommendationFor({}, options.user_id, dateRange, options, function (error, recommendedItemIds) {
     if (error) {
       recommendedItemIds = [];
       if(airbrake) {

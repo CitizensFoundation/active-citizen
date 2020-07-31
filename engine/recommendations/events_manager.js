@@ -12,13 +12,15 @@ if(process.env.AIRBRAKE_PROJECT_ID) {
   airbrake = require('../../utils/airbrake');
 }
 
-const createAction = (postId, userId, date, action, callback) => {
+const createAction = (userAgent, ipAddress, postId, userId, date, action, callback) => {
   var properties = {};
 
   const esId = `${postId}-${userId}-${action}`;
 
   properties = _.merge(properties,
     {
+      user_agent: userAgent,
+      ipAddress: ipAddress,
       postId,
       userId,
       date,
@@ -53,26 +55,93 @@ const createManyActions = (posts, callback) => {
   });
 };
 
+const createEndorsementTypeAction = (model, activity, itemId, type, done) => {
+  let userAgent;
+  let ipAddress;
+
+  async.series([
+    (seriesCallback) => {
+      if (itemId) {
+        model.findOne({
+          where: {
+            id: itemId
+          },
+          attributes: ['id','user_agent','ip_address']
+        }).then(endorsement => {
+          if (endorsement) {
+            userAgent = endorsement.user_agent;
+            ipAddress = endorsement.ip_address;
+            seriesCallback();
+          } else {
+            seriesCallback("Can't find endorsement: "+activity.object.endorsementId)
+          }
+        }).catch( error => {
+          seriesCallback(error);
+        })
+      } else {
+        log.error("Can't find itemId for createEndorsementTypeAction");
+        seriesCallback();
+      }
+    },
+    (seriesCallback) => {
+      createAction(
+        userAgent,
+        ipAddress,
+        activity.Post.id,
+        activity.user_id,
+        activity.created_at.toISOString(),
+        type,
+        seriesCallback
+      );
+    }
+  ], error => {
+    done(error);
+  })
+}
+
 const generateRecommendationEvent = (activity, callback) => {
   if (process.env["AC_ANALYTICS_BASE_URL"] && activity) {
     log.info('Events Manager generateRecommendationEvent', {type: activity.type, userId: activity.user_id });
     switch (activity.type) {
       case "activity.post.endorsement.new":
       case "activity.post.endorsement.copied":
+        createEndorsementTypeAction(models.Endorsement, activity, activity.object.endorsementId, 'endorse', callback);
+        break;
       case "activity.post.rating.new":
       case "activity.post.rating.copied":
-        createAction(activity.Post.id, activity.user_id, activity.created_at.toISOString(), 'endorse', callback);
+        createEndorsementTypeAction(models.Rating, activity, activity.object.ratingId, 'endorse',  callback);
         break;
       case "activity.post.opposition.new":
-        createAction(activity.Post.id, activity.user_id, activity.created_at.toISOString(), 'oppose', callback);
+        createEndorsementTypeAction(models.Endorsement, activity, activity.object.endorsementId, 'oppose',  callback);
+        break;
+      case "activity.post.new":
+        createAction(
+          activity.Post.user_agent,
+          activity.Post.ip_address,
+          activity.Post.id,
+          activity.user_id,
+          activity.created_at.toISOString(),
+          'post-new', callback);
         break;
       case "activity.point.new":
       case "activity.point.copied":
         if (activity.Point) {
           if (activity.Point.value==0 && activity.Point.Post) {
-            createAction(activity.Point.Post.id, activity.user_id, activity.created_at.toISOString(), 'point-comment-new', callback);
+            createAction(
+              activity.Point.user_agent,
+              activity.Point.ip_address,
+              activity.Point.Post.id,
+              activity.user_id,
+              activity.created_at.toISOString(),
+              'point-comment-new', callback);
           } else if (activity.Point.Post) {
-            createAction(activity.Point.Post.id, activity.user_id, activity.created_at.toISOString(), 'point-new', callback);
+            createAction(
+              activity.Point.user_agent,
+              activity.Point.ip_address,
+              activity.Point.Post.id,
+              activity.user_id,
+              activity.created_at.toISOString(),
+              'point-new', callback);
           } else {
             callback();
           }
@@ -83,7 +152,7 @@ const generateRecommendationEvent = (activity, callback) => {
       case "activity.point.helpful.new":
       case "activity.point.helpful.copied":
         if (activity.Point.Post) {
-          createAction(activity.Point.Post.id, activity.user_id, activity.created_at.toISOString(), 'point-helpful', callback);
+          createEndorsementTypeAction(models.PointQuality, activity, activity.object.pointQualityId, 'point-helpful',  callback);
         } else {
           callback();
         }
@@ -91,7 +160,7 @@ const generateRecommendationEvent = (activity, callback) => {
       case "activity.point.unhelpful.new":
       case "activity.point.unhelpful.copied":
         if (activity.Point.Post) {
-          createAction(activity.Point.Post.id, activity.user_id, activity.created_at.toISOString(), 'point-unhelpful', callback);
+          createEndorsementTypeAction(models.PointQuality, activity, activity.object.pointQualityId, 'point-unhelpful',  callback);
         } else {
           callback();
         }
@@ -100,112 +169,53 @@ const generateRecommendationEvent = (activity, callback) => {
         callback();
     }
   } else {
-    log.warn("No PIOEventUrl or no activity, no action taken in generateRecommendationEvent", { activityType: activity ? activity.type : null });
+    log.warn("Not setup for ac-analytics-api", { activityType: activity ? activity.type : null });
     callback();
   }
 };
 
-const getRecommendationFor = (userId, dateRange, options, callback, userLocale) => {
-  const fields = [];
+const getRecommendationFor = (req, userId, dateRange, options, callback, userLocale) => {
+  let collectionType, collectionId;
 
-  fields.push({
-    name: 'status',
-    values: ['published'],
-    bias: -1
-  });
-
-  if (options.domain_id) {
-    fields.push({
-      name: 'domain',
-      values: [ options.domain_id ],
-      bias: -1
-    });
-  }
-
-  if (options.community_id) {
-    fields.push({
-      name: 'community',
-      values: [ options.community_id ],
-      bias: -1
-    });
-  }
-
-  if (options.group_id) {
-    fields.push({
-      name: 'group',
-      values: [ options.group_id ],
-      bias: -1
-    });
-  }
-
-  const officialStatus = options.official_status ? options.official_status : 0;
-
-  fields.push({
-    name: 'official_status',
-    values: [ officialStatus.toString() ],
-    bias: -1
-  });
-
-  if (!options.group_id && !options.community_id) {
-    fields.push({
-      name: 'groupStatus',
-      values: [ "active", "featured"],
-      bias: -1
-    });
-    fields.push({
-      name: 'communityStatus',
-      values: [ "active", "featured"],
-      bias: -1
-    });
-    if (userLocale) {
-      fields.push({
-        name: 'communityLocale',
-        values: [ userLocale ],
-        bias: 0.9 // High boost for the selected user locale
-      });
-    }
-  } else if (!options.group_id) {
-    fields.push({
-      name: 'groupStatus',
-      values: [ "active","featured"],
-      bias: -1
-    });
-    if (userLocale) {
-      fields.push({
-        name: 'communityLocale',
-        values: [ userLocale ],
-        bias: 0.9 // High boost for the selected user locale
-      });
-    }
-  }
-  
   //log.info('Events Manager getRecommendationFor', { fields: fields, dateRange: dateRange });
+  if (options.domain_id) {
+    collectionType = "domain";
+    collectionId = options.domain_id;
+  } else if (options.community_id) {
+    collectionType = "community";
+    collectionId = options.community_id;
+  } else if (options.group_id) {
+    collectionType = "group";
+    collectionId = options.group_id;
+  }
 
-  if (engine) {
-    engine.sendQuery({
-      user: userId,
-      num: options.limit || 400,
-      fields: fields,
-      dateRange: dateRange
-    }).then((results) => {
-      if (results) {
-        log.info('Events Manager getRecommendationFor', { userId: userId });
-        const resultMap =  _.map(results.itemScores, (item) => { return item.item; });
-        callback(null,resultMap);
+  //TODO: Add back dateRange options to backend and here
+  if (process.env["AC_ANALYTICS_BASE_URL"] && collectionType) {
+    const options = {
+      url: process.env["AC_ANALYTICS_BASE_URL"]+"recommendations/"+collectionType+"/"+process.env.AC_ANALYTICS_CLUSTER_ID+"/"+collectionId+"/"+userId,
+      headers: {
+        'X-API-KEY': process.env["AC_ANALYTICS_KEY"]
+      },
+      json: { user_agent: req.useragent.source, ip_address: req.clientIp }
+    };
+
+    request.put(options, (error, content) => {
+      let results = [];
+      if (content && content.statusCode!=200) {
+        error = content.statusCode;
       } else {
-        callback("Not results for recommendations");
+        results = content.body;
       }
-    }).catch((error) => {
-      callback(error);
+      callback(error, results);
     });
   } else {
-    log.warn("Pio engine not available getRecommendationFor");
+    log.warn("ac-analytics-api getRecommendationFor or no collectionType");
     callback();
   }
 };
 
-const isItemRecommended = (itemId, userId, dateRange, options, callback) => {
-  getRecommendationFor(userId, dateRange, options,  (error, items) => {
+const isItemRecommended = (req, itemId, userId, dateRange, options, callback) => {
+  getRecommendationFor(req, userId, dateRange, options,  (error, items) => {
     if (error) {
       log.error("Recommendation Events Manager Error", { itemId: itemId, userId: userId, err: error });
       if(airbrake) {

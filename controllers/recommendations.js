@@ -29,10 +29,7 @@ var setupOptions = function (req) {
 };
 
 var processRecommendations = function (levelType, req, res, recommendedItemIds, error) {
-  var finalIds;
-
   if (error) {
-    finalIds = [];
     log.error("Recommendation Error "+levelType, { err: error, id: req.params.id, userId:  req.user ? req.user.id : -1, errorStatus:  500 });
     if(airbrake) {
       airbrake.notify(error).then((airbrakeErr) => {
@@ -43,16 +40,15 @@ var processRecommendations = function (levelType, req, res, recommendedItemIds, 
     }
     res.send([]);
   } else {
-    finalIds = _.shuffle(recommendedItemIds);
-    if (finalIds.length>OVERALL_LIMIT) {
-      finalIds = _.dropRight(finalIds, finalIds.length-OVERALL_LIMIT);
+    if (recommendedItemIds.length>OVERALL_LIMIT) {
+      recommendedItemIds = _.dropRight(recommendedItemIds, recommendedItemIds.length-OVERALL_LIMIT);
     }
     log.info("Recommendations domains status", { recommendedItemIds: recommendedItemIds });
 
     models.Post.findAll({
       where: {
         id: {
-          $in: finalIds
+          $in: recommendedItemIds
         }
       },
       order: [
@@ -78,11 +74,11 @@ var processRecommendations = function (levelType, req, res, recommendedItemIds, 
         {
           model: models.Group,
           required: true,
+          attributes: models.Group.defaultPublicAttributes,
           where: {
             status: {
               $in: ['active','featured']
-            },
-            access: models.Group.ACCESS_PUBLIC
+            }
           },
           include: [
             {
@@ -176,15 +172,20 @@ var processRecommendationsLight = function (groupId, req, res, recommendedItemId
         {
           model: models.Group,
           required: true,
+          attributes: models.Group.defaultPublicAttributes,
           where: {
             id: groupId
           }
         }
       ]
     }).then(function(posts) {
+      posts.sort(function(a, b){
+        return recommendedItemIds.indexOf(a.id) - recommendedItemIds.indexOf(b.id);
+      });
+
       const recommendationsInfo = {recommendations: posts, groupId: groupId };
       if (redisCacheKey) {
-        req.redisClient.setex(redisCacheKey, process.env.RECOMMENDATIONS_CACHE_TTL ? parseInt(process.env.RECOMMENDATIONS_CACHE_TTL) : 60, JSON.stringify(recommendationsInfo));
+        req.redisClient.setex(redisCacheKey, process.env.RECOMMENDATIONS_CACHE_TTL ? parseInt(process.env.RECOMMENDATIONS_CACHE_TTL) : 5, JSON.stringify(recommendationsInfo));
       }
       res.send(recommendationsInfo);
     }).catch(function(error) {
@@ -211,7 +212,7 @@ router.get('/domains/:id', auth.can('view domain'), function(req, res) {
     limit: OVERALL_LIMIT*2
   });
 
-  getRecommendationFor(options.user_id, DATE_OPTIONS, options, function (error, recommendedItemIds) {
+  getRecommendationFor(req, options.user_id, DATE_OPTIONS, options, function (error, recommendedItemIds) {
     processRecommendations("domain", req, res, recommendedItemIds, error);
   }, req.user ? req.user.default_locale : null);
 });
@@ -224,7 +225,7 @@ router.get('/communities/:id', auth.can('view community'),  function(req, res) {
     limit: OVERALL_LIMIT*2
   }, req.user ? req.user.default_locale : null);
 
-  getRecommendationFor(options.user_id, DATE_OPTIONS, options, function (error, recommendedItemIds) {
+  getRecommendationFor(req, options.user_id, DATE_OPTIONS, options, function (error, recommendedItemIds) {
     processRecommendations("community", req, res, recommendedItemIds, error);
   }, req.user ? req.user.default_locale : null);
 });
@@ -237,7 +238,7 @@ router.get('/groups/:id', auth.can('view group'), function(req, res) {
     limit: OVERALL_LIMIT*2
   });
 
-  getRecommendationFor(options.user_id, DATE_OPTIONS, options, function (error, recommendedItemIds) {
+  getRecommendationFor(req, options.user_id, DATE_OPTIONS, options, function (error, recommendedItemIds) {
     processRecommendations("group", req, res, recommendedItemIds, error);
   }, req.user ? req.user.default_locale : null);
 });
@@ -273,7 +274,7 @@ router.put('/groups/:id/getPostRecommendations', auth.can('view group'), functio
             dateOptions = {name: "date", after: moment().add(-Math.abs(maxDays), 'days').toISOString()};
           }
 
-          getRecommendationFor(options.user_id, dateOptions, options, function (error, recommendedItemIds) {
+          getRecommendationFor(req, options.user_id, dateOptions, options, function (error, recommendedItemIds) {
             if (!error) {
               processRecommendationsLight(req.params.id, req, res, recommendedItemIds, error, redisCacheKey);
             } else {

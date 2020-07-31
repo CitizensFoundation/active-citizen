@@ -51,6 +51,15 @@ const delayedCreatePriorityActivity = (workPackage, callback) => {
   if (options.pointId)
     object['pointId'] = options.pointId;
 
+  if (options.endorsementId)
+    object['endorsementId'] = options.endorsementId;
+
+  if (options.pointQualityId)
+    object['pointQualityId'] = options.pointQualityId;
+
+  if (options.ratingId)
+    object['ratingId'] = options.ratingId;
+
   async.series([
     // Checking for missing values for community or group if its a post related event
     function (seriesCallback) {
@@ -121,7 +130,7 @@ const delayedCreatePriorityActivity = (workPackage, callback) => {
           if (activity.type!='activity.fromApp') {
             queue.create('process-activity', activity).priority('critical').removeOnComplete(true).save();
           }
-          log.info('Activity Created', { activityOd: activity.id, userId: options.userId});
+          log.info('Activity Created', { activityId: activity.id, userId: options.userId});
           callback();
         } else {
           callback('Activity Not Found');
@@ -145,7 +154,7 @@ const delayedCreateActivityFromApp = (workPackage, callback) => {
     context: { pathName: workData.body.path_name, name: workData.body.context, eventTime: workData.body.event_time,
       sessionId: workData.body.sessionId, userAgent: workData.body.user_agent, server_timestamp: workData.body.server_timestamp },
     user_id: workData.userId,
-    domain_od: workData.domainId,
+    domain_id: workData.domainId,
     group_id: workData.groupId,
     community_id: workData.communityId,
     post_id: workData.postId

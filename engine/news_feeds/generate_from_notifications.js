@@ -111,7 +111,7 @@ var buildNewsFeedItems = function (notification, callback) {
             });
           },
           function (innerSeriesCallback) {
-            isItemRecommended(activity.post_id, notification.User.id, {
+            isItemRecommended({}, activity.post_id, notification.User.id, {
               limit: 15,
               after: lastNewsItemUpdatedAt ? lastNewsItemUpdatedAt.toISOString() : null
             }, {
@@ -138,7 +138,7 @@ var buildNewsFeedItems = function (notification, callback) {
             });
           },
           function (innerSeriesCallback) {
-            isItemRecommended(activity.post_id, notification.User.id, {
+            isItemRecommended({}, activity.post_id, notification.User.id, {
               after: lastNewsItemUpdatedAt ? lastNewsItemUpdatedAt.toISOString() : null
             }, {
               community_id: activity.community_id
@@ -164,7 +164,7 @@ var buildNewsFeedItems = function (notification, callback) {
             });
           },
           function (innerSeriesCallback) {
-            isItemRecommended(activity.post_id, notification.User.id, {
+            isItemRecommended({}, activity.post_id, notification.User.id, {
               after: lastNewsItemUpdatedAt ? lastNewsItemUpdatedAt.toISOString() : null
             }, {
               group_id: activity.group_id
@@ -193,7 +193,7 @@ var buildNewsFeedItems = function (notification, callback) {
 
           // Create item if recommended
           function (innerSeriesCallback) {
-            isItemRecommended(activity.post_id, notification.User.id, {
+            isItemRecommended({}, activity.post_id, notification.User.id, {
               after: lastNewsItemUpdatedAt ? lastNewsItemUpdatedAt.toISOString() : null
             }, {
               post_id: activity.post_id
