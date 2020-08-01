@@ -203,8 +203,10 @@ const getRecommendationFor = (req, userId, dateOptions, options, callback, userL
       let results = [];
       if (content && content.statusCode!=200) {
         error = content.statusCode;
-      } else {
+      } else if (content) {
         results = content.body;
+      } else {
+        error = "No content"
       }
       callback(error, results);
     });
