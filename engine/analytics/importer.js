@@ -8,7 +8,7 @@ const importGroup = require('./utils').importGroup;
 const importPost = require('./utils').importPost;
 const importPoint = require('./utils').importPoint;
 
-let updateAsyncLimit = 1;
+let updateAsyncLimit = 5;
 
 let lineCrCounter = 0;
 
