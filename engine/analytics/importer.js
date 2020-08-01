@@ -183,6 +183,7 @@ const importAllPosts = (done) => {
                    'user_id','official_status','public_data','cover_media_type',
                    'counter_endorsements_up','counter_endorsements_down','counter_points','counter_flags']
     }).then((posts) => {
+    //posts = _.take(posts, 100);
     lineCrCounter = 0;
     async.eachOfLimit(posts, updateAsyncLimit, (post, index, callback) => {
       importPost(post, callback);
@@ -250,6 +251,7 @@ const importAllPoints = (done) => {
       }
     ]
   }).then(function (points) {
+    //points = _.take(points, 100);
     lineCrCounter = 0;
     async.eachOfLimit(points, updateAsyncLimit, (point, index, callback) => {
       importPoint(point, callback);
