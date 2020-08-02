@@ -268,7 +268,7 @@ router.put('/groups/:id/getPostRecommendations', auth.can('view group'), functio
         ]
       }).then(group => {
         if (group) {
-          var dateOptions = DATE_OPTIONS_YEAR;
+          var dateOptions = null; //DATE_OPTIONS_YEAR;
           if (group.configuration && group.configuration.maxDaysBackForRecommendations && group.configuration.maxDaysBackForRecommendations) {
             var maxDays = parseInt(group.configuration.maxDaysBackForRecommendations);
             dateOptions = {name: "date", after: moment().add(-Math.abs(maxDays), 'days').toISOString()};
