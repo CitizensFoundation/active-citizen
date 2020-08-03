@@ -302,7 +302,7 @@ const getFromAnalyticsApi = (req, featureType, collectionType, collectionId, don
         if (content && content.statusCode!=200) {
           error = content.statusCode;
         } else {
-          req.redisClient.setex(redisKey, process.env.SIMILARITIES_CACHE_TTL ? parseInt(process.env.SIMILARITIES_CACHE_TTL) : 60*60, JSON.stringify(content));
+          req.redisClient.setex(redisKey, process.env.SIMILARITIES_CACHE_TTL ? parseInt(process.env.SIMILARITIES_CACHE_TTL) : 15*60, JSON.stringify(content));
         }
         done(error, content);
       });
