@@ -119,7 +119,17 @@ const importPost = (post, done) => {
     description=post.Points[0].content;
   }
 
-  if (post.public_data && post.public_data.structuredAnswers) {
+  if (post.public_data && post.public_data.structuredAnswersJson) {
+    const answers = post.public_data.structuredAnswersJson;
+    for (let i=0 ; i<answers.length; i+=1) {
+      if (answers[i]) {
+        if (answers[i].value) {
+          description += " ";
+          description += answers[i].value.trim();
+        }
+      }
+    }
+  } else if (post.public_data && post.public_data.structuredAnswers) {
     const answers = post.public_data.structuredAnswers.split("%!#x");
     description = answers.join(" ");
   }
