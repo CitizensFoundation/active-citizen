@@ -227,7 +227,7 @@ const estimateToxicityScoreForCollection = (options, callback) => {
       attributes = ['id','language','name','domain_id', 'description'];
     }
 
-    model.findOne({
+    model.unscoped().findOne({
       where: {
         id: options.collectionId
       },
@@ -291,7 +291,7 @@ const estimateToxicityScoreForCollection = (options, callback) => {
 const estimateToxicityScoreForPost = (options, callback) => {
   if (process.env.GOOGLE_PERSPECTIVE_API_KEY) {
     log.info("getToxicityScoreForText post preparing");
-    models.Post.findOne({
+    models.Post.unscoped().findOne({
       where: {
         id: options.postId
       },
@@ -394,7 +394,7 @@ const estimateToxicityScoreForPost = (options, callback) => {
 const estimateToxicityScoreForPoint = (options, callback) => {
   if (process.env.GOOGLE_PERSPECTIVE_API_KEY) {
     log.info("getToxicityScoreForText preparing");
-    models.Point.findOne({
+    models.Point.unscoped().findOne({
       attributes: ['id','language','data','post_id','group_id'],
       where: {
         id: options.pointId
@@ -463,7 +463,7 @@ const estimateToxicityScoreForPoint = (options, callback) => {
                   point.save().then(() => {
                     if (hasModelBreachedToxicityThreshold(point)) {
                       if (point.post_id) {
-                        models.Post.findOne({
+                        models.Post.unscoped().findOne({
                           where: {
                             id: point.post_id
                           },
