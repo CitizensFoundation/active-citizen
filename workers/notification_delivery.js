@@ -63,7 +63,7 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
                   ]
                 },
                 {
-                  model: models.Post,
+                  model: models.Post.unscoped(),
                   required: false
                 },
                 {
@@ -71,7 +71,7 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
                   required: false
                 },
                 {
-                  model: models.Point,
+                  model: models.Point.unscoped(),
                   required: false,
                   include: [
                     {

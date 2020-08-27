@@ -44,7 +44,7 @@ ActivityWorker.prototype.process = (activityJson, callback) => {
             required: false
           },
           {
-            model: models.Post,
+            model: models.Post.unscoped(),
             required: false
           },
           {
