@@ -129,6 +129,7 @@ async function preparePosts(workPackage, callback) {
               location: getLocation(post),
               endorsementsUp: post.counter_endorsements_up,
               endorsementsDown: post.counter_endorsements_down,
+              status: post.status,
               counterPoints: post.counter_points,
               pointsUp: getPointsUp(post),
               Points: post.Points,
@@ -515,7 +516,7 @@ const getGroupPosts = (group, hostName, callback) => {
     where: {
       group_id: group.id
     },
-    attributes: ['id','counter_endorsements_down','counter_endorsements_up','counter_points','public_data','name','description','language','location','data','created_at'],
+    attributes: ['id','counter_endorsements_down','counter_endorsements_up','status','counter_points','public_data','name','description','language','location','data','created_at'],
 
     order: [
       ['created_at', 'asc' ],

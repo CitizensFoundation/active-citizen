@@ -297,6 +297,7 @@ const addPostToSheet = (worksheet, post, group) => {
   const row = {
     postName: post.translatedName ? post.translatedName : post.name,
     postId: post.realPost.id,
+    status: post.status,
     createdAt: moment(post.realPost.created_at).format("DD/MM/YY HH:mm"),
     email: post.userEmail,
     userName: post.userName,
@@ -490,6 +491,7 @@ async function exportToXls(options, callback) {
 
   let columns = [
     { header: "Created", key: "createdAt", width: 15 },
+    { header: "Status", key: "status", width: 15 },
     { header: "Post Id", key: "postId", width: 15 },
     { header: "User name", key: "userName", width: 30 },
     { header: "Email", key: "email", width: 30 },
