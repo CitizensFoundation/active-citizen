@@ -36,6 +36,7 @@ const preparePosts = require("./common_utils").preparePosts;
 
 const uploadToS3 = require("./common_utils").uploadToS3;
 const sanitizeFilename = require("sanitize-filename");
+const {addPostPointsToSheet} = require("./add_points_to_sheet");
 const getImageFromUrl = require("./common_utils").getImageFromUrl;
 
 const getSubCodeFromRadio = (radios, answer) => {
@@ -485,9 +486,29 @@ async function exportToXls(options, callback) {
   workbook.creator = "Your Priorities - Automated";
   workbook.created = new Date();
 
-  const worksheet = workbook.addWorksheet(
-    group.translatedName ? group.translatedName : group.name
+  const name = group.translatedName ? group.translatedName : group.name;
+
+  const worksheet = workbook.addWorksheet(`Posts - ${name}`
   );
+
+  const worksheetPoints = workbook.addWorksheet(`Points - ${name}`);
+
+  worksheetPoints.columns = [
+    { header: "Group Id", key: "groupId", width: 15 },
+    { header: "Post Id", key: "postId", width: 15 },
+    { header: "Post Name", key: "postName", width: 30 },
+    { header: "Status", key: "status", width: 15 },
+    { header: "Created", key: "createdAt", width: 15 },
+    { header: "User name", key: "userName", width: 30 },
+    { header: "Email", key: "email", width: 30 },
+    { header: "Value", key: "value", width: 15 },
+    { header: "Helpful Count", key: "helpfulCount", width: 15 },
+    { header: "Unhelpful Count", key: "unhelpfulCount", width: 15 },
+    { header: "Language", key: "pointLocale", width: 15 },
+    { header: "Content", key: "pointContentLatest", width: 150 },
+    { header: "Media URLs", key: "mediaUrls", width: 15 },
+    { header: "Point transcripts", key: "pointTranscript", width: 50 }
+  ]
 
   let columns = [
     { header: "Created", key: "createdAt", width: 15 },
@@ -587,6 +608,7 @@ async function exportToXls(options, callback) {
       getOrderedPosts(posts),
       (post, eachCallback) => {
         addPostToSheet(worksheet, post, group);
+        addPostPointsToSheet(worksheetPoints, post, group);
         processedCount += 1;
         updateJobStatusIfNeeded(
           jobId,
@@ -622,6 +644,7 @@ async function exportToXls(options, callback) {
                 (post, eachCallback) => {
                   if (post.category === category) {
                     addPostToSheet(worksheet, post, group);
+                    addPostPointsToSheet(worksheetPoints, post, group);
                     processedCount += 1;
                     updateJobStatusIfNeeded(
                       jobId,
@@ -662,6 +685,7 @@ async function exportToXls(options, callback) {
               getOrderedPosts(postsWithoutCategories),
               (post, eachCallback) => {
                 addPostToSheet(worksheet, post, group);
+                addPostPointsToSheet(worksheetPoints, post, group);
                 processedCount += 1;
                 updateJobStatusIfNeeded(
                   jobId,

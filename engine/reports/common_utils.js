@@ -370,6 +370,28 @@ const getMediaFormatUrl = function (media, formatId) {
     return ""
 };
 
+const getPointMediaUrls = function(post)  {
+  let mediaURLs = "";
+
+  if (post.Points && post.Points.length>0) {
+    _.forEach(post.Points, function (point) {
+      if (point.PointVideos && point.PointVideos.length>0) {
+        mediaURLs += _.map(point.PointVideos, function (media) {
+          return ""+getMediaFormatUrl(media, 0)+"\n";
+        });
+      }
+
+      if (point.PointAudios && point.PointAudios.length>0) {
+        mediaURLs += _.map(point.PointAudios, function (media) {
+          return ""+getMediaFormatUrl(media, 0)+"\n";
+        });
+      }
+    });
+  }
+
+  return mediaURLs;
+}
+
 const getMediaURLs = function (post) {
   var mediaURLs = "";
 
@@ -540,7 +562,7 @@ const getGroupPosts = (group, hostName, callback) => {
       },
       {
         model: models.Point,
-        attributes: ['id','content','value','language','created_at','public_data','counter_quality_up','counter_quality_down'],
+        attributes: ['id','content','value','language','created_at','public_data','counter_quality_up','counter_quality_down','status'],
         required: false,
         include: [
           {
@@ -773,5 +795,6 @@ module.exports = {
   setJobError,
   preparePosts,
   uploadToS3,
-  getImageFromUrl
+  getImageFromUrl,
+  getPointMediaUrls
 };
