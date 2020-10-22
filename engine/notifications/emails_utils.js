@@ -182,6 +182,8 @@ var sendOneEmail = function (emailLocals, callback) {
         fromEmail = 'Betra Ísland <betraisland@ibuar.is>';
       } else if (emailLocals.domain.domain_name.indexOf('forbrukerradet.no') > -1) {
         fromEmail = 'Mine idéer Forbrukerrådet <mineideer@forbrukerradet.no>';
+      } else if (emailLocals.domain.domain_name.indexOf('multicitychallenge.org') > -1) {
+        fromEmail = 'Admins GovLab <admins@thegovlab.org>';
       } else if (emailLocals.domain.domain_name.indexOf('e-dem.nl') > -1) {
         fromEmail = 'admin@yrpr.e-dem.nl';
       } else if (emailLocals.domain.domain_name.indexOf('parliament.scot') > -1) {
