@@ -39,6 +39,20 @@ const sanitizeFilename = require("sanitize-filename");
 const {addPostPointsToSheet} = require("./add_points_to_sheet");
 const getImageFromUrl = require("./common_utils").getImageFromUrl;
 
+const getSubCodeFromDropdown = (dropdowns, answer) => {
+  let subCode = answer.value.trim();
+  if (dropdowns) {
+    for (let i = 0; i < dropdowns.length; i++) {
+      if (dropdowns[i].text.trim() === answer.value.trim()) {
+        subCode = dropdowns[i].subCode;
+        break;
+      }
+    }
+  }
+
+  return subCode;
+};
+
 const getSubCodeFromRadio = (radios, answer) => {
   let subCode = answer.value.trim();
   if (radios) {
@@ -97,8 +111,20 @@ const getRadioDescription = (useSubCodes, answers, questionsById, i) => {
   }
 };
 
+const getDropdownDescription = (useSubCodes, answers, questionsById, i) => {
+  if (useSubCodes) {
+    return getSubCodeFromDropdown(questionsById[answers[i].uniqueId].dropdownOptions, answers[i]);
+  } else {
+    return answers[i].value.trim();
+  }
+};
+
 const getAnswerType = (answers, questionsById, i) => {
-  return questionsById[answers[i].uniqueId].type;
+  if (questionsById[answers[i].uniqueId]) {
+    return questionsById[answers[i].uniqueId].type;
+  } else {
+    return "unknown";
+  }
 };
 
 const setDescriptionsNewStyle = (group, post, buildPost) => {
@@ -130,6 +156,13 @@ const setDescriptionsNewStyle = (group, post, buildPost) => {
         );
       } else if (answers[i].value && answerType === "checkboxes") {
         structuredAnswers[answers[i].uniqueId] = getCheckboxDescription(
+          useSubCodes,
+          answers,
+          questionsById,
+          i
+        );
+      } else if (answers[i].value && answerType === "dropdown") {
+        structuredAnswers[answers[i].uniqueId] = getDropdownDescription(
           useSubCodes,
           answers,
           questionsById,
