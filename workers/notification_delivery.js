@@ -127,7 +127,7 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
         if (notification.user_id) {
           models.User.findOne({
             where: { id: notification.user_id },
-            attributes: ['id','notifications_settings','email','name','created_at']
+            attributes: ['id','notifications_settings','email','name','created_at','profile_data']
           }).then(function(userResults) {
             if (userResults) {
               user = userResults;
