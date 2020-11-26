@@ -244,9 +244,8 @@ var sendOneEmail = function (emailLocals, callback) {
           var translatedSubject = translateSubject(emailLocals.subject);
 
           if (transport) {
-            if (emailLocals.user.profile_data &&
-                emailLocals.user.profile_data.isAnonymousUser &&
-                emailLocals.user.email.indexOf('anonymous') > -1) {
+            if (emailLocals.user.email &&
+                emailLocals.user.email.indexOf('_anonymous@citizens.is') > -1) {
               log.info("Not sending email for anonymous user", {email: emailLocals.user.email});
               seriesCallback();
             } else {
