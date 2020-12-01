@@ -142,7 +142,32 @@ const createDocWithStyles = (title) => {
 };
 
 const setDescriptions = (group, post, builtPost, children) => {
-  if (group && group.configuration && group.configuration.structuredQuestions && group.configuration.structuredQuestions!=="") {
+  if (group && group.configuration && group.configuration.structuredQuestionsJson) {
+    const questionsById = {};
+    const questionComponents = group.configuration.structuredQuestionsJson;
+
+    for (let i = 0; i < questionComponents.length; i++) {
+      questionsById[questionComponents[i].uniqueId] = questionComponents[i];
+    }
+
+    const answers = post.public_data.structuredAnswersJson;
+
+    for (let i = 0; i < answers.length; i += 1) {
+      if (answers[i] && answers[i].uniqueId) {
+        if (questionsById[answers[i].uniqueId]) {
+          children.push(
+            new Paragraph({
+              text: questionsById[answers[i].uniqueId].text,
+              heading: HeadingLevel.HEADING_2,
+            }),
+            new Paragraph(answers[i].value),
+          )
+        } else {
+          log.error("Can't find question for answer by id");
+        }
+      }
+    }
+  } else if (group && group.configuration && group.configuration.structuredQuestions && group.configuration.structuredQuestions!=="") {
     var structuredAnswers = [];
 
     var questionComponents = group.configuration.structuredQuestions.split(",");
