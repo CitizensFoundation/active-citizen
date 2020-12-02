@@ -152,20 +152,24 @@ const setDescriptions = (group, post, builtPost, children) => {
 
     const answers = post.public_data.structuredAnswersJson;
 
-    for (let i = 0; i < answers.length; i += 1) {
-      if (answers[i] && answers[i].uniqueId) {
-        if (questionsById[answers[i].uniqueId]) {
-          children.push(
-            new Paragraph({
-              text: questionsById[answers[i].uniqueId].text,
-              heading: HeadingLevel.HEADING_2,
-            }),
-            new Paragraph(answers[i].value),
-          )
-        } else {
-          log.error("Can't find question for answer by id");
+    if (answers) {
+      for (let i = 0; i < answers.length; i += 1) {
+        if (answers[i] && answers[i].uniqueId) {
+          if (questionsById[answers[i].uniqueId]) {
+            children.push(
+              new Paragraph({
+                text: questionsById[answers[i].uniqueId].text,
+                heading: HeadingLevel.HEADING_2,
+              }),
+              new Paragraph(answers[i].value),
+            )
+          } else {
+            log.error("Can't find question for answer by id");
+          }
         }
       }
+    } else {
+      log.error("No answers in post");
     }
   } else if (group && group.configuration && group.configuration.structuredQuestions && group.configuration.structuredQuestions!=="") {
     var structuredAnswers = [];
