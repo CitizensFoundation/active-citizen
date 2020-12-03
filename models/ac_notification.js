@@ -128,11 +128,11 @@ module.exports = (sequelize, DataTypes) => {
         frequency: 2
     },
     all_community: {
-      method: 1,
+      method: 0,
         frequency: 3
     },
     all_group: {
-      method: 1,
+      method: 0,
         frequency: 3
     },
     newsletter: {
