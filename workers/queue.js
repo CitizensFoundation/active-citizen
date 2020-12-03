@@ -21,7 +21,7 @@ var queue = kue.createQueue({
   "socket_keepalive" : true
 });
 
-queue.watchStuckJobs(6000);
+queue.watchStuckJobs(2000);
 
 queue.on('job enqueue', function(id, type){
   log.info('Job Enqueue', { id: id, type: type });
