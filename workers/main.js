@@ -46,11 +46,11 @@ i18n
       email.sendOne(job.data, done);
     });
 
-    queue.process('process-notification-delivery', 5, function(job, done) {
+    queue.process('process-notification-delivery', 1, function(job, done) {
       notification_delivery.process(job.data, done);
     });
 
-    queue.process('process-activity', 5, function(job, done) {
+    queue.process('process-activity', 1, function(job, done) {
       activity.process(job.data, done);
     });
 
@@ -58,7 +58,7 @@ i18n
       delayedJobs.process(job.data, done);
     });
 
-    queue.process('process-notification-news-feed', 5, function(job, done) {
+    queue.process('process-notification-news-feed', 1, function(job, done) {
       notification_news_feed.process(job.data, done);
     });
 
