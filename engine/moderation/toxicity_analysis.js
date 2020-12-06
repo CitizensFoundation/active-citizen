@@ -363,7 +363,7 @@ const estimateToxicityScoreForPost = (options, callback) => {
               getToxicityScoreForText(textUsed, doNotStoreValue, (error, results) => {
                 if (error) {
                   callback(error);
-                } else {
+                } else if (results) {
                   setupModelPublicDataScore(post, textUsed, results);
                   post.save().then(() => {
                     if (hasModelBreachedToxicityThreshold(post)) {
@@ -376,6 +376,9 @@ const estimateToxicityScoreForPost = (options, callback) => {
                   }).catch( error => {
                     callback(error);
                   })
+                } else {
+                  log.warn("No results for toxicity");
+                  callback();
                 }
               });
           });
@@ -464,7 +467,7 @@ const estimateToxicityScoreForPoint = (options, callback) => {
               getToxicityScoreForText(textUsed, doNotStoreValue, (error, results) => {
                 if (error) {
                   callback(error);
-                } else {
+                } else if (results) {
                   setupModelPublicDataScore(point, textUsed, results);
                   point.save().then(() => {
                     if (hasModelBreachedToxicityThreshold(point)) {
@@ -509,6 +512,9 @@ const estimateToxicityScoreForPoint = (options, callback) => {
                   }).catch( error => {
                     callback(error);
                   })
+                } else {
+                  log.warn("No results for toxicity");
+                  callback();
                 }
               });
           });
