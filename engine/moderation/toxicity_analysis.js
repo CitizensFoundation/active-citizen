@@ -23,9 +23,12 @@ const getToxicityScoreForText = (text, doNotStore, callback) => {
       log.info("getToxicityScoreForText results");
       callback(null, result);
     }).catch( error => {
-      if (error && error.stack && error.stack.indexOf("ResponseError: Attribute") > -1) {
+      if (error &&
+          error.stack &&
+          error.stack.indexOf("ResponseError: Attribute") > -1 &&
+          error.stack.indexOf("does not support request languages") > -1) {
         log.warn("getToxicityScoreForText warning", { error });
-        callback(error);
+        callback();
       } else {
         log.error("getToxicityScoreForText error", { error });
         callback(error);
@@ -254,7 +257,7 @@ const estimateToxicityScoreForCollection = (options, callback) => {
             getToxicityScoreForText(textUsed, doNotStoreValue, (error, results) => {
               if (error) {
                 callback(error);
-              } else {
+              } else if (results) {
                 setupModelPublicDataScore(collection, textUsed, results);
                 collection.save().then(() => {
                   if (hasModelBreachedToxicityThreshold(collection)) {
@@ -267,6 +270,9 @@ const estimateToxicityScoreForCollection = (options, callback) => {
                 }).catch( error => {
                   callback(error);
                 })
+              } else {
+                log.warn("No results from getToxicityScoreForText");
+                callback();
               }
             });
           });
