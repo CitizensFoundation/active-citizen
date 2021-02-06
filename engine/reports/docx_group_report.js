@@ -156,13 +156,15 @@ const setDescriptions = (group, post, builtPost, children) => {
       for (let i = 0; i < answers.length; i += 1) {
         if (answers[i] && answers[i].uniqueId) {
           if (questionsById[answers[i].uniqueId]) {
-            children.push(
-              new Paragraph({
-                text: questionsById[answers[i].uniqueId].text,
-                heading: HeadingLevel.HEADING_2,
-              }),
-              new Paragraph(answers[i].value),
-            )
+            if (answers[i].value) {
+              children.push(
+                new Paragraph({
+                  text: questionsById[answers[i].uniqueId].text,
+                  heading: HeadingLevel.HEADING_2,
+                }),
+                new Paragraph(answers[i].value),
+              )
+            }
           } else {
             log.error("Can't find question for answer by id");
           }
