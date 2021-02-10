@@ -105,12 +105,12 @@ const updatePost = (postId, done) => {
       },
       include: [
         {
-          model: models.Point,
+          model: models.Point.unscoped(),
           required: false,
           attributes: ['id','content'],
         },
         {
-          model: models.Group,
+          model: models.Group.unscoped(),
           required: true,
           attributes: ['id','access','status','configuration'],
           include: [
@@ -120,7 +120,7 @@ const updatePost = (postId, done) => {
               required: false
             },
             {
-              model: models.Community,
+              model: models.Community.unscoped(),
               attributes: ['id','access','status','default_locale'],
               required: true,
               include: [
@@ -186,7 +186,7 @@ const updatePost = (postId, done) => {
 };
 
 const updatePoint = (pointId, done) => {
-  log.info('updatePoint');
+  log.info('updatePoint', { pointId });
 
   models.Point.unscoped().findOne({
     where: {
@@ -217,17 +217,17 @@ const updatePoint = (pointId, done) => {
         as: 'PointAudios'
       },
       {
-        model: models.Post,
+        model: models.Post.unscoped(),
         attributes: ['id', 'group_id','created_at','category_id','official_status','status'],
         required: true,
         include: [
           {
-            model: models.Group,
+            model: models.Group.unscoped(),
             attributes: ['id','access','status','configuration'],
             required: true,
             include: [
               {
-                model: models.Community,
+                model: models.Community.unscoped(),
                 attributes: ['id','access','status','default_locale'],
                 required: true,
                 include: [
