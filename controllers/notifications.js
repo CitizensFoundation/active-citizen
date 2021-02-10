@@ -176,7 +176,8 @@ router.put('/markAllViewed', auth.isLoggedInNoAnonymousCheck, function(req, res)
   }, {
     where: { user_id: req.user.id },
     silent: true
-  }).spread(function(affectedCount, affectedRows) {
+  }).then( results => {
+    const [ affectedCount, affectedRows ] = results;
     log.info("Notifications Have Marked All As Viewed", { affectedCount: affectedCount, affectedRows: affectedRows, userId: req.user ? req.user.id : null });
     res.sendStatus(200);
   }).catch(function (error) {
@@ -200,7 +201,8 @@ router.put('/setIdsViewed', auth.isLoggedInNoAnonymousCheck, function(req, res) 
           }
         },
         silent: true
-      }).spread(function(affectedCount, affectedRows) {
+      }).then( results => {
+        const [ affectedCount, affectedRows ] = results;
         log.info("Notifications Have Marked Ids As Viewed", { affectedCount: affectedCount, affectedRows: affectedRows, userId: req.user ? req.user.id : null });
         seriesCallback();
       }).catch(function (error) {

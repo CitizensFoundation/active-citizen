@@ -111,7 +111,8 @@ var filterNotificationForDelivery = function (notification, user, template, subj
           frequency: frequency,
           type: notification.from_notification_setting
         }
-      }).spread(function(delayedNotification, created) {
+      }).then( results => {
+        const [ delayedNotification, created ] = results;
         if (created) {
           log.info('Notification Email Processing AcDelayedNotification Created', { delayedNotificationId: delayedNotification ? delayedNotification.id : -1, context: 'create' });
         } else {

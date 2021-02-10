@@ -12,7 +12,8 @@ module.exports = (callback) => {
       notifications_settings: models.AcNotification.anonymousNotificationSettings,
       status: 'active'
     }
-  }).spread(function(user) {
+  }).then( results => {
+    const [ user, created ] = results;
     callback(null, user);
   }).catch(function (error) {
     callback(error);

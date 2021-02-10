@@ -53,7 +53,7 @@ const addNotificationsForUsers = (activity, users, notification_type, notificati
 // type: 'notification.post.endorsement';
 const addOrPossiblyGroupNotification = (model, notification_type, notification_setting_type, activity, user, priority, callback) => {
   let modelWhereOptions;
-  if (model._modelOptions.tableName=='posts') {
+  if (model.constructor.options.tableName=='posts') {
     modelWhereOptions = {
       post_id: model.id
     }

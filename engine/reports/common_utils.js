@@ -168,7 +168,7 @@ const updateJobStatusIfNeeded = (jobId, totalPosts, processedCount, lastReported
     let progress = Math.round(((processedCount/totalPosts)*100)/2);
     models.AcBackgroundJob.update(
       { progress },
-      { where: { id: jobId } }).spread(()=>{
+      { where: { id: jobId } }).then(()=>{
       done(null, true);
     }).catch((error)=>{
       done(error)
@@ -182,7 +182,7 @@ const updateUploadJobStatus = (jobId, uploadProgress) => {
   let progress = Math.min(Math.round(50 + uploadProgress/2),95);
   models.AcBackgroundJob.update(
     { progress },
-    { where: { id: jobId } }).spread(()=>{
+    { where: { id: jobId } }).then(()=>{
   }).catch((error)=>{
     log.error("updateUploadJobStatus", {error: error});
   });
