@@ -91,12 +91,9 @@ module.exports = (sequelize, DataTypes) => {
 
   AcTranslationCache.getTranslationFromGoogle = (textType, indexKey, contentToTranslate, targetLanguage, modelInstance, callback) => {
 
-    log.info("TDEBUG 1 getTranslationFromGoogle", { });
     const translateAPI = new Translate({
       credentials: JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)
     });
-
-    log.info("TDEBUG 2 getTranslationFromGoogle", { });
 
     translateAPI.translate(contentToTranslate, targetLanguage)
       .then((results) => {
@@ -139,19 +136,12 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   AcTranslationCache.getTranslation = (req, modelInstance, callback) => {
-    log.info("TDEBUG 1 getTranslation", { });
 
     const contentToTranslate = sequelize.models.AcTranslationCache.getContentToTranslate(req, modelInstance);
-    log.info("TDEBUG 2 getTranslation", { });
     if (contentToTranslate && contentToTranslate!=='' &&
       contentToTranslate.length>1 && isNaN(contentToTranslate)) {
 
-      log.info("TDEBUG 3 getTranslation", { });
-
       const contentHash = farmhash.hash32(contentToTranslate).toString();
-
-      log.info("TDEBUG 4 getTranslation", { });
-
 
       const textType = req.query.textType;
 
