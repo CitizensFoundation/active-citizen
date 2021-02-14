@@ -5,20 +5,17 @@ const _ = require('lodash');
 const fs = require('fs');
 const request = require('request');
 const farmhash = require('farmhash');
+const fixTargetLocale = require('translation_helpers').fixTargetLocale;
 
-const fixTargetLocale = (itemTargetLocale) => {
-  let targetLocale = itemTargetLocale.replace('_','-');
+// For post get translations in all locales (that exists)
+// select * from translation_cache where index_key LIKE 'communityContent-728-%-3536451109';
+// Clone them with the new post id
+// Same
+// Domains
+// Communities
+// Groups
+// Points
 
-  if (targetLocale!=='sr-latin' && targetLocale!=='zh-CN' && targetLocale!=='zh-TW') {
-    targetLocale = targetLocale.split("-")[0];
-  }
-
-  if (targetLocale==='sr-latin') {
-    targetLocale = 'sr-Latn';
-  }
-
-  return targetLocale;
-}
 
 const addItem = (targetLocale, items, textType, id, content, done) => {
   if (!content) {
@@ -340,6 +337,5 @@ module.exports = {
   getTranslatedTextsForCommunity,
   getTranslatedTextsForGroup,
   updateTranslationForCommunity,
-  updateTranslationForGroup,
-  fixTargetLocale
+  updateTranslationForGroup
 };
