@@ -144,15 +144,13 @@ module.exports = (sequelize, DataTypes) => {
     const contentToTranslate = sequelize.models.AcTranslationCache.getContentToTranslate(req, modelInstance);
     log.info("TDEBUG 2 getTranslation", { });
     if (contentToTranslate && contentToTranslate!=='' &&
-      log.info("TDEBUG 3 getTranslation", { });
-
       contentToTranslate.length>1 && isNaN(contentToTranslate)) {
 
-      log.info("TDEBUG 4 getTranslation", { });
+      log.info("TDEBUG 3 getTranslation", { });
 
       const contentHash = farmhash.hash32(contentToTranslate).toString();
+      log.info("TDEBUG 4 getTranslation", { });
 
-      log.info("TDEBUG 5 getTranslation", { });
 
       const textType = req.query.textType;
 
