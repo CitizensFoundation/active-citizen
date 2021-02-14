@@ -149,6 +149,7 @@ module.exports = (sequelize, DataTypes) => {
       log.info("TDEBUG 3 getTranslation", { });
 
       const contentHash = farmhash.hash32(contentToTranslate).toString();
+
       log.info("TDEBUG 4 getTranslation", { });
 
 
