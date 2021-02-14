@@ -60,7 +60,7 @@ const sendCampaign = (workPackage, callback) => {
   }).then(campaign => {
     const groupConfiguration = campaign.Group.configuration;
 
-    const twilioClient = require('twilio')(groupConfiguration.twilioAccountSid, groupConfiguration.twilioAuthToken, {});
+    const twilioClient = null; //require('twilio')(groupConfiguration.twilioAccountSid, groupConfiguration.twilioAuthToken, {});
 
     models.AcListUser.find({
       where: {
