@@ -89,6 +89,32 @@ module.exports = (sequelize, DataTypes) => {
     }
   };
 
+  // Post Edit
+  // When AutoTranslate event ask for all the strings from the StructuredQuestions
+  // Replace the StructuredQuestions with translates, store original value and redraw
+  // When AutoTranslate stops reinstate the original structured questions
+
+  // In Post
+  // When AutoTranslate ask for all the strings for StructuredAnswers & Questions
+  // Recreate structure and redraw
+  // When AutoTranslate stops
+  // Same in XLS and DOCX exports
+
+  AcTranslationCache.getSurveyTranslationsFromGoogle = async (textsToTranslate, targetLanguage) => {
+    //TODO: Implement a pagination for the max 128 strings limit of google translate
+    return await new Promise(async (resolve, reject) => {
+      const translateAPI = new Translate({
+        credentials: JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)
+      });
+
+      try {
+        resolve(await translateAPI.translate(textsToTranslate, targetLanguage));
+      } catch (error) {
+        reject(error);
+      }
+    });
+  };
+
   AcTranslationCache.getTranslationFromGoogle = (textType, indexKey, contentToTranslate, targetLanguage, modelInstance, callback) => {
 
     const translateAPI = new Translate({
