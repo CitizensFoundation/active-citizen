@@ -26,6 +26,19 @@ module.exports = (sequelize, DataTypes) => {
     tableName: 'translation_cache'
   });
 
+  AcTranslationCache.allowedTextTypesForSettingLanguage = [
+    "pointContent",
+    "postName",
+    "postContent",
+    "groupName",
+    "groupContent",
+    "communityName",
+    "communityContent",
+    "domainName",
+    "domainContent",
+    "statusChangeContent"
+  ]
+
   AcTranslationCache.getContentToTranslate = (req, modelInstance) => {
     switch(req.query.textType) {
       case 'postName':
@@ -144,11 +157,15 @@ module.exports = (sequelize, DataTypes) => {
                 callback(error);
               });
             } else {
-              modelInstance.update({
-                language: translation.detectedSourceLanguage
-              }).then(() => {
+              if (AcTranslationCache.allowedTextTypesForSettingLanguage.indexOf(textType)>-1) {
+                modelInstance.update({
+                  language: translation.detectedSourceLanguage
+                }).then(() => {
+                  callback(null, { content: translation.translatedText });
+                });
+              } else {
                 callback(null, { content: translation.translatedText });
-              });
+              }
             }
           }).catch((error) => {
             callback(error);
