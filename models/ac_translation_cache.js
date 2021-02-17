@@ -118,7 +118,7 @@ module.exports = (sequelize, DataTypes) => {
       where: {
         id: postId
       },
-      attributes: ['id','public_data']
+      attributes: ['id','public_data','language']
     }).then(async (post) => {
       if (post.public_data &&
           post.public_data.structuredAnswersJson &&
@@ -135,7 +135,7 @@ module.exports = (sequelize, DataTypes) => {
         }
         const contentHash = farmhash.hash32(combinedText).toString();
         let indexKey = `PostAnswer-${post.id}-${targetLanguage}-${contentHash}`;
-        AcTranslationCache.getSurveyTranslations(indexKey, textStrings, targetLanguage, done);
+        AcTranslationCache.getSurveyTranslations(indexKey, textStrings, targetLanguage, post, done);
       } else {
         done(null, []);
       }
@@ -169,7 +169,7 @@ module.exports = (sequelize, DataTypes) => {
         }
         const contentHash = farmhash.hash32(combinedText).toString();
         let indexKey = `GroupQuestions-${group.id}-${targetLanguage}-${contentHash}`;
-        AcTranslationCache.getSurveyTranslations(indexKey, textStrings, targetLanguage, done);
+        AcTranslationCache.getSurveyTranslations(indexKey, textStrings, targetLanguage, null, done);
       } else {
         done(null, []);
       }
@@ -178,24 +178,35 @@ module.exports = (sequelize, DataTypes) => {
     })
   }
 
-  AcTranslationCache.getSurveyTranslations = (indexKey, textStrings, targetLanguage, done) => {
+  AcTranslationCache.getSurveyTranslations = (indexKey, textStrings, targetLanguage, saveLanguageToModel, done) => {
     sequelize.models.AcTranslationCache.findOne({
       where: {
         index_key: indexKey
       }
     }).then(async translationModel => {
-      if (false && translationModel) {
+      if (translationModel) {
         done(null, JSON.parse(translationModel.content));
       } else {
         try {
           const results = await AcTranslationCache.getSurveyTranslationsFromGoogle(textStrings, targetLanguage);
           const translatedStrings = results[0];
+          const languageInfo = results[1];
           if (translatedStrings && translatedStrings.length>0) {
             sequelize.models.AcTranslationCache.create({
               index_key: indexKey,
               content: JSON.stringify(translatedStrings)
             }).then(() => {
-              done(null, translatedStrings);
+              if (saveLanguageToModel && languageInfo.data && languageInfo.data.translations && languageInfo.data.translations.length>0) {
+                saveLanguageToModel.update({
+                  language: languageInfo.data.translations[0].detectedSourceLanguage
+                }).then(() => {
+                  done(null, translatedStrings);
+                }).catch( error => {
+                  done(error);
+                });
+              } else {
+                done(null, translatedStrings);
+              }
             }).catch( error => {
               done(error);
             })
@@ -261,6 +272,8 @@ module.exports = (sequelize, DataTypes) => {
                   language: translation.detectedSourceLanguage
                 }).then(() => {
                   callback(null, { content: translation.translatedText });
+                }).catch( error => {
+                  callback(error);
                 });
               } else {
                 callback(null, { content: translation.translatedText });
