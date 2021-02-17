@@ -7,6 +7,7 @@ var path = require('path');
 var EmailTemplate = require('email-templates').EmailTemplate;
 var nodemailer = require('nodemailer');
 var smtpTransport = require('nodemailer-smtp-transport');
+const nodemailerSendgrid = require('nodemailer-sendgrid');
 var ejs = require('ejs');
 var i18n = require('../../utils/i18n');
 var airbrake = null;
@@ -28,14 +29,10 @@ var i18nFilter = function(text) {
 
 var transport = null;
 
-if (process.env.SENDGRID_USERNAME) {
-  transport = nodemailer.createTransport({
-    service: 'sendgrid',
-    auth: {
-      user: process.env.SENDGRID_USERNAME,
-      pass: process.env.SENDGRID_PASSWORD
-    }
-  });
+if (process.env.SENDGRID_API_KEY) {
+  transport = nodemailer.createTransport( nodemailerSendgrid({
+    apiKey: process.env.SENDGRID_API_KEY
+  }));
 } else if (process.env.SMTP_SERVER) {
   var smtpConfig = {
     host: process.env.SMTP_SERVER,
