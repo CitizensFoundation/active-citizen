@@ -112,6 +112,105 @@ module.exports = (sequelize, DataTypes) => {
   // Recreate structure and redraw
   // When AutoTranslate stops
   // Same in XLS and DOCX exports
+  AcTranslationCache.getSurveyAnswerTranslations = async (postId, targetLanguage, done) => {
+    targetLanguage = AcTranslationCache.fixUpLanguage(targetLanguage);
+    sequelize.models.Post.findOne({
+      where: {
+        id: postId
+      },
+      attributes: ['id','public_data']
+    }).then(async (post) => {
+      if (post.public_data &&
+          post.public_data.structuredAnswersJson &&
+          post.public_data.structuredAnswersJson.length>0) {
+        const textStrings = [];
+        let combinedText = "";
+        for (const answer of post.public_data.structuredAnswersJson) {
+          if (answer.value) {
+            textStrings.push(answer.value);
+            combinedText+=answer.value;
+          } else {
+            textStrings.push("");
+          }
+        }
+        const contentHash = farmhash.hash32(combinedText).toString();
+        let indexKey = `PostAnswer-${post.id}-${targetLanguage}-${contentHash}`;
+        AcTranslationCache.getSurveyTranslations(indexKey, textStrings, targetLanguage, done);
+      } else {
+        done(null, []);
+      }
+    }).catch( error => {
+      done(error);
+    })
+  }
+
+  AcTranslationCache.getSurveyQuestionTranslations = async (groupId, targetLanguage, done) => {
+    targetLanguage = AcTranslationCache.fixUpLanguage(targetLanguage);
+
+    sequelize.models.Group.findOne({
+      where: {
+        id: groupId
+      },
+      attributes: ['id','configuration']
+    }).then(async (group) => {
+      if (group.configuration &&
+          group.configuration.structuredQuestionsJson &&
+          group.configuration.structuredQuestionsJson.length>0) {
+
+        const textStrings = [];
+        let combinedText = "";
+        for (const question of group.configuration.structuredQuestionsJson) {
+          if (question.text) {
+            textStrings.push(question.text);
+            combinedText+=question.text;
+          } else {
+            textStrings.push("");
+          }
+        }
+        const contentHash = farmhash.hash32(combinedText).toString();
+        let indexKey = `GroupQuestions-${group.id}-${targetLanguage}-${contentHash}`;
+        AcTranslationCache.getSurveyTranslations(indexKey, textStrings, targetLanguage, done);
+      } else {
+        done(null, []);
+      }
+    }).catch( error => {
+      done(error);
+    })
+  }
+
+  AcTranslationCache.getSurveyTranslations = (indexKey, textStrings, targetLanguage, done) => {
+    sequelize.models.AcTranslationCache.findOne({
+      where: {
+        index_key: indexKey
+      }
+    }).then(async translationModel => {
+      if (false && translationModel) {
+        done(null, JSON.parse(translationModel.content));
+      } else {
+        try {
+          const results = await AcTranslationCache.getSurveyTranslationsFromGoogle(textStrings, targetLanguage);
+          const translatedStrings = results[0];
+          if (translatedStrings && translatedStrings.length>0) {
+            sequelize.models.AcTranslationCache.create({
+              index_key: indexKey,
+              content: JSON.stringify(translatedStrings)
+            }).then(() => {
+              done(null, translatedStrings);
+            }).catch( error => {
+              done(error);
+            })
+          } else {
+            done(null, []);
+          }
+        } catch (error) {
+          done(error);
+        }
+      }
+    }).catch( error => {
+      done(error);
+    });
+
+  }
 
   AcTranslationCache.getSurveyTranslationsFromGoogle = async (textsToTranslate, targetLanguage) => {
     //TODO: Implement a pagination for the max 128 strings limit of google translate
@@ -178,6 +277,20 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
+  AcTranslationCache.fixUpLanguage = (targetLanguage) => {
+    targetLanguage = targetLanguage.replace('_','-');
+
+    if (targetLanguage!=='sr-latin' && targetLanguage!=='zh-CN' && targetLanguage!=='zh-TW') {
+      targetLanguage = targetLanguage.split("-")[0];
+    }
+
+    if (targetLanguage==='sr-latin') {
+      targetLanguage = 'sr-Latn';
+    }
+
+    return targetLanguage;
+  }
+
   AcTranslationCache.getTranslation = (req, modelInstance, callback) => {
 
     const contentToTranslate = sequelize.models.AcTranslationCache.getContentToTranslate(req, modelInstance);
@@ -190,15 +303,7 @@ module.exports = (sequelize, DataTypes) => {
 
       let targetLanguage = req.query.targetLanguage;
 
-      targetLanguage = targetLanguage.replace('_','-');
-
-      if (targetLanguage!=='sr-latin' && targetLanguage!=='zh-CN' && targetLanguage!=='zh-TW') {
-        targetLanguage = targetLanguage.split("-")[0];
-      }
-
-      if (targetLanguage==='sr-latin') {
-        targetLanguage = 'sr-Latn';
-      }
+      targetLanguage = AcTranslationCache.fixUpLanguage(targetLanguage);
 
       let indexKey = `${textType}-${modelInstance.id}-${targetLanguage}-${contentHash}`;
 
