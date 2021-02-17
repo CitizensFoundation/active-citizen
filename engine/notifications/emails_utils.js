@@ -249,12 +249,16 @@ var sendOneEmail = function (emailLocals, callback) {
               log.info("Not sending email for anonymous user", {email: emailLocals.user.email});
               seriesCallback();
             } else {
+              let bcc = process.env.ADMIN_EMAIL_BCC ? process.env.ADMIN_EMAIL_BCC : null;
+              if (bcc===emailLocals.user.email) {
+                bcc = null;
+              }
               transport.sendMail({
                 from: fromEmail,
                 sender: sender,
                 replyTo: replyTo,
                 to: emailLocals.user.email,
-                bcc: process.env.ADMIN_EMAIL_BCC ? process.env.ADMIN_EMAIL_BCC : null,
+                bcc: bcc,
                 subject: translatedSubject,
                 html: results.html,
                 text: results.text
