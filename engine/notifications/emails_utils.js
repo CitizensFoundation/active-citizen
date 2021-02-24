@@ -143,171 +143,176 @@ var sendOneEmail = function (emailLocals, callback) {
   if (!emailLocals.isAutomated)
     emailLocals.isAutomated = false;
 
-  async.series([
-    function (seriesCallback) {
-      if (emailLocals.domain && emailLocals.domain.domain_name) {
-        seriesCallback();
-      } else {
-        log.error("EmailWorker Can't find domain for email", {emailLocals: emailLocals});
-        seriesCallback("Can't find domain for email");
-      }
-    },
-
-    function (seriesCallback) {
-      if (emailLocals.user && emailLocals.user.email) {
-        seriesCallback();
-      } else {
-        log.warn("EmailWorker Can't find email for users", {emailLocals: emailLocals});
-        seriesCallback();
-      }
-    },
-
-    function (seriesCallback) {
-      template = new EmailTemplate(path.join(templatesDir, emailLocals.template));
-
-      emailLocals['t'] = i18nFilter;
-      emailLocals['linkTo'] = linkTo;
-
-      if (!emailLocals['community']) {
-        emailLocals['community'] = {
-          hostname: process.env.DEFAULT_HOSTNAME ? process.env.DEFAULT_HOSTNAME : 'app'
-        }
-      }
-
-      if (emailLocals.domain.domain_name.indexOf('betrireykjavik.is') > -1) {
-        fromEmail = 'Betri Reykjavík <betrireykjavik@ibuar.is>';
-      } else if (emailLocals.domain.domain_name.indexOf('betraisland.is') > -1) {
-        fromEmail = 'Betra Ísland <betraisland@ibuar.is>';
-      } else if (emailLocals.domain.domain_name.indexOf('forbrukerradet.no') > -1) {
-        fromEmail = 'Mine idéer Forbrukerrådet <mineideer@forbrukerradet.no>';
-      } else if (emailLocals.domain.domain_name.indexOf('multicitychallenge.org') > -1) {
-        fromEmail = 'Admins GovLab <admins@thegovlab.org>';
-      } else if (emailLocals.domain.domain_name.indexOf('tarsalgo.net') > -1) {
-        fromEmail = 'Társalgó <tarsalgo@kofe.hu>';
-      } else if (emailLocals.domain.domain_name.indexOf('e-dem.nl') > -1) {
-        fromEmail = 'admin@yrpr.e-dem.nl';
-      } else if (emailLocals.domain.domain_name.indexOf('parliament.scot') > -1) {
-        fromEmail = 'Engage Scottish Parliament <engage@engage.parliament.scot>';
-        sender = "engage@engage.parliament.scot";
-        replyTo = "engage@parliament.scot";
-        emailLocals['community'] = {
-          hostname: 'engage'
-        }
-      } else if (emailLocals.domain.domain_name.indexOf('idea-synergy.com') > -1) {
-        fromEmail = 'ideasynergy@idea-synergy.com';
-      } else if (emailLocals.domain.domain_name.indexOf('smarter.nj.gov') > -1) {
-        fromEmail = 'SmarterNJ <support@notifications.smarter.nj.gov>';
-        sender = "support@notifications.smarter.nj.gov";
-        replyTo = "support@smarter.nj.gov";
-      } else if (process.env.EMAIL_FROM) {
-        fromEmail = process.env.EMAIL_FROM;
-      } else {
-        fromEmail = 'Your Priorities <admin@yrpri.org>';
-      }
-
-      emailLocals.headerImageUrl = "";
-      seriesCallback();
-    },
-
-    function (seriesCallback) {
-      var locale;
-
-      if (emailLocals.post && emailLocals.point && !emailLocals.point.Post) {
-        emailLocals.point.Post = emailLocals.post;
-      }
-
-      if (emailLocals.user.default_locale && emailLocals.user.default_locale != "") {
-        locale = emailLocals.user.default_locale;
-      } else if (emailLocals.community && emailLocals.community.default_locale && emailLocals.community.default_locale != "") {
-        locale = emailLocals.community.default_locale;
-      } else if (emailLocals.domain && emailLocals.domain.default_locale && emailLocals.domain.default_locale != "") {
-        locale = emailLocals.domain.default_locale;
-      } else {
-        locale = 'en';
-      }
-
-      log.info("EmailWorker Selected locale", {locale: locale});
-
-      i18n.changeLanguage(locale, function (err, t) {
-        seriesCallback(err);
-      });
-    },
-
-    function (seriesCallback) {
-      log.info("EmailWorker Started Sending", {});
-
-      template.render(emailLocals, function (error, results) {
-        if (error) {
-          log.error('EmailWorker Error', { err: error, userId: emailLocals.user.id });
-          seriesCallback(error);
+  if (emailLocals.user && emailLocals.user.email) {
+    async.series([
+      function (seriesCallback) {
+        if (emailLocals.domain && emailLocals.domain.domain_name) {
+          seriesCallback();
         } else {
-          var translatedSubject = translateSubject(emailLocals.subject);
+          log.error("EmailWorker Can't find domain for email", {emailLocals: emailLocals});
+          seriesCallback("Can't find domain for email");
+        }
+      },
 
-          if (transport) {
-            if (emailLocals.user.email &&
-                emailLocals.user.email.indexOf('_anonymous@citizens.is') > -1) {
-              log.info("Not sending email for anonymous user", {email: emailLocals.user.email});
-              seriesCallback();
-            } else {
-              let bcc = process.env.ADMIN_EMAIL_BCC ? process.env.ADMIN_EMAIL_BCC : null;
-              if (bcc===emailLocals.user.email) {
-                bcc = null;
-              }
-              transport.sendMail({
-                from: fromEmail,
-                sender: sender,
-                replyTo: replyTo,
-                to: emailLocals.user.email,
-                bcc: bcc,
-                subject: translatedSubject,
-                html: results.html,
-                text: results.text
-              }, function (error, responseStatus) {
-                if (error) {
-                  log.error('EmailWorker', { err: error, user: emailLocals.user });
-                  seriesCallback(error);
-                } else {
-                  log.info('EmailWorker Completed', { responseStatusMessage: responseStatus.message, email: emailLocals.user.email, userId: emailLocals.user.id });
-                  seriesCallback();
-                }
-              })
-            }
-          } else {
-            log.warn('EmailWorker no email configured.', { subject: translatedSubject, userId: emailLocals.user.id, resultsHtml: results.html , resultsText: results.text });
-            if (DEBUG_EMAILS_TO_TEMP_FIlE) {
-              var fileName = "/tmp/testHtml_"+parseInt(Math.random() * (423432432432 - 1232) + 1232)+".html";
-              fs.unlink(fileName, function (err) {
-                fs.writeFile(fileName, results.html, function(err) {
-                  if(err) {
-                    log.error(err);
-                  }
-                  seriesCallback();
-                });
-              });
-            } else {
-              seriesCallback();
-            }
+      function (seriesCallback) {
+        if (emailLocals.user && emailLocals.user.email) {
+          seriesCallback();
+        } else {
+          log.warn("EmailWorker Can't find email for users", {emailLocals: emailLocals});
+          seriesCallback();
+        }
+      },
+
+      function (seriesCallback) {
+        template = new EmailTemplate(path.join(templatesDir, emailLocals.template));
+
+        emailLocals['t'] = i18nFilter;
+        emailLocals['linkTo'] = linkTo;
+
+        if (!emailLocals['community']) {
+          emailLocals['community'] = {
+            hostname: process.env.DEFAULT_HOSTNAME ? process.env.DEFAULT_HOSTNAME : 'app'
           }
         }
-      });
-    }
-  ], function (error) {
-    if (error) {
-      log.error("EmailWorker Error", {err: error});
-      if(airbrake) {
-        airbrake.notify(error).then((airbrakeErr)=> {
-          if (airbrakeErr.error) {
-            log.error("AirBrake Error", { context: 'airbrake', err: airbrakeErr.error, errorStatus: 500 });
+
+        if (emailLocals.domain.domain_name.indexOf('betrireykjavik.is') > -1) {
+          fromEmail = 'Betri Reykjavík <betrireykjavik@ibuar.is>';
+        } else if (emailLocals.domain.domain_name.indexOf('betraisland.is') > -1) {
+          fromEmail = 'Betra Ísland <betraisland@ibuar.is>';
+        } else if (emailLocals.domain.domain_name.indexOf('forbrukerradet.no') > -1) {
+          fromEmail = 'Mine idéer Forbrukerrådet <mineideer@forbrukerradet.no>';
+        } else if (emailLocals.domain.domain_name.indexOf('multicitychallenge.org') > -1) {
+          fromEmail = 'Admins GovLab <admins@thegovlab.org>';
+        } else if (emailLocals.domain.domain_name.indexOf('tarsalgo.net') > -1) {
+          fromEmail = 'Társalgó <tarsalgo@kofe.hu>';
+        } else if (emailLocals.domain.domain_name.indexOf('e-dem.nl') > -1) {
+          fromEmail = 'admin@yrpr.e-dem.nl';
+        } else if (emailLocals.domain.domain_name.indexOf('parliament.scot') > -1) {
+          fromEmail = 'Engage Scottish Parliament <engage@engage.parliament.scot>';
+          sender = "engage@engage.parliament.scot";
+          replyTo = "engage@parliament.scot";
+          emailLocals['community'] = {
+            hostname: 'engage'
           }
-          callback(error);
+        } else if (emailLocals.domain.domain_name.indexOf('idea-synergy.com') > -1) {
+          fromEmail = 'ideasynergy@idea-synergy.com';
+        } else if (emailLocals.domain.domain_name.indexOf('smarter.nj.gov') > -1) {
+          fromEmail = 'SmarterNJ <support@notifications.smarter.nj.gov>';
+          sender = "support@notifications.smarter.nj.gov";
+          replyTo = "support@smarter.nj.gov";
+        } else if (process.env.EMAIL_FROM) {
+          fromEmail = process.env.EMAIL_FROM;
+        } else {
+          fromEmail = 'Your Priorities <admin@yrpri.org>';
+        }
+
+        emailLocals.headerImageUrl = "";
+        seriesCallback();
+      },
+
+      function (seriesCallback) {
+        var locale;
+
+        if (emailLocals.post && emailLocals.point && !emailLocals.point.Post) {
+          emailLocals.point.Post = emailLocals.post;
+        }
+
+        if (emailLocals.user.default_locale && emailLocals.user.default_locale != "") {
+          locale = emailLocals.user.default_locale;
+        } else if (emailLocals.community && emailLocals.community.default_locale && emailLocals.community.default_locale != "") {
+          locale = emailLocals.community.default_locale;
+        } else if (emailLocals.domain && emailLocals.domain.default_locale && emailLocals.domain.default_locale != "") {
+          locale = emailLocals.domain.default_locale;
+        } else {
+          locale = 'en';
+        }
+
+        log.info("EmailWorker Selected locale", {locale: locale});
+
+        i18n.changeLanguage(locale, function (err, t) {
+          seriesCallback(err);
         });
-      } else {
-        callback(error);
+      },
+
+      function (seriesCallback) {
+        log.info("EmailWorker Started Sending", {});
+
+        template.render(emailLocals, function (error, results) {
+          if (error) {
+            log.error('EmailWorker Error', { err: error, userId: emailLocals.user.id });
+            seriesCallback(error);
+          } else {
+            var translatedSubject = translateSubject(emailLocals.subject);
+
+            if (transport) {
+              if (emailLocals.user.email &&
+                emailLocals.user.email.indexOf('_anonymous@citizens.is') > -1) {
+                log.info("Not sending email for anonymous user", {email: emailLocals.user.email});
+                seriesCallback();
+              } else {
+                let bcc = process.env.ADMIN_EMAIL_BCC ? process.env.ADMIN_EMAIL_BCC : null;
+                if (bcc===emailLocals.user.email) {
+                  bcc = null;
+                }
+                transport.sendMail({
+                  from: fromEmail,
+                  sender: sender,
+                  replyTo: replyTo,
+                  to: emailLocals.user.email,
+                  bcc: bcc,
+                  subject: translatedSubject,
+                  html: results.html,
+                  text: results.text
+                }, function (error, responseStatus) {
+                  if (error) {
+                    log.error('EmailWorker', { err: error, user: emailLocals.user });
+                    seriesCallback(error);
+                  } else {
+                    log.info('EmailWorker Completed', { responseStatusMessage: responseStatus.message, email: emailLocals.user.email, userId: emailLocals.user.id });
+                    seriesCallback();
+                  }
+                })
+              }
+            } else {
+              log.warn('EmailWorker no email configured.', { subject: translatedSubject, userId: emailLocals.user.id, resultsHtml: results.html , resultsText: results.text });
+              if (DEBUG_EMAILS_TO_TEMP_FIlE) {
+                var fileName = "/tmp/testHtml_"+parseInt(Math.random() * (423432432432 - 1232) + 1232)+".html";
+                fs.unlink(fileName, function (err) {
+                  fs.writeFile(fileName, results.html, function(err) {
+                    if(err) {
+                      log.error(err);
+                    }
+                    seriesCallback();
+                  });
+                });
+              } else {
+                seriesCallback();
+              }
+            }
+          }
+        });
       }
-    } else {
-      callback();
-    }
-  });
+    ], function (error) {
+      if (error) {
+        log.error("EmailWorker Error", {err: error});
+        if(airbrake) {
+          airbrake.notify(error).then((airbrakeErr)=> {
+            if (airbrakeErr.error) {
+              log.error("AirBrake Error", { context: 'airbrake', err: airbrakeErr.error, errorStatus: 500 });
+            }
+            callback(error);
+          });
+        } else {
+          callback(error);
+        }
+      } else {
+        callback();
+      }
+    });
+  } else {
+    log.warn("EmailWorker Can't find email for user", {emailLocals: emailLocals});
+    callback();
+  }
 };
 
 module.exports = {

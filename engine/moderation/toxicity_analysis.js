@@ -156,6 +156,8 @@ const getTranslatedTextForPoint = (point, callback) => {
 
 const getTranslatedTextForPost = (post, callback) => {
   let postName, postDescription, postTranscript;
+  let postStructuredAnswers = "";
+
   async.parallel([
     (parallelCallback) => {
       const req = { query: {
@@ -199,10 +201,27 @@ const getTranslatedTextForPost = (post, callback) => {
           parallelCallback();
         }
       });
+    },
+    (parallelCallback) => {
+      if (post.public_data &&
+          post.public_data.structuredAnswersJson &&
+          post.public_data.structuredAnswersJson.length>0) {
+        models.AcTranslationCache.getSurveyAnswerTranslations(post.id, "en", (error, translations) => {
+          if (error) {
+            parallelCallback(error);
+          } else {
+            postStructuredAnswers = translations.join(". ");
+            parallelCallback();
+          }
+        });
+      } else {
+        parallelCallback();
+      }
     }
+
   ], error => {
-    if (postName && postDescription) {
-      callback(error, `${postName.content} ${postDescription.content} ${postTranscript? postTranscript.content : ''}`);
+    if (postName && (postDescription || postStructuredAnswers)) {
+      callback(error, `${postName.content} ${postDescription.content} ${postStructuredAnswers} ${postTranscript? postTranscript.content : ''}`);
     } else {
       log.error("No postname for toxicity!", { error });
       callback(error);
@@ -338,7 +357,7 @@ const estimateToxicityScoreForPost = (options, callback) => {
       attributes: ['id','name','description','language','data','group_id','public_data']
     }).then( post => {
       if (post) {
-        let doNotStoreValue = post.Group.access===0 && post.Group.Community.access === 0;
+        let doNotStoreValue = (post.Group.access===0 && post.Group.Community.access === 0) ? false : true;
         if (post.User.age_group && (post.User.age_group==="0-12" || post.User.age_group==="0"))
           doNotStoreValue = true;
 
