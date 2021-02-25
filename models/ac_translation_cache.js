@@ -144,6 +144,70 @@ module.exports = (sequelize, DataTypes) => {
     })
   }
 
+  AcTranslationCache.addSubOptionsElements = (textStrings, combinedText, subOptions) => {
+     for (let i=0;i<subOptions.length; i++) {
+       const text = subOptions[i].text;
+       if (text) {
+         textStrings.push(text);
+         combinedText+=text;
+       } else {
+         textStrings.push("");
+       }
+     }
+
+     return combinedText;
+   }
+
+  AcTranslationCache.addSubOptionsToTranslationStrings = (textStrings, combinedText, question) => {
+    if (question.radioButtons && question.radioButtons.length>0) {
+      return AcTranslationCache.addSubOptionsElements(textStrings, combinedText, question.radioButtons);
+    } else if (question.checkboxes && question.checkboxes.length>0) {
+      return AcTranslationCache.addSubOptionsElements(textStrings, combinedText, question.checkboxes);
+    } else if (question.dropdownOptions && question.dropdownOptions.length>0) {
+      return AcTranslationCache.addSubOptionsElements(textStrings, combinedText, question.dropdownOptions);
+    }
+  }
+
+  //TODO: Reduce amount of duplicate code
+  AcTranslationCache.getRegistrationQuestionTranslations = async (groupId, targetLanguage, done) => {
+    targetLanguage = AcTranslationCache.fixUpLanguage(targetLanguage);
+
+    sequelize.models.Group.findOne({
+      where: {
+        id: groupId
+      },
+      attributes: ['id','configuration']
+    }).then(async (group) => {
+      if (group.configuration &&
+        group.configuration.registrationQuestionsJson &&
+        group.configuration.registrationQuestionsJson.length>0) {
+
+        const textStrings = [];
+        let combinedText = "";
+        for (const question of group.configuration.registrationQuestionsJson) {
+          if (question.text) {
+            textStrings.push(question.text);
+            combinedText+=question.text;
+          } else {
+            textStrings.push("");
+          }
+
+          if (question.type==="radios" || question.type==="checkboxes" || question.type==="dropdown" ) {
+            combinedText = AcTranslationCache.addSubOptionsToTranslationStrings(textStrings, combinedText, question);
+          }
+        }
+        const contentHash = farmhash.hash32(combinedText).toString();
+        let indexKey = `GroupRegQuestions-${group.id}-${targetLanguage}-${contentHash}`;
+        AcTranslationCache.getSurveyTranslations(indexKey, textStrings, targetLanguage, null, done);
+      } else {
+        done(null, []);
+      }
+    }).catch( error => {
+      done(error);
+    })
+  }
+
+
   AcTranslationCache.getSurveyQuestionTranslations = async (groupId, targetLanguage, done) => {
     targetLanguage = AcTranslationCache.fixUpLanguage(targetLanguage);
 
@@ -165,6 +229,10 @@ module.exports = (sequelize, DataTypes) => {
             combinedText+=question.text;
           } else {
             textStrings.push("");
+          }
+
+          if (question.type==="radios" || question.type==="checkboxes" || question.type==="dropdown" ) {
+            AcTranslationCache.addSubOptionsToTranslationStrings(textStrings, combinedText, question);
           }
         }
         const contentHash = farmhash.hash32(combinedText).toString();
