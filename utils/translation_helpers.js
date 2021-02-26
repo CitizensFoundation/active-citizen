@@ -163,6 +163,8 @@ const getTranslatedTextsForGroup = (targetLocale, groupId, done) => {
   const groupItems = [];
   const postItems = [];
 
+  let group, surveyQuestionTranslations, registrationQuestionTranslations;
+
   async.parallel([
     (seriesCallback) => {
       async.series([
@@ -186,15 +188,48 @@ const getTranslatedTextsForGroup = (targetLocale, groupId, done) => {
         },
         (innerSeriesCallback) => {
           models.Group.findAll({
-            attributes: ['id','name','objectives'],
+            attributes: ['id','name','objectives','configuration'],
             where: {
               id: groupId
             }
           }).then(groups=>{
+            group = groups[0];
             addTranslationsForGroups(targetLocale, groupItems, groups, innerSeriesCallback);
           }).catch(error=>{
             innerSeriesCallback(error);
           })
+        },
+        (innerSeriesCallback) => {
+          if (group &&
+              group.configuration.structuredQuestionsJson &&
+              group.configuration.structuredQuestionsJson.length>0) {
+            models.AcTranslationCache.getSurveyQuestionTranslations(group.id, targetLocale, (error, translations) => {
+              if (error) {
+                innerSeriesCallback(error);
+              } else {
+                surveyQuestionTranslations = translations;
+                innerSeriesCallback();
+              }
+            });
+          } else {
+            innerSeriesCallback();
+          }
+        },
+        (innerSeriesCallback) => {
+          if (group &&
+              group.configuration.registrationQuestionsJson &&
+              group.configuration.registrationQuestionsJson.length>0) {
+            models.AcTranslationCache.getRegistrationQuestionTranslations(group.id, targetLocale, (error, translations) => {
+              if (error) {
+                innerSeriesCallback(error);
+              } else {
+                registrationQuestionTranslations = translations;
+                innerSeriesCallback();
+              }
+            });
+          } else {
+            innerSeriesCallback();
+          }
         }
       ], (error) => {
         seriesCallback(error);
@@ -204,7 +239,7 @@ const getTranslatedTextsForGroup = (targetLocale, groupId, done) => {
     if (error) {
       done(null, error);
     } else {
-      done(groupItems.concat(postItems));
+      done({ items: groupItems.concat(postItems), surveyQuestionTranslations, registrationQuestionTranslations });
     }
   });
 }
@@ -231,6 +266,20 @@ const updateTranslation = (item, done) => {
       seriesCallback("Cant find or create translation");
     }
   }).catch(error => done(error));
+}
+
+const updateSurveyTranslation = (groupId, textType, targetLocale, translations, questions, done) => {
+  const combinedText = questions.join("");
+
+  const item = {
+    textType,
+    contentId: groupId,
+    targetLocale,
+    content: combinedText,
+    translatedText: JSON.stringify(translations)
+  }
+
+  updateTranslation(item, done);
 }
 
 const updateTranslationForGroup = (groupId, item, done) => {
@@ -341,5 +390,6 @@ module.exports = {
   getTranslatedTextsForGroup,
   updateTranslationForCommunity,
   updateTranslationForGroup,
-  fixTargetLocale
+  fixTargetLocale,
+  updateSurveyTranslation
 };
