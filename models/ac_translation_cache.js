@@ -114,7 +114,7 @@ module.exports = (sequelize, DataTypes) => {
   // Same in XLS and DOCX exports
   AcTranslationCache.getSurveyAnswerTranslations = async (postId, targetLanguage, done) => {
     targetLanguage = AcTranslationCache.fixUpLanguage(targetLanguage);
-    sequelize.models.Post.findOne({
+    sequelize.models.Post.unscoped().findOne({
       where: {
         id: postId
       },

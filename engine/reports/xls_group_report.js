@@ -519,7 +519,15 @@ async function exportToXls(options, callback) {
   workbook.creator = "Your Priorities - Automated";
   workbook.created = new Date();
 
-  const name = group.translatedName ? group.translatedName : group.name;
+  let name = group.translatedName ? group.translatedName : group.name;
+
+  name = name.replace(/\*/g,'');
+  name = name.replace(/\?/g,'');
+  name = name.replace(/:/g,'');
+  name = name.replace(/\//g,'');
+  name = name.replace(/\\/g,'');
+  name = name.replace(/\[/g,'');
+  name = name.replace(/\]/g,'');
 
   const worksheet = workbook.addWorksheet(`Posts - ${name}`
   );
