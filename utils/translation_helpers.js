@@ -154,7 +154,7 @@ const getTranslatedTextsForCommunity = (targetLocale, communityId, done) => {
     if (error) {
       done(null, error);
     } else {
-      done(communityItems.concat(groupItems.concat(postItems)));
+      done({items: communityItems.concat(groupItems.concat(postItems))});
     }
   });
 }
