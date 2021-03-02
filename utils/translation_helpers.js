@@ -391,5 +391,6 @@ module.exports = {
   updateTranslationForCommunity,
   updateTranslationForGroup,
   fixTargetLocale,
+  updateTranslation,
   updateSurveyTranslation
 };
