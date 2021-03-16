@@ -59,104 +59,116 @@ const generateNotificationsForNewPoint = (activity, callback) => {
     },
 
     (seriesCallback) => {
-      // Notifications for my points
-      const userWhere = {};
+      if (activity.subType==="bulkOperation") {
+        seriesCallback();
+      } else {
+        // Notifications for my points
+        const userWhere = {};
 
-      userWhere["notifications_settings.my_points.method"] = {
-        $gt: 0
-      };
+        userWhere["notifications_settings.my_points.method"] = {
+          $gt: 0
+        };
 
-      if (activity.post_id) {
-        models.Point.findAll({
-          where: {
-            post_id: activity.post_id,
-            status: 'published'
-          },
-          attributes: ['id'],
-          order: [
-            models.sequelize.literal('(counter_quality_up-counter_quality_down) desc')
-          ],
-          limit: 10000
-        }).then((pointsIn) => {
+        if (activity.post_id) {
           models.Point.findAll({
             where: {
-             id: {
-               $in: _.map(pointsIn, (pointIn) => { return pointIn.id })
-             }
+              post_id: activity.post_id,
+              status: 'published'
             },
             attributes: ['id'],
-            include: [
-              {
-                model: models.User,
-                attributes: ['id','notifications_settings','email'],
-                where: userWhere,
-                required: true
-              }
-            ],
             order: [
               models.sequelize.literal('(counter_quality_up-counter_quality_down) desc')
             ],
-          }).then((points) => {
-            if (points) {
-              const users = [];
-              const userIds = [];
-              async.eachSeries(points, (point, innerSeriesCallback) => {
-                if (!_.includes(userIds, point.User.id)) {
-                  users.push(point.User);
-                  userIds.push(point.User.id);
+            limit: 10000
+          }).then((pointsIn) => {
+            models.Point.findAll({
+              where: {
+                id: {
+                  $in: _.map(pointsIn, (pointIn) => { return pointIn.id })
                 }
-                innerSeriesCallback();
-              },  (error) => {
-                addNotificationsForUsers(activity, users, notificationType, 'my_points', uniqueUserIds, seriesCallback);
-              });
-            } else {
-              seriesCallback();
-            }
+              },
+              attributes: ['id'],
+              include: [
+                {
+                  model: models.User,
+                  attributes: ['id','notifications_settings','email'],
+                  where: userWhere,
+                  required: true
+                }
+              ],
+              order: [
+                models.sequelize.literal('(counter_quality_up-counter_quality_down) desc')
+              ],
+            }).then((points) => {
+              if (points) {
+                const users = [];
+                const userIds = [];
+                async.eachSeries(points, (point, innerSeriesCallback) => {
+                  if (!_.includes(userIds, point.User.id)) {
+                    users.push(point.User);
+                    userIds.push(point.User.id);
+                  }
+                  innerSeriesCallback();
+                },  (error) => {
+                  addNotificationsForUsers(activity, users, notificationType, 'my_points', uniqueUserIds, seriesCallback);
+                });
+              } else {
+                seriesCallback();
+              }
+            }).catch((error) => {
+              seriesCallback(error);
+            });
           }).catch((error) => {
             seriesCallback(error);
           });
-        }).catch((error) => {
-          seriesCallback(error);
-        });
-      } else {
-        // No post associated with this point
-        seriesCallback();
+        } else {
+          // No post associated with this point
+          seriesCallback();
+        }
       }
     },
 
     (seriesCallback) => {
-      if (activity.Community) {
-        // Notifications for all new points in community
-        getModelAndUsersByType(models.Community, 'CommunityUsers', activity.Community.id, "all_community", (error, community) => {
-          if (error) {
-            seriesCallback(error);
-          } else if (community) {
-            addNotificationsForUsers(activity, community.CommunityUsers, notificationType, 'all_community', uniqueUserIds, seriesCallback);
-          } else {
-            log.warn("Generate Point Notification Not found or muted", { userId: activity.user_id, type: activity.type});
-            seriesCallback();
-          }
-        });
-      } else {
+      if (activity.subType==="bulkOperation") {
         seriesCallback();
+      } else {
+        if (activity.Community) {
+          // Notifications for all new points in community
+          getModelAndUsersByType(models.Community, 'CommunityUsers', activity.Community.id, "all_community", (error, community) => {
+            if (error) {
+              seriesCallback(error);
+            } else if (community) {
+              addNotificationsForUsers(activity, community.CommunityUsers, notificationType, 'all_community', uniqueUserIds, seriesCallback);
+            } else {
+              log.warn("Generate Point Notification Not found or muted", { userId: activity.user_id, type: activity.type});
+              seriesCallback();
+            }
+          });
+        } else {
+          seriesCallback();
+        }
       }
     },
 
     (seriesCallback) => {
-      if (activity.Group) {
-        // Notifications for all new points in group
-        getModelAndUsersByType(models.Group, 'GroupUsers', activity.Group.id, "all_group", (error, group) => {
-          if (error) {
-            seriesCallback(error);
-          } else if (group) {
-            addNotificationsForUsers(activity, group.GroupUsers, notificationType, "all_group", uniqueUserIds, seriesCallback);
-          } else {
-            log.warn("Generate Point Notification Not found or muted", { userId: activity.user_id, type: activity.type});
-            seriesCallback();
-          }
-        });
-      } else {
+      if (activity.options && activity.options.subType==="bulkOperation") {
         seriesCallback();
+      } else {
+        if (activity.Group) {
+          // Notifications for all new points in group
+          getModelAndUsersByType(models.Group, 'GroupUsers', activity.Group.id, "all_group", (error, group) => {
+            if (error) {
+              seriesCallback(error);
+            } else if (group) {
+              addNotificationsForUsers(activity, group.GroupUsers, notificationType, "all_group", uniqueUserIds, seriesCallback);
+            } else {
+              log.warn("Generate Point Notification Not found or muted", { userId: activity.user_id, type: activity.type});
+              seriesCallback();
+            }
+          });
+        } else {
+          seriesCallback();
+        }
       }
     }
   ], (error) => {

@@ -53,7 +53,17 @@ const addTranslationsForPosts = (targetLocale, items, posts, done) => {
         forEachCallback(error)
       } else {
         addItem(targetLocale, items,'postContent', post.id, post.description, (error) => {
-          forEachCallback(error);
+          if (error) {
+            forEachCallback(error);
+          } else {
+            let tagsContent = null;
+            if (post.public_data && post.public_data.tags) {
+              tagsContent = post.public_data.tags;
+            }
+            addItem(targetLocale, items,'postTags', post.id, tagsContent, (error) => {
+              forEachCallback(error);
+            });
+          }
         });
       }
     });
@@ -100,7 +110,7 @@ const getTranslatedTextsForCommunity = (targetLocale, communityId, done) => {
       async.series([
         (innerSeriesCallback) => {
           models.Post.findAll({
-            attributes: ['id','name','description'],
+            attributes: ['id','name','description','public_data'],
             include: [
               {
                 model: models.Group,
@@ -170,7 +180,7 @@ const getTranslatedTextsForGroup = (targetLocale, groupId, done) => {
       async.series([
         (innerSeriesCallback) => {
           models.Post.findAll({
-            attributes: ['id','name','description'],
+            attributes: ['id','name','description','public_data'],
             include: [
               {
                 model: models.Group,
@@ -297,7 +307,7 @@ const updateTranslationForGroup = (groupId, item, done) => {
           where: {
             id: item.contentId
           },
-          attributes: ["id"],
+          attributes: ["id","public_data"],
           include: [
             {
               model: models.Group,
@@ -356,7 +366,7 @@ const updateTranslationForCommunity = (communityId, item, done) => {
           where: {
             id: item.contentId
           },
-          attributes: ["id"],
+          attributes: ["id","public_data"],
           include: [
             {
               model: models.Group,

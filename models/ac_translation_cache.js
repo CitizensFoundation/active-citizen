@@ -62,14 +62,21 @@ module.exports = (sequelize, DataTypes) => {
             modelInstance.public_data.admin_comment.text) {
           return modelInstance.public_data.admin_comment.text;
         } else {
-          return "Translation error";
+          return "No translation";
+        }
+      case 'postTags':
+        if (modelInstance.public_data &&
+            modelInstance.public_data.tags) {
+          return modelInstance.public_data.tags;
+        } else {
+          return "No translation";
         }
       case 'customRatingName':
         if (modelInstance.Group.configuration.customRatings &&
           modelInstance.Group.configuration.customRatings[modelInstance.custom_rating_index]) {
           return modelInstance.Group.configuration.customRatings[modelInstance.custom_rating_index].name
         } else {
-          return "Translation error";
+          return "No translation";
         }
       case 'alternativeTextForNewIdeaButton':
         return modelInstance.configuration.alternativeTextForNewIdeaButton;
