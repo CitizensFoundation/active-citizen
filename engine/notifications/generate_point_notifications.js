@@ -151,7 +151,7 @@ const generateNotificationsForNewPoint = (activity, callback) => {
     },
 
     (seriesCallback) => {
-      if (activity.options && activity.options.subType==="bulkOperation") {
+      if (activity.subType==="bulkOperation") {
         seriesCallback();
       } else {
         if (activity.Group) {
