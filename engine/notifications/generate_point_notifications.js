@@ -59,7 +59,7 @@ const generateNotificationsForNewPoint = (activity, callback) => {
     },
 
     (seriesCallback) => {
-      if (activity.subType==="bulkOperation") {
+      if (activity.sub_type==="bulkOperation") {
         seriesCallback();
       } else {
         // Notifications for my points
@@ -129,7 +129,7 @@ const generateNotificationsForNewPoint = (activity, callback) => {
     },
 
     (seriesCallback) => {
-      if (activity.subType==="bulkOperation") {
+      if (activity.sub_type==="bulkOperation") {
         seriesCallback();
       } else {
         if (activity.Community) {
@@ -151,7 +151,7 @@ const generateNotificationsForNewPoint = (activity, callback) => {
     },
 
     (seriesCallback) => {
-      if (activity.subType==="bulkOperation") {
+      if (activity.sub_type==="bulkOperation") {
         seriesCallback();
       } else {
         if (activity.Group) {

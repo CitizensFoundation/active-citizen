@@ -5,7 +5,7 @@
   <h2><%= post.name %></h2>
 <% } %>
 <p>
-    <%= point.content %>
+    <%- simpleFormat(point.content) %>
 </p>
 <% if (point.User) { %>
 <p>

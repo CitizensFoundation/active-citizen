@@ -168,6 +168,13 @@ var sendOneEmail = function (emailLocals, callback) {
 
         emailLocals['t'] = i18nFilter;
         emailLocals['linkTo'] = linkTo;
+        emailLocals['simpleFormat'] = function (text) {
+          if (text) {
+            return text.replace(/(\n)/g,"<br>");
+          } else {
+            return "";
+          }
+        }
 
         if (!emailLocals['community']) {
           emailLocals['community'] = {
