@@ -31,6 +31,21 @@ const getTranslationsForSearch = (textType, id, content, callback) => {
   })
 }
 
+const getTranslationsConfigSearch = (textType, id, callback) => {
+  const indexSearch = `${textType}-${id}-%-%}`;
+  models.AcTranslationCache.findAll({
+    where: {
+      index_key: {
+        $like: indexSearch
+      }
+    }
+  }).then( translations => {
+    callback(null, translations);
+  }).catch( error=> {
+    callback(error);
+  })
+}
+
 const updateIndexKey = (current_index_key, objectId) => {
   const splitIndex = current_index_key.split("-");
   splitIndex[1] = objectId;
@@ -56,6 +71,20 @@ const cloneTranslations = (translations, objectId, callback) => {
 
 const cloneTranslationForItem = (textType, inObjectId, outObjectId, content, callback) => {
   getTranslationsForSearch(textType, inObjectId, content, (error, translations) => {
+    if (error) {
+      callback(error);
+    } else {
+      if (translations.length>0) {
+        cloneTranslations(translations, outObjectId, callback);
+      }  else {
+        callback();
+      }
+    }
+  })
+}
+
+const cloneTranslationForConfig = (textType, inObjectId, outObjectId, callback) => {
+  getTranslationsConfigSearch(textType, inObjectId, (error, translations) => {
     if (error) {
       callback(error);
     } else {
@@ -101,6 +130,12 @@ const cloneTranslationForGroup = (inGroup, outGroup, done) => {
     },
     (parallelCallback) => {
       cloneTranslationForItem("groupContent", inGroup.id, outGroup.id, inGroup.objectives, parallelCallback);
+    },
+    (parallelCallback) => {
+      cloneTranslationForConfig("GroupQuestions", inGroup.id, outGroup.id, parallelCallback);
+    },
+    (parallelCallback) => {
+      cloneTranslationForConfig("GroupRegQuestions", inGroup.id, outGroup.id, parallelCallback);
     }
   ], error => {
     done(error);
@@ -117,10 +152,10 @@ const cloneTranslationForPoint = (inPoint, outPoint, done) => {
   })
 }
 
-
 module.exports = {
   cloneTranslationForPoint,
   cloneTranslationForPost,
   cloneTranslationForCommunity,
-  cloneTranslationForGroup
+  cloneTranslationForGroup,
+  cloneTranslationForConfig
 };
