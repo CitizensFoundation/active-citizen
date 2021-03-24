@@ -48,25 +48,34 @@ const addItem = (targetLocale, items, textType, id, content, done) => {
 
 const addTranslationsForPosts = (targetLocale, items, posts, done) => {
   async.forEachSeries(posts, (post, forEachCallback) => {
-    addItem(targetLocale, items, 'postName', post.id, post.name, (error) => {
-      if (error) {
-        forEachCallback(error)
-      } else {
-        addItem(targetLocale, items,'postContent', post.id, post.description, (error) => {
-          if (error) {
-            forEachCallback(error);
-          } else {
-            let tagsContent = null;
-            if (post.public_data && post.public_data.tags) {
-              tagsContent = post.public_data.tags;
+    async.series([
+      innerSeriesCallback => {
+        addItem(targetLocale, items, 'postName', post.id, post.name, innerSeriesCallback);
+      },
+      innerSeriesCallback => {
+        addItem(targetLocale, items,'postContent', post.id, post.description, innerSeriesCallback);
+      },
+      innerSeriesCallback => {
+        let tagsContent = null;
+        if (post.public_data && post.public_data.tags) {
+          tagsContent = post.public_data.tags;
+        }
+        addItem(targetLocale, items,'postTags', post.id, tagsContent, innerSeriesCallback);
+      },
+      innerSeriesCallback => {
+        let answerContent = "";
+        if (post.public_data && post.public_data.structuredAnswersJson) {
+          for (const answer of post.public_data.structuredAnswersJson) {
+            if (answer.value) {
+              answerContent+=answer.value;
             }
-            addItem(targetLocale, items,'postTags', post.id, tagsContent, (error) => {
-              forEachCallback(error);
-            });
           }
-        });
+        }
+        addItem(targetLocale, items,'PostAnswer', post.id, answerContent ? answerContent : null, innerSeriesCallback);
       }
-    });
+    ], error => {
+      forEachCallback(error);
+    })
   }, error => {
     done(error);
   })
@@ -74,15 +83,46 @@ const addTranslationsForPosts = (targetLocale, items, posts, done) => {
 
 const addTranslationsForGroups = (targetLocale, items, groups, done) => {
   async.forEachSeries(groups, (group, forEachCallback) => {
-    addItem(targetLocale, items, 'groupName', group.id, group.name, (error) => {
-      if (error) {
-        forEachCallback(error)
-      } else {
-        addItem(targetLocale, items, 'groupContent', group.id, group.objectives, (error) => {
-          forEachCallback(error);
-        });
+    async.series([
+      innerSeriesCallback => {
+        addItem(targetLocale, items, 'groupName', group.id, group.name, innerSeriesCallback);
+      },
+      innerSeriesCallback => {
+        addItem(targetLocale, items, 'groupContent', group.id, group.objectives, innerSeriesCallback);
+      },
+      innerSeriesCallback => {
+        addItem(targetLocale, items, 'alternativeTextForNewIdeaButton', group.id, group.configuration.alternativeTextForNewIdeaButton, innerSeriesCallback);
+      },
+      innerSeriesCallback => {
+        addItem(targetLocale, items, 'alternativeTextForNewIdeaButtonClosed', group.id, group.configuration.alternativeTextForNewIdeaButtonClosed, innerSeriesCallback);
+      },
+      innerSeriesCallback => {
+        addItem(targetLocale, items, 'alternativeTextForNewIdeaButtonHeader', group.id, group.configuration.alternativeTextForNewIdeaButtonHeader, innerSeriesCallback);
+      },
+      innerSeriesCallback => {
+        addItem(targetLocale, items, 'customThankYouTextNewPosts', group.id, group.configuration.customThankYouTextNewPosts, innerSeriesCallback);
+      },
+      innerSeriesCallback => {
+        addItem(targetLocale, items, 'customTitleQuestionText', group.id, group.configuration.customTitleQuestionText, innerSeriesCallback);
+      },
+      innerSeriesCallback => {
+        addItem(targetLocale, items, 'customAdminCommentsTitle', group.id, group.configuration.customAdminCommentsTitle, innerSeriesCallback);
+      },
+      innerSeriesCallback => {
+        addItem(targetLocale, items, 'alternativePointForHeader', group.id, group.configuration.alternativePointForHeader, innerSeriesCallback);
+      },
+      innerSeriesCallback => {
+        addItem(targetLocale, items, 'alternativePointAgainstHeader', group.id, group.configuration.alternativePointAgainstHeader, innerSeriesCallback);
+      },
+      innerSeriesCallback => {
+        addItem(targetLocale, items, 'alternativePointForLabel', group.id, group.configuration.alternativePointForLabel, innerSeriesCallback);
+      },
+      innerSeriesCallback => {
+        addItem(targetLocale, items, 'alternativePointAgainstLabel', group.id, group.configuration.alternativePointAgainstLabel, innerSeriesCallback);
       }
-    });
+    ], error => {
+      done(error);
+    })
   }, error => {
     done(error);
   })
@@ -292,6 +332,37 @@ const updateSurveyTranslation = (groupId, textType, targetLocale, translations, 
   updateTranslation(item, done);
 }
 
+const updateAnswerTranslation = (postId, textType, targetLocale, translations, contentHash, done) => {
+  const item = {
+    textType,
+    contentId: postId,
+    targetLocale,
+    translatedText: JSON.stringify(translations)
+  }
+
+  targetLocale = fixTargetLocale(item.targetLocale);
+
+  const indexKey = `${item.textType}-${item.contentId}-${targetLocale}-${contentHash}`;
+  models.AcTranslationCache.findOrCreate({
+    where: {
+      index_key: indexKey
+    },
+    defaults: {
+      index_key: indexKey,
+      content: item.translatedText
+    }
+  }).then((result) => {
+    if (result && result.length>0) {
+      result[0].content = item.translatedText;
+      result[0].save().then(()=>{
+        done();
+      }).catch(error => seriesCallback(error));
+    } else {
+      seriesCallback("Cant find or create translation");
+    }
+  }).catch(error => done(error));
+}
+
 const updateTranslationForGroup = (groupId, item, done) => {
   async.series([
     (seriesCallback) => {
@@ -400,6 +471,7 @@ module.exports = {
   getTranslatedTextsForGroup,
   updateTranslationForCommunity,
   updateTranslationForGroup,
+  updateAnswerTranslation,
   fixTargetLocale,
   updateTranslation,
   updateSurveyTranslation
