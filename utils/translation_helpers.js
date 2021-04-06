@@ -154,7 +154,7 @@ const getTranslatedTextsForCommunity = (targetLocale, communityId, done) => {
             include: [
               {
                 model: models.Group,
-                attributes: ['id'],
+                attributes: ['id','configuration'],
                 include: [
                   {
                     model: models.Community,
@@ -174,7 +174,7 @@ const getTranslatedTextsForCommunity = (targetLocale, communityId, done) => {
         },
         (innerSeriesCallback) => {
           models.Group.findAll({
-            attributes: ['id','name','objectives'],
+            attributes: ['id','name','objectives','configuration'],
             where: {
               community_id: communityId
             }
@@ -224,7 +224,7 @@ const getTranslatedTextsForGroup = (targetLocale, groupId, done) => {
             include: [
               {
                 model: models.Group,
-                attributes: ['id'],
+                attributes: ['id','configuration'],
                 where: {
                   id: groupId
                 }
@@ -416,7 +416,7 @@ const updateTranslationForCommunity = (communityId, item, done) => {
           where: {
             id: item.contentId
           },
-          attributes: ["id"],
+          attributes: ["id",'configuration'],
           include: [
             {
               model: models.Community,
