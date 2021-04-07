@@ -58,12 +58,29 @@ const cloneTranslations = (translations, objectId, callback) => {
     const newTranslationJson = JSON.parse(JSON.stringify(translation.toJSON()));
     delete newTranslationJson['id'];
     newTranslationJson['index_key'] = updateIndexKey(translation.index_key, objectId);
-    const newTranslation = models.AcTranslationCache.build(newTranslationJson);
-    newTranslation.save().then(()=>{
-      forEachCallback();
-    }).catch( error=> {
-      callback(error);
-    });
+    models.AcTranslationCache.findOne({
+      where: {
+        index_key: newTranslationJson.index_key
+      }
+    }).then( translation=> {
+      if (translation) {
+        translation.content = newTranslationJson.content;
+        translation.save().then( () => {
+          forEachCallback();
+        }).catch( error => {
+          forEachCallback(error);
+        })
+      } else {
+        const newTranslation = models.AcTranslationCache.build(newTranslationJson);
+        newTranslation.save().then(()=>{
+          forEachCallback();
+        }).catch( error=> {
+          forEachCallback(error);
+        });
+      }
+    }).catch( error => {
+      forEachCallback(error);
+    })
   }, (error) => {
     callback(error);
   })
