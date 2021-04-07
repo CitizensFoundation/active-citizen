@@ -32,7 +32,7 @@ const getTranslationsForSearch = (textType, id, content, callback) => {
 }
 
 const getTranslationsConfigSearch = (textType, id, callback) => {
-  const indexSearch = `${textType}-${id}-%-%}`;
+  const indexSearch = `${textType}-${id}-%-%`;
   models.AcTranslationCache.findAll({
     where: {
       index_key: {
