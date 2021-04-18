@@ -1,4 +1,3 @@
-const predictionio = require('predictionio-driver');
 const models = require('../../../models');
 const _ = require('lodash');
 const async = require('async');
