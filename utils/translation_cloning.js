@@ -146,7 +146,7 @@ const cloneTranslationForGroup = (inGroup, outGroup, done) => {
       cloneTranslationForItem("groupName", inGroup.id, outGroup.id, inGroup.name, parallelCallback);
     },
     (parallelCallback) => {
-      cloneTranslationForItem("groupContent", inGroup.id, outGroup.id, inGroup.objectives, parallelCallback);
+      cloneTranslationForItem("groupContent", inGroup.id, outGroup.id, inGroup.objectives || "", parallelCallback);
     },
     (parallelCallback) => {
       cloneTranslationForConfig("GroupQuestions", inGroup.id, outGroup.id, parallelCallback);
