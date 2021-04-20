@@ -211,7 +211,7 @@ const getRecommendationFor = (req, userId, dateOptions, options, callback, userL
     });
   } else {
     log.warn("ac-analytics-api getRecommendationFor or no collectionType");
-    callback();
+    callback(null, []);
   }
 };
 
