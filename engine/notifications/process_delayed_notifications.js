@@ -343,7 +343,8 @@ var sendNotificationEmail = function (delayedNotification, callback) {
               });
             });
           });
-          var emailLocals = {
+
+          const emailLocals = {
             subject: { translateToken: 'notifications.email.newsFrom', contentName: domain.name },
             template: 'delayed_notification',
             user: emailUser,

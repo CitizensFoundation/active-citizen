@@ -138,6 +138,22 @@ var filterNotificationForDelivery = function (notification, user, template, subj
 var sendOneEmail = function (emailLocals, callback) {
   var template, fromEmail=null, sender=null, replyTo=null;
 
+  let envValues = null;
+
+  if (process.env.EMAIL_CONFIG_FROM_ADDRESS &&
+    process.env.EMAIL_CONFIG_FROM_NAME &&
+    process.env.EMAIL_CONFIG_URL) {
+
+    envValues = {
+      emailName: process.env.EMAIL_CONFIG_FROM_NAME,
+      email: process.env.EMAIL_CONFIG_FROM_ADDRESS,
+      url: process.env.EMAIL_CONFIG_URL,
+      banner_image: process.env.EMAIL_CONFIG_340_X_74_BANNER_IMAGE_URL
+    }
+  }
+
+  emailLocals.envValues = envValues;
+
   if (!emailLocals.isReportingContent)
     emailLocals.isReportingContent = false;
   if (!emailLocals.isAutomated)
@@ -207,8 +223,8 @@ var sendOneEmail = function (emailLocals, callback) {
           fromEmail = 'SmarterNJ <support@notifications.smarter.nj.gov>';
           sender = "support@notifications.smarter.nj.gov";
           replyTo = "support@smarter.nj.gov";
-        } else if (process.env.EMAIL_FROM) {
-          fromEmail = process.env.EMAIL_FROM;
+        } else if (process.env.EMAIL_FROM || (emailLocals && emailLocals.envValues)) {
+          fromEmail = process.env.EMAIL_FROM || emailLocals.envValues.email;
         } else {
           fromEmail = 'Your Priorities <admin@yrpri.org>';
         }

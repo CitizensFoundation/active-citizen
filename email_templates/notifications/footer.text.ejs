@@ -1,27 +1,35 @@
-<% if (domain.domain_name == 'betrireykjavik.is') { %>
-betrireykjavik@ibuar.is
+<% if (envValues!=null) { %>
+    <%= envValues.emailName %> <%= envValues.email %>
 <% } %>
-<% if (domain.domain_name == 'betraisland.is') { %>
-betraisland@ibuar.is
+
+<% if (envValues==null) { %>
+    <% if (domain.domain_name == 'betrireykjavik.is') { %>
+        betrireykjavik@ibuar.is
+    <% } %>
+    <% if (domain.domain_name == 'betraisland.is') { %>
+        betraisland@ibuar.is
+    <% } %>
+    <% if (domain.domain_name  == 'yrpri.org') { %>
+        admin@yrpri.org
+    <% } %>
+    <% if (domain.domain_name  == 'ypus.org') { %>
+        admin@yrpri.org
+    <% } %>
+    <% if (domain.domain_name  == 'tarsalgo.net') { %>
+        tarsalgo@kofe.hu
+    <% } %>
+    <% if (domain.domain_name  == 'forbrukerradet.no') { %>
+        mineideer@forbrukerradet.no
+    <% } %>
+    <% if (domain.domain_name  == 'multicitychallenge.org') { %>
+        admins@thegovlab.org
+    <% } %>
+    <% if (domain.domain_name  == 'smarter.nj.gov') { %>
+        support@smarter.nj.gov
+    <% } %>
+    <% if (domain.domain_name  == 'parliament.scot') { %>
+        info@parliament.scot
+    <% } %>
 <% } %>
-<% if (domain.domain_name  == 'yrpri.org') { %>
-admin@yrpri.org
-<% } %>
-<% if (domain.domain_name  == 'ypus.org') { %>
-    admin@yrpri.org
-<% } %>
-<% if (domain.domain_name  == 'tarsalgo.net') { %>
-    tarsalgo@kofe.hu
-<% } %>
-<% if (domain.domain_name  == 'forbrukerradet.no') { %>
-mineideer@forbrukerradet.no
-<% } %>
-<% if (domain.domain_name  == 'multicitychallenge.org') { %>
-    admins@thegovlab.org
-<% } %>
-<% if (domain.domain_name  == 'smarter.nj.gov') { %>
-    support@smarter.nj.gov
-<% } %>
-<% if (domain.domain_name  == 'parliament.scot') { %>
-    info@parliament.scot
-<% } %>
+
+
