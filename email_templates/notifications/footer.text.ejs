@@ -1,8 +1,6 @@
 <% if (envValues!=null) { %>
     <%= envValues.emailName %> <%= envValues.email %>
-<% } %>
-
-<% if (envValues==null) { %>
+<% } else { %>
     <% if (domain.domain_name == 'betrireykjavik.is') { %>
         betrireykjavik@ibuar.is
     <% } %>

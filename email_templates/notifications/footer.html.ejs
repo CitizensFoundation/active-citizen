@@ -6,9 +6,7 @@
           <a style="color: #0083e8;" href="<%= envValues.url %>"><%= envValues.emailName %></a> |
           <a style="color: #0083e8;" href="mailto:<%= envValues.email %>"><%= envValues.email %></a> |
           <a style="color: #0083e8;" href="<%= envValues.url %>/user/open_notification_settings"><%= t('notification.email.settings') %></a>
-        <% } %>
-
-        <% if (envValues==null) { %>
+        <% } else { %>
           <% if (domain.domain_name == 'betrireykjavik.is') { %>
             <a style="color: #0083e8;" href="https://www.betrireykjavik.is/">Betri Reykjavik</a> |
             <a style="color: #0083e8;" href="mailto:betrireykjavik@ibuar.is">betrireykjavik@ibuar.is</a> |
