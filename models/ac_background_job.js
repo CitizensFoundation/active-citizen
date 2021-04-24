@@ -16,9 +16,10 @@ module.exports = (sequelize, DataTypes) => {
     tableName: 'ac_background_jobs',
   });
 
-  AcBackgroundJob.createJob = (done) => {
+  AcBackgroundJob.createJob = (data, done) => {
     sequelize.models.AcBackgroundJob.create({
-      progress: 5
+      progress: 5,
+      data: data,
     }).then(job => {
       done(null, job.id);
     }).catch(error => {
