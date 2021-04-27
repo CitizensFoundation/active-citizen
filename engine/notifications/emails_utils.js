@@ -33,6 +33,28 @@ if (process.env.SENDGRID_API_KEY) {
   transport = nodemailer.createTransport( nodemailerSendgrid({
     apiKey: process.env.SENDGRID_API_KEY
   }));
+} else if (process.env.GMAIL_ADDRESS &&
+           process.env.GMAIL_CLIENT_ID &&
+           process.env.GMAIL_PRIVATE_KEY) {
+  transport = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+    auth: {
+      type: "OAuth2",
+      user: process.env.GMAIL_ADDRESS,
+      serviceClient: process.env.GMAIL_CLIENT_ID,
+      privateKey: process.env.GMAIL_PRIVATE_KEY.replace(/\\n/g, "\n")
+    }
+  });
+
+  transport.verify(function(error, success) {
+    if (error) {
+      log.error(error);
+    } else {
+      log.info('Server is ready to take our messages');
+    }
+  });
 } else if (process.env.SMTP_SERVER) {
   var smtpConfig = {
     host: process.env.SMTP_SERVER,
