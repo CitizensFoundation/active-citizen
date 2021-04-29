@@ -196,8 +196,8 @@ var sendOneEmail = function (emailLocals, callback) {
         if (emailLocals.user.email.indexOf("@") > 0) {
           seriesCallback();
         } else {
-          log.warn("EmailWorker Email in wrong format no @ sign", {emailLocals: emailLocals});
-          seriesCallback();
+          log.error("EmailWorker Email in wrong format no @ sign", {emailLocals: emailLocals});
+          seriesCallback("EmailWorker Email in wrong format no @ sign");
         }
       },
 
