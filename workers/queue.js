@@ -24,9 +24,9 @@ var queue = kue.createQueue({
 queue.watchStuckJobs(15000);
 
 queue.on('job enqueue', function(id, type){
-  log.info('Job Enqueue', { id: id, type: type });
+  log.info('JQ', { id: id, t: type });
 }).on('job complete', function(id, result){
-  log.info('Job Completed', { id: id });
+  log.info('JC', { id: id });
 }).on('job failed', function(id, result){
   log.error('Job Failed', { id: id, result: result});
 }).on('job removed', function(id, result){
