@@ -215,7 +215,6 @@ const getItems = (posts, points, options) => {
 };
 
 const getModelModeration = (options, callback) => {
-  log.info("get_moderation_items getModelModeration X");
   options.model.unscoped().findAll({
     where: {
       deleted: false,

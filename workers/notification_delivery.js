@@ -156,7 +156,7 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
         }
       },
       function(seriesCallback){
-        log.info('Processing NotificationDeliveryWorker Started', { type: notification.type, user: user ? user.simple() : null });
+        log.info('Processing NotificationDeliveryWorker Started', { type: notification.type, userId: user ? user.id : null });
         switch(notification.type) {
           case "notification.user.invite":
             var inviteFromName;
@@ -175,7 +175,7 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
               group: group,
               token: notification.AcActivities[0].object.token
             }).priority('critical').removeOnComplete(true).save();
-            log.info('NotificationDeliveryWorker notification.user.invite Queued', { type: notification.type, user: user ? user.simple() : null });
+            log.info('NotificationDeliveryWorker notification.user.invite Queued', { type: notification.type, userId: user ? user.id : null });
             seriesCallback();
             break;
           case "notification.password.recovery":
@@ -187,7 +187,7 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
               community: community,
               token: notification.AcActivities[0].object.token
             }).priority('critical').removeOnComplete(true).save();
-            log.info('NotificationDeliveryWorker notification.password.recovery Completed', { type: notification.type, user: user ? user.simple() : null });
+            log.info('NotificationDeliveryWorker notification.password.recovery Completed', { type: notification.type, userId: user ? user.id : null });
             seriesCallback();
             break;
           case "notification.report.content":
@@ -232,7 +232,7 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
               point: notification.AcActivities[0].Point ?  notification.AcActivities[0].Point.toJSON() : null,
               activity: notification.AcActivities[0].toJSON()
             }).priority('critical').removeOnComplete(true).save();
-            log.info('NotificationDeliveryWorker notification.report.content Completed', { type: notification.type, user: user ? user.simple() : null });
+            log.info('NotificationDeliveryWorker notification.report.content Completed', { type: notification.type, userId: user ? user.id : null });
             seriesCallback();
             break;
           case "notification.password.changed":
@@ -245,16 +245,16 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
                 community: community,
                 token: notification.activity.object.token
               }).priority('critical').removeOnComplete(true).save();
-              log.info('NotificationDeliveryWorker notification.password.changed Completed', { type: notification.type, user: user ? user.simple() : null });
+              log.info('NotificationDeliveryWorker notification.password.changed Completed', { type: notification.type, userId: user ? user.id : null });
               seriesCallback();
             } else {
-              log.error('NotificationDeliveryWorker notification.password.changed cant find token!', { type: notification.type, user: user ? user.simple() : null });
+              log.error('NotificationDeliveryWorker notification.password.changed cant find token!', { type: notification.type, userId: user ? user.id : null });
               seriesCallback();
             }
             break;
           case "notification.post.status.change":
             if (notification.AcActivities[0].object && notification.AcActivities[0].object.bulkStatusUpdate) {
-              log.info('Processing notification.status.change Not Sent Due To Bulk Status Update', { type: notification.type, user: user ? user.simple() : null });
+              log.info('Processing notification.status.change Not Sent Due To Bulk Status Update', { type: notification.type, userId: user ? user.id : null });
               seriesCallback();
             } else {
               var post = notification.AcActivities[0].Post;
@@ -269,7 +269,7 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
                 content: content ? content : "",
                 status_changed_to: notification.AcActivities[0].PostStatusChange.status_changed_to
               }).priority('critical').removeOnComplete(true).save();
-              log.info('Processing notification.status.change Completed', { type: notification.type, user: user ? user.simple() : null });
+              log.info('Processing notification.status.change Completed', { type: notification.type, userId: user ? user.id : null });
               seriesCallback();
             }
             break;
@@ -293,7 +293,7 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
                   emailHeader: statusUpdate.config.emailHeader,
                   emailFooter: statusUpdate.config.emailFooter
                 }).priority('critical').removeOnComplete(true).save();
-                log.info('Processing notification.bulk.status.change Completed', { type: notification.type, user: user ? user.simple() : null });
+                log.info('Processing notification.bulk.status.change Completed', { type: notification.type, userId: user ? user.id : null });
                 seriesCallback();
               } else {
                 seriesCallback("Can't find bulk status update");
@@ -305,7 +305,7 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
           case "notification.post.new":
           case "notification.post.endorsement":
             deliverPostNotification(notification, user, function (error) {
-              log.info('Processing notification.post.* Completed', { type: notification.type, user: user ? user.simple() : null });
+              log.info('Processing notification.post.* Completed', { type: notification.type, userId: user ? user.id : null });
               seriesCallback(error);
             });
             break;
@@ -314,13 +314,13 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
           case "notification.point.newsStory":
           case "notification.point.comment":
             deliverPointNotification(notification, user, function (error) {
-              log.info('Processing notification.point.* Completed', { type: notification.type, user: user ? user.simple() : null });
+              log.info('Processing notification.point.* Completed', { type: notification.type, userId: user ? user.id : null });
               seriesCallback(error);
             });
             break;
           case "notification.generalUserNotification":
             processGeneralNotification(notification, domain, community, group, user, (error) => {
-              log.info('Processing notification.generalUserNotification Completed', { type: notification.type, user: user ? user.simple() : null });
+              log.info('Processing notification.generalUserNotification Completed', { type: notification.type, userId: user ? user.id : null });
               seriesCallback(error);
             });
             break;

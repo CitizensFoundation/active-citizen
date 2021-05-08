@@ -14,7 +14,7 @@ if (process.env.GOOGLE_PERSPECTIVE_API_KEY) {
 }
 
 const getToxicityScoreForText = (text, doNotStore, callback) => {
-  log.info("getToxicityScoreForText starting", { text, doNotStore });
+  log.info("getToxicityScoreForText starting", { doNotStore });
   if (text && text!=="") {
     perspectiveApi.analyze(text, { doNotStore, attributes: [
         'TOXICITY', 'SEVERE_TOXICITY','IDENTITY_ATTACK',
@@ -374,7 +374,7 @@ const estimateToxicityScoreForPost = (options, callback) => {
         if (textContent!=='') {
           log.info("getToxicityScoreForText post getting translated text");
           getTranslatedTextForPost(post, (error, translatedText) => {
-            log.info("getToxicityScoreForText post got translated text", { translatedText, error });
+            //log.info("getToxicityScoreForText post got translated text", { translatedText, error });
             if (error)
               callback(error);
             else
@@ -478,7 +478,7 @@ const estimateToxicityScoreForPoint = (options, callback) => {
         if (textContent && textContent!=='') {
           log.info("getToxicityScoreForText getting translated text");
           getTranslatedTextForPoint(point, (error, translatedText) => {
-            log.info("getToxicityScoreForText got translated text", { translatedText, error });
+            //log.info("getToxicityScoreForText got translated text", { translatedText, error });
             if (error)
               callback(error);
             else

@@ -98,12 +98,12 @@ var filterNotificationForDelivery = function (notification, user, template, subj
 
   //TODO: Switch from FREQUENCY_AS_IT_HAPPENS if user has had a lot of emails > 25 in the hour or something
 
-  log.info("Notification Email Processing", {email: user.email, notification_settings_type: notification.notification_setting_type,
-                                                method: method, frequency: frequency});
+  //log.info("Notification Email Processing", {email: user.email, notification_settings_type: notification.notification_setting_type,
+  //                                              method: method, frequency: frequency});
 
   if (method !== models.AcNotification.METHOD_MUTED) {
     if (frequency === models.AcNotification.FREQUENCY_AS_IT_HAPPENS) {
-      log.info("Notification Email Processing Sending email", {email: user.email, method: method, frequency: frequency});
+      log.info("Email queued", {email: user.email, method: method, frequency: frequency});
       queue.create('send-one-email', {
         subject: subject,
         template: template,
@@ -133,9 +133,9 @@ var filterNotificationForDelivery = function (notification, user, template, subj
       }).then( results => {
         const [ delayedNotification, created ] = results;
         if (created) {
-          log.info('Notification Email Processing AcDelayedNotification Created', { delayedNotificationId: delayedNotification ? delayedNotification.id : -1, context: 'create' });
+          log.info('AcDelayedNotification', { delayedNotificationId: delayedNotification ? delayedNotification.id : -1, context: 'create' });
         } else {
-          log.info('Notification Email Processing AcDelayedNotification Loaded', { delayedNotificationId: delayedNotification ? delayedNotification.id : -1, context: 'loaded' });
+          log.info('AcDelayedNotification', { delayedNotificationId: delayedNotification ? delayedNotification.id : -1, context: 'loaded' });
         }
         delayedNotification.addAcNotifications(notification).then(function (results) {
           if (delayedNotification.delivered) {
@@ -278,15 +278,13 @@ var sendOneEmail = function (emailLocals, callback) {
             locale = 'en';
           }
 
-          log.info("EmailWorker Selected locale", {locale: locale});
-
           i18n.changeLanguage(locale, function (err, t) {
             seriesCallback(err);
           });
         },
 
         function (seriesCallback) {
-          log.info("EmailWorker Started Sending", {});
+          log.info("EmailWorker Started Sending", {locale: i18n.language});
 
           template.render(emailLocals, function (error, results) {
             if (error) {
@@ -325,7 +323,8 @@ var sendOneEmail = function (emailLocals, callback) {
                   })
                 }
               } else {
-                log.warn('EmailWorker no email configured.', { subject: translatedSubject, userId: emailLocals.user.id, resultsHtml: results.html , resultsText: results.text });
+                log.warn('EmailWorker no email configured.', { subject: translatedSubject, userId: emailLocals.user.id });
+                //log.warn('EmailWorker no email configured.', { subject: translatedSubject, userId: emailLocals.user.id, resultsHtml: results.html , resultsText: results.text });
                 if (DEBUG_EMAILS_TO_TEMP_FIlE) {
                   var fileName = "/tmp/testHtml_"+parseInt(Math.random() * (423432432432 - 1232) + 1232)+".html";
                   fs.unlink(fileName, function (err) {
@@ -361,11 +360,11 @@ var sendOneEmail = function (emailLocals, callback) {
         }
       });
     } else {
-      log.warn("EmailWorker Can't find email for user", {emailLocals: emailLocals});
+      log.warn("EmailWorker Can't find email for user", { email: emailLocals.user  ? emailLocals.user.email : "?"});
       callback();
     }
   } else {
-    log.error("EmailWorker Email in wrong format no @ sign", {emailLocals: emailLocals});
+    log.error("EmailWorker Email in wrong format no @ sign", { email: (emailLocals && emailLocals.user) ? emailLocals.user.email : "?"});
     callback();
   }
 };

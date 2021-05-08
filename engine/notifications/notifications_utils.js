@@ -11,7 +11,7 @@ const getModelAndUsersByType = (model, userType, id, notification_setting_type, 
     $gt: 0
   };
 
-  log.info("Notification Processing getModelAndUsersByType", { notification_setting_type: notification_setting_type, userWhere: userWhere });
+  //log.info("getModelAndUsersByType", { type: notification_setting_type, userWhere: userWhere });
   // TODO: Use streams when ready https://github.com/sequelize/sequelize/issues/2454
   model.findOne({
     where: { id: id },
@@ -24,7 +24,7 @@ const getModelAndUsersByType = (model, userType, id, notification_setting_type, 
       }
     ]
   }).then((results) => {
-    log.info("Notification Processing found users", { numberOfUsers: results ? results.length : null, userWhere: userWhere });
+    //log.info("Notification Processing found users", { numberOfUsers: results ? results.length : null, userWhere: userWhere });
     if (results) {
       callback(null, results)
     } else {
