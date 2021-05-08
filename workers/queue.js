@@ -23,27 +23,29 @@ var queue = kue.createQueue({
 
 queue.watchStuckJobs(15000);
 
-queue.on('job enqueue', function(id, type){
-  log.info('JQ', { id: id, t: type });
-}).on('job complete', function(id, result){
-  log.info('JC', { id: id });
-}).on('job failed', function(id, result){
-  log.error('Job Failed', { id: id, result: result});
-}).on('job removed', function(id, result){
-  log.info('Job Removed', { id: id, result: result});
-}).on( 'job error', function( err, result ) {
-  log.error('Job Error', { err: err, result: result } );
-  if(airbrake) {
-    if (!(err instanceof Error)) {
-      err = new Error(result ? result : err);
-    }
-    airbrake.notify(err).then((airbrakeErr)=> {
-      if (airbrakeErr.error) {
-        log.error("AirBrake Error", { context: 'airbrake', err: airbrakeErr.error, errorStatus: 500 });
+if (!process.env.SUPPRESS_WEB_QUEUE_MESSAGES) {
+  queue.on('job enqueue', function(id, type){
+    log.info('JQ', { id: id, t: type });
+  }).on('job complete', function(id, result){
+    log.info('JC', { id: id });
+  }).on('job failed', function(id, result){
+    log.error('Job Failed', { id: id, result: result});
+  }).on('job removed', function(id, result){
+    log.info('Job Removed', { id: id, result: result});
+  }).on( 'job error', function( err, result ) {
+    log.error('Job Error', { err: err, result: result } );
+    if(airbrake) {
+      if (!(err instanceof Error)) {
+        err = new Error(result ? result : err);
       }
-    });
-  }
-});
+      airbrake.notify(err).then((airbrakeErr)=> {
+        if (airbrakeErr.error) {
+          log.error("AirBrake Error", { context: 'airbrake', err: airbrakeErr.error, errorStatus: 500 });
+        }
+      });
+    }
+  });
+}
 
 if (process.env.NODE_ENV === 'development' || process.env.FORCE_KUE_UI) {
   kue.app.listen(3000).on('error', function (error) {
