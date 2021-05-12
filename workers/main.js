@@ -43,11 +43,11 @@ i18n
   }, function (err, t) {
     log.info("Have Loaded i18n", {err: err});
 
-    queue.process('send-one-email', 1, function(job, done) {
+    queue.process('send-one-email', 5, function(job, done) {
       email.sendOne(job.data, done);
     });
 
-    queue.process('process-notification-delivery', 1, function(job, done) {
+    queue.process('process-notification-delivery', 15, function(job, done) {
       notification_delivery.process(job.data, done);
     });
 
@@ -55,7 +55,7 @@ i18n
       activity.process(job.data, done);
     });
 
-    queue.process('delayed-job', 5, function(job, done) {
+    queue.process('delayed-job', 15, function(job, done) {
       delayedJobs.process(job.data, done);
     });
 
