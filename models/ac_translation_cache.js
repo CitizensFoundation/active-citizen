@@ -239,9 +239,10 @@ module.exports = (sequelize, DataTypes) => {
           }
 
           if (question.type==="radios" || question.type==="checkboxes" || question.type==="dropdown" ) {
-            AcTranslationCache.addSubOptionsToTranslationStrings(textStrings, combinedText, question);
+            combinedText = AcTranslationCache.addSubOptionsToTranslationStrings(textStrings, combinedText, question);
           }
         }
+
         const contentHash = farmhash.hash32(combinedText).toString();
         let indexKey = `GroupQuestions-${group.id}-${targetLanguage}-${contentHash}`;
         AcTranslationCache.getSurveyTranslations(indexKey, textStrings, targetLanguage, null, done);
