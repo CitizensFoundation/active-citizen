@@ -236,6 +236,8 @@ var sendOneEmail = function (emailLocals, callback) {
             fromEmail = 'Admins GovLab <admins@thegovlab.org>';
           } else if (emailLocals.domain.domain_name.indexOf('tarsalgo.net') > -1) {
             fromEmail = 'Társalgó <tarsalgo@kofe.hu>';
+          } else if (emailLocals.domain.domain_name.indexOf('junges.wien') > -1) {
+            fromEmail = 'Junges Wien <junges.wien@wienxtra.at>';
           } else if (emailLocals.domain.domain_name.indexOf('e-dem.nl') > -1) {
             fromEmail = 'admin@yrpr.e-dem.nl';
           } else if (emailLocals.domain.domain_name.indexOf('parliament.scot') > -1) {
