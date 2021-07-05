@@ -316,7 +316,7 @@ var sendOneEmail = function (emailLocals, callback) {
                     text: results.text
                   }, function (error, responseStatus) {
                     if (error) {
-                      log.error('EmailWorker', { err: error, user: emailLocals.user });
+                      log.error('EmailWorker', { err: error, user: emailLocals.user, fromEmail: fromEmail, sender: sender, replyTo: replyTo} );
                       seriesCallback(error);
                     } else {
                       log.info('EmailWorker Completed', { responseStatusMessage: responseStatus.message, email: emailLocals.user.email, userId: emailLocals.user.id });
