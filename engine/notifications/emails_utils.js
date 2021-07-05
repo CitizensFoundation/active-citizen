@@ -319,6 +319,7 @@ var sendOneEmail = function (emailLocals, callback) {
                       log.error('EmailWorker', {
                         errorHeaders: (error && error.response) ? error.response.headers : null,
                         errorBody: (error && error.response) ? error.response.body : null,
+                        errorBodyString: (error && error.response && error.response.body) ? JSON.stringify(error.response.body) : null,
                         err: error,
                         user: emailLocals.user,
                         fromEmail: fromEmail, sender: sender, replyTo: replyTo });
