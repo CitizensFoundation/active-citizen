@@ -103,22 +103,30 @@ var filterNotificationForDelivery = function (notification, user, template, subj
 
   if (method !== models.AcNotification.METHOD_MUTED) {
     if (frequency === models.AcNotification.FREQUENCY_AS_IT_HAPPENS) {
-      log.info("Email queued", {email: user.email, method: method, frequency: frequency});
-      queue.create('send-one-email', {
-        subject: subject,
-        template: template,
-        user: user,
-        domain: notification.AcActivities[0].Domain,
-        group: (notification.AcActivities[0].Point && notification.AcActivities[0].Point.Group && notification.AcActivities[0].Point.Group.name!="hidden_public_group_for_domain_level_points") ?
-          notification.AcActivities[0].Point.Group : notification.AcActivities[0].Group,
-        community: notification.AcActivities[0].Community,
-        activity: notification.AcActivities[0],
-        post: notification.AcActivities[0].Post,
-        point: notification.AcActivities[0].Point
-      }).priority('critical').removeOnComplete(true).save();
-      callback();
+      if (user.email.indexOf('_anonymous@citizens.is') > -1 ||
+         !(user.email.indexOf('@') > -1)) {
+        log.info("Email for anonymous or invalid not queued", { email: user.email});
+        callback();
+      } else {
+        log.info("Email queued", {email: user.email, method: method, frequency: frequency});
+        queue.create('send-one-email', {
+          subject: subject,
+          template: template,
+          user: user,
+          domain: notification.AcActivities[0].Domain,
+          group: (notification.AcActivities[0].Point && notification.AcActivities[0].Point.Group && notification.AcActivities[0].Point.Group.name!="hidden_public_group_for_domain_level_points") ?
+            notification.AcActivities[0].Point.Group : notification.AcActivities[0].Group,
+          community: notification.AcActivities[0].Community,
+          activity: notification.AcActivities[0],
+          post: notification.AcActivities[0].Post,
+          point: notification.AcActivities[0].Point
+        }).priority('medium').removeOnComplete(true).save();
+        callback();
+      }
     } else if (method !== models.AcNotification.METHOD_MUTED) {
-      models.AcDelayedNotification.findOrCreate({
+      callback();
+      // Disabled for now
+      /*models.AcDelayedNotification.findOrCreate({
         where: {
           user_id: user.id,
           method: method,
@@ -150,7 +158,7 @@ var filterNotificationForDelivery = function (notification, user, template, subj
         });
       }).catch(function (error) {
         callback(error);
-      });
+      });*/
     }
   } else {
     callback();

@@ -200,7 +200,7 @@ const processContentToBeAnonymized =  (notification, object, domain, community, 
         header: header,
         content: prependToContent+content,
         link: link
-      }).priority('critical').removeOnComplete(true).save();
+      }).priority('high').removeOnComplete(true).save();
       callback();
     }
   });

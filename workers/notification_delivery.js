@@ -268,7 +268,7 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
                 post: post,
                 content: content ? content : "",
                 status_changed_to: notification.AcActivities[0].PostStatusChange.status_changed_to
-              }).priority('critical').removeOnComplete(true).save();
+              }).priority('high').removeOnComplete(true).save();
               log.info('Processing notification.status.change Completed', { type: notification.type, userId: user ? user.id : null });
               seriesCallback();
             }
@@ -292,7 +292,7 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
                   bulkStatusUpdateId: bulkStatusUpdateId,
                   emailHeader: statusUpdate.config.emailHeader,
                   emailFooter: statusUpdate.config.emailFooter
-                }).priority('critical').removeOnComplete(true).save();
+                }).priority('high').removeOnComplete(true).save();
                 log.info('Processing notification.bulk.status.change Completed', { type: notification.type, userId: user ? user.id : null });
                 seriesCallback();
               } else {

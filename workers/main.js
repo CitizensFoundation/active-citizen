@@ -43,15 +43,15 @@ i18n
   }, function (err, t) {
     log.info("Have Loaded i18n", {err: err});
 
-    queue.process('send-one-email', 5, function(job, done) {
+    queue.process('send-one-email', 25, function(job, done) {
       email.sendOne(job.data, done);
     });
 
-    queue.process('process-notification-delivery', 15, function(job, done) {
+    queue.process('process-notification-delivery', 25, function(job, done) {
       notification_delivery.process(job.data, done);
     });
 
-    queue.process('process-activity', 1, function(job, done) {
+    queue.process('process-activity', 10, function(job, done) {
       activity.process(job.data, done);
     });
 
@@ -79,11 +79,11 @@ i18n
       speechToText.process(job.data, done);
     });
 
-    queue.process('process-moderation', 1, function(job, done) {
+    queue.process('process-moderation', 5, function(job, done) {
       moderation.process(job.data, done);
     });
 
-    queue.process('process-similarities', 1, function(job, done) {
+    queue.process('process-similarities', 5, function(job, done) {
       similarities.process(job.data, done);
     });
 
@@ -91,7 +91,7 @@ i18n
       reports.process(job.data, done);
     });
 
-    queue.process('process-marketing', 1, function(job, done) {
+    queue.process('process-marketing', 20, function(job, done) {
       marketing.process(job.data, done);
     });
   });

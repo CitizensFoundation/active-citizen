@@ -104,7 +104,7 @@ module.exports = (sequelize, DataTypes) => {
 
 
   AcActivity.createActivity = (options, callback) => {
-    queue.create('delayed-job', { type: 'create-priority-activity', workData: options }).priority('critical').removeOnComplete(true).save();
+    queue.create('delayed-job', { type: 'create-priority-activity', workData: options }).priority('high').removeOnComplete(true).save();
     callback();
   };
 
