@@ -146,9 +146,9 @@ module.exports = (sequelize, DataTypes) => {
   AcNotification.processNotification = (notification, user, activity, callback) => {
     let queuePriority;
     if (user.last_login_at && ((new Date().getDate()-5)<user.last_login_at)) {
-      queuePriority = 'high';
-    } else {
       queuePriority = 'medium';
+    } else {
+      queuePriority = 'low';
     }
 
     queue.create('process-notification-delivery', { id: notification.id }).priority(queuePriority).removeOnComplete(true).save();
@@ -241,7 +241,7 @@ module.exports = (sequelize, DataTypes) => {
               notification.addAcActivities(activity).then((results) => {
                 if (results) {
                   const notificationJson = { id: notification.id };
-                  queue.create('process-notification-delivery', notificationJson).priority('critical').removeOnComplete(true).save();
+                  queue.create('process-notification-delivery', notificationJson).priority('high').removeOnComplete(true).save();
                   log.info('Notification Created', { notificationId: notification ?  notification.id : -1, userId: admin.id});
                   innerSeriesCallback();
                 } else {
