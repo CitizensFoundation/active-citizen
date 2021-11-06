@@ -23,38 +23,44 @@ const generateNotificationsForNewPoint = (activity, callback) => {
 
   async.series([
     (seriesCallback) => {
-      // Notifications for my posts
-      const userWhere = {};
-
-      userWhere["notifications_settings.my_posts.method"] = {
-        $gt: 0
-      };
-
-      if (activity.post_id) {
-        models.Post.findOne({
-          where: {
-            id: activity.post_id
-          },
-          include: [
-            {
-              model: models.User,
-              attributes: ['id','notifications_settings','email'],
-              where: userWhere,
-              required: true
-            }
-          ]
-        }).then((post) => {
-          if (post) {
-            addNotificationsForUsers(activity, [post.User], notificationType, 'my_posts', uniqueUserIds, seriesCallback);
-          } else {
-            seriesCallback();
-          }
-        }).catch((error) => {
-          seriesCallback(error);
-        });
-      } else {
-        // No post associated with this point
+      if (activity.sub_type==="bulkOperation" &&
+          activity.context &&
+          activity.context.silentMode===true) {
         seriesCallback();
+      } else {
+        // Notifications for my posts
+        const userWhere = {};
+
+        userWhere["notifications_settings.my_posts.method"] = {
+          $gt: 0
+        };
+
+        if (activity.post_id) {
+          models.Post.findOne({
+            where: {
+              id: activity.post_id
+            },
+            include: [
+              {
+                model: models.User,
+                attributes: ['id', 'notifications_settings', 'email'],
+                where: userWhere,
+                required: true
+              }
+            ]
+          }).then((post) => {
+            if (post) {
+              addNotificationsForUsers(activity, [post.User], notificationType, 'my_posts', uniqueUserIds, seriesCallback);
+            } else {
+              seriesCallback();
+            }
+          }).catch((error) => {
+            seriesCallback(error);
+          });
+        } else {
+          // No post associated with this point
+          seriesCallback();
+        }
       }
     },
 
