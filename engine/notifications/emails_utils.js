@@ -101,66 +101,71 @@ var filterNotificationForDelivery = function (notification, user, template, subj
   //log.info("Notification Email Processing", {email: user.email, notification_settings_type: notification.notification_setting_type,
   //                                              method: method, frequency: frequency});
 
-  if (method !== models.AcNotification.METHOD_MUTED) {
-    if (frequency === models.AcNotification.FREQUENCY_AS_IT_HAPPENS) {
-      if (user.email.indexOf('_anonymous@citizens.is') > -1 ||
-         !(user.email.indexOf('@') > -1)) {
-        log.info("Email for anonymous or invalid not queued", { email: user.email});
-        callback();
-      } else {
-        log.info("Email queued", {email: user.email, method: method, frequency: frequency});
-        queue.create('send-one-email', {
-          subject: subject,
-          template: template,
-          user: user,
-          domain: notification.AcActivities[0].Domain,
-          group: (notification.AcActivities[0].Point && notification.AcActivities[0].Point.Group && notification.AcActivities[0].Point.Group.name!="hidden_public_group_for_domain_level_points") ?
-            notification.AcActivities[0].Point.Group : notification.AcActivities[0].Group,
-          community: notification.AcActivities[0].Community,
-          activity: notification.AcActivities[0],
-          post: notification.AcActivities[0].Post,
-          point: notification.AcActivities[0].Point
-        }).priority('medium').removeOnComplete(true).save();
-        callback();
-      }
-    } else if (method !== models.AcNotification.METHOD_MUTED) {
-      callback();
-      // Disabled for now
-      /*models.AcDelayedNotification.findOrCreate({
-        where: {
-          user_id: user.id,
-          method: method,
-          frequency: frequency
-        },
-        defaults: {
-          user_id: user.id,
-          method: method,
-          frequency: frequency,
-          type: notification.from_notification_setting
-        }
-      }).then( results => {
-        const [ delayedNotification, created ] = results;
-        if (created) {
-          log.info('AcDelayedNotification', { delayedNotificationId: delayedNotification ? delayedNotification.id : -1, context: 'create' });
+  if (user.email) {
+    if (method !== models.AcNotification.METHOD_MUTED) {
+      if (frequency === models.AcNotification.FREQUENCY_AS_IT_HAPPENS) {
+        if (user.email && user.email.indexOf('_anonymous@citizens.is') > -1 ||
+          !(user.email.indexOf('@') > -1)) {
+          log.info("Email for anonymous or invalid not queued", { email: user.email});
+          callback();
         } else {
-          log.info('AcDelayedNotification', { delayedNotificationId: delayedNotification ? delayedNotification.id : -1, context: 'loaded' });
+          log.info("Email queued", {email: user.email, method: method, frequency: frequency});
+          queue.create('send-one-email', {
+            subject: subject,
+            template: template,
+            user: user,
+            domain: notification.AcActivities[0].Domain,
+            group: (notification.AcActivities[0].Point && notification.AcActivities[0].Point.Group && notification.AcActivities[0].Point.Group.name!="hidden_public_group_for_domain_level_points") ?
+              notification.AcActivities[0].Point.Group : notification.AcActivities[0].Group,
+            community: notification.AcActivities[0].Community,
+            activity: notification.AcActivities[0],
+            post: notification.AcActivities[0].Post,
+            point: notification.AcActivities[0].Point
+          }).priority('medium').removeOnComplete(true).save();
+          callback();
         }
-        delayedNotification.addAcNotifications(notification).then(function (results) {
-          if (delayedNotification.delivered) {
-            log.info('Notification Email Processing AcDelayedNotification already delivered resetting');
-            delayedNotification.delivered = false;
-            delayedNotification.save().then(function (results) {
-              callback();
-            });
-          } else {
-            callback();
+      } else if (method !== models.AcNotification.METHOD_MUTED) {
+        callback();
+        // Disabled for now
+        /*models.AcDelayedNotification.findOrCreate({
+          where: {
+            user_id: user.id,
+            method: method,
+            frequency: frequency
+          },
+          defaults: {
+            user_id: user.id,
+            method: method,
+            frequency: frequency,
+            type: notification.from_notification_setting
           }
-        });
-      }).catch(function (error) {
-        callback(error);
-      });*/
+        }).then( results => {
+          const [ delayedNotification, created ] = results;
+          if (created) {
+            log.info('AcDelayedNotification', { delayedNotificationId: delayedNotification ? delayedNotification.id : -1, context: 'create' });
+          } else {
+            log.info('AcDelayedNotification', { delayedNotificationId: delayedNotification ? delayedNotification.id : -1, context: 'loaded' });
+          }
+          delayedNotification.addAcNotifications(notification).then(function (results) {
+            if (delayedNotification.delivered) {
+              log.info('Notification Email Processing AcDelayedNotification already delivered resetting');
+              delayedNotification.delivered = false;
+              delayedNotification.save().then(function (results) {
+                callback();
+              });
+            } else {
+              callback();
+            }
+          });
+        }).catch(function (error) {
+          callback(error);
+        });*/
+      }
+    } else {
+      callback();
     }
   } else {
+    console.warn("Can't find email for user");
     callback();
   }
 };
