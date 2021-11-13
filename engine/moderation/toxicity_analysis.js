@@ -481,6 +481,8 @@ const estimateToxicityScoreForPoint = (options, callback) => {
             //log.info("getToxicityScoreForText got translated text", { translatedText, error });
             if (error)
               callback(error);
+            else if (translatedText.content==null)
+              callback("Can't find translatedText.content");
             else
               textUsed = translatedText.content;
               getToxicityScoreForText(textUsed, doNotStoreValue, (error, results) => {
