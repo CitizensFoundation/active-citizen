@@ -130,6 +130,7 @@ async function preparePosts(workPackage, callback) {
               endorsementsUp: post.counter_endorsements_up,
               endorsementsDown: post.counter_endorsements_down,
               status: post.status,
+              User: post.User,
               counterPoints: post.counter_points,
               pointsUp: getPointsUp(post),
               Points: post.Points,
@@ -568,7 +569,7 @@ const getGroupPosts = (group, hostName, callback) => {
           {
             model: models.User,
             required: true,
-            attributes:['id','name','email']
+            attributes:['id','name','email','private_profile_data']
           },
           {
             model: models.Audio,
@@ -596,7 +597,7 @@ const getGroupPosts = (group, hostName, callback) => {
       {
         model: models.User,
         required: true,
-        attributes:['id','name','email']
+        attributes:['id','name','email','private_profile_data']
       },
       {
         model: models.Audio,

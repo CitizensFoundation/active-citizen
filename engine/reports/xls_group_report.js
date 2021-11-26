@@ -36,6 +36,7 @@ const preparePosts = require("./common_utils").preparePosts;
 
 const uploadToS3 = require("./common_utils").uploadToS3;
 const sanitizeFilename = require("sanitize-filename");
+const {getAnswerFor} = require("./xls_community_users_report");
 const {addPostPointsToSheet} = require("./add_points_to_sheet");
 const getImageFromUrl = require("./common_utils").getImageFromUrl;
 
@@ -396,6 +397,19 @@ const addPostToSheet = (worksheet, post, group) => {
     pointsAgainst: pointsDownText,
   });
 
+  const registrationQuestions = group.configuration.registrationQuestionsJson;
+
+  if (registrationQuestions && post.User && post.User.private_profile_data && post.User.private_profile_data.registration_answers) {
+    const answers = post.User.private_profile_data.registration_answers;
+    for (let i=0;i<registrationQuestions.length;i++) {
+      if (registrationQuestions[i].type!=="segment" && registrationQuestions[i].type!=="textDescription") {
+        const key = registrationQuestions[i].text;
+        const value = getAnswerFor(registrationQuestions[i].text, answers);
+        _.merge(row, { [key]: value });
+      }
+    }
+  }
+
   worksheet.addRow(row);
 };
 
@@ -638,6 +652,24 @@ async function exportToXls(options, callback) {
     { header: "Media URLs", key: "mediaUrls", width: 15 },
     { header: "Post transcript", key: "postTranscript", width: 15 }
   );
+
+  const registrationQuestions = group.configuration.registrationQuestionsJson;
+
+  if (registrationQuestions) {
+    for (let i=0;i<registrationQuestions.length;i++) {
+      if (registrationQuestions[i].type!=="segment" && registrationQuestions[i].type!=="textDescription") {
+        try {
+          columns.push({
+            header: registrationQuestions[i].text,
+            key: registrationQuestions[i].text,
+            width: 30
+          })
+        } catch (ex) {
+          log.error(ex);
+        }
+      }
+    }
+  }
 
   worksheet.columns = columns;
 

@@ -311,5 +311,6 @@ const createXlsCommunityUsersReport = (workPackage, callback) => {
 };
 
 module.exports = {
-  createXlsCommunityUsersReport
+  createXlsCommunityUsersReport,
+  getAnswerFor
 };
