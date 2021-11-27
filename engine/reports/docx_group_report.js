@@ -159,10 +159,10 @@ const setDescriptions = (group, post, builtPost, children) => {
             if (answers[i].value) {
               children.push(
                 new Paragraph({
-                  text: questionsById[answers[i].uniqueId].text,
+                  text: cleanText(questionsById[answers[i].uniqueId].text),
                   heading: HeadingLevel.HEADING_2,
                 }),
-                new Paragraph(answers[i].value),
+                new Paragraph(cleanText(answers[i].value)),
               )
             }
           } else {
@@ -200,27 +200,35 @@ const setDescriptions = (group, post, builtPost, children) => {
     structuredAnswers.forEach((questionAnswer) => {
       children.push(
         new Paragraph({
-          text: questionAnswer.translatedQuestion,
+          text: cleanText(questionAnswer.translatedQuestion),
           heading: HeadingLevel.HEADING_2,
         }),
-        new Paragraph(questionAnswer.value),
+        new Paragraph(cleanText(questionAnswer.value)),
       )
     });
   } else {
     children.push(
-      new Paragraph(builtPost.translatedDescription ? builtPost.translatedDescription : post.description)
+      new Paragraph(cleanText(builtPost.translatedDescription ? builtPost.translatedDescription : post.description))
     );
   }
 };
 
+const cleanText = (text) => {
+  if (text) {
+    return text.replace(/[^\x09\x0A\x0D\x20-\xFF\x85\xA0-\uD7FF\uE000-\uFDCF\uFDE0-\uFFFD]/gm, '');
+  } else {
+    return "";
+  }
+}
+
 const addPointTranslationIfNeeded = (group, post, point, children) => {
   if (post.translatedPoints && post.translatedPoints[point.id]) {
     children.push(
-      new Paragraph(post.translatedPoints[point.id])
+      new Paragraph(cleanText(post.translatedPoints[point.id]))
     );
   } else {
     children.push(
-      new Paragraph(point.content)
+      new Paragraph(cleanText(point.content))
     );
   }
 
@@ -236,7 +244,7 @@ const addPointTranslationIfNeeded = (group, post, point, children) => {
     let text = (post.translatedPoints && post.translatedPoints[point.id + "adminComments"]) || point.public_data.admin_comment.text || "";
 
     children.push(
-      new Paragraph(text)
+      new Paragraph(cleanText(text))
     );
   }
 
@@ -248,7 +256,7 @@ const addPointTranslationIfNeeded = (group, post, point, children) => {
 const addPostToDoc = (doc, post, group) => {
   const children = [
     new Paragraph({
-      text: post.translatedName ? post.translatedName : post.name,
+      text: cleanText(post.translatedName ? post.translatedName : post.name),
       heading: HeadingLevel.HEADING_1,
     })
   ];
