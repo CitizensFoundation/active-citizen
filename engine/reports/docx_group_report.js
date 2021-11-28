@@ -215,7 +215,8 @@ const setDescriptions = (group, post, builtPost, children) => {
 
 const cleanText = (text) => {
   if (text) {
-    return text.replace(/[^\x09\x0A\x0D\x20-\xFF\x85\xA0-\uD7FF\uE000-\uFDCF\uFDE0-\uFFFD]/gm, '');
+    return text.replace(/[\x0b]/gm, '')
+//    return text.replace(/[^\x09\x0A-\xFF\x85\xA0-\uD7FF\uE000-\uFDCF\uFDE0-\uFFFD]/gm, '');
   } else {
     return "";
   }
