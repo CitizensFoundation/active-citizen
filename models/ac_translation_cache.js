@@ -305,7 +305,8 @@ module.exports = (sequelize, DataTypes) => {
     //TODO: Implement a pagination for the max 128 strings limit of google translate
     return await new Promise(async (resolve, reject) => {
       const translateAPI = new Translate({
-        credentials: JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)
+        credentials: JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON),
+        projectId: process.env.GOOGLE_TRANSLATE_PROJECT_ID ? process.env.GOOGLE_TRANSLATE_PROJECT_ID : undefined
       });
 
       try {

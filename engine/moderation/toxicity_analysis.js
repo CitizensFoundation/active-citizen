@@ -10,7 +10,10 @@ const TOXICITY_EMAIL_THRESHOLD = 0.75;
 const Perspective = require('perspective-api-client');
 let perspectiveApi;
 if (process.env.GOOGLE_PERSPECTIVE_API_KEY) {
-  perspectiveApi = new Perspective({apiKey: process.env.GOOGLE_PERSPECTIVE_API_KEY});
+  perspectiveApi = new Perspective({
+    apiKey: process.env.GOOGLE_PERSPECTIVE_API_KEY,
+    projectId: process.env.GOOGLE_TRANSLATE_PROJECT_ID ? process.env.GOOGLE_TRANSLATE_PROJECT_ID : undefined,
+  });
 }
 
 const getToxicityScoreForText = (text, doNotStore, callback) => {

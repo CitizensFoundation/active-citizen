@@ -13,7 +13,7 @@ let speech, Storage;
 let GOOGLE_APPLICATION_CREDENTIALS;
 if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON && process.env.GOOGLE_TRANSCODING_FLAC_BUCKET) {
   const config = {
-    projectId: 'neon-particle-735',
+    projectId: process.env.GOOGLE_TRANSLATE_PROJECT_ID ? process.env.GOOGLE_TRANSLATE_PROJECT_ID : "neon-particle-735",
     credentials: JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)
   };
   GOOGLE_APPLICATION_CREDENTIALS=JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
@@ -259,7 +259,8 @@ const createTranscriptForFlac = (flackUrl, workPackage, callback) => {
 
   if (languageSelection && speech) {
     const client = new speech.SpeechClient({
-      credentials: JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)
+      credentials: JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON),
+      projectId: process.env.GOOGLE_TRANSLATE_PROJECT_ID ? process.env.GOOGLE_TRANSLATE_PROJECT_ID : undefined,
     });
 
     const encoding = 'FLAC';
@@ -322,7 +323,8 @@ const uploadFlacToGoogleCloud = (flacUrl, callback) => {
       })
     } else {
       const storage = new Storage({
-        credentials: JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)
+        credentials: JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON),
+        projectId: process.env.GOOGLE_TRANSLATE_PROJECT_ID ? process.env.GOOGLE_TRANSLATE_PROJECT_ID : undefined,
       });
       const bucket = storage.bucket(process.env.GOOGLE_TRANSCODING_FLAC_BUCKET);
       if (bucket) {
