@@ -317,15 +317,9 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   AcTranslationCache.getTranslationFromGoogle = (textType, indexKey, contentToTranslate, targetLanguage, modelInstance, callback) => {
-    log.info(`key ${process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON}`)
-    try {
-      log.info(JSON.stringify(JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)))
-    } catch (error) {
-      log.error("Cant validate json");
-    }
     const translateAPI = new Translate({
       credentials: JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON),
-      projectId: "lunar-sled-335506"
+      projectId: process.env.GOOGLE_TRANSLATE_PROJECT_ID ? process.env.GOOGLE_TRANSLATE_PROJECT_ID : undefined
     });
 
     translateAPI.translate(contentToTranslate, targetLanguage)
