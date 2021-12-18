@@ -324,7 +324,8 @@ module.exports = (sequelize, DataTypes) => {
       log.error("Cant validate json");
     }
     const translateAPI = new Translate({
-      credentials: JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)
+      credentials: JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON),
+      projectId: "lunar-sled-335506"
     });
 
     translateAPI.translate(contentToTranslate, targetLanguage)
