@@ -317,7 +317,7 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   AcTranslationCache.getTranslationFromGoogle = (textType, indexKey, contentToTranslate, targetLanguage, modelInstance, callback) => {
-
+    log.info(`key ${process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON}`)
     const translateAPI = new Translate({
       credentials: JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)
     });
