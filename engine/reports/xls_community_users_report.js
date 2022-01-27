@@ -81,32 +81,34 @@ async function addUsers(worksheet, model, modelId, asUsersCode, registrationQues
 
     foundAll = true;
 
-    const users = modelResults[asUsersCode];
+    if (modelResults) {
+      const users = modelResults[asUsersCode];
 
-    if (users.length===0) {
-      foundAll = true;
-    } else {
-      for (let i=0;i<users.length;i++) {
-        let row = {
-          email: users[i].email,
-          name: users[i].name,
-          ssn: users[i].ssn,
-          id: users[i].id,
-        }
+      if (users.length===0) {
+        foundAll = true;
+      } else {
+        for (let i=0;i<users.length;i++) {
+          let row = {
+            email: users[i].email,
+            name: users[i].name,
+            ssn: users[i].ssn,
+            id: users[i].id,
+          }
 
-        if (registrationQuestions && users[i].private_profile_data && users[i].private_profile_data.registration_answers) {
-          const answers = users[i].private_profile_data.registration_answers;
-          for (let i=0;i<registrationQuestions.length;i++) {
-            if (registrationQuestions[i].type!=="segment" && registrationQuestions[i].type!=="textDescription") {
-              const key = registrationQuestions[i].text;
-              const value = getAnswerFor(registrationQuestions[i].text, answers);
-              row = _.merge(row, { [key]: value });
+          if (registrationQuestions && users[i].private_profile_data && users[i].private_profile_data.registration_answers) {
+            const answers = users[i].private_profile_data.registration_answers;
+            for (let i=0;i<registrationQuestions.length;i++) {
+              if (registrationQuestions[i].type!=="segment" && registrationQuestions[i].type!=="textDescription") {
+                const key = registrationQuestions[i].text;
+                const value = getAnswerFor(registrationQuestions[i].text, answers);
+                row = _.merge(row, { [key]: value });
+              }
             }
           }
-        }
 
-        worksheet.addRow(row);
-        offset+=users.length;
+          worksheet.addRow(row);
+          offset+=users.length;
+        }
       }
     }
   }
