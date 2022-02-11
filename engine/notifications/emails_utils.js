@@ -108,6 +108,9 @@ var filterNotificationForDelivery = function (notification, user, template, subj
           !(user.email.indexOf('@') > -1)) {
           log.info("Email for anonymous or invalid not queued", { email: user.email});
           callback();
+        } else if (notification.AcActivities[0].Point && notification.AcActivities[0].Point.Group && notification.AcActivities[0].Point.Group.name==="hidden_public_group_for_domain_level_points") {
+          log.info("Email for hidden_public_group_for_domain_level_points not queued", { email: user.email});
+          callback();
         } else {
           log.info("Email queued", {email: user.email, method: method, frequency: frequency});
           queue.create('send-one-email', {
@@ -115,7 +118,7 @@ var filterNotificationForDelivery = function (notification, user, template, subj
             template: template,
             user: user,
             domain: notification.AcActivities[0].Domain,
-            group: (notification.AcActivities[0].Point && notification.AcActivities[0].Point.Group && notification.AcActivities[0].Point.Group.name!="hidden_public_group_for_domain_level_points") ?
+            group: (notification.AcActivities[0].Point && notification.AcActivities[0].Point.Group) ?
               notification.AcActivities[0].Point.Group : notification.AcActivities[0].Group,
             community: notification.AcActivities[0].Community,
             activity: notification.AcActivities[0],
