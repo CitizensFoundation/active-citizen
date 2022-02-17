@@ -27,5 +27,64 @@ module.exports = (sequelize, DataTypes) => {
     })
   };
 
+  AcBackgroundJob.updateProgress = (jobId, progress, done) => {
+    models.AcBackgroundJob.update(
+      {
+        progress: progress,
+      },
+      {
+        where: { id: jobId },
+      }
+    )
+      .then(() => {
+        done();
+      })
+      .catch((error) => {
+        done(error);
+      });
+  }
+
+  AcBackgroundJob.updateProgressAsync = async (jobId, progress) => {
+    return await new Promise(async (resolve, reject) => {
+      try {
+        resolve(models.AcBackgroundJob.update({
+          progress: progress
+        },
+        {
+          where: { id: jobId },
+        }))
+      } catch (error) {
+        reject(error);
+      }
+    });
+  };
+
+  AcBackgroundJob.updateDataAsync = async (jobId, data) => {
+    return await new Promise(async (resolve, reject) => {
+      try {
+        resolve(models.AcBackgroundJob.update({
+            data: data
+          },
+          {
+            where: { id: jobId },
+          }))
+      } catch (error) {
+        reject(error);
+      }
+    });
+  };
+
+  AcBackgroundJob.destroyJobAsync = async (jobId) => {
+    return await new Promise(async (resolve, reject) => {
+      try {
+        resolve(models.AcBackgroundJob.destroy({
+            where: { id: jobId },
+          }))
+      } catch (error) {
+        reject(error);
+      }
+    });
+  };
+
   return AcBackgroundJob;
 };

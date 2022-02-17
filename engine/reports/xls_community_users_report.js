@@ -242,20 +242,7 @@ const createXlsCommunityUsersReport = (workPackage, callback) => {
           });
       },
       (seriesCallback) => {
-        models.AcBackgroundJob.update(
-          {
-            progress: 5,
-          },
-          {
-            where: { id: workPackage.jobId },
-          }
-        )
-          .then(() => {
-            seriesCallback();
-          })
-          .catch((error) => {
-            seriesCallback(error);
-          });
+        models.AcBackgroundJob.updateProgress(workPackage.jobId, 5, seriesCallback);
       },
       (seriesCallback) => {
         exportToXls({ jobId: workPackage.jobId, community: workPackage.community }, (error, data) => {
