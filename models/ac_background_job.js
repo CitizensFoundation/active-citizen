@@ -28,7 +28,7 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   AcBackgroundJob.updateProgress = (jobId, progress, done) => {
-    models.AcBackgroundJob.update(
+    sequelize.models.AcBackgroundJob.update(
       {
         progress: progress,
       },
@@ -47,7 +47,7 @@ module.exports = (sequelize, DataTypes) => {
   AcBackgroundJob.updateProgressAsync = async (jobId, progress) => {
     return await new Promise(async (resolve, reject) => {
       try {
-        resolve(models.AcBackgroundJob.update({
+        resolve(sequelize.models.AcBackgroundJob.update({
           progress: progress
         },
         {
@@ -62,7 +62,7 @@ module.exports = (sequelize, DataTypes) => {
   AcBackgroundJob.updateDataAsync = async (jobId, data) => {
     return await new Promise(async (resolve, reject) => {
       try {
-        resolve(models.AcBackgroundJob.update({
+        resolve(sequelize.models.AcBackgroundJob.update({
             data: data
           },
           {
@@ -77,7 +77,7 @@ module.exports = (sequelize, DataTypes) => {
   AcBackgroundJob.destroyJobAsync = async (jobId) => {
     return await new Promise(async (resolve, reject) => {
       try {
-        resolve(models.AcBackgroundJob.destroy({
+        resolve(sequelize.models.AcBackgroundJob.destroy({
             where: { id: jobId },
           }))
       } catch (error) {

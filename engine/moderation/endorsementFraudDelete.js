@@ -15,12 +15,34 @@ const allowDeletingSingles = process.argv[4];
 const allItems = [];
 let deletedEndorsments = 0;
 
-const processItemsToDestroy = (itemsToDestroy, postsToRecount, callback) => {
+const processItemsToDestroy = (itemsToDestroy, communityId, postsToRecount, callback) => {
   async.forEachSeries(itemsToDestroy, (item, forEachItemCallback) => {
     models.Endorsement.findOne({
       where: {
         id: item.endorsementId
       },
+      include: [
+        {
+          model: models.Post,
+          attributes: ['id'],
+          include: [
+            {
+              model: models.Group,
+              attributes: ['id'],
+              include: [
+                {
+                  model: models.Community,
+                  attributes: ['id'],
+                  where: {
+                    id: communityId
+                  },
+                  required: true
+                }
+              ]
+            }
+          ]
+        }
+      ],
       attributes: ['id']
     }).then( endorsement => {
       if (endorsement) {
@@ -42,7 +64,7 @@ const processItemsToDestroy = (itemsToDestroy, postsToRecount, callback) => {
     if (error) {
       callback(error)
     } else {
-      if (postsToRecount.indexOf(itemsToDestroy[0].postId) == -1) {
+      if (postsToRecount.indexOf(itemsToDestroy[0].postId) === -1) {
         postsToRecount.push(itemsToDestroy[0].postId);
       }
       callback();
@@ -77,7 +99,6 @@ const getAllItemsExceptOne = (items) => {
   }
 }
 
-
 const deleteFraudulentEndorsements = (workPackage, done) => {
   const postsToRecount = [];
 
@@ -102,7 +123,7 @@ const deleteFraudulentEndorsements = (workPackage, done) => {
       async.forEachSeries(chunks, (items, forEachChunkCallback) => {
         const itemsToDestroy = getAllItemsExceptOne(items);
         if (itemsToDestroy.length>0) {
-          processItemsToDestroy(itemsToDestroy, postsToRecount, forEachChunkCallback);
+          processItemsToDestroy(itemsToDestroy, workPackage.communityId, postsToRecount, forEachChunkCallback);
         } else {
           forEachChunkCallback();
         }

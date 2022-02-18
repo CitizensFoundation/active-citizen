@@ -14,16 +14,16 @@ if(process.env.AIRBRAKE_PROJECT_ID) {
   airbrake = require('../utils/airbrake');
 }
 
-let EndorsementFraudActionWorker = function () {};
+let FraudManagementWorker = function () {};
 
-EndorsementFraudActionWorker.prototype.process = (workPackage, callback) => {
+FraudManagementWorker.prototype.process = (workPackage, callback) => {
   switch (workPackage.type) {
-    case 'delete-job':
+    case 'delete':
       deleteJob(workPackage, callback);
       break;
-    case 'get-by-missing-fingerprint':
-    case 'get-by-ip-address-user-agent-post-id':
-    case 'get-by-ip-address':
+    case 'byMissingBrowserFingerprint':
+    case 'byIpUserAgentPostId':
+    case 'byIp':
       getData(workPackage, callback);
       break;
     default:
@@ -31,4 +31,4 @@ EndorsementFraudActionWorker.prototype.process = (workPackage, callback) => {
   }
 };
 
-module.exports = new EndorsementFraudActionWorker();
+module.exports = new FraudManagementWorker();

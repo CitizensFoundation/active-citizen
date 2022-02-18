@@ -8,7 +8,15 @@ const average = arr => arr.reduce((a,b) => a + b, 0) / arr.length;
 const setWeightedConfidenceScore = (items, score) => {
   const averageScore =  average([score, getTimeDifferentScores(items)]).toFixed(2);
   _.forEach(items, item=>{
-    item.confidenceScore = averageScore;
+    item.dataValues.confidenceScore = averageScore;
+  })
+}
+
+const formatTime = (items) => {
+  const averageScore =  average([score, getTimeDifferentScores(items)]).toFixed(2);
+  _.forEach(items, item=>{
+    item.created_at = moment(item.created_at).format("DD/MM/YY HH:mm:ss");
+    item.createAtValue = moment(item.created_at);
   })
 }
 
@@ -61,7 +69,7 @@ const getTimeDifferentScores = (items) => {
 const setBackgroundColorsFromKey = (data) => {
   const colorHash = new ColorHash({lightness: 0.75});
   _.forEach(data, item => {
-    item.backgroundColor = colorHash.hex(data.key);
+    item.backgroundColor = colorHash.hex(item.key);
   });
 }
 
@@ -284,6 +292,7 @@ const deleteJob = async (workPackage, done) => {
 }
 
 const getData = async (workPackage, done) => {
+  console.log("Get data")
   try {
     await models.AcBackgroundJob.updateProgressAsync(workPackage.jobId, 10);
     const endorsements = await getAllEndorsements(workPackage);
@@ -291,11 +300,11 @@ const getData = async (workPackage, done) => {
 
     let data;
 
-    if (workPackage.type==="get-by-ip-address") {
+    if (workPackage.type==="byIp") {
       data = getTopDataByIp(endorsements);
-    } else if (workPackage.type==="get-by-ip-address-user-agent-post-id") {
+    } else if (workPackage.type==="byIpUserAgentPostId") {
       data = getTopDataByIpUserAgentPostId(endorsements);
-    } else if (workPackage.type==="get-by-missing-fingerprint") {
+    } else if (workPackage.type==="byMissingBrowserFingerprint") {
       data = getTopDataByNoFingerprints(endorsements);
     }
 
@@ -304,6 +313,7 @@ const getData = async (workPackage, done) => {
 
     await models.AcBackgroundJob.updateDataAsync(workPackage.jobId, data);
     await models.AcBackgroundJob.updateProgressAsync(workPackage.jobId, 100);
+    console.log("Get data done")
     done();
   } catch (error) {
     console.error(error);

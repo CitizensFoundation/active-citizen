@@ -16,6 +16,7 @@ var speechToText = require('./speech_to_text');
 const similarities = require('./similarities');
 const reports = require('./reports');
 const marketing = require('./marketing');
+const fraudManagement = require('./fraud_management');
 
 log.info("Dirname", {dirname: __dirname});
 
@@ -85,6 +86,10 @@ i18n
 
     queue.process('process-similarities', 5, function(job, done) {
       similarities.process(job.data, done);
+    });
+
+    queue.process('process-fraud-action', 1, function(job, done) {
+      fraudManagement.process(job.data, done);
     });
 
     queue.process('process-reports', 1, function(job, done) {
