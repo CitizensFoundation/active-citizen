@@ -6,9 +6,18 @@ const ColorHash = require('color-hash').default;
 const average = arr => arr.reduce((a,b) => a + b, 0) / arr.length;
 
 const setWeightedConfidenceScore = (items, score) => {
-  const averageScore =  average([score, getTimeDifferentScores(items)]).toFixed(2);
+  const timeScore = getTimeDifferentScores(items);
+  const averageScore = (timeScore+score)/2;
   _.forEach(items, item=>{
-    item.dataValues.confidenceScore = averageScore;
+    const hasData = item.data ? Object.keys(item.data).length === 0 : false;
+    if (!hasData && moment(item.created_at).valueOf()>moment("17/02/2022","DD/MM/YYYY").valueOf()) {
+      item.dataValues.confidenceScore = `100%`;
+    } else if (hasData && !item.data.browserId && moment(item.created_at)>moment("17/02/2022","DD/MM/YYYY")) {
+      item.dataValues.confidenceScore = `100%`;
+    } else {
+      item.dataValues.confidenceScore = `${averageScore.toFixed(0)}%`;
+    }
+//    item.dataValues.confidenceScore = `${averageScore.toFixed(0)}-${score}-${timeScore}`;
   })
 }
 
@@ -27,48 +36,52 @@ const getTimeDifferentScores = (items) => {
   });
 
   const daysScores = [];
-  _.each(items, function (items, key) {
+  _.each(days, function (innerItems, key) {
     const seconds = [];
-    for (let i=0; i<items.length;i++) {
-      if (i<items.length-1) {
-        const first = moment(items[i]);
-        const second = moment(items[i+1]);
-        const duration = moment.duration(first.diff(second));
-        seconds.push(duration.asSeconds());
+    const sortedItems = _.sortBy(innerItems, item => {
+      return moment(item.created_at).valueOf()
+    })
+
+    for (let i=0; i<sortedItems.length;i++) {
+      if (i<sortedItems.length-1) {
+        const first = moment(sortedItems[i].created_at);
+        const second = moment(sortedItems[i+1].created_at);
+        const duration = moment.duration(second.diff(first));
+        seconds.push(Math.round(duration.asSeconds()));
       }
     }
 
-    const averageDay = average(seconds).toFixed(2);
+    const averageDay = average(seconds);
     let score;
 
     if (averageDay<1) {
       score = 99;
-    } else if (averageDay<2) {
-      score = 95;
     } else if (averageDay<5) {
-      score = 90;
-    } else if (averageDay<10) {
-      score = 85;
-    } else if (averageDay<25) {
-      score = 80;
+      score = 97;
     } else if (averageDay<50) {
-      score = 70;
-    } else if (averageDay<75) {
-      score = 60;
+      score = 95;
     } else if (averageDay<100) {
-      score = 50;
+      score = 90;
+    } else if (averageDay<200) {
+      score = 85;
+    } else if (averageDay<400) {
+      score = 80;
+    } else if (averageDay<800) {
+      score = 75;
+    } else if (averageDay<900) {
+      score = 60;
     } else {
-      score = 30;
+      score = 50;
     }
 
     daysScores.push(score);
   });
 
-  return average(daysScores).toFixed(2);
+  return average(daysScores);
 }
 
 const setBackgroundColorsFromKey = (data) => {
-  const colorHash = new ColorHash({lightness: 0.75});
+  const colorHash = new ColorHash({lightness: 0.83});
   _.forEach(data, item => {
     const color = colorHash.hex(item.key);
     _.forEach(item.items,  (innerItem) => {
@@ -83,6 +96,7 @@ const customCompress = (data) => {
   _.forEach(data, item => {
     _.forEach(item.items,  (innerItem) => {
       innerItem.key = item.key;
+      innerItem.dataValues.groupCount = item.items.length;
       flatData.push(innerItem);
     });
   });
@@ -164,37 +178,41 @@ const getTopItems = (items, type) => {
     let out = [];
     _.each(topItems, function (item) {
       if (item.count>1) {
-        if ((item.count/postCount) > 10) {
+        if ((item.count) > 10) {
           setWeightedConfidenceScore(item.items, 95);
-        } else if ((item.count/postCount) > 5) {
+        } else if ((item.count) > 5) {
+          setWeightedConfidenceScore(item.items, 90);
+        } else if ((item.count) > 4) {
+          setWeightedConfidenceScore(item.items, 85);
+        } else if ((item.count) > 3) {
           setWeightedConfidenceScore(item.items, 80);
-        } else if ((item.count/postCount) > 2) {
-          setWeightedConfidenceScore(item.items, 60);
+        } else if ((item.count) > 2) {
+          setWeightedConfidenceScore(item.items, 75);
         } else {
-          setWeightedConfidenceScore(item.items, 30);
+          setWeightedConfidenceScore(item.items, 50);
         }
         out.push(item);
       }
     });
     return out;
-  } else if (type==="byIp") {
+  } else if (type==="byIpAddress") {
     let out = [];
     _.each(topItems, function (item) {
       if (item.count>10) {
         if ((item.count/postCount) > 100) {
-          setWeightedConfidenceScore(item.items, 80);
+          setWeightedConfidenceScore(item.items, 90);
         } else if ((item.count/postCount) > 50) {
-          setWeightedConfidenceScore(item.items, 75);
+          setWeightedConfidenceScore(item.items, 85);
         } else if ((item.count/postCount) > 25) {
-          setWeightedConfidenceScore(item.items, 70);
+          setWeightedConfidenceScore(item.items, 80);
         } else if ((item.count/postCount) > 10) {
-          setWeightedConfidenceScore(item.items, 65);
+          setWeightedConfidenceScore(item.items, 75);
         } else if ((item.count/postCount) > 5) {
-          setWeightedConfidenceScore(item.items, 60);
+          setWeightedConfidenceScore(item.items, 70);
         } else if ((item.count/postCount) > 2) {
-          setWeightedConfidenceScore(item.items, 55);
+          setWeightedConfidenceScore(item.items, 65);
         } else {
-          setWeightedConfidenceScore(item.items, 45);
+          setWeightedConfidenceScore(item.items, 50);
         }
         out.push(item);
       }
@@ -250,7 +268,7 @@ const getTopDataByIp = (endorsements) => {
     return endorsement.ip_address;
   });
 
-  return getTopItems(groupedBy, "byIp");
+  return getTopItems(groupedBy, "byIpAddress");
 }
 
 const getTopDataByIpUserAgentPostId = (endorsements) => {
@@ -266,7 +284,7 @@ const getTopDataByNoFingerprints = (endorsements) => {
     return endorsement.data &&
            (endorsement.data.browserFingerprint === "undefined" ||
             endorsement.data.browserId === "undefined") &&
-           moment(endorsement.created_at)>moment("17/02/2022");
+           moment(endorsement.created_at).valueOf()>moment("16/02/2022","DD/MM/YYYY").valueOf();
   });
 
   _.forEach(filtered,  endorsement => {
@@ -304,7 +322,7 @@ const getData = async (workPackage, done) => {
 
     let data;
 
-    if (workPackage.type==="byIp") {
+    if (workPackage.type==="byIpAddress") {
       data = getTopDataByIp(endorsements);
     } else if (workPackage.type==="byIpUserAgentPostId") {
       data = getTopDataByIpUserAgentPostId(endorsements);

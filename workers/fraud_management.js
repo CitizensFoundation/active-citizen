@@ -23,7 +23,7 @@ FraudManagementWorker.prototype.process = (workPackage, callback) => {
       break;
     case 'byMissingBrowserFingerprint':
     case 'byIpUserAgentPostId':
-    case 'byIp':
+    case 'byIpAddress':
       getData(workPackage, callback);
       break;
     default:
