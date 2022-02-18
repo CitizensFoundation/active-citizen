@@ -12,12 +12,13 @@ const setWeightedConfidenceScore = (items, score) => {
   })
 }
 
-const formatTime = (items) => {
-  const averageScore =  average([score, getTimeDifferentScores(items)]).toFixed(2);
-  _.forEach(items, item=>{
-    item.created_at = moment(item.created_at).format("DD/MM/YY HH:mm:ss");
-    item.createAtValue = moment(item.created_at);
-  })
+const formatTime = (data) => {
+  _.forEach(data, item => {
+    _.forEach(item.items,  (innerItem) => {
+      innerItem.dataValues.createAtValue = moment(innerItem.created_at).valueOf();
+      innerItem.dataValues.created_at = moment(innerItem.created_at).format("DD/MM/YY HH:mm:ss");
+    });
+  });
 }
 
 const getTimeDifferentScores = (items) => {
@@ -69,7 +70,10 @@ const getTimeDifferentScores = (items) => {
 const setBackgroundColorsFromKey = (data) => {
   const colorHash = new ColorHash({lightness: 0.75});
   _.forEach(data, item => {
-    item.backgroundColor = colorHash.hex(item.key);
+    const color = colorHash.hex(item.key);
+    _.forEach(item.items,  (innerItem) => {
+      innerItem.dataValues.backgroundColor =color;
+    });
   });
 }
 
@@ -104,7 +108,7 @@ const customCompress = (data) => {
       cKeys.push(item.key);
     }
 
-    item.key = cKeys.indexOf(item.keys);
+    item.dataValues.key = cKeys.indexOf(item.key);
 
     if (!cDoneUserAgents[item.user_agent]) {
       cDoneUserAgents[item.user_agent] = true;
@@ -309,6 +313,7 @@ const getData = async (workPackage, done) => {
     }
 
     setBackgroundColorsFromKey(data);
+    formatTime(data);
     data = customCompress(data);
 
     await models.AcBackgroundJob.updateDataAsync(workPackage.jobId, data);
