@@ -198,7 +198,7 @@ const getTopItems = (items, type) => {
   } else if (type==="byIpAddress") {
     let out = [];
     _.each(topItems, function (item) {
-      if (item.count>10) {
+      if ((item.count/postCount)>1) {
         if ((item.count/postCount) > 100) {
           setWeightedConfidenceScore(item.items, 90);
         } else if ((item.count/postCount) > 50) {
