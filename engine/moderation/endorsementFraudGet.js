@@ -85,7 +85,7 @@ const setBackgroundColorsFromKey = (data) => {
   _.forEach(data, item => {
     const color = colorHash.hex(item.key);
     _.forEach(item.items,  (innerItem) => {
-      innerItem.dataValues.backgroundColor =color;
+      innerItem.dataValues.backgroundColor = color;
     });
   });
 }
@@ -101,6 +101,8 @@ const customCompress = (data) => {
     });
   });
 
+  const cDoneBackgroundColors = {};
+  const cDoneIpAddresses = {};
   const cDoneUserAgents = {};
   const cDoneEmails = {};
   const cDoneNames = {};
@@ -109,6 +111,8 @@ const customCompress = (data) => {
   const cKeys = [];
 
   const outData = {
+    cBackgroundColors: [],
+    cIpAddresses: [],
     cUserAgents: [],
     cEmails: [],
     cNames: [],
@@ -123,6 +127,16 @@ const customCompress = (data) => {
     }
 
     item.dataValues.key = cKeys.indexOf(item.key);
+
+    if (!cDoneBackgroundColors[item.dataValues.backgroundColor]) {
+      cDoneBackgroundColors[item.dataValues.backgroundColor] = true;
+      outData.cBackgroundColors.push(item.dataValues.backgroundColor);
+    }
+
+    if (!cDoneIpAddresses[item.ip_address]) {
+      cDoneIpAddresses[item.ip_address] = true;
+      outData.cIpAddresses.push(item.ip_address);
+    }
 
     if (!cDoneUserAgents[item.user_agent]) {
       cDoneUserAgents[item.user_agent] = true;
@@ -144,6 +158,8 @@ const customCompress = (data) => {
       outData.cPostNames.push(item.Post.name);
     }
 
+    item.dataValues.backgroundColor = outData.cBackgroundColors.indexOf(item.dataValues.backgroundColor);
+    item.ip_address = outData.cIpAddresses.indexOf(item.ip_address);
     item.user_agent = outData.cUserAgents.indexOf(item.user_agent);
     item.User.email = outData.cEmails.indexOf(item.User.email);
     item.User.name = outData.cEmails.indexOf(item.User.name);
