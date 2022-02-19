@@ -18,12 +18,14 @@ let FraudManagementWorker = function () {};
 
 FraudManagementWorker.prototype.process = (workPackage, callback) => {
   switch (workPackage.type) {
-    case 'delete':
+    case 'delete-job':
       deleteJob(workPackage, callback);
       break;
     case 'byMissingBrowserFingerprint':
     case 'byIpUserAgentPostId':
     case 'byIpAddress':
+    case 'byIpFingerprintPostId':
+    case 'byIpFingerprint':
       getData(workPackage, callback);
       break;
     default:

@@ -159,6 +159,7 @@ const customCompress = (data) => {
     }
 
     item.dataValues.backgroundColor = outData.cBackgroundColors.indexOf(item.dataValues.backgroundColor);
+    item.dataValues.confidenceScoreSort = parseInt(item.dataValues.confidenceScore.replace("%",''));
     item.ip_address = outData.cIpAddresses.indexOf(item.ip_address);
     item.user_agent = outData.cUserAgents.indexOf(item.user_agent);
     item.User.email = outData.cEmails.indexOf(item.User.email);
@@ -205,7 +206,49 @@ const getTopItems = (items, type) => {
         } else if ((item.count) > 2) {
           setWeightedConfidenceScore(item.items, 75);
         } else {
-          setWeightedConfidenceScore(item.items, 50);
+          setWeightedConfidenceScore(item.items, 70);
+        }
+        out.push(item);
+      }
+    });
+    return out;
+  } else if (type==="byIpFingerprint") {
+    let out = [];
+    _.each(topItems, function (item) {
+      if ((item.count/postCount)>1) {
+        if ((item.count/postCount) > 5) {
+          setWeightedConfidenceScore(item.items, 99);
+        } else if ((item.count/postCount) > 4) {
+          setWeightedConfidenceScore(item.items, 95);
+        } else if ((item.count/postCount) > 3) {
+          setWeightedConfidenceScore(item.items, 90);
+        } else if ((item.count/postCount) > 2) {
+          setWeightedConfidenceScore(item.items, 85);
+        } else {
+          setWeightedConfidenceScore(item.items, 80);
+        }
+        out.push(item);
+      }
+    });
+    return out;
+  } else if (type==="byMissingFingerprint") {
+    return topItems;
+  } else if (type==="byIpFingerprintPostId") {
+    let out = [];
+    _.each(topItems, function (item) {
+      if (item.count>1) {
+        if ((item.count) > 10) {
+          setWeightedConfidenceScore(item.items, 100);
+        } else if ((item.count) > 5) {
+          setWeightedConfidenceScore(item.items, 98);
+        } else if ((item.count) > 4) {
+          setWeightedConfidenceScore(item.items, 95);
+        } else if ((item.count) > 3) {
+          setWeightedConfidenceScore(item.items, 90);
+        } else if ((item.count) > 2) {
+          setWeightedConfidenceScore(item.items, 85);
+        } else {
+          setWeightedConfidenceScore(item.items, 80);
         }
         out.push(item);
       }
@@ -295,29 +338,59 @@ const getTopDataByIpUserAgentPostId = (endorsements) => {
   return getTopItems(groupedBy, "byIpUserAgentPostId");
 }
 
+const getTopDataByIpFingerprintPostId = (endorsements) => {
+  const filtered = _.filter(endorsements, (endorsement) => {
+    return endorsement.data &&
+      endorsement.data.browserFingerprint && endorsement.data.browserFingerprint !== "undefined";
+  });
+
+  const groupedBy = _.groupBy(filtered, (endorsement) => {
+    return endorsement.ip_address+":"+endorsement.post_id+":"+endorsement.data.browserFingerprint;
+  });
+
+  return getTopItems(groupedBy, "byIpFingerprintPostId");
+}
+
+const getTopDataByIpFingerprint = (endorsements) => {
+  const filtered = _.filter(endorsements, (endorsement) => {
+    return endorsement.data &&
+      endorsement.data.browserFingerprint && endorsement.data.browserFingerprint !== "undefined";
+  });
+
+  const groupedBy = _.groupBy(filtered, (endorsement) => {
+    return endorsement.ip_address+":"+endorsement.data.browserFingerprint;
+  });
+
+  return getTopItems(groupedBy, "byIpFingerprint");
+}
+
 const getTopDataByNoFingerprints = (endorsements) => {
   const filtered = _.filter(endorsements, (endorsement) => {
     return endorsement.data &&
-           (endorsement.data.browserFingerprint === "undefined" ||
-            endorsement.data.browserId === "undefined") &&
+           (!endorsement.data.browserFingerprint ||
+            !endorsement.data.browserId) &&
            moment(endorsement.created_at).valueOf()>moment("16/02/2022","DD/MM/YYYY").valueOf();
   });
 
   _.forEach(filtered,  endorsement => {
-    if (endorsement.data.browserFingerprint === "undefined" &
-       endorsement.data.browserId === "undefined") {
-      endorsement.confidenceScore = 100;
-      endorsement.key = "bothUndefined";
-    } else if (endorsement.data.browserId === "undefined") {
-      endorsement.confidenceScore = 90;
-      endorsement.key = "browserIdUndefined";
+    if (!endorsement.data.browserFingerprint &&
+       !endorsement.data.browserId) {
+      endorsement.dataValues.confidenceScore = "100%";
+      endorsement.dataValues.key = "bothUndefined";
+    } else if (!endorsement.data.browserId) {
+      endorsement.dataValues.confidenceScore = "90%";
+      endorsement.dataValues.key = "browserIdUndefined";
     } else {
-      endorsement.confidenceScore = 75;
-      endorsement.key = "fingerPrintUndefined";
+      endorsement.dataValues.confidenceScore = "75%";
+      endorsement.dataValues.key = "fingerPrintUndefined";
     }
   })
 
-  return filtered;
+  const groupedBy = _.groupBy(filtered, (endorsement) => {
+    return endorsement.key;
+  });
+
+  return getTopItems(groupedBy, "byMissingFingerprint");
 }
 
 const deleteJob = async (workPackage, done) => {
@@ -342,6 +415,10 @@ const getData = async (workPackage, done) => {
       data = getTopDataByIp(endorsements);
     } else if (workPackage.type==="byIpUserAgentPostId") {
       data = getTopDataByIpUserAgentPostId(endorsements);
+    } else if (workPackage.type==="byIpFingerprintPostId") {
+      data = getTopDataByIpFingerprintPostId(endorsements);
+    } else if (workPackage.type==="byIpFingerprint") {
+      data = getTopDataByIpFingerprint(endorsements);
     } else if (workPackage.type==="byMissingBrowserFingerprint") {
       data = getTopDataByNoFingerprints(endorsements);
     }
