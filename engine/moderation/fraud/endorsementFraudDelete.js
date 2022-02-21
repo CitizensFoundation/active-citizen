@@ -1,4 +1,4 @@
-const models = require('../../../models');
+const models = require('../../../../models');
 const async = require('async');
 const ip = require('ip');
 const _ = require('lodash');
@@ -6,8 +6,8 @@ const fs = require('fs');
 const request = require('request');
 const moment = require("moment");
 
-const recountCommunity = require('../../../utils/recount_utils').recountCommunity;
-const recountPost = require('../../../utils/recount_utils').recountPost;
+const recountCommunity = require('../../../../utils/recount_utils').recountCommunity;
+const recountPost = require('../../../../utils/recount_utils').recountPost;
 
 const processItemsToDestroy = (itemsToDestroy, communityId, postsToRecount, callback) => {
   // Make into chunks

@@ -1,4 +1,4 @@
-const models = require('../../../models');
+const models = require('../../../../models');
 const _ = require('lodash');
 const moment = require('moment');
 const ColorHash = require('color-hash').default;
