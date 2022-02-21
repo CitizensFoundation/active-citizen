@@ -1,19 +1,13 @@
-const models = require('../../models');
+const models = require('../../../models');
 const async = require('async');
 const ip = require('ip');
 const _ = require('lodash');
 const fs = require('fs');
 const request = require('request');
+const moment = require("moment");
 
-const recountCommunity = require('../../utils/recount_utils').recountCommunity;
-const recountPost = require('../../utils/recount_utils').recountPost;
-
-const communityId = process.argv[2];
-const urlToConfig = process.argv[3];
-const allowDeletingSingles = process.argv[4];
-
-const allItems = [];
-let deletedEndorsments = 0;
+const recountCommunity = require('../../../utils/recount_utils').recountCommunity;
+const recountPost = require('../../../utils/recount_utils').recountPost;
 
 const processItemsToDestroy = (itemsToDestroy, communityId, postsToRecount, callback) => {
   async.forEachSeries(itemsToDestroy, (item, forEachItemCallback) => {
@@ -72,7 +66,7 @@ const processItemsToDestroy = (itemsToDestroy, communityId, postsToRecount, call
   });
 }
 
-const getAllItemsExceptOne = (items) => {
+const getAllItemsExceptOne = (items, allowDeletingSingles) => {
   if (items.length===1 && allowDeletingSingles) {
     return items;
   } else {
@@ -99,57 +93,127 @@ const getAllItemsExceptOne = (items) => {
   }
 }
 
-const deleteFraudulentEndorsements = (workPackage, done) => {
+const getAllowedSingleDelete = (workpackage) => {
+
+}
+
+const deleteFraudulentEndorsements = (workPackage, job, done) => {
   const postsToRecount = [];
 
-  async.series([
-    (seriesCallback) => {
-      let chunks;
+  const allItemsIds = job.internal_data.idsToDelete;
+  let allItems;
 
-      if (workPackage.type==="get-by-ip-address") {
-        chunks = _.groupBy(allItems, function (endorsement) {
-          return endorsement.ip_address;
-        });
-      } else if (workPackage.type==="get-by-ip-address-user-agent-post-id") {
-        chunks = _.groupBy(allItems, function (endorsement) {
-          return endorsement.ip_address+":"+endorsement.post_id+":"+endorsement.user_agent;
-        });
-      } else if (workPackage.type==="get-by-missing-fingerprint") {
-        chunks = _.groupBy(allItems, function (endorsement) {
-          return endorsement.data ? `${endorsement.data.browserId}:${endorsement.data.browserFingerprint}` : "nodata";
-        });
-      }
+  if (allItemsIds && allItemsIds.length>0) {
+    async.series([
+      (seriesCallback) => {
+        models.Endorsement.findAll({
+          where: {
+            id: {
+              $in: allItemsIds
+            }
+          }
+        }).then( inItems => {
+          if (inItems && inItems.length>0) {
+            allItems = inItems;
+            seriesCallback();
+          } else {
+            seriesCallback("No items")
+          }
+        }).catch( error => {
+          seriesCallback(error);
+        })
+      },
+      (seriesCallback) => {
+        let chunks;
 
-      async.forEachSeries(chunks, (items, forEachChunkCallback) => {
-        const itemsToDestroy = getAllItemsExceptOne(items);
-        if (itemsToDestroy.length>0) {
-          processItemsToDestroy(itemsToDestroy, workPackage.communityId, postsToRecount, forEachChunkCallback);
-        } else {
-          forEachChunkCallback();
+        // TODO: Share chunks in super base class of delete and get
+        const filteredFingerprints = _.filter(allItems, (endorsement) => {
+          return endorsement.data &&
+            (!endorsement.data.browserFingerprint ||
+              !endorsement.data.browserId) &&
+            moment(endorsement.created_at).valueOf()>moment("16/02/2022","DD/MM/YYYY").valueOf();
+        });
+
+        if (workPackage.selectedMethod==="byIpAddress") {
+          chunks = _.groupBy(allItems, function (endorsement) {
+            return endorsement.ip_address;
+          });
+        } else if (workPackage.selectedMethod==="byIpFingerprint") {
+          chunks = _.groupBy(filteredFingerprints, function (endorsement) {
+            return endorsement.ip_address+":"+(endorsement.data ? endorsement.data.browserFingerprint : "na");
+          });
+        } else if (workPackage.selectedMethod==="byIpFingerprintPostId") {
+          chunks = _.groupBy(filteredFingerprints, function (endorsement) {
+            return endorsement.post_id+":"+endorsement.ip_address+":"+(endorsement.data ? endorsement.data.browserFingerprint : "na");
+          });
+        } else if (workPackage.selectedMethod==="byIpUserAgentPostId") {
+          chunks = _.groupBy(allItems, function (endorsement) {
+            return endorsement.ip_address+":"+endorsement.post_id+":"+endorsement.user_agent;
+          });
+        } else if (workPackage.selectedMethod==="byMissingBrowserFingerprint") {
+          chunks = _.groupBy(filteredFingerprints, function (endorsement) {
+            return endorsement.data ? `${endorsement.data.browserId}:${endorsement.data.browserFingerprint}` : "nodata";
+          });
         }
-      }, error => {
-        seriesCallback(error)
-      });
-    },
-    (seriesCallback) => {
-      async.forEachSeries(postsToRecount, (postId, forEachPostCallback) => {
-        recountPost(postId, forEachPostCallback);
-      }, error => {
-        seriesCallback(error)
-      });
-    },
-    (seriesCallback) => {
-      recountCommunity(communityId, seriesCallback);
-    }
-  ], error => {
-    if (error)
-      console.error(error);
-    else
-      console.log(`Deleted ${deletedEndorsments} endorsements from community ${workPackage.communityId}`)
+
+        async.forEachSeries(chunks, (items, forEachChunkCallback) => {
+          const itemsToDestroy = getAllItemsExceptOne(items, getAllowedSingleDelete(workPackage));
+          if (itemsToDestroy.length>0) {
+            processItemsToDestroy(itemsToDestroy, workPackage.communityId, postsToRecount, forEachChunkCallback);
+          } else {
+            forEachChunkCallback();
+          }
+        }, error => {
+          seriesCallback(error)
+        });
+      },
+      (seriesCallback) => {
+        async.forEachSeries(postsToRecount, (postId, forEachPostCallback) => {
+          recountPost(postId, forEachPostCallback);
+        }, error => {
+          seriesCallback(error)
+        });
+      },
+      (seriesCallback) => {
+        recountCommunity(communityId, seriesCallback);
+      }
+    ], error => {
+      if (error)
+        console.error(error);
+      else
+        console.log(`Deleted ${deletedEndorsments} endorsements from community ${workPackage.communityId}`)
+      done(error);
+    });
+  } else {
+    done("No items");
+  }
+}
+
+const deleteItems = async (workPackage, done) => {
+  console.log(`Delete data ${JSON.stringify(workPackage)}`)
+
+  try {
+    const job = await models.AcBackgroundJob.findOne({
+      where: {
+        id: workPackage.jobId
+      }
+    });
+
+    deleteFraudulentEndorsements(workPackage, job, async (error) => {
+      if (error) {
+        await models.AcBackgroundJob.updateErrorAsync(workPackage.jobId, error);
+        done();
+      } else {
+        await models.AcBackgroundJob.updateProgressAsync(workPackage.jobId, 100);
+        done();
+      }
+    });
+  } catch (error) {
+    console.error(error);
     done(error);
-  });
+  }
 }
 
 module.exports = {
-  deleteFraudulentEndorsements
+  deleteItems
 };

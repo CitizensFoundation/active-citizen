@@ -411,15 +411,15 @@ const getData = async (workPackage, done) => {
 
     let data;
 
-    if (workPackage.type==="byIpAddress") {
+    if (workPackage.selectedMethod==="byIpAddress") {
       data = getTopDataByIp(endorsements);
-    } else if (workPackage.type==="byIpUserAgentPostId") {
+    } else if (workPackage.selectedMethod==="byIpUserAgentPostId") {
       data = getTopDataByIpUserAgentPostId(endorsements);
-    } else if (workPackage.type==="byIpFingerprintPostId") {
+    } else if (workPackage.selectedMethod==="byIpFingerprintPostId") {
       data = getTopDataByIpFingerprintPostId(endorsements);
-    } else if (workPackage.type==="byIpFingerprint") {
+    } else if (workPackage.selectedMethod==="byIpFingerprint") {
       data = getTopDataByIpFingerprint(endorsements);
-    } else if (workPackage.type==="byMissingBrowserFingerprint") {
+    } else if (workPackage.selectedMethod==="byMissingBrowserFingerprint") {
       data = getTopDataByNoFingerprints(endorsements);
     }
 
@@ -433,6 +433,7 @@ const getData = async (workPackage, done) => {
     done();
   } catch (error) {
     console.error(error);
+    await models.AcBackgroundJob.updateErrorAsync(workPackage.jobId, error);
     done(error);
   }
 }

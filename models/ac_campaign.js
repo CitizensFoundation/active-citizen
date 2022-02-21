@@ -72,7 +72,7 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   AcCampaign.sendCampaign = (campaignId, done) => {
-    models.AcBackgroundJob.createJob({}, (error, jobId) => {
+    models.AcBackgroundJob.createJob({}, {}, (error, jobId) => {
       if (error) {
         done(error);
       } else {

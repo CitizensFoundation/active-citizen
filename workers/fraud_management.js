@@ -8,6 +8,7 @@ const _ = require('lodash');
 
 const getData = require('../engine/moderation/endorsementFraudGet').getData;
 const deleteJob = require('../engine/moderation/endorsementFraudGet').deleteJob;
+const deleteItems = require('../engine/moderation/endorsementFraudDelete').deleteItems;;
 
 let airbrake = null;
 if(process.env.AIRBRAKE_PROJECT_ID) {
@@ -18,14 +19,14 @@ let FraudManagementWorker = function () {};
 
 FraudManagementWorker.prototype.process = (workPackage, callback) => {
   switch (workPackage.type) {
+    case 'delete-one-item':
+    case 'delete-items':
+      deleteItems(workPackage, callback);
+      break;
     case 'delete-job':
       deleteJob(workPackage, callback);
       break;
-    case 'byMissingBrowserFingerprint':
-    case 'byIpUserAgentPostId':
-    case 'byIpAddress':
-    case 'byIpFingerprintPostId':
-    case 'byIpFingerprint':
+    case 'get-items':
       getData(workPackage, callback);
       break;
     default:

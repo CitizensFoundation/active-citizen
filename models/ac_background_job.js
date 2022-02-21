@@ -4,7 +4,8 @@ module.exports = (sequelize, DataTypes) => {
   const AcBackgroundJob = sequelize.define("AcBackgroundJob", {
     progress: { type: DataTypes.INTEGER, allowNull: true },
     error: { type: DataTypes.TEXT, allowNull: true },
-    data: DataTypes.JSONB
+    data: { type: DataTypes.JSONB, allowNull: true },
+    internal_data: { type: DataTypes.JSONB, allowNull: true }
   }, {
 
     timestamps: true,
@@ -16,10 +17,11 @@ module.exports = (sequelize, DataTypes) => {
     tableName: 'ac_background_jobs',
   });
 
-  AcBackgroundJob.createJob = (data, done) => {
+  AcBackgroundJob.createJob = (data, internal_data, done) => {
     sequelize.models.AcBackgroundJob.create({
       progress: 5,
       data: data,
+      internal_data: internal_data
     }).then(job => {
       done(null, job.id);
     }).catch(error => {
@@ -64,6 +66,21 @@ module.exports = (sequelize, DataTypes) => {
       try {
         resolve(sequelize.models.AcBackgroundJob.update({
             data: data
+          },
+          {
+            where: { id: jobId },
+          }))
+      } catch (error) {
+        reject(error);
+      }
+    });
+  };
+
+  AcBackgroundJob.updateErrorAsync = async (jobId, error) => {
+    return await new Promise(async (resolve, reject) => {
+      try {
+        resolve(sequelize.models.AcBackgroundJob.update({
+            error: error
           },
           {
             where: { id: jobId },
