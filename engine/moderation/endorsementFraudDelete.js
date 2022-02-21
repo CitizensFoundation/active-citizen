@@ -10,10 +10,15 @@ const recountCommunity = require('../../../utils/recount_utils').recountCommunit
 const recountPost = require('../../../utils/recount_utils').recountPost;
 
 const processItemsToDestroy = (itemsToDestroy, communityId, postsToRecount, callback) => {
-  async.forEachSeries(itemsToDestroy, (item, forEachItemCallback) => {
-    models.Endorsement.findOne({
+  // Make into chunks
+  const idsToDestroy = itemsToDestroy.map( item => item.id);
+  models.Endorsement.update({
+      deleted: true
+    }, {
       where: {
-        id: item.endorsementId
+        id: {
+          $in: idsToDestroy
+        }
       },
       include: [
         {
@@ -39,30 +44,10 @@ const processItemsToDestroy = (itemsToDestroy, communityId, postsToRecount, call
       ],
       attributes: ['id']
     }).then( endorsement => {
-      if (endorsement) {
-        endorsement.deleted = true;
-        endorsement.save().then(()=>{
-          deletedEndorsments++;
-          forEachItemCallback();
-        }).catch( error => {
-          forEachItemCallback(error);
-        })
-      } else {
-        console.warn("Endorsement not found: "+item.endorsementId);
-        forEachItemCallback();
-      }
-    }).catch( error => {
-      forEachItemCallback(error);
-    })
-  }, error => {
-    if (error) {
-      callback(error)
-    } else {
-      if (postsToRecount.indexOf(itemsToDestroy[0].postId) === -1) {
-        postsToRecount.push(itemsToDestroy[0].postId);
-      }
-      callback();
+    if (postsToRecount.indexOf(itemsToDestroy[0].post_id) === -1) {
+      postsToRecount.push(itemsToDestroy[0].post_id);
     }
+    callback();
   });
 }
 
@@ -78,7 +63,7 @@ const getAllItemsExceptOne = (items, allowDeletingSingles) => {
     let foundEmail = false;
 
     for (let i=0; i<sortedItems.length;i++) {
-      if (!foundEmail && sortedItems[i].userEmail.indexOf("_anonymous@citizens.i") === -1) {
+      if (!foundEmail && sortedItems[i].User.email.indexOf("_anonymous@citizens.i") === -1) {
         foundEmail = true;
       } else {
         finalItems.push(sortedItems[i]);
@@ -93,8 +78,16 @@ const getAllItemsExceptOne = (items, allowDeletingSingles) => {
   }
 }
 
-const getAllowedSingleDelete = (workpackage) => {
+const getAllowedSingleDelete = (workPackage) => {
+  return workPackage.type==="delete-one-item"
+}
 
+const GetMomentInYourPriorities = (workPackage) => {
+  if (workPackage.collectionType==="endorsements") {
+    return moment("16/02/2022","DD/MM/YYYY").valueOf();
+  } else {
+    return moment("21/02/2022","DD/MM/YYYY").valueOf();
+  }
 }
 
 const deleteFraudulentEndorsements = (workPackage, job, done) => {
@@ -111,7 +104,18 @@ const deleteFraudulentEndorsements = (workPackage, job, done) => {
             id: {
               $in: allItemsIds
             }
-          }
+          },
+          attributes: ['id','value','ip_address','user_agent','data','post_id'],
+          include: [
+            {
+              model: models.User,
+              attributes: ['id','email']
+            },
+            {
+              model: models.Post,
+              attributes: ['id','name']
+            }
+          ]
         }).then( inItems => {
           if (inItems && inItems.length>0) {
             allItems = inItems;
@@ -127,11 +131,15 @@ const deleteFraudulentEndorsements = (workPackage, job, done) => {
         let chunks;
 
         // TODO: Share chunks in super base class of delete and get
-        const filteredFingerprints = _.filter(allItems, (endorsement) => {
+        const filteredMissingFingerprints = _.filter(allItems, (endorsement) => {
           return endorsement.data &&
             (!endorsement.data.browserFingerprint ||
               !endorsement.data.browserId) &&
-            moment(endorsement.created_at).valueOf()>moment("16/02/2022","DD/MM/YYYY").valueOf();
+            moment(endorsement.created_at).valueOf()>GetMomentInYourPriorities(workPackage);
+        });
+
+        const filteredHasFingerprints = _.filter(allItems, (endorsement) => {
+          return endorsement.data && endorsement.data.browserFingerprint;
         });
 
         if (workPackage.selectedMethod==="byIpAddress") {
@@ -143,7 +151,7 @@ const deleteFraudulentEndorsements = (workPackage, job, done) => {
             return endorsement.ip_address+":"+(endorsement.data ? endorsement.data.browserFingerprint : "na");
           });
         } else if (workPackage.selectedMethod==="byIpFingerprintPostId") {
-          chunks = _.groupBy(filteredFingerprints, function (endorsement) {
+          chunks = _.groupBy(filteredHasFingerprints, function (endorsement) {
             return endorsement.post_id+":"+endorsement.ip_address+":"+(endorsement.data ? endorsement.data.browserFingerprint : "na");
           });
         } else if (workPackage.selectedMethod==="byIpUserAgentPostId") {
@@ -151,7 +159,7 @@ const deleteFraudulentEndorsements = (workPackage, job, done) => {
             return endorsement.ip_address+":"+endorsement.post_id+":"+endorsement.user_agent;
           });
         } else if (workPackage.selectedMethod==="byMissingBrowserFingerprint") {
-          chunks = _.groupBy(filteredFingerprints, function (endorsement) {
+          chunks = _.groupBy(filteredMissingFingerprints, function (endorsement) {
             return endorsement.data ? `${endorsement.data.browserId}:${endorsement.data.browserFingerprint}` : "nodata";
           });
         }
@@ -175,13 +183,13 @@ const deleteFraudulentEndorsements = (workPackage, job, done) => {
         });
       },
       (seriesCallback) => {
-        recountCommunity(communityId, seriesCallback);
+        recountCommunity(workPackage.communityId, seriesCallback);
       }
     ], error => {
       if (error)
         console.error(error);
       else
-        console.log(`Deleted ${deletedEndorsments} endorsements from community ${workPackage.communityId}`)
+        console.log(`Deleted $deletedEndorsments endorsements from community ${workPackage.communityId}`)
       done(error);
     });
   } else {
@@ -198,6 +206,8 @@ const deleteItems = async (workPackage, done) => {
         id: workPackage.jobId
       }
     });
+
+    console.log(`Delete data ${JSON.stringify(workPackage)} ${JSON.stringify(job)}`)
 
     deleteFraudulentEndorsements(workPackage, job, async (error) => {
       if (error) {
