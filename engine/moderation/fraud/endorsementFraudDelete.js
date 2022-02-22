@@ -147,7 +147,7 @@ const deleteFraudulentEndorsements = (workPackage, job, done) => {
             return endorsement.ip_address;
           });
         } else if (workPackage.selectedMethod==="byIpFingerprint") {
-          chunks = _.groupBy(filteredFingerprints, function (endorsement) {
+          chunks = _.groupBy(filteredHasFingerprints, function (endorsement) {
             return endorsement.ip_address+":"+(endorsement.data ? endorsement.data.browserFingerprint : "na");
           });
         } else if (workPackage.selectedMethod==="byIpFingerprintPostId") {
@@ -195,6 +195,12 @@ const deleteFraudulentEndorsements = (workPackage, job, done) => {
   } else {
     done("No items");
   }
+}
+
+const saveAuditToCollection = async (workPackage, job) => {
+  models.GeneralDataStore.create({ data: { workPackage, deleteData: job.internal_data }}).then((dataItem)=> {
+  //TODO
+  });
 }
 
 const deleteItems = async (workPackage, done) => {

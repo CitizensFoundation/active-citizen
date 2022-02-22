@@ -6,6 +6,8 @@ const i18n = require('../utils/i18n');
 const toJson = require('../utils/to_json');
 const _ = require('lodash');
 const FraudGetEndorsements = require("../engine/moderation/fraud/FraudGetEndorsements");
+const FraudDeleteEndorsements = require("../engine/moderation/fraud/FraudDeleteEndorsements");
+const FraudDeleteRatings = require("../engine/moderation/fraud/FraudDeleteRatings");
 const FraudGetRatings = require("../engine/moderation/fraud/FraudGetRatings");
 
 //const getData = require('../engine/moderation/fraud/endorsementFraudGet').getData;
@@ -41,11 +43,33 @@ const ProcessFraudGet = async (workPackage, done) => {
   }
 }
 
+const ProcessFraudDelete = async (workPackage, done) => {
+  let fraudDeleteEngine;
+
+  try {
+    switch (workPackage.collectionType) {
+      case "endorsements":
+        fraudDeleteEngine = new FraudDeleteEndorsements(workPackage);
+        break;
+      case "ratings":
+        fraudDeleteEngine = new FraudDeleteRatings(workPackage);
+        break;
+    }
+
+    await fraudDeleteEngine.deleteItems();
+    done();
+  } catch (error) {
+    console.error(error);
+    await models.AcBackgroundJob.updateErrorAsync(workPackage.jobId, error);
+    done(error);
+  }
+}
+
 FraudManagementWorker.prototype.process = async (workPackage, callback) => {
   switch (workPackage.type) {
     case 'delete-one-item':
     case 'delete-items':
-      deleteItems(workPackage, callback);
+      await ProcessFraudDelete(workPackage, callback);
       break;
     case 'delete-job':
       await models.AcBackgroundJob.destroyJobAsync(workPackage.jobId);
