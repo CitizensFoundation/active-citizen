@@ -71,6 +71,13 @@ class FraudDeleteBase extends FraudBase {
           deleteData: this.job.internal_data
         }});
 
+        const user = await models.findOne({
+          where: {
+            id: this.workPackage.userId,
+            attributes: ['name']
+          }
+        });
+
         const community = await models.Community.findOne({
           where: {
             id: this.workPackage.communityId
@@ -88,7 +95,8 @@ class FraudDeleteBase extends FraudBase {
 
         community.data.fraudDeletionsAuditLogs.push({
           logId: fraudAuditLog.id,
-          date: fraudAuditLog.date
+          date: fraudAuditLog.date,
+          userName: user.name
         });
 
         community.changed('data', true);
