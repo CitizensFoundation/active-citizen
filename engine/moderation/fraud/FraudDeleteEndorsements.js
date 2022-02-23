@@ -4,7 +4,6 @@ const moment = require("moment");
 const FraudDeleteBase = require('./FraudDeleteBase.js');
 const models = require("../../../../models");
 
-//TODO: Change to native JS instead of lodash
 class FraudDeleteEndorsements extends FraudDeleteBase {
 
   async destroyChunkItemsByModel(model, items) {

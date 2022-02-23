@@ -109,19 +109,19 @@ class FraudScannerNotifier {
 
     for (let c=0;c<this.collectionsToScan.length;c++) {
       const collectionLength = this.uniqueCollectionItemsIds[this.collectionsToScan[c]].length;
-      if (collectionLength>10) {
+      if (collectionLength>0) {
         collectionCountTexts.push(`${this.capitalizeFirstLetter(this.collectionsToScan[c])}: ${collectionLength}`)
       }
     }
 
     if (collectionCountTexts.length>0) {
-      await this.currentCommunity.reload();
-
       if (!this.currentCommunity.data ||
           !this.currentCommunity.data.lastFraudScanResults ||
           JSON.stringify(this.currentCommunity.data.lastFraudScanResults) !== JSON.stringify(collectionCountTexts)
       ) {
         await this.sendNotificationEmails(collectionCountTexts);
+
+        await this.currentCommunity.reload();
 
         if (!this.currentCommunity.data) {
           this.currentCommunity.data = {};
@@ -129,7 +129,6 @@ class FraudScannerNotifier {
 
         this.currentCommunity.data.lastFraudScanResults = collectionCountTexts;
         this.currentCommunity.changed('data', true);
-
         await this.currentCommunity.save();
       } else {
         console.log("Not resending same numbers");

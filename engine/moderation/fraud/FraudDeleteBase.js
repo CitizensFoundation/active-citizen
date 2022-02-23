@@ -65,18 +65,19 @@ class FraudDeleteBase extends FraudBase {
     return await new Promise(async (resolve, reject) => {
       try {
 
+        const user = await models.User.findOne({
+          where: {
+            id: this.workPackage.userId,
+          },
+          attributes: ['name']
+        });
+
         const fraudAuditLog = await models.GeneralDataStore.create({ data: {
           date: new Date(),
+          userName: user.name,
           workPackage: this.workPackage,
           deleteData: this.job.internal_data
         }});
-
-        const user = await models.findOne({
-          where: {
-            id: this.workPackage.userId,
-            attributes: ['name']
-          }
-        });
 
         const community = await models.Community.findOne({
           where: {
@@ -95,7 +96,7 @@ class FraudDeleteBase extends FraudBase {
 
         community.data.fraudDeletionsAuditLogs.push({
           logId: fraudAuditLog.id,
-          date: fraudAuditLog.date,
+          date: fraudAuditLog.data.date,
           userName: user.name
         });
 
