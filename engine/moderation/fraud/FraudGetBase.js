@@ -94,7 +94,8 @@ class FraudGetBase extends FraudBase {
       }
 
       if (this.workPackage.collectionType==="endorsements" ||
-        this.workPackage.collectionType==="ratings") {
+        this.workPackage.collectionType==="ratings" ||
+        this.workPackage.collectionType==="points") {
         if (!cDonePostNames[item.Post.name]) {
           cDonePostNames[item.Post.name] = true;
           outData.cPostNames.push(item.Post.name);

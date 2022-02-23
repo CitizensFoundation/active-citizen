@@ -11,6 +11,8 @@ const FraudDeletePointQualities = require("../engine/moderation/fraud/FraudDelet
 const FraudDeleteEndorsements = require("../engine/moderation/fraud/FraudDeleteEndorsements");
 const FraudDeleteRatings = require("../engine/moderation/fraud/FraudDeleteRatings");
 const FraudGetRatings = require("../engine/moderation/fraud/FraudGetRatings");
+const FraudGetPoints = require("../engine/moderation/fraud/FraudGetPoints");
+const FraudDeletePoints = require("../engine/moderation/fraud/FraudDeletePoints");
 
 //const getData = require('../engine/moderation/fraud/endorsementFraudGet').getData;
 const deleteJob = require('../engine/moderation/fraud/endorsementFraudGet').deleteJob;
@@ -37,6 +39,9 @@ const ProcessFraudGet = async (workPackage, done) => {
       case "pointQualities":
         fraudGetEngine = new FraudGetPointQualities(workPackage);
         break;
+      case "points":
+        fraudGetEngine = new FraudGetPoints(workPackage);
+        break;
     }
 
     await fraudGetEngine.processAndGetFraudItems();
@@ -61,6 +66,9 @@ const ProcessFraudDelete = async (workPackage, done) => {
         break;
       case "pointQualities":
         fraudDeleteEngine = new FraudDeletePointQualities(workPackage);
+        break;
+      case "points":
+        fraudDeleteEngine = new FraudDeletePoints(workPackage);
         break;
     }
 
