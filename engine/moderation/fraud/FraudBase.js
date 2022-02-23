@@ -53,8 +53,16 @@ class FraudBase {
     return this.getTopItems(this.groupTopDataByIpUserAgentPostId(), "byIpUserAgentPostId");
   }
 
+  getTopDataByIpUserAgentPointId() {
+    return this.getTopItems(this.groupTopDataByIpUserAgentPointId(), "byIpUserAgentPointId");
+  }
+
   getTopDataByIpFingerprintPostId ()  {
     return this.getTopItems(this.groupTopDataByIpFingerprintPostId(), "byIpFingerprintPostId");
+  }
+
+  getTopDataByIpFingerprintPointId ()  {
+    return this.getTopItems(this.groupTopDataByIpFingerprintPointId(), "byIpFingerprintPointId");
   }
 
   getTopDataByIpFingerprint () {
@@ -73,8 +81,14 @@ class FraudBase {
       case "byIpUserAgentPostId":
         this.dataToProcess = this.getTopDataByIpUserAgentPostId();
         break;
+      case "byIpUserAgentPointId":
+        this.dataToProcess = this.getTopDataByIpUserAgentPointId();
+        break;
       case "byIpFingerprintPostId":
         this.dataToProcess = this.getTopDataByIpFingerprintPostId();
+        break;
+      case "byIpFingerprintPointId":
+        this.dataToProcess = this.getTopDataByIpFingerprintPointId();
         break;
       case "byIpFingerprint":
         this.dataToProcess = this.getTopDataByIpFingerprint();
@@ -170,6 +184,12 @@ class FraudBase {
     });
   }
 
+  groupTopDataByIpUserAgentPointId()  {
+    return _.groupBy(this.items, (item) => {
+      return item.ip_address+":"+item.point_id+":"+item.user_agent;
+    });
+  }
+
   groupTopDataByIpFingerprintPostId() {
     const filtered = _.filter(this.items, (item) => {
       return item.data &&
@@ -179,6 +199,18 @@ class FraudBase {
 
     return _.groupBy(filtered, (item) => {
       return item.ip_address+":"+item.post_id+":"+item.data.browserFingerprint;
+    });
+  }
+
+  groupTopDataByIpFingerprintPointId() {
+    const filtered = _.filter(this.items, (item) => {
+      return item.data &&
+        item.data.browserFingerprint &&
+        item.data.browserFingerprint !== "undefined";
+    });
+
+    return _.groupBy(filtered, (item) => {
+      return item.ip_address+":"+item.point_id+":"+item.data.browserFingerprint;
     });
   }
 

@@ -5,36 +5,42 @@ const FraudGetBase = require('./FraudGetBase.js');
 const models = require("../../../../models");
 
 //TODO: Change to native JS instead of lodash
-class FraudGetEndorsements extends FraudGetBase {
-  async getAllModelItems(model, getGroup) {
+class FraudGetPointQualities extends FraudGetBase {
+  async getAllItems() {
     return await new Promise(async (resolve, reject) => {
       try {
-        const items = await model.findAll({
-          attributes: ["id","created_at","value","post_id","user_id","user_agent","ip_address","data"],
+        const items = await models.PointQuality.findAll({
+          attributes: ["id","created_at","value","point_id","user_id","user_agent","ip_address","data"],
           include: [
             {
               model: models.User,
               attributes: ['id','email'],
             },
             {
-              model: models.Post,
-              attributes: ['id','name'],
+              model: models.Point,
+              attributes: ['id'],
               include: [
                 {
-                  model: models.Group,
-                  attributes: ['id'],
+                  model: models.Post,
+                  attributes: ['id','name'],
                   include: [
                     {
-                      model: models.Community,
-                      attributes: [],
-                      where: {
-                        id: this.workPackage.communityId
-                      }
+                      model: models.Group,
+                      attributes: ['id'],
+                      include: [
+                        {
+                          model: models.Community,
+                          attributes: [],
+                          where: {
+                            id: this.workPackage.communityId
+                          }
+                        }
+                      ]
                     }
                   ]
                 }
               ]
-            }
+            },
           ]
         })
 
@@ -42,39 +48,30 @@ class FraudGetEndorsements extends FraudGetBase {
           return [item.post_id, item.user_agent];
         });
 
-        let groupConfiguration;
-
-        if (getGroup && items.length>0) {
-          const group = await models.Group.findOne({
-            where: {
-              id: itemsToAnalyse[0].Post.Group.id
-            },
-            attributes: ['configuration']
-          });
-
-          if (group) {
-            groupConfiguration = group.configuration;
-          }
-        }
-
-        resolve({itemsToAnalyse, groupConfiguration});
+        resolve(itemsToAnalyse);
       } catch (error) {
         reject(error);
       }
     });
   }
 
-  async getAllItems() {
-    const itemsContainer = await this.getAllModelItems(models.Endorsement);
-    return itemsContainer.itemsToAnalyse;
+  getPointIdsFromItems(topItems) {
+    const postIds = [];
+    _.forEach(topItems, item => {
+      for (let i=0;i<item.items.length;i++) {
+        postIds.push(item.items[i].point_id);
+      }
+    });
+
+    return postIds;
   }
 
   getTopItems(items, type) {
     let topItems = this.setupTopItems(items);
-    const postIds = this.getPostIdsFromItems(topItems);
-    const postCount = _.uniq(postIds).length;
+    const pointIds = this.getPointIdsFromItems(topItems);
+    const pointCount = _.uniq(pointIds).length;
 
-    if (type==="byIpUserAgentPostId") {
+    if (type==="byIpUserAgentPointId") {
       let out = [];
       _.each(topItems, function (item) {
         if (item.count>1) {
@@ -98,14 +95,14 @@ class FraudGetEndorsements extends FraudGetBase {
     } else if (type==="byIpFingerprint") {
       let out = [];
       _.each(topItems, function (item) {
-        if ((item.count/postCount)>1) {
-          if ((item.count/postCount) > 5) {
+        if ((item.count/pointCount)>1) {
+          if ((item.count/pointCount) > 5) {
             this.setWeightedConfidenceScore(item.items, 99);
-          } else if ((item.count/postCount) > 4) {
+          } else if ((item.count/pointCount) > 4) {
             this.setWeightedConfidenceScore(item.items, 95);
-          } else if ((item.count/postCount) > 3) {
+          } else if ((item.count/pointCount) > 3) {
             this.setWeightedConfidenceScore(item.items, 90);
-          } else if ((item.count/postCount) > 2) {
+          } else if ((item.count/pointCount) > 2) {
             this.setWeightedConfidenceScore(item.items, 85);
           } else {
             this.setWeightedConfidenceScore(item.items, 80);
@@ -116,7 +113,7 @@ class FraudGetEndorsements extends FraudGetBase {
       return out;
     } else if (type==="byMissingFingerprint") {
       return topItems;
-    } else if (type==="byIpFingerprintPostId") {
+    } else if (type==="byIpFingerprintPointId") {
       let out = [];
       _.each(topItems, function (item) {
         if (item.count>1) {
@@ -140,18 +137,18 @@ class FraudGetEndorsements extends FraudGetBase {
     } else if (type==="byIpAddress") {
       let out = [];
       _.each(topItems, function (item) {
-        if ((item.count/postCount)>1) {
-          if ((item.count/postCount) > 100) {
+        if ((item.count/pointCount)>1) {
+          if ((item.count/pointCount) > 100) {
             this.setWeightedConfidenceScore(item.items, 90);
-          } else if ((item.count/postCount) > 50) {
+          } else if ((item.count/pointCount) > 50) {
             this.setWeightedConfidenceScore(item.items, 85);
-          } else if ((item.count/postCount) > 25) {
+          } else if ((item.count/pointCount) > 25) {
             this.setWeightedConfidenceScore(item.items, 80);
-          } else if ((item.count/postCount) > 10) {
+          } else if ((item.count/pointCount) > 10) {
             this.setWeightedConfidenceScore(item.items, 75);
-          } else if ((item.count/postCount) > 5) {
+          } else if ((item.count/pointCount) > 5) {
             this.setWeightedConfidenceScore(item.items, 70);
-          } else if ((item.count/postCount) > 2) {
+          } else if ((item.count/pointCount) > 2) {
             this.setWeightedConfidenceScore(item.items, 65);
           } else {
             this.setWeightedConfidenceScore(item.items, 50);
@@ -167,4 +164,4 @@ class FraudGetEndorsements extends FraudGetBase {
   }
 }
 
-module.exports = FraudGetEndorsements;
+module.exports = FraudGetPointQualities;

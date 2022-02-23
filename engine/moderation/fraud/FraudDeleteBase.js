@@ -5,11 +5,13 @@ const FraudBase = require('./FraudBase');
 
 const recountCommunity = require('../../../../utils/recount_utils').recountCommunity;
 const recountPosts = require('../../../../utils/recount_utils').recountPosts;
+const recountPoints = require('../../../../utils/recount_utils').recountPoints;
 
 class FraudDeleteBase extends FraudBase {
   constructor(workPackage){
     super(workPackage);
     this.postsToRecount = [];
+    this.pointsToRecount = [];
     this.job = null;
   }
 
@@ -161,6 +163,18 @@ class FraudDeleteBase extends FraudBase {
     })
   }
 
+  async recountPoints() {
+    return await new Promise(async (resolve, reject) => {
+      recountPoints( this.pointsToRecount,error=> {
+        if (error) {
+          reject(error)
+        } else {
+          resolve()
+        }
+      })
+    })
+  }
+
   async recountCommunity() {
     return await new Promise(async (resolve, reject) => {
       recountCommunity( this.workPackage.communityId, error=> {
@@ -191,7 +205,14 @@ class FraudDeleteBase extends FraudBase {
 
         await this.createAuditLog();
 
-        await this.recountPosts();
+        if (this.postsToRecount.length>0) {
+          await this.recountPosts();
+        }
+
+        if (this.pointsToRecount.length>0) {
+          await this.recountPoints();
+        }
+
         await this.recountCommunity();
 
         await models.AcBackgroundJob.updateProgressAsync(this.workPackage.jobId, 100);

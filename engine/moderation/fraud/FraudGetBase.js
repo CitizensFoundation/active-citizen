@@ -93,9 +93,21 @@ class FraudGetBase extends FraudBase {
         outData.cNames.push(item.User.name);
       }
 
-      if (!cDonePostNames[item.Post.name]) {
-        cDonePostNames[item.Post.name] = true;
-        outData.cPostNames.push(item.Post.name);
+      if (this.workPackage.collectionType==="endorsements" ||
+        this.workPackage.collectionType==="ratings") {
+        if (!cDonePostNames[item.Post.name]) {
+          cDonePostNames[item.Post.name] = true;
+          outData.cPostNames.push(item.Post.name);
+        }
+        item.Post.name = outData.cPostNames.indexOf(item.Post.name);
+      }
+
+      if (this.workPackage.collectionType==="pointQualities") {
+        if (!cDonePostNames[item.Point.Post.name]) {
+          cDonePostNames[item.Point.Post.name] = true;
+          outData.cPostNames.push(item.Point.Post.name);
+        }
+        item.Point.Post.name = outData.cPostNames.indexOf(item.Point.Post.name);
       }
 
       item.dataValues.backgroundColor = outData.cBackgroundColors.indexOf(item.dataValues.backgroundColor);
@@ -104,7 +116,6 @@ class FraudGetBase extends FraudBase {
       item.user_agent = outData.cUserAgents.indexOf(item.user_agent);
       item.User.email = outData.cEmails.indexOf(item.User.email);
       item.User.name = outData.cEmails.indexOf(item.User.name);
-      item.Post.name = outData.cPostNames.indexOf(item.Post.name);
 
       outData.items.push(item);
     });

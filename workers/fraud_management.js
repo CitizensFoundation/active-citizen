@@ -6,6 +6,8 @@ const i18n = require('../utils/i18n');
 const toJson = require('../utils/to_json');
 const _ = require('lodash');
 const FraudGetEndorsements = require("../engine/moderation/fraud/FraudGetEndorsements");
+const FraudGetPointQualities = require("../engine/moderation/fraud/FraudGetPointQualities");
+const FraudDeletePointQualities = require("../engine/moderation/fraud/FraudDeletePointQualities");
 const FraudDeleteEndorsements = require("../engine/moderation/fraud/FraudDeleteEndorsements");
 const FraudDeleteRatings = require("../engine/moderation/fraud/FraudDeleteRatings");
 const FraudGetRatings = require("../engine/moderation/fraud/FraudGetRatings");
@@ -32,6 +34,9 @@ const ProcessFraudGet = async (workPackage, done) => {
       case "ratings":
         fraudGetEngine = new FraudGetRatings(workPackage);
         break;
+      case "pointQualities":
+        fraudGetEngine = new FraudGetPointQualities(workPackage);
+        break;
     }
 
     await fraudGetEngine.processAndGetFraudItems();
@@ -53,6 +58,9 @@ const ProcessFraudDelete = async (workPackage, done) => {
         break;
       case "ratings":
         fraudDeleteEngine = new FraudDeleteRatings(workPackage);
+        break;
+      case "pointQualities":
+        fraudDeleteEngine = new FraudDeletePointQualities(workPackage);
         break;
     }
 
