@@ -86,7 +86,10 @@ class FraudDeleteBase extends FraudBase {
           community.set('data.fraudDeletionsAuditLogs', []);
         }
 
-        community.data.fraudDeletionsAuditLogs.push(fraudAuditLog.id);
+        community.data.fraudDeletionsAuditLogs.push({
+          logId: fraudAuditLog.id,
+          date: fraudAuditLog.date
+        });
 
         community.changed('data', true);
 
