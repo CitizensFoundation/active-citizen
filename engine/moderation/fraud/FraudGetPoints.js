@@ -54,7 +54,7 @@ class FraudGetPointQualities extends FraudGetBase {
     const postIds = this.getPostIdsFromItems(topItems);
     const postCount = _.uniq(postIds).length;
     
-    const pointMultiplier = 1;
+    const pointMultiplier = 10;
 
     if (type==="byIpUserAgentPostId") {
       let out = [];

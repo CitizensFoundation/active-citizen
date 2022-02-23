@@ -47,7 +47,7 @@ class FraudGetPoints extends FraudGetBase {
     const postIds = this.getPostIdsFromItems(topItems);
     const postCount = _.uniq(postIds).length;
 
-    const pointMultiplier = 1 //10;
+    const pointMultiplier = 10;
 
     if (type==="byIpFingerprint") {
       let out = [];

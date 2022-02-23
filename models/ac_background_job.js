@@ -29,6 +29,21 @@ module.exports = (sequelize, DataTypes) => {
     })
   };
 
+  AcBackgroundJob.createJobAsync = async (data, internal_data) => {
+    return await new Promise(async (resolve, reject) => {
+      try {
+        const job = sequelize.models.AcBackgroundJob.create({
+          progress: 5,
+          data: data,
+          internal_data: internal_data
+        })
+        resolve(job);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  };
+
   AcBackgroundJob.updateProgress = (jobId, progress, done) => {
     sequelize.models.AcBackgroundJob.update(
       {

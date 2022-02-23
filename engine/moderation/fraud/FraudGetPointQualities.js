@@ -158,7 +158,7 @@ class FraudGetPointQualities extends FraudGetBase {
       }.bind(this));
       return out;
     } else {
-      console.warn("Wrong type for e fraud check")
+      console.warn(`Wrong type for e fraud check: ${type}`)
       return [];
     }
   }

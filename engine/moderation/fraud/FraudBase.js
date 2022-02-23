@@ -167,12 +167,11 @@ class FraudBase {
     }
   }
 
-
   getStartFingerprintMoment()  {
     if (this.workPackage.collectionType==="endorsements") {
       return moment("16/02/2022","DD/MM/YYYY").valueOf();
     } else {
-      return moment("24/02/2021","DD/MM/YYYY").valueOf();
+      return moment("24/02/2022","DD/MM/YYYY").valueOf();
     }
   }
 

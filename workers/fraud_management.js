@@ -5,20 +5,18 @@ const queue = require('./queue');
 const i18n = require('../utils/i18n');
 const toJson = require('../utils/to_json');
 const _ = require('lodash');
+
 const FraudGetEndorsements = require("../engine/moderation/fraud/FraudGetEndorsements");
 const FraudGetPointQualities = require("../engine/moderation/fraud/FraudGetPointQualities");
-const FraudDeletePointQualities = require("../engine/moderation/fraud/FraudDeletePointQualities");
-const FraudDeleteEndorsements = require("../engine/moderation/fraud/FraudDeleteEndorsements");
-const FraudDeleteRatings = require("../engine/moderation/fraud/FraudDeleteRatings");
 const FraudGetRatings = require("../engine/moderation/fraud/FraudGetRatings");
 const FraudGetPoints = require("../engine/moderation/fraud/FraudGetPoints");
-const FraudDeletePoints = require("../engine/moderation/fraud/FraudDeletePoints");
 const FraudGetPosts = require("../engine/moderation/fraud/FraudGetPosts");
-const FraudDeletePosts = require("../engine/moderation/fraud/FraudDeletePosts");
 
-//const getData = require('../engine/moderation/fraud/endorsementFraudGet').getData;
-const deleteJob = require('../engine/moderation/fraud/endorsementFraudGet').deleteJob;
-const deleteItems = require('../engine/moderation/fraud/endorsementFraudDelete').deleteItems;;
+const FraudDeleteEndorsements = require("../engine/moderation/fraud/FraudDeleteEndorsements");
+const FraudDeleteRatings = require("../engine/moderation/fraud/FraudDeleteRatings");
+const FraudDeletePointQualities = require("../engine/moderation/fraud/FraudDeletePointQualities");
+const FraudDeletePoints = require("../engine/moderation/fraud/FraudDeletePoints");
+const FraudDeletePosts = require("../engine/moderation/fraud/FraudDeletePosts");
 
 let airbrake = null;
 if(process.env.AIRBRAKE_PROJECT_ID) {
