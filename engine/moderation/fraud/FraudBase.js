@@ -156,7 +156,11 @@ class FraudBase {
       const item = items[i];
       const hasData = item.data ? Object.keys(item.data).length === 0 : false;
       if (hasData && !item.data.browserId && moment(item.created_at)>this.getStartFingerprintMoment()) {
-        item.dataValues.confidenceScore = `100%`;
+        if (["posts","points"].indexOf(this.workPackage.collectionType) > -1) {
+          item.dataValues.confidenceScore = `50%`;
+        } else {
+          item.dataValues.confidenceScore = `100%`;
+        }
       } else {
         item.dataValues.confidenceScore = `${averageScore.toFixed(0)}%`;
       }
@@ -168,7 +172,7 @@ class FraudBase {
     if (this.workPackage.collectionType==="endorsements") {
       return moment("16/02/2022","DD/MM/YYYY").valueOf();
     } else {
-      return moment("21/02/2022","DD/MM/YYYY").valueOf();
+      return moment("24/02/2021","DD/MM/YYYY").valueOf();
     }
   }
 
@@ -234,16 +238,20 @@ class FraudBase {
               moment(item.created_at).valueOf()>this.getStartFingerprintMoment();
     });
 
+    const scoreHundred = (["posts","points"].indexOf(this.workPackage.collectionType) > -1) ? "50%" : "100%";
+    const scoreNinety = (["posts","points"].indexOf(this.workPackage.collectionType) > -1) ? "45%" : "90%";
+    const scoreSeventy = (["posts","points"].indexOf(this.workPackage.collectionType) > -1) ? "60%" : "70%";
+
     _.forEach(filtered,  item => {
       if (!item.data.browserFingerprint &&
         !item.data.browserId) {
-        item.dataValues.confidenceScore = "100%";
+        item.dataValues.confidenceScore = scoreHundred;
         item.dataValues.key = "bothUndefined";
       } else if (!item.data.browserId) {
-        item.dataValues.confidenceScore = "90%";
+        item.dataValues.confidenceScore = scoreNinety;
         item.dataValues.key = "browserIdUndefined";
       } else {
-        item.dataValues.confidenceScore = "75%";
+        item.dataValues.confidenceScore = scoreSeventy;
         item.dataValues.key = "fingerPrintUndefined";
       }
     })

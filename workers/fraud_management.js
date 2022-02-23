@@ -13,6 +13,8 @@ const FraudDeleteRatings = require("../engine/moderation/fraud/FraudDeleteRating
 const FraudGetRatings = require("../engine/moderation/fraud/FraudGetRatings");
 const FraudGetPoints = require("../engine/moderation/fraud/FraudGetPoints");
 const FraudDeletePoints = require("../engine/moderation/fraud/FraudDeletePoints");
+const FraudGetPosts = require("../engine/moderation/fraud/FraudGetPosts");
+const FraudDeletePosts = require("../engine/moderation/fraud/FraudDeletePosts");
 
 //const getData = require('../engine/moderation/fraud/endorsementFraudGet').getData;
 const deleteJob = require('../engine/moderation/fraud/endorsementFraudGet').deleteJob;
@@ -42,10 +44,18 @@ const ProcessFraudGet = async (workPackage, done) => {
       case "points":
         fraudGetEngine = new FraudGetPoints(workPackage);
         break;
+      case "posts":
+        fraudGetEngine = new FraudGetPosts(workPackage);
+        break;
     }
 
-    await fraudGetEngine.processAndGetFraudItems();
-    done();
+    if (fraudGetEngine) {
+      await fraudGetEngine.processAndGetFraudItems();
+      done();
+    } else {
+      done("Could not find engine");
+    }
+
   } catch (error) {
     console.error(error);
     await models.AcBackgroundJob.updateErrorAsync(workPackage.jobId, error);
@@ -70,13 +80,20 @@ const ProcessFraudDelete = async (workPackage, done) => {
       case "points":
         fraudDeleteEngine = new FraudDeletePoints(workPackage);
         break;
+      case "posts":
+        fraudDeleteEngine = new FraudDeletePosts(workPackage);
+        break;
     }
 
-    await fraudDeleteEngine.deleteItems();
-    done();
+    if (fraudDeleteEngine) {
+      await fraudDeleteEngine.deleteItems();
+      done();
+    } else {
+      done("Could not find engine");
+    }
   } catch (error) {
     console.error(error);
-    await models.AcBackgroundJob.updateErrorAsync(workPackage.jobId, error);
+    await models.AcBackgroundJob.updateErrorAsync(workPackage.jobId, error.toString());
     done(error);
   }
 }

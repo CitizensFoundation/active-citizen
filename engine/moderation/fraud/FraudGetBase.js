@@ -103,6 +103,14 @@ class FraudGetBase extends FraudBase {
         item.Post.name = outData.cPostNames.indexOf(item.Post.name);
       }
 
+      if (this.workPackage.collectionType==="posts") {
+        if (!cDonePostNames[item.name]) {
+          cDonePostNames[item.name] = true;
+          outData.cPostNames.push(item.name);
+        }
+        item.name = outData.cPostNames.indexOf(item.name);
+      }
+
       if (this.workPackage.collectionType==="pointQualities") {
         if (!cDonePostNames[item.Point.Post.name]) {
           cDonePostNames[item.Point.Post.name] = true;
