@@ -2,6 +2,7 @@ const _ = require("lodash");
 const moment = require("moment");
 const models = require("../../../../models");
 const i18n = require('../../../utils/i18n');
+const deepEqual = require('deep-equal');
 
 const FraudGetEndorsements = require("./FraudGetEndorsements");
 const FraudGetPointQualities = require("./FraudGetPointQualities");
@@ -71,11 +72,23 @@ class FraudScannerNotifier {
     }
   }
 
-  async sendNotificationEmails(texts) {
+  getNumberSign(number) {
+    if (number>=0) {
+      return "+";
+    } else {
+      return "";
+    }
+  }
+
+  async sendNotificationEmails(fraudAuditResults) {
     const admins = this.currentCommunity.CommunityAdmins;
     let textsHtml = "";
-    for (let t=0;t<texts.length;t++) {
-      textsHtml += `${this.formatNumber(texts[t])} items</br>`
+    for (let t=0;t<fraudAuditResults.length;t++) {
+      textsHtml += `${fraudAuditResults[t].collectionType}: ${this.formatNumber(fraudAuditResults[t].count)} items`
+      if (fraudAuditResults[t].changeFromLastCount) {
+        textsHtml += ` (${this.getNumberSign(fraudAuditResults[t].changeFromLastCount)}${this.formatNumber(fraudAuditResults[t].changeFromLastCount)})`
+      }
+      textsHtml += `</br>`;
     }
 
     const content = `
@@ -87,15 +100,14 @@ class FraudScannerNotifier {
         <p>${i18n.t('notification.email.possibleFraudFooter')}</p>
       </div>
     `
-
-    for (let u=0;u<admins.length;u++) {
+    for (let u=0;u<Math.min(admins.length, 5);u++) {
       queue.create('send-one-email', {
         subject: { translateToken: 'notification.email.possibleFraudHeader', contentName: this.currentCommunity.name },
         template: 'general_user_notification',
         user: admins[u],
         domain: this.currentCommunity.Domain,
         community: this.currentCommunity,
-        object: texts,
+        object: fraudAuditResults,
         header: "",
         content: content,
         link: this.getCommunityURL()
@@ -104,22 +116,54 @@ class FraudScannerNotifier {
 
   }
 
+  getContainerOldCount(collectionType) {
+    let foundCollection;
+
+    if (this.currentCommunity.data.lastFraudScanResults) {
+      for (let i=0;i<this.currentCommunity.data.lastFraudScanResults.length;i++) {
+        if (this.currentCommunity.data.lastFraudScanResults[i].collectionType &&
+            this.currentCommunity.data.lastFraudScanResults[i].collectionType===collectionType) {
+          foundCollection = this.currentCommunity.data.lastFraudScanResults[i];
+          break;
+        }
+      }
+    }
+
+    return foundCollection;
+  }
+
+  getWithDifference(results) {
+    const newResults = JSON.parse(JSON.stringify(results));
+
+    for (let i=0;i<newResults.length;i++) {
+      const oldResults = this.getContainerOldCount(newResults[i].collectionType);
+
+      if (oldResults) {
+        newResults[i].changeFromLastCount = newResults[i].count-oldResults.count;
+      }
+
+    }
+
+    return newResults;
+  }
+
+
   async notify() {
-    const collectionCountTexts = [];
+    const fraudScanResults = [];
 
     for (let c=0;c<this.collectionsToScan.length;c++) {
       const collectionLength = this.uniqueCollectionItemsIds[this.collectionsToScan[c]].length;
       if (collectionLength>0) {
-        collectionCountTexts.push(`${this.capitalizeFirstLetter(this.collectionsToScan[c])}: ${collectionLength}`)
+        fraudScanResults.push({ collectionType: this.capitalizeFirstLetter(this.collectionsToScan[c]), count: collectionLength});
       }
     }
 
-    if (collectionCountTexts.length>0) {
+    if (fraudScanResults.length>0) {
       if (!this.currentCommunity.data ||
           !this.currentCommunity.data.lastFraudScanResults ||
-          JSON.stringify(this.currentCommunity.data.lastFraudScanResults) !== JSON.stringify(collectionCountTexts)
+          !deepEqual(this.currentCommunity.data.lastFraudScanResults, fraudScanResults)
       ) {
-        await this.sendNotificationEmails(collectionCountTexts);
+        await this.sendNotificationEmails(this.getWithDifference(fraudScanResults));
 
         await this.currentCommunity.reload();
 
@@ -127,7 +171,7 @@ class FraudScannerNotifier {
           this.currentCommunity.data = {};
         }
 
-        this.currentCommunity.data.lastFraudScanResults = collectionCountTexts;
+        this.currentCommunity.data.lastFraudScanResults = fraudScanResults;
         this.currentCommunity.changed('data', true);
         await this.currentCommunity.save();
       } else {
