@@ -37,12 +37,12 @@
             <a style="color: #0083e8;" href="mailto:mineideer@forbrukerradet.no">mineideer@forbrukerradet.no</a> |
             <a style="color: #0083e8;" href="https://mineideer.forbrukerradet.no/user/open_notification_settings">Varselinnstillinger</a>
           <% } %>
-          <% if (domain.domain_name  == 'multicitychallenge.org' && process.env('US-CLUSTER')!=null) { %>
+          <% if (domain.domain_name  == 'multicitychallenge.org' && process.env.US_CLUSTER !=null) { %>
             <a style="color: #0083e8;" href="https://ideas.multicitychallenge.org">Multi City Challenge</a> |
             <a style="color: #0083e8;" href="mailto:admins@thegovlab.org">admins@thegovlab.org</a> |
             <a style="color: #0083e8;" href="https://ideas.multicitychallenge.org/user/open_notification_settings">Email Settings</a>
           <% } %>
-          <% if (domain.domain_name  == 'multicitychallenge.org' && process.env('US-CLUSTER')==null) { %>
+          <% if (domain.domain_name  == 'multicitychallenge.org' && process.env.US_CLUSTER ==null) { %>
             <a style="color: #0083e8;" href="https://yp.multicitychallenge.org">Multi City Challenge</a> |
             <a style="color: #0083e8;" href="mailto:admins@thegovlab.org">admins@thegovlab.org</a> |
             <a style="color: #0083e8;" href="https://yp.multicitychallenge.org/user/open_notification_settings">Email Settings</a>

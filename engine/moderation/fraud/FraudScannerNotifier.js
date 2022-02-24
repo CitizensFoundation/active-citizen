@@ -28,7 +28,7 @@ class FraudScannerNotifier {
 
     if (domainName==="parliament.scot") {
       hostname = "engage";
-    } else if (domainName==="multicitychallenge.org" && process.env('US-CLUSTER')!=null) {
+    } else if (domainName==="multicitychallenge.org" && process.env.US_CLUSTER !=null) {
       hostname = "ideas";
     } else if (domainName==="multicitychallenge.org") {
       hostname = "yp";
