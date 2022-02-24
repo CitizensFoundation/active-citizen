@@ -100,15 +100,15 @@ class FraudGetEndorsements extends FraudGetBase {
       _.each(topItems, function (item) {
         if ((item.count/postCount)>1) {
           if ((item.count/postCount) > 5) {
-            this.setWeightedConfidenceScore(item.items, 99);
-          } else if ((item.count/postCount) > 4) {
-            this.setWeightedConfidenceScore(item.items, 95);
-          } else if ((item.count/postCount) > 3) {
             this.setWeightedConfidenceScore(item.items, 90);
-          } else if ((item.count/postCount) > 2) {
-            this.setWeightedConfidenceScore(item.items, 85);
-          } else {
+          } else if ((item.count/postCount) > 4) {
             this.setWeightedConfidenceScore(item.items, 80);
+          } else if ((item.count/postCount) > 3) {
+            this.setWeightedConfidenceScore(item.items, 60);
+          } else if ((item.count/postCount) > 2) {
+            this.setWeightedConfidenceScore(item.items, 55);
+          } else {
+            this.setWeightedConfidenceScore(item.items, 30);
           }
           out.push(item);
         }
@@ -142,19 +142,19 @@ class FraudGetEndorsements extends FraudGetBase {
       _.each(topItems, function (item) {
         if ((item.count/postCount)>1) {
           if ((item.count/postCount) > 100) {
-            this.setWeightedConfidenceScore(item.items, 90);
-          } else if ((item.count/postCount) > 50) {
-            this.setWeightedConfidenceScore(item.items, 85);
-          } else if ((item.count/postCount) > 25) {
             this.setWeightedConfidenceScore(item.items, 80);
-          } else if ((item.count/postCount) > 10) {
+          } else if ((item.count/postCount) > 50) {
             this.setWeightedConfidenceScore(item.items, 75);
+          } else if ((item.count/postCount) > 25) {
+            this.setWeightedConfidenceScore(item.items, 60);
+          } else if ((item.count/postCount) > 10) {
+            this.setWeightedConfidenceScore(item.items, 55);
           } else if ((item.count/postCount) > 5) {
-            this.setWeightedConfidenceScore(item.items, 70);
-          } else if ((item.count/postCount) > 2) {
-            this.setWeightedConfidenceScore(item.items, 65);
-          } else {
             this.setWeightedConfidenceScore(item.items, 50);
+          } else if ((item.count/postCount) > 2) {
+            this.setWeightedConfidenceScore(item.items, 45);
+          } else {
+            this.setWeightedConfidenceScore(item.items, 30);
           }
           out.push(item);
         }
