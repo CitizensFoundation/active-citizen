@@ -26,6 +26,121 @@ class FraudAuditReport {
     this.worksheet = null;
   }
 
+  async getPointQualityItems (ids) {
+    return await models.PointQuality.unscoped().findAll({
+      attributes: ["id","created_at","value","point_id","user_id","user_agent","ip_address","data"],
+      where: {
+        id: {
+          $in: ids
+        }
+      },
+      include: [
+        {
+          model: models.User,
+          attributes: ['id','email'],
+        },
+        {
+          model: models.Point,
+          attributes: ['id'],
+          include: [
+            {
+              model: models.Post,
+              attributes: ['id','name'],
+              include: [
+                {
+                  model: models.Group,
+                  attributes: ['id'],
+                  include: [
+                    {
+                      model: models.Community,
+                      attributes: [],
+                      where: {
+                        id: this.workPackage.communityId
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    })
+
+  }
+
+  async getPostDependedItems(model, ids) {
+    let items = await model.unscoped().findAll({
+      attributes: ["id","created_at","value","post_id","user_id","user_agent","ip_address","data"],
+      where: {
+        id: {
+          $in: ids
+        }
+      },
+      include: [
+        {
+          model: models.User,
+          attributes: ['id','email'],
+        },
+        {
+          model: models.Post,
+          attributes: ['id','name'],
+          include: [
+            {
+              model: models.Group,
+              attributes: ['id'],
+              include: [
+                {
+                  model: models.Community,
+                  attributes: [],
+                  where: {
+                    id: this.workPackage.communityId
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    })
+
+    items = _.sortBy(items, function (item) {
+      return [item.post_id, item.user_agent];
+    });
+
+    return items;
+  }
+
+  async getPostItems(ids) {
+    return await model.unscoped().findAll({
+      attributes: ["id","created_at","group_id","user_id","user_agent","ip_address","data"],
+      where: {
+        id: {
+          $in: ids
+        }
+      },
+      include: [
+        {
+          model: models.User,
+          attributes: ['id','email'],
+        },
+        {
+          model: models.Group,
+          attributes: ['id'],
+          include: [
+            {
+              model: models.Community,
+              attributes: [],
+              where: {
+                id: this.workPackage.communityId
+              }
+            }
+          ]
+        }
+      ]
+    })
+  }
+
   async setupXls() {
     const originalWorkPackage = this.workPackage.auditReportData.workPackage;
     this.workBook = new Excel.Workbook();
@@ -33,15 +148,16 @@ class FraudAuditReport {
     this.workBook.creator = "Your Priorities Report - Automated";
     this.workBook.created = new Date();
 
-    this.worksheet = this.workBook.addWorksheet(`Community Users ${community.id} ${this.workPackage.userName}`);
+    this.worksheet = this.workBook.addWorksheet(`Community Users ${this.workPackage.community.id} ${this.workPackage.userName}`);
 
     this.worksheet.columns = [
+      { header: "Type", key: "collectionType", width: 20 },
       { header: "Method", key: "selectedMethod", width: 20 },
       { header: "Date deleted", key: "dateDeleted", width: 20 },
       { header: "Id", key: "id", width: 10 },
       { header: "Date created", key: "date", width: 20 },
       { header: "IP Address", key: "ipAddress", width: 20 },
-      { header: "Browser Id", key: "browerId", width: 30 },
+      { header: "Browser Id", key: "browserId", width: 30 },
       { header: "Fingerprint", key: "browserFingerprint", width: 30 },
       { header: "User Id", key: "userId", width: 15 },
       { header: "Email", key: "email", width: 40 }
@@ -88,7 +204,7 @@ class FraudAuditReport {
   }
 
   async getCommunity() {
-    this.workPackage.community = await models.Community({
+    this.workPackage.community = await models.Community.findOne({
       where: {
         id: this.workPackage.communityId
       },
@@ -134,16 +250,16 @@ class FraudAuditReport {
 
     switch (auditReportData.workPackage.collectionType) {
       case 'endorsements':
-        this.items = await this.getEndorsementItems(auditReportData.deleteData.idsToDelete);
+        this.items = await this.getPostDependedItems(models.Endorsement, auditReportData.deleteData.idsToDelete);
         break;
       case 'ratings':
-        this.items = await this.getRatingItems(auditReportData.deleteData.idsToDelete);
+        this.items = await this.getPostDependedItems(models.Rating, auditReportData.deleteData.idsToDelete);
         break;
       case 'pointQualities':
         this.items = await this.getPointQualityItems(auditReportData.deleteData.idsToDelete);
         break;
       case 'points':
-        this.items = await this.getPointItems(auditReportData.deleteData.idsToDelete);
+        this.items = await this.getPostDependedItems(models.Point, auditReportData.deleteData.idsToDelete);
         break;
       case 'posts':
         this.items = await this.getPostItems(auditReportData.deleteData.idsToDelete);
@@ -154,9 +270,10 @@ class FraudAuditReport {
   async populateXls() {
     const originalWorkPackage = this.workPackage.auditReportData.workPackage;
     for (let i=0;i<this.items.length;i++) {
-      const item = items[i];
+      const item = this.items[i];
       let row = {
-        method: originalWorkPackage.selectedMethod,
+        collectionType: originalWorkPackage.collectionType,
+        selectedMethod: originalWorkPackage.selectedMethod,
         dateDeleted: this.workPackage.auditReportData.date,
         id: item.id,
         date: item.created_at,
@@ -167,7 +284,7 @@ class FraudAuditReport {
       }
 
       if (item.data) {
-        row.browserFingerpint = item.data.browserFingerpint;
+        row.browserFingerprint = item.data.browserFingerprint;
         row.browserId = item.data.browserId;
       }
 
@@ -187,14 +304,16 @@ class FraudAuditReport {
       this.worksheet.addRow(row);
     }
 
-    this.exportedData = await workbook.xlsx.writeBuffer();
+    this.exportedData = await this.workBook.xlsx.writeBuffer();
   }
 
   async createReport() {
     return await new Promise(async (resolve, reject) => {
       try {
         const auditReport = await models.GeneralDataStore.findOne({
-          id: this.workPackage.selectedFraudAuditId
+          where: {
+            id: this.workPackage.selectedFraudAuditId
+          }
         });
 
         if (auditReport && auditReport.data) {
@@ -224,7 +343,7 @@ class FraudAuditReport {
         console.error(error);
         setJobError(
           this.workPackage.jobId,
-          "errorXlsCommunityUsersReportGeneration",
+          "errorFraudAuditReportGeneration",
           error,
           (dbError) => {
             reject(dbError || error);
@@ -236,9 +355,16 @@ class FraudAuditReport {
 }
 
 const createFraudAuditReport = async (workPackage, done) => {
-  const generator = new FraudAuditReport(workPackage);
-  await generator.createReport();
-  done();
+  return await new Promise(async (resolve, reject) => {
+    try {
+      const generator = new FraudAuditReport(workPackage);
+      await generator.createReport();
+      done();
+    }
+    catch (error) {
+      done(error);
+    }
+  });
 }
 
 module.exports = {
