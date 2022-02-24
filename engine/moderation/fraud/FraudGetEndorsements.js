@@ -142,17 +142,17 @@ class FraudGetEndorsements extends FraudGetBase {
       _.each(topItems, function (item) {
         if ((item.count/postCount)>1) {
           if ((item.count/postCount) > 100) {
-            this.setWeightedConfidenceScore(item.items, 80);
+            this.setWeightedConfidenceScore(item.items, 90);
           } else if ((item.count/postCount) > 50) {
-            this.setWeightedConfidenceScore(item.items, 75);
+            this.setWeightedConfidenceScore(item.items, 80);
           } else if ((item.count/postCount) > 25) {
-            this.setWeightedConfidenceScore(item.items, 60);
+            this.setWeightedConfidenceScore(item.items, 70);
           } else if ((item.count/postCount) > 10) {
-            this.setWeightedConfidenceScore(item.items, 55);
+            this.setWeightedConfidenceScore(item.items, 60);
           } else if ((item.count/postCount) > 5) {
             this.setWeightedConfidenceScore(item.items, 50);
           } else if ((item.count/postCount) > 2) {
-            this.setWeightedConfidenceScore(item.items, 45);
+            this.setWeightedConfidenceScore(item.items, 40);
           } else {
             this.setWeightedConfidenceScore(item.items, 30);
           }

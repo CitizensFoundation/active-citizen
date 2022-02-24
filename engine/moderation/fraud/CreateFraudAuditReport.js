@@ -153,7 +153,7 @@ class FraudAuditReport {
     this.worksheet.columns = [
       { header: "Type", key: "collectionType", width: 20 },
       { header: "Method", key: "selectedMethod", width: 20 },
-      { header: "Date deleted", key: "dateDeleted", width: 20 },
+      { header: "Delete Evaluation", key: "dateDeleted", width: 27 },
       { header: "Id", key: "id", width: 10 },
       { header: "Date created", key: "date", width: 20 },
       { header: "IP Address", key: "ipAddress", width: 20 },
