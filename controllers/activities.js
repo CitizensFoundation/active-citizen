@@ -49,11 +49,28 @@ var getActivities = function (req, res, options, callback) {
       limit: 20
   }).then(function(activities) {
     var slicedActivitesBecauseOfLimitBug = _.take(activities, 20);
-    res.send({
-      activities: slicedActivitesBecauseOfLimitBug,
-      oldestProcessedActivityAt: slicedActivitesBecauseOfLimitBug.length>0 ? _.last(slicedActivitesBecauseOfLimitBug).created_at : null
+
+    var collectedPostIds = _.map(slicedActivitesBecauseOfLimitBug, function (activity) {
+      if (activity.Post) {
+        return activity.Post.id;
+      }
     });
-    callback();
+
+    models.Post.getVideosForPosts(collectedPostIds, (error, videos) => {
+      if (error) {
+        callback(error);
+      } else {
+        if (videos.length>0) {
+          models.Post.addVideosToAllActivityPosts(slicedActivitesBecauseOfLimitBug, videos);
+        }
+
+        res.send({
+          activities: slicedActivitesBecauseOfLimitBug,
+          oldestProcessedActivityAt: slicedActivitesBecauseOfLimitBug.length>0 ? _.last(slicedActivitesBecauseOfLimitBug).created_at : null
+        });
+        callback();
+      }
+    })
   }).catch(function(error) {
     callback(error);
   });

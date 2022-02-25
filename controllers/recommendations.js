@@ -74,7 +74,7 @@ var processRecommendations = function (levelType, req, res, recommendedItemIds, 
         {
           model: models.Group,
           required: true,
-          attributes: models.Group.defaultPublicAttributes,
+          attributes: models.Group.defaultAttributesPublic,
           where: {
             status: {
               $in: ['active','featured']
@@ -172,7 +172,7 @@ var processRecommendationsLight = function (groupId, req, res, recommendedItemId
         {
           model: models.Group,
           required: true,
-          attributes: models.Group.defaultPublicAttributes,
+          attributes: models.Group.defaultAttributesPublic,
           where: {
             id: groupId
           }

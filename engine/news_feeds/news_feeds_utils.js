@@ -222,7 +222,7 @@ var activitiesDefaultIncludes = function (options) {
     group = {
       model: models.Group,
       required: true,
-      attributes: models.Group.defaultPublicAttributes,
+      attributes: models.Group.defaultAttributesPublic,
       where: {
         $or: [
           { access: models.Group.ACCESS_PUBLIC },
@@ -232,6 +232,7 @@ var activitiesDefaultIncludes = function (options) {
       include: [
         {
           model: models.Image, as: 'GroupLogoImages',
+          attributes: models.Image.defaultAttributesPublic,
           required: false
         }
       ]
@@ -246,7 +247,7 @@ var activitiesDefaultIncludes = function (options) {
     group = {
       model: models.Group,
       required: true,
-      attributes: models.Group.defaultPublicAttributes,
+      attributes: models.Group.defaultAttributesPublic,
       where: {
         $or: [
           {
@@ -260,6 +261,7 @@ var activitiesDefaultIncludes = function (options) {
       include: [
         {
           model: models.Image, as: 'GroupLogoImages',
+          attributes: models.Image.defaultAttributesPublic,
           required: false
         }
       ]
@@ -274,10 +276,11 @@ var activitiesDefaultIncludes = function (options) {
     group = {
       model: models.Group,
       required: false,
-      attributes: models.Group.defaultPublicAttributes,
+      attributes: models.Group.defaultAttributesPublic,
       include: [
         {
           model: models.Image, as: 'GroupLogoImages',
+          attributes: models.Image.defaultAttributesPublic,
           required: false
         }
       ]
@@ -292,6 +295,7 @@ var activitiesDefaultIncludes = function (options) {
       include: [
         {
           model: models.Image, as: 'UserProfileImages',
+          attributes: models.Image.defaultAttributesPublic,
           required: false
         },
         {
@@ -320,6 +324,7 @@ var activitiesDefaultIncludes = function (options) {
     {
       model: models.Post,
       required: false,
+      attributes: models.Post.defaultAttributesPublic,
       include: [
         {
           model: models.Group,
@@ -329,21 +334,8 @@ var activitiesDefaultIncludes = function (options) {
         {
           model: models.Image,
           as: 'PostHeaderImages',
+          attributes: models.Image.defaultAttributesPublic,
           required: false
-        },
-        {
-          model: models.Video,
-          required: false,
-          attributes: ['id','formats','updated_at','viewable','public_meta'],
-          as: 'PostVideos',
-          include: [
-            {
-              model: models.Image,
-              as: 'VideoImages',
-              attributes:["formats",'updated_at'],
-              required: false
-            },
-          ]
         },
         {
           model: models.Audio,
@@ -358,6 +350,7 @@ var activitiesDefaultIncludes = function (options) {
           include: [
             {
               model: models.Image,
+              attributes: models.Image.defaultAttributesPublic,
               required: false,
               as: 'CategoryIconImages'
             }
@@ -368,9 +361,11 @@ var activitiesDefaultIncludes = function (options) {
     {
       model: models.Point,
       required: false,
+      attributes: models.Point.defaultAttributesPublic,
       include: [
         {
           model: models.PointRevision,
+          attributes: models.PointRevision.defaultAttributesPublic,
           include: [
             {
               model: models.User,
@@ -409,6 +404,7 @@ var activitiesDefaultIncludes = function (options) {
     },
     {
       model: models.PostStatusChange,
+      attributes: models.PostStatusChange.defaultAttributesPublic,
       required: false
     }
   ]
