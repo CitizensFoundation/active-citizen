@@ -32,6 +32,8 @@ class FraudScannerNotifier {
       hostname = "ideas";
     } else if (domainName==="multicitychallenge.org") {
       hostname = "yp";
+    } else if (domainName==="mycitychallenge.org") {
+      hostname = "ideas";
     }
 
     if (hostname) {

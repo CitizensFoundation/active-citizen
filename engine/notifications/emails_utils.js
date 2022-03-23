@@ -250,6 +250,8 @@ var sendOneEmail = function (emailLocals, callback) {
             fromEmail = 'Mine idéer Forbrukerrådet <mineideer@forbrukerradet.no>';
           } else if (emailLocals.domain.domain_name.indexOf('multicitychallenge.org') > -1) {
             fromEmail = 'Admins GovLab <admins@thegovlab.org>';
+          } else if (emailLocals.domain.domain_name.indexOf('mycitychallenge.org') > -1) {
+            fromEmail = 'Admins GovLab <admins@thegovlab.org>';
           } else if (emailLocals.domain.domain_name.indexOf('tarsalgo.net') > -1) {
             fromEmail = 'Társalgó <tarsalgo@kofe.hu>';
           } else if (emailLocals.domain.domain_name.indexOf('junges.wien') > -1) {
