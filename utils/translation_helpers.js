@@ -118,6 +118,9 @@ const addTranslationsForGroups = (targetLocale, items, groups, done) => {
         addItem(targetLocale, items, 'alternativePointAgainstHeader', group.id, group.configuration.alternativePointAgainstHeader, innerSeriesCallback);
       },
       innerSeriesCallback => {
+        addItem(targetLocale, items, 'customTabTitleNewLocation', group.id, group.configuration.customTabTitleNewLocation, innerSeriesCallback);
+      },
+      innerSeriesCallback => {
         addItem(targetLocale, items, 'alternativePointForLabel', group.id, group.configuration.alternativePointForLabel, innerSeriesCallback);
       },
       innerSeriesCallback => {

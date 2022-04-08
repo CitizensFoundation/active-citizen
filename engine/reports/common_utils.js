@@ -96,6 +96,9 @@ async function preparePosts(workPackage, callback) {
       if (group.configuration.alternativePointForHeader) {
         group.translatedAlternativePointAgainstHeader =  await getTranslation(group,'alternativePointAgainstHeader', targetLanguage);
       }
+      if (group.configuration.customTabTitleNewLocation) {
+        group.customTabTitleNewLocation =  await getTranslation(group,'customTabTitleNewLocation', targetLanguage);
+      }
       if (group.configuration.customAdminCommentsTitle) {
         group.translatedCustomAdminCommentsTitle =  await getTranslation(group,'customAdminCommentsTitle', targetLanguage);
       }

@@ -96,6 +96,8 @@ module.exports = (sequelize, DataTypes) => {
         return modelInstance.configuration.customAdminCommentsTitle;
       case 'alternativePointForHeader':
         return modelInstance.configuration.alternativePointForHeader;
+      case 'customTabTitleNewLocation':
+        return modelInstance.configuration.customTabTitleNewLocation;
       case 'alternativePointAgainstHeader':
         return modelInstance.configuration.alternativePointAgainstHeader;
       case 'alternativePointForLabel':
