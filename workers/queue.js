@@ -60,28 +60,28 @@ class YpQueue {
 
   createQueues() {
     this.mainQueue = new BullQueue('mainYpQueue', redisUrl, this.defaultQueueOptions);
-    this.mainQueue.on('active', function(id, type) {
-      log.info('JQ', { id: id, t: type });
-    }).on('completed', function(id, result){
-      log.info('JC', { id: id });
-    }).on('failed', function(id, result){
-      log.error('Job Failed', { id: id, result: result});
-    }).on('resumed', function(id, result){
-      log.info('Job Removed', { id: id, result: result});
-    }).on('waiting', function(id, result){
-      log.info('Job Waiting', { id: id, result: result});
-    }).on('stalled', function(id, result){
-      log.info('Job Stalled', { id: id, result: result});
-    }).on('progress', function(id, result){
-      log.info('Job Progress', { id: id, result: result});
-    }).on('paused', function(id, result){
-      log.info('Job Paused', { id: id, result: result});
-    }).on('cleaned', function(id, result){
-      log.info('Job Cleaned', { id: id, result: result});
-    }).on('drained', function(id, result){
-      log.info('Job Drained', { id: id, result: result});
-    }).on( 'error', function( err, result ) {
-      log.error('Job Error', { err: err, result: result } );
+    this.mainQueue.on('active', function(job) {
+      log.info('JQ', { id: job.id, name: job.name });
+    }).on('completed', function(job, result){
+      log.info('JC', { id: job.id, name: job.name });
+    }).on('failed', function(job, error){
+      log.error('Job Failed', { id: job.id, name: job.name, data: job.data, error });
+    }).on('resumed', function(job){
+      log.info('Job Removed', { id: job.id });
+    }).on('waiting', function(job){
+      log.info('Job Waiting', { id: job.id, name: job.name, data: job.data, });
+    }).on('stalled', function(job){
+      log.info('Job Stalled', { id: job.id, name: job.name, data: job.data, });
+    }).on('progress', function(job, process){
+      log.info('Job Progress', { id: job.id, process });
+    }).on('paused', function(){
+      log.info('Queue Paused');
+    }).on('cleaned', function(jobs, type){
+      log.info('Job Cleaned', { jobs, type });
+    }).on('drained', function(){
+      log.info('Queue Drained');
+    }).on( 'error', function( error ) {
+      log.error('Job Error', { error } );
       if(airbrake) {
         if (!(err instanceof Error)) {
           err = new Error(result ? result : err);
