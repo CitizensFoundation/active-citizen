@@ -1,4 +1,5 @@
 const log = require('../utils/logger');
+const url = require('url');
 
 var airbrake = null;
 if(process.env.AIRBRAKE_PROJECT_ID) {
@@ -8,6 +9,21 @@ if(process.env.AIRBRAKE_PROJECT_ID) {
 const BullQueue = require('bull');
 
 const redisUrl = process.env.REDIS_URL ? process.env.REDIS_URL : "redis://localhost:6379";
+
+const redis_uri = url.parse(redisUrl);
+
+const redisOptions = redisUrl.includes("rediss://")
+  ? {
+    port: Number(redis_uri.port),
+    host: redis_uri.hostname,
+    password: redis_uri.auth.split(":")[1],
+    db: 0,
+    tls: {
+      rejectUnauthorized: false,
+    },
+  }
+  : redisUrl;
+
 log.info("Starting app access to Bull Queue", {redis_url: redisUrl});
 
 class YpQueue {
@@ -59,7 +75,7 @@ class YpQueue {
   }
 
   createQueues() {
-    this.mainQueue = new BullQueue('mainYpQueue', redisUrl, this.defaultQueueOptions);
+    this.mainQueue = new BullQueue('mainYpQueue', redisOptions, this.defaultQueueOptions);
     this.mainQueue.on('active', function(job) {
       log.info('JQ', { id: job.id, name: job.name });
     }).on('completed', function(job, result){
