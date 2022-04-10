@@ -84,7 +84,7 @@ i18n
       moderation.process(job.data, done);
     });
 
-    queue.process('process-similarities', 5, function(job, done) {
+    queue.process('process-similarities', 1, function(job, done) {
       similarities.process(job.data, done);
     });
 
