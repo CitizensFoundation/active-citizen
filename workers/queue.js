@@ -68,8 +68,8 @@ class YpQueue {
       log.error('Job Failed', { id: job.id, name: job.name, data: job.data, error });
     }).on('resumed', function(job){
       log.info('Job Removed', { id: job.id });
-    }).on('waiting', function(job){
-      log.info('Job Waiting', { id: job.id, name: job.name, data: job.data, });
+    }).on('waiting', function(jobId){
+      log.info('Job Waiting', { id: jobId });
     }).on('stalled', function(job){
       log.info('Job Stalled', { id: job.id, name: job.name, data: job.data, });
     }).on('progress', function(job, process){
