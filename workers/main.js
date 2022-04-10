@@ -44,7 +44,7 @@ i18n
   }, function (err, t) {
     log.info("Have Loaded i18n", {err: err});
 
-    queue.process('send-one-email', 25, function(job, done) {
+    queue.process('send-one-email', 20, function(job, done) {
       email.sendOne(job.data, done);
     });
 
@@ -76,11 +76,11 @@ i18n
       anonymizations.process(job.data, done);
     });
 
-    queue.process('process-voice-to-text', 5, function(job, done) {
+    queue.process('process-voice-to-text', 1, function(job, done) {
       speechToText.process(job.data, done);
     });
 
-    queue.process('process-moderation', 5, function(job, done) {
+    queue.process('process-moderation', 1, function(job, done) {
       moderation.process(job.data, done);
     });
 
@@ -88,7 +88,7 @@ i18n
       similarities.process(job.data, done);
     });
 
-    queue.process('process-fraud-action', 5, function(job, done) {
+    queue.process('process-fraud-action', 2, function(job, done) {
       fraudManagement.process(job.data, done);
     });
 
