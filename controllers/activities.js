@@ -3,6 +3,7 @@ var router = express.Router();
 var models = require("../../models");
 var auth = require('../../authorization');
 var log = require('../utils/logger');
+var async = require('async');
 var toJson = require('../utils/to_json');
 var _ = require('lodash');
 
@@ -56,20 +57,53 @@ var getActivities = function (req, res, options, callback) {
       }
     });
 
-    models.Post.getVideosForPosts(collectedPostIds, (error, videos) => {
-      if (error) {
-        callback(error);
-      } else {
-        if (videos.length>0) {
-          models.Post.addVideosToAllActivityPosts(slicedActivitesBecauseOfLimitBug, videos);
-        }
+    var collectedPointIds = _.map(slicedActivitesBecauseOfLimitBug, function (activity) {
+      if (activity.Point) {
+        return activity.Point.id;
+      }
+    });
 
+    async.series([
+      (innerCallback) => {
+        models.Post.getVideosForPosts(collectedPostIds, (error, videos) => {
+          if (error) {
+            innerCallback(error);
+          } else {
+            if (videos.length>0) {
+              models.Post.addVideosToAllActivityPosts(slicedActivitesBecauseOfLimitBug, videos);
+            }
+
+            res.send({
+              activities: slicedActivitesBecauseOfLimitBug,
+              oldestProcessedActivityAt: slicedActivitesBecauseOfLimitBug.length>0 ? _.last(slicedActivitesBecauseOfLimitBug).created_at : null
+            });
+            innerCallback();
+          }
+        })
+      },
+      (innerCallback) => {
+        models.Point.getVideosForPoints(collectedPointIds, (error, videos) => {
+          if (error) {
+            innerCallback(error);
+          } else {
+            if (videos.length>0) {
+              models.Point.addVideosToAllActivityPoints(slicedActivitesBecauseOfLimitBug, videos);
+            }
+            innerCallback();
+          }
+        })
+      }
+    ], (error) =>{
+      if (error) {
+        log.error(error);
+        res.sendStatus(500);
+      } else {
         res.send({
           activities: slicedActivitesBecauseOfLimitBug,
           oldestProcessedActivityAt: slicedActivitesBecauseOfLimitBug.length>0 ? _.last(slicedActivitesBecauseOfLimitBug).created_at : null
         });
-        callback();
       }
+      callback(error);
     })
   }).catch(function(error) {
     callback(error);

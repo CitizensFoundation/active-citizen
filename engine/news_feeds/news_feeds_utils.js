@@ -376,20 +376,6 @@ var activitiesDefaultIncludes = function (options) {
           required: false
         },
         {
-          model: models.Video,
-          required: false,
-          attributes: ['id','formats','updated_at','viewable','public_meta'],
-          as: 'PointVideos',
-          include: [
-            {
-              model: models.Image,
-              as: 'VideoImages',
-              attributes:["formats",'updated_at'],
-              required: false
-            },
-          ]
-        },
-        {
           model: models.Audio,
           required: false,
           attributes: ['id','formats','updated_at','listenable'],
