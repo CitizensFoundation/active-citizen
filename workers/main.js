@@ -92,7 +92,7 @@ i18n
       fraudManagement.process(job.data, done);
     });
 
-    queue.process('process-reports', 10, function(job, done) {
+    queue.process('process-reports', 1, function(job, done) {
       reports.process(job.data, done);
     });
 
