@@ -128,7 +128,7 @@ const delayedCreatePriorityActivity = (workPackage, callback) => {
       }).save().then(function(activity) {
         if (activity) {
           if (activity.type!='activity.fromApp') {
-            queue.create('process-activity', activity).priority('high').removeOnComplete(true).save();
+            queue.add('process-activity', activity, 'high');
           }
           log.info('Activity Created', { activityId: activity.id, userId: options.userId});
           callback();

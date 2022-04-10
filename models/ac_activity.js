@@ -104,7 +104,7 @@ module.exports = (sequelize, DataTypes) => {
 
 
   AcActivity.createActivity = (options, callback) => {
-    queue.create('delayed-job', { type: 'create-priority-activity', workData: options }).priority('high').removeOnComplete(true).save();
+    queue.add('delayed-job', { type: 'create-priority-activity', workData: options }, 'high');
     callback();
   };
 
@@ -124,7 +124,7 @@ module.exports = (sequelize, DataTypes) => {
       access: sequelize.models.AcActivity.ACCESS_PRIVATE
     }).save().then((activity)=> {
       if (activity) {
-        queue.create('process-activity', activity).priority('critical').removeOnComplete(true).save();
+        queue.add('process-activity', activity, 'critical');
         log.info('Activity Created', { activityId: activity ? activity.id : -1, userId: user ? user.id : -1 });
         done(null);
       } else {
@@ -154,7 +154,7 @@ module.exports = (sequelize, DataTypes) => {
       access: sequelize.models.AcActivity.ACCESS_PRIVATE
     }).save().then((activity) => {
       if (activity) {
-        queue.create('process-activity', activity).priority('critical').removeOnComplete(true).save();
+        queue.add('process-activity', activity, 'critical');
         log.info('Activity Created', { activityId: activity ? activity.id : -1, userId: options.user_id, email: options.email });
         done(null);
       } else {

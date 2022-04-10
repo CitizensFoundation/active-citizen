@@ -113,7 +113,7 @@ var filterNotificationForDelivery = function (notification, user, template, subj
           callback();
         } else {
           log.info("Email queued", {email: user.email, method: method, frequency: frequency});
-          queue.create('send-one-email', {
+          queue.add('send-one-email', {
             subject: subject,
             template: template,
             user: user,
@@ -124,7 +124,7 @@ var filterNotificationForDelivery = function (notification, user, template, subj
             activity: notification.AcActivities[0],
             post: notification.AcActivities[0].Post,
             point: notification.AcActivities[0].Point
-          }).priority('medium').removeOnComplete(true).save();
+          }, 'medium');
           callback();
         }
       } else if (method !== models.AcNotification.METHOD_MUTED) {

@@ -730,7 +730,7 @@ const deletePostContent = (workPackage, callback) => {
         }).then((points) => {
           async.forEachLimit(points, 100, (point, innerCallback) => {
             deletePointContent(_.merge({pointId: point.id, skipActivities: true}, workPackage), innerCallback);
-            queue.create('process-similarities', { type: 'update-collection', pointId: point.id }).delay(10000).priority('low').removeOnComplete(true).save();
+            queue.add('process-similarities', { type: 'update-collection', pointId: point.id }, 'low', { delay: 10000 });
           }, (error) => {
             seriesCallback(error);
           })
@@ -845,7 +845,7 @@ const deleteGroupContent = (workPackage, callback) => {
         }).then(function (posts) {
           async.forEachLimit(posts, 100, function (post, innerCallback) {
             deletePostContent(_.merge({postId: post.id, skipActivities: true, useNotification: false, resetCounters: false }, workPackage), innerCallback);
-            queue.create('process-similarities', { type: 'update-collection', postId: post.id }).delay(10000).priority('low').removeOnComplete(true).save();
+            queue.add('process-similarities', { type: 'update-collection', postId: post.id }, 'low', { delay: 10000 });
           }, (error) => {
             seriesCallback(error);
           });
@@ -939,8 +939,8 @@ const deleteCommunityContent = (workPackage, callback) => {
           }
         ).then(function (groups) {
           groups.forEach(function (group) {
-            queue.create('process-deletion', { type: 'delete-group-content', userId: workPackage.userId, groupId: group.id }).priority('high').removeOnComplete(true).save();
-            queue.create('process-similarities', { type: 'update-collection', groupId: group.id }).delay(10000).priority('low').removeOnComplete(true).save();
+            queue.add('process-deletion', { type: 'delete-group-content', userId: workPackage.userId, groupId: group.id }, 'high');
+            queue.add('process-similarities', { type: 'update-collection', groupId: group.id }, 'low', { delay: 10000 });
           });
           seriesCallback();
         }).catch((error) => {

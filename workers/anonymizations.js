@@ -441,7 +441,7 @@ const anonymizeCommunityContent = (workPackage, callback) => {
           }
         ).then(function (groups) {
           groups.forEach(function (group) {
-            queue.create('process-anonymization', { type: 'anonymize-group-content', userId: workPackage.userId, skipNotification: true, groupId: group.id }).priority('high').removeOnComplete(true).save();
+            queue.add('process-anonymization', { type: 'anonymize-group-content', userId: workPackage.userId, skipNotification: true, groupId: group.id }, 'high');
           });
           seriesCallback();
         }).catch(function (error) {

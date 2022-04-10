@@ -189,7 +189,7 @@ const processContentToBeAnonymized =  (notification, object, domain, community, 
     if (error) {
       callback(error);
     } else {
-      queue.create('send-one-email', {
+      queue.add('send-one-email', {
         subject: { translateToken: 'notification.contentToBeAnonymized', contentName: object.name },
         template: 'general_user_notification',
         user: user,
@@ -200,7 +200,7 @@ const processContentToBeAnonymized =  (notification, object, domain, community, 
         header: header,
         content: prependToContent+content,
         link: link
-      }).priority('high').removeOnComplete(true).save();
+      }, 'high');
       callback();
     }
   });

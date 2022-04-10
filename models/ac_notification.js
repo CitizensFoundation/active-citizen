@@ -151,10 +151,10 @@ module.exports = (sequelize, DataTypes) => {
       queuePriority = 'low';
     }
 
-    queue.create('process-notification-delivery', { id: notification.id }).priority(queuePriority).removeOnComplete(true).save();
+    queue.add('process-notification-delivery', { id: notification.id }, queuePriority);
 
     // Disabled for now
-    //queue.create('process-notification-news-feed', { id: notification.id }).priority(queuePriority).removeOnComplete(true).save();
+    //queue.add('process-notification-news-feed', { id: notification.id }, queuePriority);
 
     // Its being updated and is not new
     if (callback) {
@@ -241,7 +241,7 @@ module.exports = (sequelize, DataTypes) => {
               notification.addAcActivities(activity).then((results) => {
                 if (results) {
                   const notificationJson = { id: notification.id };
-                  queue.create('process-notification-delivery', notificationJson).priority('high').removeOnComplete(true).save();
+                  queue.add('process-notification-delivery', notificationJson, 'high');
                   log.info('Notification Created', { notificationId: notification ?  notification.id : -1, userId: admin.id});
                   innerSeriesCallback();
                 } else {

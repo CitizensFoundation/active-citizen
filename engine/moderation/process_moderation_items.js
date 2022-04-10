@@ -40,22 +40,18 @@ const moderationItemActionMaster = (req, res, options) => {
             log.info('Moderation Action Done', { item, options });
             if (options.itemType==='point') {
               if (options.actionType==='anonymize') {
-                queue.create('process-anonymization', { type: 'anonymize-point-activities', pointId: options.itemId }).
-                priority('high').removeOnComplete(true).save();
+                queue.add('process-anonymization', { type: 'anonymize-point-activities', pointId: options.itemId }, 'high');
               } else if (options.actionType==='delete') {
-                queue.create('process-deletion', { type: 'delete-point-activities', pointId: options.itemId }).
-                priority('high').removeOnComplete(true).save();
+                queue.add('process-deletion', { type: 'delete-point-activities', pointId: options.itemId }, 'high');
               }
-              queue.create('process-similarities', { type: 'update-collection', pointId: options.itemId }).delay(5000).priority('low').removeOnComplete(true).save();
+              queue.add('process-similarities', { type: 'update-collection', pointId: options.itemId }, 'low', { delay: 5000});
             } else if (options.itemType==='post') {
               if (options.actionType==='anonymize') {
-                queue.create('process-anonymization', { type: 'anonymize-post-activities', pointId: options.itemId }).
-                priority('high').removeOnComplete(true).save();
+                queue.add('process-anonymization', { type: 'anonymize-post-activities', pointId: options.itemId }, 'high');
               } else if (options.actionType==='delete') {
-                queue.create('process-deletion', { type: 'delete-post-activities', postId: options.itemId }).
-                priority('high').removeOnComplete(true).save();
+                queue.add('process-deletion', { type: 'delete-post-activities', postId: options.itemId }, 'high');
               }
-              queue.create('process-similarities', { type: 'update-collection', postId: options.itemId }).delay(5000).priority('low').removeOnComplete(true).save();
+              queue.add('process-similarities', { type: 'update-collection', postId: options.itemId }, 'low', { delay: 5000 });
             }
             res.sendStatus(200);
           }).catch( error => {
@@ -77,19 +73,15 @@ const moderationItemActionMaster = (req, res, options) => {
 const createActivityJob = (workPackage, model) => {
   if (workPackage.itemType==='post') {
     if (workPackage.actionType==='anonymize') {
-      queue.create('process-anonymization', { type: 'anonymize-post-activities', postId: model.id }).
-      priority('high').removeOnComplete(true).save();
+      queue.add('process-anonymization', { type: 'anonymize-post-activities', postId: model.id }, 'high');
     } else if (workPackage.actionType==='delete') {
-      queue.create('process-deletion', { type: 'delete-post-activities', postId: model.id }).
-      priority('high').removeOnComplete(true).save();
+      queue.add('process-deletion', { type: 'delete-post-activities', postId: model.id }, 'high');
     }
   } else if (workPackage.itemType==='point') {
     if (workPackage.actionType==='anonymize') {
-      queue.create('process-anonymization', { type: 'anonymize-point-activities', pointId: model.id }).
-      priority('high').removeOnComplete(true).save();
+      queue.add('process-anonymization', { type: 'anonymize-point-activities', pointId: model.id }, 'high');
     } else if (workPackage.actionType==='delete') {
-      queue.create('process-deletion', { type: 'delete-point-activities', pointId: model.id }).
-      priority('high').removeOnComplete(true).save();
+      queue.add('process-deletion', { type: 'delete-point-activities', pointId: model.id }, 'high');
     }
   }
 };
@@ -264,12 +256,12 @@ const performManyModerationActions = (workPackage, callback) => {
       if (!error) {
         if (pointIds) {
           _.map(pointIds, (pointId) => {
-            queue.create('process-similarities', { type: 'update-collection', pointId: pointId }).delay(5000).priority('low').removeOnComplete(true).save();
+            queue.add('process-similarities', { type: 'update-collection', pointId: pointId }, 'low', { delay: 5000 });
           });
         }
         if (postIds) {
           _.map(postIds, (postId) => {
-            queue.create('process-similarities', { type: 'update-collection', postId: postId }).delay(5000).priority('low').removeOnComplete(true).save();
+            queue.add('process-similarities', { type: 'update-collection', postId: postId }, 'low', { delay: 5000 });
           });
         }
       }

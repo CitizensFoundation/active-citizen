@@ -165,7 +165,7 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
             } else if (notification.AcActivities[0].community_id) {
               inviteFromName = notification.AcActivities[0].Community.name;
             }
-            queue.create('send-one-email', {
+            queue.add('send-one-email', {
               subject: { translateToken: 'notification.email.user_invite', contentName: inviteFromName },
               template: 'user_invite',
               user: user ? user : { id: null, email: notification.AcActivities[0].object.email, name: notification.AcActivities[0].object.email },
@@ -174,19 +174,19 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
               community: community,
               group: group,
               token: notification.AcActivities[0].object.token
-            }).priority('critical').removeOnComplete(true).save();
+            }, 'critical');
             log.info('NotificationDeliveryWorker notification.user.invite Queued', { type: notification.type, userId: user ? user.id : null });
             seriesCallback();
             break;
           case "notification.password.recovery":
-            queue.create('send-one-email', {
+            queue.add('send-one-email', {
               subject: { translateToken: 'notification.email.password_recovery' },
               template: 'password_recovery',
               user: user,
               domain: domain,
               community: community,
               token: notification.AcActivities[0].object.token
-            }).priority('critical').removeOnComplete(true).save();
+            }, 'now');
             log.info('NotificationDeliveryWorker notification.password.recovery Completed', { type: notification.type, userId: user ? user.id : null });
             seriesCallback();
             break;
@@ -218,7 +218,7 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
               moderation.toxicityScorePercent = Math.round(moderation.toxicityScore*100)+'%';
             }
 
-            queue.create('send-one-email', {
+            queue.add('send-one-email', {
               subject: { translateToken: translateToken },
               template: template,
               user: user,
@@ -231,20 +231,20 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
               post: notification.AcActivities[0].Post.toJSON(),
               point: notification.AcActivities[0].Point ?  notification.AcActivities[0].Point.toJSON() : null,
               activity: notification.AcActivities[0].toJSON()
-            }).priority('critical').removeOnComplete(true).save();
+            }, 'critical');
             log.info('NotificationDeliveryWorker notification.report.content Completed', { type: notification.type, userId: user ? user.id : null });
             seriesCallback();
             break;
           case "notification.password.changed":
             if (notification.activity && notification.activity.object && notification.activity.object.token) {
-              queue.create('send-one-email', {
+              queue.add('send-one-email', {
                 subject: { translateToken: 'email.password_changed' },
                 template: 'password_changed',
                 user: user,
                 domain: domain,
                 community: community,
                 token: notification.activity.object.token
-              }).priority('critical').removeOnComplete(true).save();
+              }, 'critical');
               log.info('NotificationDeliveryWorker notification.password.changed Completed', { type: notification.type, userId: user ? user.id : null });
               seriesCallback();
             } else {
@@ -259,7 +259,7 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
             } else {
               var post = notification.AcActivities[0].Post;
               var content = notification.AcActivities[0].PostStatusChange.content;
-              queue.create('send-one-email', {
+              queue.add('send-one-email', {
                 subject: { translateToken: 'notification.post.statusChangeSubject', contentName: post.name },
                 template: 'post_status_change',
                 user: user,
@@ -268,7 +268,7 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
                 post: post,
                 content: content ? content : "",
                 status_changed_to: notification.AcActivities[0].PostStatusChange.status_changed_to
-              }).priority('high').removeOnComplete(true).save();
+              }, 'high');
               log.info('Processing notification.status.change Completed', { type: notification.type, userId: user ? user.id : null });
               seriesCallback();
             }
@@ -282,7 +282,7 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
               }
             }).then(function (statusUpdate) {
               if (statusUpdate) {
-                queue.create('send-one-email', {
+                queue.add('send-one-email', {
                   subject: { translateToken: 'notification.bulkStatusUpdate', contentName: groupUpdate ? group.name : community.name },
                   template: 'bulk_status_update',
                   user: user,
@@ -292,7 +292,7 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
                   bulkStatusUpdateId: bulkStatusUpdateId,
                   emailHeader: statusUpdate.config.emailHeader,
                   emailFooter: statusUpdate.config.emailFooter
-                }).priority('high').removeOnComplete(true).save();
+                }, 'high');
                 log.info('Processing notification.bulk.status.change Completed', { type: notification.type, userId: user ? user.id : null });
                 seriesCallback();
               } else {

@@ -103,7 +103,7 @@ class FraudScannerNotifier {
       </div>
     `
     for (let u=0;u<Math.min(admins.length, 5);u++) {
-      queue.create('send-one-email', {
+      queue.add('send-one-email', {
         subject: { translateToken: 'notification.email.possibleFraudHeader', contentName: this.currentCommunity.name },
         template: 'general_user_notification',
         user: admins[u],
@@ -113,7 +113,7 @@ class FraudScannerNotifier {
         header: "",
         content: content,
         link: this.getCommunityURL()
-      }).priority('high').removeOnComplete(true).save();
+      }, 'high');
     }
 
   }

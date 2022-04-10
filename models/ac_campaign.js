@@ -76,11 +76,11 @@ module.exports = (sequelize, DataTypes) => {
       if (error) {
         done(error);
       } else {
-        queue.create('process-marketing', {
+        queue.add('process-marketing', {
           type: 'send-campaign',
           jobId: jobId,
           campaignId: campaignId,
-        }).priority('medium').removeOnComplete(true).save();
+        }, 'medium');
         done();
       }
     });
