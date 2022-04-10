@@ -16,11 +16,6 @@ const EventEmitter = require('events');
 EventEmitter.defaultMaxListeners = 100;
 
 const redissOptions = {
-//  port: Number(redis_uri.port),
-//  host: redis_uri.hostname,
-//  password: redis_uri.auth.split(":")[1],
-//  db: 0,
-//  url: redisUrl,
   tls: {
     rejectUnauthorized: false,
   },
