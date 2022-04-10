@@ -12,17 +12,16 @@ const redisUrl = process.env.REDIS_URL ? process.env.REDIS_URL : "redis://localh
 
 const redis_uri = url.parse(redisUrl);
 
-const redisOptions = redisUrl.includes("rediss://")
-  ? { redis: {
-    port: Number(redis_uri.port),
-    host: redis_uri.hostname,
-    password: redis_uri.auth.split(":")[1],
-    db: 0,
-    tls: {
-      rejectUnauthorized: false,
-    },
-  }}
-  : redisUrl;
+const redissOptions = {
+//  port: Number(redis_uri.port),
+//  host: redis_uri.hostname,
+//  password: redis_uri.auth.split(":")[1],
+//  db: 0,
+//  url: redisUrl,
+  tls: {
+    rejectUnauthorized: false,
+  },
+}
 
 log.info("Starting app access to Bull Queue", {redis_url: redisUrl});
 
@@ -34,6 +33,7 @@ class YpQueue {
 
   get defaultQueueOptions() {
     return {
+      redis: redisUrl.includes("rediss://") ? redissOptions : undefined,
       defaultJobOptions: {
         attempts: 1,
         removeOnComplete: true,
@@ -75,7 +75,7 @@ class YpQueue {
   }
 
   createQueues() {
-    this.mainQueue = new BullQueue('mainYpQueue', redisOptions, this.defaultQueueOptions);
+    this.mainQueue = new BullQueue('mainYpQueue', redisUrl, this.defaultQueueOptions);
     this.mainQueue.on('active', function(job) {
       log.info('JQ', { id: job.id, name: job.name });
     }).on('completed', function(job, result){
