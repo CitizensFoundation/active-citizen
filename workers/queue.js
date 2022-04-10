@@ -8,9 +8,11 @@ if(process.env.AIRBRAKE_PROJECT_ID) {
 
 const BullQueue = require('bull');
 
-const redisUrl = process.env.REDIS_URL ? process.env.REDIS_URL : "redis://localhost:6379";
+let redisUrl = process.env.REDIS_URL ? process.env.REDIS_URL : "redis://localhost:6379";
 
-const redis_uri = url.parse(redisUrl);
+if (redisUrl.startsWith("redis://h:")) {
+  redisUrl = redisUrl.replace("redis://h:","redis://:")
+}
 
 const EventEmitter = require('events');
 EventEmitter.defaultMaxListeners = 100;
