@@ -72,11 +72,6 @@ var getActivities = function (req, res, options, callback) {
             if (videos.length>0) {
               models.Post.addVideosToAllActivityPosts(slicedActivitesBecauseOfLimitBug, videos);
             }
-
-            res.send({
-              activities: slicedActivitesBecauseOfLimitBug,
-              oldestProcessedActivityAt: slicedActivitesBecauseOfLimitBug.length>0 ? _.last(slicedActivitesBecauseOfLimitBug).created_at : null
-            });
             innerCallback();
           }
         })
