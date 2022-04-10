@@ -60,7 +60,7 @@ i18n
       delayedJobs.process(job.data, done);
     });
 
-    queue.process('process-notification-news-feed', 1, function(job, done) {
+    queue.process('process-notification-news-feed', 10, function(job, done) {
       notification_news_feed.process(job.data, done);
     });
 
@@ -68,15 +68,15 @@ i18n
       bulk_status_update.process(job.data, done);
     });
 
-    queue.process('process-deletion', 1, function(job, done) {
+    queue.process('process-deletion', 5, function(job, done) {
       deletions.process(job.data, done);
     });
 
-    queue.process('process-anonymization', 1, function(job, done) {
+    queue.process('process-anonymization', 5, function(job, done) {
       anonymizations.process(job.data, done);
     });
 
-    queue.process('process-voice-to-text', 1, function(job, done) {
+    queue.process('process-voice-to-text', 5, function(job, done) {
       speechToText.process(job.data, done);
     });
 
@@ -88,11 +88,11 @@ i18n
       similarities.process(job.data, done);
     });
 
-    queue.process('process-fraud-action', 1, function(job, done) {
+    queue.process('process-fraud-action', 5, function(job, done) {
       fraudManagement.process(job.data, done);
     });
 
-    queue.process('process-reports', 1, function(job, done) {
+    queue.process('process-reports', 10, function(job, done) {
       reports.process(job.data, done);
     });
 

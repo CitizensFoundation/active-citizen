@@ -13,7 +13,7 @@ const redisUrl = process.env.REDIS_URL ? process.env.REDIS_URL : "redis://localh
 const redis_uri = url.parse(redisUrl);
 
 const EventEmitter = require('events');
-EventEmitter.defaultMaxListeners = 30;
+EventEmitter.defaultMaxListeners = 100;
 
 const redissOptions = {
 //  port: Number(redis_uri.port),
