@@ -13,7 +13,7 @@ const redisUrl = process.env.REDIS_URL ? process.env.REDIS_URL : "redis://localh
 const redis_uri = url.parse(redisUrl);
 
 const redisOptions = redisUrl.includes("rediss://")
-  ? {
+  ? { redis: {
     port: Number(redis_uri.port),
     host: redis_uri.hostname,
     password: redis_uri.auth.split(":")[1],
@@ -21,7 +21,7 @@ const redisOptions = redisUrl.includes("rediss://")
     tls: {
       rejectUnauthorized: false,
     },
-  }
+  }}
   : redisUrl;
 
 log.info("Starting app access to Bull Queue", {redis_url: redisUrl});
