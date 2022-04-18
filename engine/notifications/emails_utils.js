@@ -22,10 +22,30 @@ var templatesDir = path.resolve(__dirname, '..', '..', 'email_templates', 'notif
 
 var queue = require('../../workers/queue');
 var models = require("../../../models");
+const redis = require("redis");
 
 var i18nFilter = function(text) {
   return i18n.t(text);
 };
+
+let redisClient;
+
+if (process.env.REDIS_URL) {
+  let redisUrl = process.env.REDIS_URL;
+
+  if (redisUrl.startsWith("redis://h:")) {
+    redisUrl = redisUrl.replace("redis://h:","redis://:")
+  }
+
+  if (redisUrl.includes("rediss://")) {
+    redisClient = redis.createClient(redisUrl, { tls: { rejectUnauthorized: false } });
+  } else {
+    redisClient = redis.createClient(redisUrl);
+  }
+
+} else {
+  redisClient = redis.createClient();
+}
 
 var transport = null;
 
@@ -92,14 +112,12 @@ var linkTo = function (url) {
   return '<a href="'+url+'">'+url+'</a>';
 };
 
-var filterNotificationForDelivery = function (notification, user, template, subject, callback) {
+const LIMIT_EMAILS_FOR_SECONDS = 60*60;
+const SUPPRESSION_KEYBASE = "uelim_V1_";
+
+const processNotification = (notification, user, template, subject, callback) => {
   var method = user.notifications_settings[notification.from_notification_setting].method;
   var frequency = user.notifications_settings[notification.from_notification_setting].frequency;
-
-  //TODO: Switch from FREQUENCY_AS_IT_HAPPENS if user has had a lot of emails > 25 in the hour or something
-
-  //log.info("Notification Email Processing", {email: user.email, notification_settings_type: notification.notification_setting_type,
-  //                                              method: method, frequency: frequency});
 
   if (user.email) {
     if (method !== models.AcNotification.METHOD_MUTED) {
@@ -125,6 +143,8 @@ var filterNotificationForDelivery = function (notification, user, template, subj
             post: notification.AcActivities[0].Post,
             point: notification.AcActivities[0].Point
           }, 'medium');
+          const redisKey = `${SUPPRESSION_KEYBASE}${user.id}`;
+          redisClient.setex(redisKey, LIMIT_EMAILS_FOR_SECONDS, JSON.stringify({}));
           callback();
         }
       } else if (method !== models.AcNotification.METHOD_MUTED) {
@@ -170,6 +190,39 @@ var filterNotificationForDelivery = function (notification, user, template, subj
   } else {
     console.warn("Can't find email for user");
     callback();
+  }
+}
+
+const filterNotificationForDelivery = function (notification, user, template, subject, callback) {
+  //log.info("Notification Email Processing", {email: user.email, notification_settings_type: notification.notification_setting_type,
+  //                                              method: method, frequency: frequency});
+
+  if (template==="point_activity") {
+    const group = (notification.AcActivities[0].Point && notification.AcActivities[0].Point.Group) ?
+                   notification.AcActivities[0].Point.Group : notification.AcActivities[0].Group;
+
+    if (group) {
+      group.hasGroupAdmins(user).then(result => {
+        if (result) {
+          processNotification(notification, user, template, subject, callback);
+        } else {
+          const redisKey = `${SUPPRESSION_KEYBASE}${user.id}`;
+          redisClient.get(redisKey, (error, found) => {
+            if (found) {
+              log.info(`Suppressing emails for user ${user.email} settings ${LIMIT_EMAILS_FOR_SECONDS}`);
+              callback();
+            } else {
+              processNotification(notification, user, template, subject, callback);
+            }
+          })
+        }
+      });
+    } else {
+      log.error("Can't find group for filterNotificationForDelivery")
+      callback();
+    }
+  } else {
+    processNotification(notification, user, template, subject, callback);
   }
 };
 
