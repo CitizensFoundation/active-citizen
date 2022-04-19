@@ -103,6 +103,9 @@ const addTranslationsForGroups = (targetLocale, items, groups, done) => {
         addItem(targetLocale, items, 'alternativeTextForNewIdeaSaveButton', group.id, group.configuration.alternativeTextForNewIdeaSaveButton, innerSeriesCallback);
       },
       innerSeriesCallback => {
+        addItem(targetLocale, items, 'customCategoryQuestionText', group.id, group.configuration.customCategoryQuestionText, innerSeriesCallback);
+      },
+      innerSeriesCallback => {
         addItem(targetLocale, items, 'customThankYouTextNewPosts', group.id, group.configuration.customThankYouTextNewPosts, innerSeriesCallback);
       },
       innerSeriesCallback => {
