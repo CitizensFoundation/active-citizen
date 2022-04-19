@@ -12,6 +12,8 @@ var ejs = require('ejs');
 var i18n = require('../../utils/i18n');
 var airbrake = null;
 
+const redisConnection = require('../../utils/redisConnection');
+
 if(process.env.AIRBRAKE_PROJECT_ID) {
   airbrake = require('../../utils/airbrake');
 }
@@ -22,30 +24,12 @@ var templatesDir = path.resolve(__dirname, '..', '..', 'email_templates', 'notif
 
 var queue = require('../../workers/queue');
 var models = require("../../../models");
-const redis = require("redis");
 
 var i18nFilter = function(text) {
   return i18n.t(text);
 };
 
-let redisClient;
 
-if (process.env.REDIS_URL) {
-  let redisUrl = process.env.REDIS_URL;
-
-  if (redisUrl.startsWith("redis://h:")) {
-    redisUrl = redisUrl.replace("redis://h:","redis://:")
-  }
-
-  if (redisUrl.includes("rediss://")) {
-    redisClient = redis.createClient(redisUrl, { tls: { rejectUnauthorized: false } });
-  } else {
-    redisClient = redis.createClient(redisUrl);
-  }
-
-} else {
-  redisClient = redis.createClient();
-}
 
 var transport = null;
 
@@ -144,7 +128,7 @@ const processNotification = (notification, user, template, subject, callback) =>
             point: notification.AcActivities[0].Point
           }, 'medium');
           const redisKey = `${SUPPRESSION_KEYBASE}${user.id}`;
-          redisClient.setex(redisKey, LIMIT_EMAILS_FOR_SECONDS, JSON.stringify({}));
+          redisConnection.setex(redisKey, LIMIT_EMAILS_FOR_SECONDS, JSON.stringify({}));
           callback();
         }
       } else if (method !== models.AcNotification.METHOD_MUTED) {
@@ -207,7 +191,7 @@ const filterNotificationForDelivery = function (notification, user, template, su
           processNotification(notification, user, template, subject, callback);
         } else {
           const redisKey = `${SUPPRESSION_KEYBASE}${user.id}`;
-          redisClient.get(redisKey, (error, found) => {
+          redisConnection.get(redisKey, (error, found) => {
             if (found) {
               log.info(`Suppressing emails for user ${user.email} settings ${LIMIT_EMAILS_FOR_SECONDS}`);
               callback();
