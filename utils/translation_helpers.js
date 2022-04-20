@@ -112,6 +112,9 @@ const addTranslationsForGroups = (targetLocale, items, groups, done) => {
         addItem(targetLocale, items, 'customTitleQuestionText', group.id, group.configuration.customTitleQuestionText, innerSeriesCallback);
       },
       innerSeriesCallback => {
+        addItem(targetLocale, items, 'customFilterText', group.id, group.configuration.customFilterText, innerSeriesCallback);
+      },
+      innerSeriesCallback => {
         addItem(targetLocale, items, 'customAdminCommentsTitle', group.id, group.configuration.customAdminCommentsTitle, innerSeriesCallback);
       },
       innerSeriesCallback => {

@@ -94,6 +94,8 @@ module.exports = (sequelize, DataTypes) => {
         return modelInstance.configuration.customThankYouTextNewPosts;
       case 'customTitleQuestionText':
         return modelInstance.configuration.customTitleQuestionText;
+      case 'customFilterText':
+        return modelInstance.configuration.customFilterText;
       case 'customAdminCommentsTitle':
         return modelInstance.configuration.customAdminCommentsTitle;
       case 'alternativePointForHeader':
