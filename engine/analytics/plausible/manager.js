@@ -44,9 +44,10 @@ async function createPlausibleSite(community) {
           process.env["PLAUSIBLE_BASE_URL"] +
           "sites/",
         headers: {
-          "authorization": `Bearer ${process.env["PLAUSIBLE_API_KEY"]}`,
+          "Authorization": `Bearer ${process.env["PLAUSIBLE_API_KEY"]}`,
+          "Content-Type": "multipart/form-data"
         },
-        json: {
+        formData: {
           domain: `community_${community.id}`,
           timezone: 'Europe/London'
         },
