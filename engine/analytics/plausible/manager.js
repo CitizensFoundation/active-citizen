@@ -40,7 +40,7 @@ async function createPlausibleSite(community) {
     const options = {
       url:
         process.env["PLAUSIBLE_BASE_URL"] +
-        "site/",
+        "sites/",
       headers: {
         "Authorization": `Bearer ${process.env["PLAUSIBLE_API_KEY"]}`,
       },
