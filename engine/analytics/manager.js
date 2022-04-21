@@ -51,7 +51,7 @@ const updateCommunity = (communityId, done) => {
     ]
   }).then((community) => {
     if (community) {
-      importCommunity(community, async (error) => {
+      importCommunity(community, async(error) => {
         if (error) {
           done(error);
         } else {

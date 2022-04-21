@@ -43,7 +43,7 @@ async function getPlausibleStats(statsParams) {
       const options = {
         url:
           process.env["PLAUSIBLE_BASE_URL"] +
-          "stats/timeseries?site_id=your-priorities&period=7d",
+          "stats/"+statsParams,
         headers: {
           "Authorization": `Bearer ${process.env["PLAUSIBLE_API_KEY"]}`,
           "X-Forwarded-For": "127.0.0.1",
@@ -101,12 +101,7 @@ async function addPlausibleEvent(eventName, userAgent, url, domain, screenWidth)
           log.error(content);
           reject(content.statusCode);
         } else {
-          try {
-            await getPlausibleStats()
-            resolve();
-          } catch (error) {
-            reject(error);
-          }
+          resolve();
         }
       });
     } else {
@@ -153,5 +148,6 @@ async function createPlausibleSite(community) {
 
 module.exports = {
   createPlausibleSite,
-  addPlausibleEvent
+  addPlausibleEvent,
+  getPlausibleStats
 };
