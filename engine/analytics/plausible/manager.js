@@ -45,6 +45,7 @@ async function createPlausibleSite(community) {
           "sites/",
         headers: {
           "Authorization": `Bearer ${process.env["PLAUSIBLE_API_KEY"]}`,
+          "X-Forwarded-For": "127.0.0.1",
           "Content-Type": "multipart/form-data"
         },
         formData: {
