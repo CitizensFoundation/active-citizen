@@ -54,12 +54,12 @@ async function getPlausibleStats(statsParams) {
       log.info(JSON.stringify(options))
 
       request.get(options, (error, content) => {
-        if (content && content.statusCode != 202) {
+        if (content && content.statusCode != 200) {
           log.error(error);
           log.error(content);
           reject(content.statusCode);
         } else {
-          console.log(content);
+          console.log(content.body);
           resolve();
         }
       });
@@ -101,8 +101,12 @@ async function addPlausibleEvent(eventName, userAgent, url, domain, screenWidth)
           log.error(content);
           reject(content.statusCode);
         } else {
-          await getPlausibleStats()
-          resolve();
+          try {
+            await getPlausibleStats()
+            resolve();
+          } catch (error) {
+            reject(error);
+          }
         }
       });
     } else {
