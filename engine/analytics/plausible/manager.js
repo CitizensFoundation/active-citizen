@@ -42,7 +42,7 @@ async function getPlausibleStats(statsParams) {
       process.env["PLAUSIBLE_API_KEY"]) {
       const options = {
         url:
-          process.env["PLAUSIBLE_EVENT_BASE_URL"] +
+          process.env["PLAUSIBLE_BASE_URL"] +
           "stats/timeseries?site_id=your-priorities&period=6mo",
         headers: {
           "Authorization": `Bearer ${process.env["PLAUSIBLE_API_KEY"]}`,
