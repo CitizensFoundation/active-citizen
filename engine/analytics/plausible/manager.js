@@ -37,28 +37,34 @@ const getFromAnalyticsApi = (
 
 async function createPlausibleSite(community) {
   return await new Promise((resolve, reject) => {
-    const options = {
-      url:
-        process.env["PLAUSIBLE_BASE_URL"] +
-        "sites/",
-      headers: {
-        "Authorization": `Bearer ${process.env["PLAUSIBLE_API_KEY"]}`,
-      },
-      json: {
-        domain: `community_${community.id}`,
-        timezone: 'Europe/London'
-      },
-    };
+    if (process.env["PLAUSIBLE_BASE_URL"] &&
+      process.env["PLAUSIBLE_API_KEY"]) {
+      const options = {
+        url:
+          process.env["PLAUSIBLE_BASE_URL"] +
+          "sites/",
+        headers: {
+          "authorization": `Bearer ${process.env["PLAUSIBLE_API_KEY"]}`,
+        },
+        json: {
+          domain: `community_${community.id}`,
+          timezone: 'Europe/London'
+        },
+      };
 
-    request.post(options, (error, content) => {
-      if (content && content.statusCode != 200) {
-        log.error(error);
-        log.error(content);
-        reject(content.statusCode);
-      } else {
-        resolve();
-      }
-    });
+      request.post(options, (error, content) => {
+        if (content && content.statusCode != 200) {
+          log.error(error);
+          log.error(content);
+          reject(content.statusCode);
+        } else {
+          resolve();
+        }
+      });
+    } else {
+      log.warn("No plausible base url or api key");
+      resolve();
+    }
   });
 }
 
