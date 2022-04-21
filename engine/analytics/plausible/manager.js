@@ -57,6 +57,8 @@ async function addPlausibleEvent(eventName, userAgent, url, domain, screenWidth)
         },
       };
 
+      log.info(JSON.stringify(options));
+
       request.post(options, (error, content) => {
         if (content && content.statusCode != 200) {
           log.error(error);
