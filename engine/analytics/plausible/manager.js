@@ -42,7 +42,7 @@ async function addPlausibleEvent(eventName, userAgent, url, domain, screenWidth)
       const options = {
         url:
           process.env["PLAUSIBLE_BASE_URL"] +
-          "sites/",
+          "event/",
         headers: {
           "Authorization": `Bearer ${process.env["PLAUSIBLE_API_KEY"]}`,
           "X-Forwarded-For": "127.0.0.1",
