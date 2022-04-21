@@ -43,7 +43,7 @@ async function getPlausibleStats(statsParams) {
       const options = {
         url:
           process.env["PLAUSIBLE_BASE_URL"] +
-          "stats/timeseries?site_id=your-priorities&period=6mo",
+          "stats/timeseries?site_id=your-priorities&period=7d",
         headers: {
           "Authorization": `Bearer ${process.env["PLAUSIBLE_API_KEY"]}`,
           "X-Forwarded-For": "127.0.0.1",
