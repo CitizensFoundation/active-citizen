@@ -6,6 +6,8 @@ const i18n = require('../utils/i18n');
 const toJson = require('../utils/to_json');
 const _ = require('lodash');
 
+const { addPlausibleEvent } = require('../engine/analytics/plausible/manager');
+
 let airbrake = null;
 if(process.env.AIRBRAKE_PROJECT_ID) {
   airbrake = require('../utils/airbrake');
