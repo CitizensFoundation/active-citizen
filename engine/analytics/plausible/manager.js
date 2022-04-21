@@ -60,6 +60,7 @@ async function getPlausibleStats(statsParams) {
           reject(content.statusCode);
         } else {
           console.log(content.body);
+          console.log(content.body.results);
           resolve(content.body.results);
         }
       });
