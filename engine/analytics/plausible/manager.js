@@ -35,6 +35,44 @@ const getFromAnalyticsApi = (
   });
 };
 
+async function addPlausibleEvent(eventName, userAgent, url, domain, screenWidth) {
+  return await new Promise((resolve, reject) => {
+    if (process.env["PLAUSIBLE_BASE_URL"] &&
+      process.env["PLAUSIBLE_API_KEY"]) {
+      const options = {
+        url:
+          process.env["PLAUSIBLE_BASE_URL"] +
+          "sites/",
+        headers: {
+          "Authorization": `Bearer ${process.env["PLAUSIBLE_API_KEY"]}`,
+          "X-Forwarded-For": "127.0.0.1",
+          "User-Agent": userAgent,
+          "Content-Type": "application/json"
+        },
+        body: {
+          name: eventName,
+          url,
+          domain: "your-priorities",
+          screen_width: screenWidth
+        },
+      };
+
+      request.post(options, (error, content) => {
+        if (content && content.statusCode != 200) {
+          log.error(error);
+          log.error(content);
+          reject(content.statusCode);
+        } else {
+          resolve();
+        }
+      });
+    } else {
+      log.warn("No plausible base url or api key");
+      resolve();
+    }
+  });
+}
+
 async function createPlausibleSite(community) {
   return await new Promise((resolve, reject) => {
     if (process.env["PLAUSIBLE_BASE_URL"] &&
@@ -71,5 +109,6 @@ async function createPlausibleSite(community) {
 }
 
 module.exports = {
-  createPlausibleSite
+  createPlausibleSite,
+  addPlausibleEvent
 };

@@ -158,11 +158,29 @@ const delayedCreateActivityFromApp = (workPackage, callback) => {
     group_id: workData.groupId,
     community_id: workData.communityId,
     post_id: workData.postId
-  }).save().then(function(clientActivity) {
+  }).save().then( async (clientActivity) => {
     if (!clientActivity) {
       log.error('Client Activity not created', { context: 'createClientActivity', errorStatus: 500 });
     }
-    callback();
+
+    let plausibleEvent;
+
+    if (workData.body.type==="pageview") {
+      plausibleEvent = `${workData.body.type} - ${workData.body.object}`;
+    } else {
+      plausibleEvent = `pageview`;
+    }
+
+    try {
+      await addPlausibleEvent(
+        plausibleEvent,
+        workData.body.user_agent,
+        workData.body.url, `community_${workData.communityId}`,
+        workData.body.sceen_width);
+        callback();
+    } catch (error) {
+      callback(error);
+    }
   }).catch(function(error) {
     log.error('Client Activity Created Error', { context: 'createClientActivity', err: error });
     callback(error);
