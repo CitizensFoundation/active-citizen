@@ -7,6 +7,7 @@ const importGroup = require('./utils').importGroup;
 const importPost = require('./utils').importPost;
 const importPoint = require('./utils').importPoint;
 const request = require('request');
+const { createPlausibleSite } = require('./plausible/manager');
 
 const updateDomain = (domainId, done) => {
   log.info('updateDomain');
@@ -50,7 +51,18 @@ const updateCommunity = (communityId, done) => {
     ]
   }).then((community) => {
     if (community) {
-      importCommunity(community, done);
+      importCommunity(community, async (error) => {
+        if (error) {
+          done(error);
+        } else {
+          try {
+            await createPlausibleSite(community);
+            done();
+          } catch (error) {
+            done(error);
+          }
+        }
+      });
     } else {
       done("Can't find community for similarities import");
     }
