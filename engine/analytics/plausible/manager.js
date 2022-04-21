@@ -44,7 +44,7 @@ async function addPlausibleEvent(eventName, userAgent, url, domain, screenWidth)
           process.env["PLAUSIBLE_EVENT_BASE_URL"] +
           "event/",
         headers: {
-          "Authorization": `Bearer ${process.env["PLAUSIBLE_API_KEY"]}`,
+//          "Authorization": `Bearer ${process.env["PLAUSIBLE_API_KEY"]}`,
           "X-Forwarded-For": "127.0.0.1",
           "User-Agent": userAgent,
           "Content-Type": "application/json"
