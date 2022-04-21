@@ -37,11 +37,11 @@ const getFromAnalyticsApi = (
 
 async function addPlausibleEvent(eventName, userAgent, url, domain, screenWidth) {
   return await new Promise((resolve, reject) => {
-    if (process.env["PLAUSIBLE_BASE_URL"] &&
+    if (process.env["PLAUSIBLE_EVENT_BASE_URL"] &&
       process.env["PLAUSIBLE_API_KEY"]) {
       const options = {
         url:
-          process.env["PLAUSIBLE_BASE_URL"] +
+          process.env["PLAUSIBLE_EVENT_BASE_URL"] +
           "event/",
         headers: {
           "Authorization": `Bearer ${process.env["PLAUSIBLE_API_KEY"]}`,
