@@ -49,15 +49,13 @@ async function addPlausibleEvent(eventName, userAgent, url, domain, screenWidth)
           "User-Agent": userAgent,
           "Content-Type": "application/json"
         },
-        body: {
+        json: {
           name: eventName,
           url,
           domain: "your-priorities",
           screen_width: screenWidth
         },
       };
-
-      log.info(JSON.stringify(options));
 
       request.post(options, (error, content) => {
         if (content && content.statusCode != 200) {
