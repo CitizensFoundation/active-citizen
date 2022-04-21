@@ -168,17 +168,18 @@ const delayedCreateActivityFromApp = (workPackage, callback) => {
     let plausibleEvent;
 
     if (workData.body.type==="pageview") {
-      plausibleEvent = `${workData.body.type} - ${workData.body.object}`;
-    } else {
       plausibleEvent = `pageview`;
+    } else {
+      plausibleEvent = `${workData.body.type} - ${workData.body.object}`;
     }
 
     try {
       await addPlausibleEvent(
         plausibleEvent,
         workData.body.user_agent,
-        workData.body.url, `community_${workData.communityId}`,
-        workData.body.sceen_width);
+        workData.body.url,
+        `community_${workData.communityId}`,
+        workData.body.screen_width);
         callback();
     } catch (error) {
       callback(error);
