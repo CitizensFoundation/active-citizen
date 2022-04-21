@@ -42,7 +42,7 @@ async function createPlausibleSite(community) {
         process.env["PLAUSIBLE_BASE_URL"] +
         "site/",
       headers: {
-        "X-API-KEY": process.env["PLAUSIBLE_API_KEY"],
+        "Authorization": `Bearer ${process.env["PLAUSIBLE_API_KEY"]}`,
       },
       json: {
         domain: `community_${community.id}`,
@@ -52,6 +52,8 @@ async function createPlausibleSite(community) {
 
     request.post(options, (error, content) => {
       if (content && content.statusCode != 200) {
+        log.error(error);
+        log.error(content);
         reject(content.statusCode);
       } else {
         resolve();
