@@ -85,7 +85,8 @@ const generateNotificationsForNewPoint = (activity, callback) => {
             order: [
               models.sequelize.literal('(counter_quality_up-counter_quality_down) desc')
             ],
-            limit: 10000
+            //TODO: Review this limit on notifications for large points discussions
+            limit: 250
           }).then((pointsIn) => {
             models.Point.findAll({
               where: {
