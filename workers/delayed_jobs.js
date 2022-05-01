@@ -180,7 +180,8 @@ const delayedCreateActivityFromApp = (workPackage, callback) => {
         workData.body.url,
         `community_${workData.communityId}`,
         workData.body.screen_width,
-        workData.body.referrer);
+        workData.body.referrer,
+        workData.body.ipAddress);
         callback();
     } catch (error) {
       callback(error);

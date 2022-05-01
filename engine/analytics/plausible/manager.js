@@ -35,23 +35,19 @@ const getFromAnalyticsApi = (
   });
 };
 
-
 async function getPlausibleStats(statsParams) {
   return await new Promise((resolve, reject) => {
-    if (process.env["PLAUSIBLE_BASE_URL"] &&
-      process.env["PLAUSIBLE_API_KEY"]) {
+    if (process.env["PLAUSIBLE_BASE_URL"] && process.env["PLAUSIBLE_API_KEY"]) {
       const options = {
-        url:
-          process.env["PLAUSIBLE_BASE_URL"] +
-          "stats/"+statsParams,
+        url: process.env["PLAUSIBLE_BASE_URL"] + "stats/" + statsParams,
         headers: {
-          "Authorization": `Bearer ${process.env["PLAUSIBLE_API_KEY"]}`,
+          Authorization: `Bearer ${process.env["PLAUSIBLE_API_KEY"]}`,
           "X-Forwarded-For": "127.0.0.1",
-          "Content-Type": "application/json"
-        }
+          "Content-Type": "application/json",
+        },
       };
 
-      log.info(JSON.stringify(options))
+      log.info(JSON.stringify(options));
 
       request.get(options, (error, content) => {
         if (content && content.statusCode != 200) {
@@ -70,31 +66,39 @@ async function getPlausibleStats(statsParams) {
   });
 }
 
-async function addPlausibleEvent(eventName, userAgent, url, domain, screenWidth, referrer) {
+async function addPlausibleEvent(
+  eventName,
+  userAgent,
+  url,
+  domain,
+  screenWidth,
+  referrer,
+  ipAddress
+) {
   return await new Promise((resolve, reject) => {
-    if (process.env["PLAUSIBLE_EVENT_BASE_URL"] &&
-      process.env["PLAUSIBLE_API_KEY"]) {
+    if (
+      process.env["PLAUSIBLE_EVENT_BASE_URL"] &&
+      process.env["PLAUSIBLE_API_KEY"]
+    ) {
       const options = {
-        url:
-          process.env["PLAUSIBLE_EVENT_BASE_URL"] +
-          "event/",
+        url: process.env["PLAUSIBLE_EVENT_BASE_URL"] + "event/",
         headers: {
-//          "Authorization": `Bearer ${process.env["PLAUSIBLE_API_KEY"]}`,
-          "X-Forwarded-For": "127.0.0.1",
+          //          "Authorization": `Bearer ${process.env["PLAUSIBLE_API_KEY"]}`,
+          "X-Forwarded-For": ipAddress,
           "User-Agent": userAgent,
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
-        method: 'POST',
+        method: "POST",
         json: {
           name: eventName,
           url,
           domain: "your-priorities",
           screen_width: screenWidth,
-          referrer
+          referrer,
         },
       };
 
-      log.info(JSON.stringify(options))
+      log.info(JSON.stringify(options));
 
       request.post(options, async (error, content) => {
         if (content && content.statusCode != 202) {
@@ -114,20 +118,17 @@ async function addPlausibleEvent(eventName, userAgent, url, domain, screenWidth,
 
 async function createPlausibleSite(community) {
   return await new Promise((resolve, reject) => {
-    if (process.env["PLAUSIBLE_BASE_URL"] &&
-      process.env["PLAUSIBLE_API_KEY"]) {
+    if (process.env["PLAUSIBLE_BASE_URL"] && process.env["PLAUSIBLE_API_KEY"]) {
       const options = {
-        url:
-          process.env["PLAUSIBLE_BASE_URL"] +
-          "sites/",
+        url: process.env["PLAUSIBLE_BASE_URL"] + "sites/",
         headers: {
-          "Authorization": `Bearer ${process.env["PLAUSIBLE_API_KEY"]}`,
+          Authorization: `Bearer ${process.env["PLAUSIBLE_API_KEY"]}`,
           "X-Forwarded-For": "127.0.0.1",
-          "Content-Type": "multipart/form-data"
+          "Content-Type": "multipart/form-data",
         },
         formData: {
           domain: `community_${community.id}`,
-          timezone: 'Europe/London'
+          timezone: "Europe/London",
         },
       };
 
@@ -150,5 +151,5 @@ async function createPlausibleSite(community) {
 module.exports = {
   createPlausibleSite,
   addPlausibleEvent,
-  getPlausibleStats
+  getPlausibleStats,
 };
