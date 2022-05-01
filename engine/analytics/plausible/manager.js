@@ -70,7 +70,7 @@ async function getPlausibleStats(statsParams) {
   });
 }
 
-async function addPlausibleEvent(eventName, userAgent, url, domain, screenWidth) {
+async function addPlausibleEvent(eventName, userAgent, url, domain, screenWidth, referrer) {
   return await new Promise((resolve, reject) => {
     if (process.env["PLAUSIBLE_EVENT_BASE_URL"] &&
       process.env["PLAUSIBLE_API_KEY"]) {
@@ -89,7 +89,8 @@ async function addPlausibleEvent(eventName, userAgent, url, domain, screenWidth)
           name: eventName,
           url,
           domain: "your-priorities",
-          screen_width: screenWidth
+          screen_width: screenWidth,
+          referrer
         },
       };
 
