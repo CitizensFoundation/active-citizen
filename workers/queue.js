@@ -98,11 +98,11 @@ class YpQueue {
       log.info('Queue Drained');
     }).on( 'error', function( error ) {
       log.error('Job Error', { error } );
-      if(airbrake) {
-        if (!(err instanceof Error)) {
-          err = new Error(result ? result : err);
+      if (airbrake) {
+        if (!(error instanceof Error)) {
+          error = new Error(error);
         }
-        airbrake.notify(err).then((airbrakeErr)=> {
+        airbrake.notify(error).then((airbrakeErr)=> {
           if (airbrakeErr.error) {
             log.error("AirBrake Error", { context: 'airbrake', err: airbrakeErr.error, errorStatus: 500 });
           }

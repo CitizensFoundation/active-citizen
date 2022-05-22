@@ -102,7 +102,6 @@ module.exports = (sequelize, DataTypes) => {
   AcActivity.ACCESS_GROUP = 2;
   AcActivity.ACCESS_PRIVATE = 3;
 
-
   AcActivity.createActivity = (options, callback) => {
     queue.add('delayed-job', { type: 'create-priority-activity', workData: options }, 'high');
     callback();
