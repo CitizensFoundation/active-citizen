@@ -11,6 +11,11 @@
       "statusChangeSubject": "status příspěvku byl změněn"
     },
     "email": {
+      "possibleFraudFooter": "Klikněte na odkaz komunity níže, přihlaste se jako správce a v nabídce vyberte možnost Správa podvodů.",
+      "possibleFraudSubHeader": "Počet možných podvodných činností s odhadovanou 75% pravděpodobností podvodu",
+      "possibleFraudInformation": "Náš automatizovaný systém identifikoval možné podvodné jednání. Podrobněji se na to můžete podívat v administrátorském rozhraní komunity. Některé z těchto aktivit mohou mít jiné než podvodné důvody, proto je před odstraněním obsahu důkladně prozkoumejte.",
+      "possibleFraudHeader": "Možné podvodné jednání",
+      "settings": "Nastavení e-mailu",
       "automaticToxicityDetection": "Tento obsah byl automaticky označen jako škodlivý pomocí AI algoritmu, který odhaduje škodlivost obsahu. Pokud potřebujete, můžete obsah smazat.",
       "automaticToxicityDetectionDisclaimer": "Někdy AI algoritmus vypočítá skóre chybně. V takovém případě si nedělejte starosti, nemusíte dělat nic dalšího a tento e-mail můžete ignorovat.",
       "automaticToxicityHowLikely": "Jak pravděpodobná (v %) je škodlivost obsahu?",
