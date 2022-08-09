@@ -304,6 +304,13 @@ var sendOneEmail = function (emailLocals, callback) {
             emailLocals['community'] = {
               hostname: 'engage'
             }
+          } else if (emailLocals.domain.domain_name.indexOf('puttingcommunitiesfirst.org.uk') > -1) {
+            fromEmail = 'Community Fund <puttingcommunitiesfirst@tnlcommunityfund.org.uk>';
+            sender = "puttingcommunitiesfirst@tnlcommunityfund.org.uk";
+            replyTo = "puttingcommunitiesfirst@tnlcommunityfund.org.uk";
+            emailLocals['community'] = {
+              hostname: 'discuss'
+            }
           } else if (emailLocals.domain.domain_name.indexOf('idea-synergy.com') > -1) {
             fromEmail = 'ideasynergy@idea-synergy.com';
           } else if (emailLocals.domain.domain_name.indexOf('smarter.nj.gov') > -1) {
