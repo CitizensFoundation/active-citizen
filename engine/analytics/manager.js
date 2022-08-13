@@ -7,7 +7,6 @@ const importGroup = require('./utils').importGroup;
 const importPost = require('./utils').importPost;
 const importPoint = require('./utils').importPoint;
 const request = require('request');
-const { createPlausibleSite } = require('./plausible/manager');
 
 const updateDomain = (domainId, done) => {
   log.info('updateDomain');
@@ -55,12 +54,7 @@ const updateCommunity = (communityId, done) => {
         if (error) {
           done(error);
         } else {
-          try {
-            await createPlausibleSite(community);
-            done();
-          } catch (error) {
-            done(error);
-          }
+          done();
         }
       });
     } else {
