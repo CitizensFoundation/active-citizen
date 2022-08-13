@@ -270,6 +270,7 @@ async function addPlausibleEvent(
     ) {
       let communityId;
       let useUrl = url;
+      let useReferrer = referrer;
 
       try {
         if (!communityId && workData.groupId) {
@@ -325,6 +326,10 @@ async function addPlausibleEvent(
         if (workData.body.originalQueryString && useUrl.indexOf("?") === -1) {
           useUrl += "?" + workData.body.originalQueryString;
         }
+
+        if (workData.body.originalQueryString && useReferrer.indexOf("?") === -1) {
+          useReferrer += "?" + workData.body.originalQueryString;
+        }
       } catch (error) {
         reject(error);
         return;
@@ -352,14 +357,14 @@ async function addPlausibleEvent(
           url: useUrl,
           domain: process.env["PLAUSIBLE_SITE_NAME"],
           screen_width: parseInt(screenWidth),
-          referrer,
+          referrer: useReferrer,
           props: JSON.stringify(props),
         },
       };
 
       //log.info(JSON.stringify(options));
       log.debug(
-        `${ipAddress} Plausible ${eventName} - ${JSON.stringify(props)} - ${useUrl}`
+        `${ipAddress} Plausible ${eventName} - ${JSON.stringify(props)} - ${useUrl} - ${useReferrer} - ${referrer}`
       );
 
       request.post(options, async (error, content) => {
