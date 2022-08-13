@@ -260,7 +260,7 @@ async function addPlausibleEvent(
   url,
   workData,
   screenWidth,
-  referrer,
+  referer,
   ipAddress
 ) {
   return await new Promise(async (resolve, reject) => {
@@ -270,7 +270,6 @@ async function addPlausibleEvent(
     ) {
       let communityId;
       let useUrl = url;
-      let useReferrer = referrer;
 
       try {
         if (!communityId && workData.groupId) {
@@ -326,10 +325,6 @@ async function addPlausibleEvent(
         if (workData.body.originalQueryString && useUrl.indexOf("?") === -1) {
           useUrl += "?" + workData.body.originalQueryString;
         }
-
-        if (workData.body.originalQueryString && useReferrer.indexOf("?") === -1) {
-          useReferrer += "?" + workData.body.originalQueryString;
-        }
       } catch (error) {
         reject(error);
         return;
@@ -357,14 +352,14 @@ async function addPlausibleEvent(
           url: useUrl,
           domain: process.env["PLAUSIBLE_SITE_NAME"],
           screen_width: parseInt(screenWidth),
-          referrer: referrer,
+          referer: referer,
           props: JSON.stringify(props),
         },
       };
 
       //log.info(JSON.stringify(options));
       log.debug(
-        `${ipAddress} Plausible ${eventName} - ${JSON.stringify(props)} - ${useUrl} - ${useReferrer} - ${referrer}`
+        `${ipAddress} Plausible ${eventName} - ${JSON.stringify(props)} - ${useUrl} - ${referer}`
       );
 
       request.post(options, async (error, content) => {
