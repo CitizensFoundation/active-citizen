@@ -6,6 +6,8 @@ const i18n = require('../utils/i18n');
 const toJson = require('../utils/to_json');
 const _ = require('lodash');
 
+const { addPlausibleEvent } = require('../engine/analytics/plausible/manager');
+
 let airbrake = null;
 if(process.env.AIRBRAKE_PROJECT_ID) {
   airbrake = require('../utils/airbrake');
@@ -158,11 +160,36 @@ const delayedCreateActivityFromApp = (workPackage, callback) => {
     group_id: workData.groupId,
     community_id: workData.communityId,
     post_id: workData.postId
-  }).save().then(function(clientActivity) {
+  }).save().then( async (clientActivity) => {
     if (!clientActivity) {
       log.error('Client Activity not created', { context: 'createClientActivity', errorStatus: 500 });
     }
-    callback();
+
+    if (process.env.PLAUSIBLE_API_KEY) {
+      let plausibleEvent;
+
+      if (workData.body.type==="pageview") {
+        plausibleEvent = `pageview`;
+      } else {
+        plausibleEvent = `${workData.body.type} - ${workData.body.object}`;
+      }
+
+      try {
+        await addPlausibleEvent(
+          plausibleEvent,
+          workData.body.user_agent,
+          workData.body.url,
+          `community_${workData.communityId}`,
+          workData.body.screen_width,
+          workData.body.referrer,
+          workData.body.ipAddress);
+          callback();
+      } catch (error) {
+        callback(error);
+      }
+    } else {
+      callback();
+    }
   }).catch(function(error) {
     log.error('Client Activity Created Error', { context: 'createClientActivity', err: error });
     callback(error);
