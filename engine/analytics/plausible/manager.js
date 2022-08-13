@@ -344,6 +344,7 @@ async function addPlausibleEvent(
         headers: {
           "X-Forwarded-For": ipAddress,
           "User-Agent": userAgent,
+          "referer": referer,
           "Content-Type": "application/json",
         },
         method: "POST",
