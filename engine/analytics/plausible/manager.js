@@ -41,7 +41,7 @@ async function getPlausibleStats(statsParams) {
       const options = {
         url: process.env["PLAUSIBLE_BASE_URL"] + "stats/" + statsParams,
         headers: {
-          Authorization: `Bearer ${process.env["PLAUSIBLE_API_KEY"]}`,
+          "Authorization": `Bearer ${process.env["PLAUSIBLE_API_KEY"]}`,
           "X-Forwarded-For": "127.0.0.1",
           "Content-Type": "application/json",
         },
@@ -150,7 +150,6 @@ async function addPlausibleEvent(
       const options = {
         url: process.env["PLAUSIBLE_EVENT_BASE_URL"] + "event/",
         headers: {
-          //          "Authorization": `Bearer ${process.env["PLAUSIBLE_API_KEY"]}`,
           "X-Forwarded-For": ipAddress,
           "User-Agent": userAgent,
           "Content-Type": "application/json",
