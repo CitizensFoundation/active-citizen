@@ -354,7 +354,7 @@ async function addPlausibleEvent(
 
       //log.info(JSON.stringify(options));
       log.debug(
-        `${ipAddress} Plausible ${eventName} - ${JSON.stringify(props)} -`
+        `${ipAddress} Plausible ${eventName} - ${JSON.stringify(props)} - ${url}`
       );
 
       request.post(options, async (error, content) => {
