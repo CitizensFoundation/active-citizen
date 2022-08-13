@@ -357,7 +357,7 @@ async function addPlausibleEvent(
           url: useUrl,
           domain: process.env["PLAUSIBLE_SITE_NAME"],
           screen_width: parseInt(screenWidth),
-          referrer: useReferrer,
+          referrer: referrer,
           props: JSON.stringify(props),
         },
       };
