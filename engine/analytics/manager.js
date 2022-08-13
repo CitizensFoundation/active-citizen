@@ -307,7 +307,7 @@ const getFromAnalyticsApi = (req, featureType, collectionType, collectionId, don
       request.get(options, (error, content) => {
         if (content && content.statusCode!=200) {
           error = content.statusCode;
-        } else {
+        } else if (content) {
           req.redisClient.setex(redisKey, process.env.SIMILARITIES_CACHE_TTL ? parseInt(process.env.SIMILARITIES_CACHE_TTL) : 15*60, JSON.stringify(content));
         }
         done(error, content);
