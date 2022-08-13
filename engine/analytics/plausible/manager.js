@@ -269,6 +269,7 @@ async function addPlausibleEvent(
       process.env["PLAUSIBLE_API_KEY"]
     ) {
       let communityId;
+      let useUrl = url;
 
       try {
         if (!communityId && workData.groupId) {
@@ -320,6 +321,10 @@ async function addPlausibleEvent(
             workData.groupId = post.group_id;
           }
         }
+
+        if (workData.body.originalQueryString && useUrl.indexOf("?") === -1) {
+          useUrl += "?" + workData.body.originalQueryString;
+        }
       } catch (error) {
         reject(error);
         return;
@@ -344,7 +349,7 @@ async function addPlausibleEvent(
         method: "POST",
         json: {
           name: eventName,
-          url,
+          url: useUrl,
           domain: process.env["PLAUSIBLE_SITE_NAME"],
           screen_width: parseInt(screenWidth),
           referrer,
@@ -354,7 +359,7 @@ async function addPlausibleEvent(
 
       //log.info(JSON.stringify(options));
       log.debug(
-        `${ipAddress} Plausible ${eventName} - ${JSON.stringify(props)} - ${url}`
+        `${ipAddress} Plausible ${eventName} - ${JSON.stringify(props)} - ${useUrl}`
       );
 
       request.post(options, async (error, content) => {
