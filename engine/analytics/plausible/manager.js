@@ -166,7 +166,7 @@ async function addPlausibleEvent(
       };
 
       //log.info(JSON.stringify(options));
-      log.debug(`Plausible ${eventName} - ${JSON.stringify(props)}`);
+      log.debug(`${ipAddress} Plausible ${eventName} - ${JSON.stringify(props)} -`);
 
       request.post(options, async (error, content) => {
         if (content && content.statusCode != 202) {
