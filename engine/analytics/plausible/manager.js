@@ -260,7 +260,7 @@ async function addPlausibleEvent(
   url,
   workData,
   screenWidth,
-  referer,
+  referrer,
   ipAddress
 ) {
   return await new Promise(async (resolve, reject) => {
@@ -344,7 +344,7 @@ async function addPlausibleEvent(
         headers: {
           "X-Forwarded-For": ipAddress,
           "User-Agent": userAgent,
-          "referer": referer,
+          "referer": referrer,
           "Content-Type": "application/json",
         },
         method: "POST",
@@ -353,14 +353,15 @@ async function addPlausibleEvent(
           url: useUrl,
           domain: process.env["PLAUSIBLE_SITE_NAME"],
           screen_width: parseInt(screenWidth),
-          referer: referer,
+          referrer: referrer,
+          referer: referrer,
           props: JSON.stringify(props),
         },
       };
 
       //log.info(JSON.stringify(options));
       log.debug(
-        `${ipAddress} Plausible ${eventName} - ${JSON.stringify(props)} - ${useUrl} - ${referer}`
+        `${ipAddress} Plausible ${eventName} - ${JSON.stringify(props)} - ${useUrl} - ${referrer}`
       );
 
       request.post(options, async (error, content) => {
