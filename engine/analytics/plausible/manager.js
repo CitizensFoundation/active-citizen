@@ -177,6 +177,38 @@ const getFromAnalyticsApi = (
   });
 };
 
+async function plausibleStatsProxy(plausibleUrl) {
+  return await new Promise((resolve, reject) => {
+    if (process.env["PLAUSIBLE_BASE_URL"] && process.env["PLAUSIBLE_API_KEY"]) {
+      const baseUrl = process.env["PLAUSIBLE_BASE_URL"].replace("/api/v1/", "");
+      const options = {
+        url: baseUrl + plausibleUrl + `&site_id=${process.env.PLAUSIBLE_SITE_NAME}`,
+        headers: {
+          Authorization: `Bearer ${process.env["PLAUSIBLE_API_KEY"]}`,
+          "X-Forwarded-For": "127.0.0.1",
+          "Content-Type": "application/json",
+        },
+      };
+
+      log.info(JSON.stringify(options));
+
+      request.get(options, (error, content) => {
+        if (content && content.statusCode != 200) {
+          log.error(error);
+          log.error(content);
+          reject(content.statusCode);
+        } else {
+          console.log(content.body);
+          resolve(content.body);
+        }
+      });
+    } else {
+      log.warn("No plausible base url or api key");
+      resolve();
+    }
+  });
+}
+
 async function getPlausibleStats(statsParams) {
   return await new Promise((resolve, reject) => {
     if (process.env["PLAUSIBLE_BASE_URL"] && process.env["PLAUSIBLE_API_KEY"]) {
@@ -383,5 +415,6 @@ async function addPlausibleEvent(
 module.exports = {
   addPlausibleEvent,
   getPlausibleStats,
-  addAllPlausibleGoals
+  addAllPlausibleGoals,
+  plausibleStatsProxy
 };
