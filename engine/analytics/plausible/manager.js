@@ -192,9 +192,10 @@ async function plausibleStatsProxy(plausibleUrl) {
           //"UserAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.3",
           "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.3",
           //referrer: "https://pl-eu.citizens.is/localhost",
-          //referer: "https://pl-eu.citizens.is/localhost",
+          referrer: "http://localhost:9000/marketing/community/2",
+          referer: "http://localhost:9000/marketing/community/2",
           Authorization: `Bearer ${process.env["PLAUSIBLE_API_KEY"]}`,
-          "X-Forwarded-For": "194.144.7.167,127.0.0.1",
+          //"X-Forwarded-For": "194.144.7.167,127.0.0.1",
           "Content-Type": "application/json",
           Accept: 'application/json'
         }
