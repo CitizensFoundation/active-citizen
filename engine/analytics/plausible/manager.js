@@ -196,6 +196,7 @@ async function plausibleStatsProxy(plausibleUrl) {
           Authorization: `Bearer ${process.env["PLAUSIBLE_API_KEY"]}`,
           "X-Forwarded-For": "194.144.7.167,127.0.0.1",
           "Content-Type": "application/json",
+          Accept: 'application/json'
         }
       };
 
