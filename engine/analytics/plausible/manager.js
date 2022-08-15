@@ -177,13 +177,13 @@ const getFromAnalyticsApi = (
   });
 };
 
-async function plausibleStatsProxy(plausibleUrl, communityId) {
+async function plausibleStatsProxy(plausibleUrl, props) {
   return await new Promise((resolve, reject) => {
     if (process.env["PLAUSIBLE_BASE_URL"] && process.env["PLAUSIBLE_API_KEY"]) {
 
       const searchParams = new URLSearchParams(plausibleUrl);
       let filtersJson = JSON.parse(searchParams.get('filters'));
-      filtersJson = { ...filtersJson, ...{props: { communityId }}}
+      filtersJson = { ...filtersJson, ...{ props }}
       searchParams.set('filters', JSON.stringify(filtersJson));
       let newUrl = searchParams.toString();
       newUrl = newUrl.replace(/%2F/g,'/')
