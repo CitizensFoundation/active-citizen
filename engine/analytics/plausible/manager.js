@@ -177,12 +177,21 @@ const getFromAnalyticsApi = (
   });
 };
 
-async function plausibleStatsProxy(plausibleUrl) {
+async function plausibleStatsProxy(plausibleUrl, communityId) {
   return await new Promise((resolve, reject) => {
     if (process.env["PLAUSIBLE_BASE_URL"] && process.env["PLAUSIBLE_API_KEY"]) {
+
+      const searchParams = new URLSearchParams(plausibleUrl);
+      let filtersJson = JSON.parse(searchParams.get('filters'));
+      filtersJson = { ...filtersJson, ...{props: { communityId }}}
+      searchParams.set('filters', JSON.stringify(filtersJson));
+      let newUrl = searchParams.toString();
+      newUrl = newUrl.replace(/%2F/g,'/')
+      newUrl = newUrl.replace(/%3F/g,'?')
+
       const baseUrl = process.env["PLAUSIBLE_BASE_URL"].replace("/api/v1/", "");
       const options = {
-        url: baseUrl+ plausibleUrl, //+ `&site_id=${process.env.PLAUSIBLE_SITE_NAME}`,
+        url: baseUrl+ newUrl, //+ `&site_id=${process.env.PLAUSIBLE_SITE_NAME}`,
         //url: "https://pl-eu.citizens.is" + "/api/stats/localhost/top-stats?period=30d&date=2022-08-14&filters=%7B%7D&with_imported=true",
         headers: {
           //Authorization: `Bearer ${process.env["PLAUSIBLE_API_KEY"]}`,
