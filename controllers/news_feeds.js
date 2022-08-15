@@ -29,7 +29,7 @@ var setupOptions = function (req) {
   return options;
 };
 
-router.get('/domains/:id', auth.can('view domain'), auth.isLoggedIn, function(req, res) {
+router.get('/domains/:id', auth.can('view domain'), auth.isLoggedInNoAnonymousCheck, function(req, res) {
 
   var options = setupOptions(req);
 
@@ -51,7 +51,7 @@ router.get('/domains/:id', auth.can('view domain'), auth.isLoggedIn, function(re
 });
 
 
-router.get('/communities/:id', auth.can('view community'), auth.isLoggedIn, function(req, res) {
+router.get('/communities/:id', auth.can('view community'), auth.isLoggedInNoAnonymousCheck, function(req, res) {
 
   var options = setupOptions(req);
 
@@ -72,7 +72,7 @@ router.get('/communities/:id', auth.can('view community'), auth.isLoggedIn, func
   });
 });
 
-router.get('/groups/:id', auth.can('view group'), auth.isLoggedIn, function(req, res) {
+router.get('/groups/:id', auth.can('view group'), auth.isLoggedInNoAnonymousCheck, function(req, res) {
 
   var options = setupOptions(req);
 
@@ -93,7 +93,7 @@ router.get('/groups/:id', auth.can('view group'), auth.isLoggedIn, function(req,
   });
 });
 
-router.get('/posts/:id', auth.can('view post'), auth.isLoggedIn, function(req, res) {
+router.get('/posts/:id', auth.can('view post'), auth.isLoggedInNoAnonymousCheck, function(req, res) {
 
   var options = setupOptions(req);
 
