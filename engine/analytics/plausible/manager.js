@@ -42,7 +42,6 @@ const allGoals = [
   "recommendations - goBack",
   "stopTranslation - click",
   "startTranslation - click",
-  "stopTranslation - click",
   "changeLanguage - click",
   "video - completed",
   "audio - completed",
@@ -185,9 +184,7 @@ async function plausibleStatsProxy(plausibleUrl, props) {
       let filtersJson = JSON.parse(searchParams.get('filters'));
       filtersJson = { ...filtersJson, ...{ props }}
       searchParams.set('filters', JSON.stringify(filtersJson));
-      let newUrl = searchParams.toString();
-      newUrl = newUrl.replace(/%2F/g,'/')
-      newUrl = newUrl.replace(/%3F/g,'?')
+      let newUrl = decodeURIComponent(searchParams.toString());
 
       const baseUrl = process.env["PLAUSIBLE_BASE_URL"].replace("/api/v1/", "");
       const options = {
@@ -382,7 +379,8 @@ async function addPlausibleEvent(
         postId: workData.postId ? parseInt(workData.postId) : undefined,
         pointId: workData.pointId ? parseInt(workData.pointId) : undefined,
         userId: workData.userId ? parseInt(workData.userId) : -1,
-        userLocale: workData.body.userLocale
+        userLocale: workData.body.userLocale,
+        userAutoTranslate: workData.body.userAutoTranslate
       };
 
       const options = {
