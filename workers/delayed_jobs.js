@@ -169,6 +169,7 @@ const delayedCreateActivityFromApp = (workPackage, callback) => {
       eventTime: workData.body.event_time,
       sessionId: workData.body.sessionId,
       userAgent: workData.body.user_agent,
+      userLocale: workData.body.userLocale,
       server_timestamp: workData.body.server_timestamp,
     },
     user_id: workData.userId,
@@ -199,12 +200,7 @@ const delayedCreateActivityFromApp = (workPackage, callback) => {
         try {
           await addPlausibleEvent(
             plausibleEvent,
-            workData.body.user_agent,
-            workData.body.url,
-            workData,
-            workData.body.screen_width,
-            workData.body.referrer,
-            workData.body.ipAddress
+            workData
           );
           callback();
         } catch (error) {

@@ -191,20 +191,12 @@ async function plausibleStatsProxy(plausibleUrl, props) {
 
       const baseUrl = process.env["PLAUSIBLE_BASE_URL"].replace("/api/v1/", "");
       const options = {
-        url: baseUrl+ newUrl, //+ `&site_id=${process.env.PLAUSIBLE_SITE_NAME}`,
-        //url: "https://pl-eu.citizens.is" + "/api/stats/localhost/top-stats?period=30d&date=2022-08-14&filters=%7B%7D&with_imported=true",
+        url: baseUrl+ newUrl,
         headers: {
-          //Authorization: `Bearer ${process.env["PLAUSIBLE_API_KEY"]}`,
-          //Authorization: `Basic cGwtZXUtNDNmLXNkZDl0ajM6ZGM4Y1g5dHYyMzQubnM3dmp3cExGcGU4Z25Da2Q5Z2pTZDBmbHNh`,
-          //"X-Forwarded-For": "194.144.7.167,127.0.0.1",
-          //"Content-Type": "application/json",
-          //"UserAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.3",
           "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.3",
-          //referrer: "https://pl-eu.citizens.is/localhost",
           referrer: "http://localhost:9000/marketing/community/2",
           referer: "http://localhost:9000/marketing/community/2",
           Authorization: `Bearer ${process.env["PLAUSIBLE_API_KEY"]}`,
-          //"X-Forwarded-For": "194.144.7.167,127.0.0.1",
           "Content-Type": "application/json",
           Accept: 'application/json'
         }
@@ -308,13 +300,14 @@ async function addPlausibleGoal(eventName) {
 
 async function addPlausibleEvent(
   eventName,
-  userAgent,
-  url,
-  workData,
-  screenWidth,
-  referrer,
-  ipAddress
+  workData
 ) {
+  const userAgent = workData.body.user_agent;
+  const url = workData.body.url;
+  const screenWidth = workData.body.screen_width;
+  const referrer = workData.body.referrer;
+  const ipAddress = workData.body.ipAddress;
+
   return await new Promise(async (resolve, reject) => {
     if (
       process.env["PLAUSIBLE_EVENT_BASE_URL"] &&
@@ -389,6 +382,7 @@ async function addPlausibleEvent(
         postId: workData.postId ? parseInt(workData.postId) : undefined,
         pointId: workData.pointId ? parseInt(workData.pointId) : undefined,
         userId: workData.userId ? parseInt(workData.userId) : -1,
+        userLocale: workData.body.userLocale
       };
 
       const options = {
