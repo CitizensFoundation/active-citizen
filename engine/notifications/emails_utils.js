@@ -307,7 +307,7 @@ var sendOneEmail = function (emailLocals, callback) {
               hostname: 'engage'
             }
           } else if (emailLocals.domain.domain_name.indexOf('puttingcommunitiesfirst.org.uk') > -1) {
-            fromEmail = 'Community Fund <share@tnlcommunityfund.org.uk>';
+            fromEmail = 'The National Lottery Community Fund <share@tnlcommunityfund.org.uk>';
             sender = "share@tnlcommunityfund.org.uk";
             replyTo = "share@tnlcommunityfund.org.uk";
             emailLocals['community'] = {

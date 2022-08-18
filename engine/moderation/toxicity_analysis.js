@@ -8,6 +8,7 @@ const TOXICITY_THRESHOLD = 0.50;
 const TOXICITY_EMAIL_THRESHOLD = 0.75;
 
 const Perspective = require('perspective-api-client');
+const queue = require("../../workers/queue");
 let perspectiveApi;
 if (process.env.GOOGLE_PERSPECTIVE_API_KEY) {
   perspectiveApi = new Perspective({
@@ -311,7 +312,7 @@ const estimateToxicityScoreForCollection = (options, callback) => {
       callback(error);
     })
   } else {
-    log.error("getToxicityScoreForText: No API key");
+    log.warn("getToxicityScoreForText: No API key");
     callback();
   }
 };
@@ -357,7 +358,7 @@ const estimateToxicityScoreForPost = (options, callback) => {
           attribues: ['id','age_group']
         }
       ],
-      attributes: ['id','name','description','language','data','group_id','public_data']
+      attributes: ['id','name','description','language','data','group_id','public_data','user_id','user_agent','ip_address']
     }).then( post => {
       if (post) {
         let doNotStoreValue = (post.Group.access===0 && post.Group.Community.access === 0) ? false : true;
@@ -388,6 +389,7 @@ const estimateToxicityScoreForPost = (options, callback) => {
                 } else if (results) {
                   setupModelPublicDataScore(post, textUsed, results);
                   post.save().then(() => {
+                    sendPostAnalyticsEvent(post);
                     if (hasModelBreachedToxicityThreshold(post)) {
                       post.report({ disableNotification: !hasModelBreachedToxicityEmailThreshold(post) },
                                   "perspectiveAPI",
@@ -417,7 +419,7 @@ const estimateToxicityScoreForPost = (options, callback) => {
       callback(error);
     })
   } else {
-    log.error("getToxicityScoreForText: No API key");
+    log.warn("getToxicityScoreForText: No API key");
     callback();
   }
 };
@@ -426,7 +428,7 @@ const estimateToxicityScoreForPoint = (options, callback) => {
   if (process.env.GOOGLE_PERSPECTIVE_API_KEY) {
     log.info("getToxicityScoreForText preparing");
     models.Point.unscoped().findOne({
-      attributes: ['id','language','data','post_id','group_id'],
+      attributes: ['id','language','data','post_id','group_id','user_id','user_agent','ip_address'],
       where: {
         id: options.pointId
       },
@@ -452,7 +454,14 @@ const estimateToxicityScoreForPoint = (options, callback) => {
             {
               model: models.Community,
               required: false,
-              attributes: ['id', 'access']
+              attributes: ['id', 'access'],
+              include: [
+                {
+                  model: models.Domain,
+                  required: false,
+                  attributes: ['id'],
+                }
+              ]
             }
           ]
         },
@@ -494,6 +503,7 @@ const estimateToxicityScoreForPoint = (options, callback) => {
                 } else if (results) {
                   setupModelPublicDataScore(point, textUsed, results);
                   point.save().then(() => {
+                    sendPointAnalyticsEvent(point);
                     if (hasModelBreachedToxicityThreshold(point)) {
                       if (point.post_id) {
                         models.Post.unscoped().findOne({
@@ -555,10 +565,98 @@ const estimateToxicityScoreForPoint = (options, callback) => {
       callback(error);
     })
   } else {
-    log.error("getToxicityScoreForText: No Google API key");
+    log.warn("getToxicityScoreForText: No Google API key");
     callback();
   }
 };
+
+const sendPostAnalyticsEvent = (post) => {
+  try {
+    if (post.data && post.data.moderation && post.data.moderation.toxicityScore) {
+      const moderationScore = JSON.parse(JSON.stringify(post.data.moderation));
+      moderationScore.rawToxicityResults = undefined;
+      moderationScore.textUsedForScore = undefined;
+
+      const analyticsEvent = {
+        postId: post.id,
+        groupId: post.Group.id,
+        communityId: post.Group.Community.id,
+        domainId: post.Group.Community.Domain.id,
+        userId: post.user_id,
+        body: {
+          type: "evaluated - post toxicity",
+          useTypeNameUnchanged: true,
+          originalQueryString: post.data.originalQueryString,
+          userLocale: post.data.userLocale,
+          userAutoTranslate: post.data.userAutoTranslate,
+          referrer: post.data.referrer,
+          url: post.data.url,
+          screen_width: post.data.screen_width,
+          props: moderationScore,
+          user_agent: post.user_agent,
+          ipAddress: post.ip_address,
+          server_timestamp: Date.now()
+        }
+      };
+
+      if (hasModelBreachedToxicityEmailThreshold(post)) {
+        analyticsEvent.body.type = "evaluated - post toxicity high";
+      } else if (hasModelBreachedToxicityThreshold(post)) {
+        analyticsEvent.body.type = "evaluated - post toxicity medium";
+      } else {
+        analyticsEvent.body.type = "evaluated - post toxicity low";
+      }
+
+      queue.add('delayed-job', {type: 'create-activity-from-app', workData: analyticsEvent}, 'medium');
+    }
+  } catch (error) {
+    log.error(error);
+  }
+}
+
+const sendPointAnalyticsEvent = (point) => {
+  try {
+    if (point.data && point.data.moderation && point.data.moderation.toxicityScore) {
+      const moderationScore = JSON.parse(JSON.stringify(point.data.moderation));
+      moderationScore.rawToxicityResults = undefined;
+      moderationScore.textUsedForScore = undefined;
+
+      const analyticsEvent = {
+        postId: point.post_id,
+        groupId: point.Group.id,
+        communityId: point.Group.Community.id,
+        domainId: point.Group.Community.Domain.id,
+        userId: point.user_id,
+        pointId: point.id,
+        body: {
+          useTypeNameUnchanged: true,
+          originalQueryString: point.data.originalQueryString,
+          userLocale: point.data.userLocale,
+          userAutoTranslate: point.data.userAutoTranslate,
+          referrer: point.data.referrer,
+          url: point.data.url,
+          screen_width: point.data.screen_width,
+          props: moderationScore,
+          user_agent: point.user_agent,
+          ipAddress: point.ip_address,
+          server_timestamp: Date.now()
+        }
+      };
+
+      if (hasModelBreachedToxicityEmailThreshold(point)) {
+        analyticsEvent.body.type = "evaluated - point toxicity high";
+      } else if (hasModelBreachedToxicityThreshold(point)) {
+        analyticsEvent.body.type = "evaluated - point toxicity medium";
+      } else {
+        analyticsEvent.body.type = "evaluated - point toxicity low";
+      }
+
+      queue.add('delayed-job', {type: 'create-activity-from-app', workData: analyticsEvent}, 'medium');
+    }
+  } catch(error) {
+    log.error(error);
+  }
+}
 
 module.exports = {
   estimateToxicityScoreForPoint,

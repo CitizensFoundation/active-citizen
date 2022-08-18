@@ -193,8 +193,10 @@ const delayedCreateActivityFromApp = (workPackage, callback) => {
 
         if (workData.body.type === "pageview") {
           plausibleEvent = `pageview`;
-        } else {
+        } else if (!workData.body.useTypeNameUnchanged) {
           plausibleEvent = `${workData.body.object} - ${workData.body.type}`;
+        } else {
+          plausibleEvent = workData.body.type;
         }
 
         try {

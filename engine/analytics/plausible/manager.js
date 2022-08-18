@@ -142,6 +142,12 @@ const allGoals = [
   "user.createApiKey - open",
   "user.reCreateApiKey - open",
   "userAllContentModeration - open",
+  "evaluated - point toxicity low",
+  "evaluated - point toxicity medium",
+  "evaluated - point toxicity high",
+  "evaluated - post toxicity low",
+  "evaluated - post toxicity medium",
+  "evaluated - post toxicity high",
 ];
 
 const getFromAnalyticsApi = (
@@ -372,15 +378,20 @@ async function addPlausibleEvent(
         return;
       }
 
+      let inProps = workData.body.props ?  workData.body.props : {};
+
       const props = {
-        communityId: communityId ? parseInt(communityId) : undefined,
-        groupId: workData.groupId ? parseInt(workData.groupId) : undefined,
-        domainId: workData.domainId ? parseInt(workData.domainId) : undefined,
-        postId: workData.postId ? parseInt(workData.postId) : undefined,
-        pointId: workData.pointId ? parseInt(workData.pointId) : undefined,
-        userId: workData.userId ? parseInt(workData.userId) : -1,
-        userLocale: workData.body.userLocale,
-        userAutoTranslate: workData.body.userAutoTranslate
+        ...inProps,
+        ...{
+          communityId: communityId ? parseInt(communityId) : undefined,
+          groupId: workData.groupId ? parseInt(workData.groupId) : undefined,
+          domainId: workData.domainId ? parseInt(workData.domainId) : undefined,
+          postId: workData.postId ? parseInt(workData.postId) : undefined,
+          pointId: workData.pointId ? parseInt(workData.pointId) : undefined,
+          userId: workData.userId ? parseInt(workData.userId) : -1,
+          userLocale: workData.body.userLocale,
+          userAutoTranslate: workData.body.userAutoTranslate
+        }
       };
 
       const options = {
@@ -410,7 +421,7 @@ async function addPlausibleEvent(
 
       request.post(options, async (error, content) => {
         if (content && content.statusCode != 202) {
-          log.error(error);
+          log.error(`Error in sending to plausible ${content.statusCode}`);
           log.error(content);
           reject(content.statusCode);
         } else {
