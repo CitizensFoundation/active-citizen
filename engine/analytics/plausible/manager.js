@@ -373,6 +373,11 @@ async function addPlausibleEvent(
         if (workData.body.originalQueryString && useUrl.indexOf("?") === -1) {
           useUrl += "?" + workData.body.originalQueryString;
         }
+
+        if (workData.body.userAutoTranslate &&
+          typeof workData.body.userAutoTranslate === "string") {
+          workData.body.userAutoTranslate = workData.body.userAutoTranslate.toLowerCase() === 'true'
+        }
       } catch (error) {
         reject(error);
         return;
