@@ -197,8 +197,8 @@ async function plausibleStatsProxy(plausibleUrl, props) {
         url: baseUrl+ newUrl,
         headers: {
           "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.3",
-          referrer: "http://localhost:9000/marketing/community/2",
-          referer: "http://localhost:9000/marketing/community/2",
+//          referrer: "http://localhost:9000/marketing/community/2",
+//          referer: "http://localhost:9000/marketing/community/2",
           Authorization: `Bearer ${process.env["PLAUSIBLE_API_KEY"]}`,
           "Content-Type": "application/json",
           Accept: 'application/json'
