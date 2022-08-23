@@ -188,7 +188,7 @@ async function plausibleStatsProxy(plausibleUrl, props) {
 
       const searchParams = new URLSearchParams(plausibleUrl);
       let filtersJson = JSON.parse(searchParams.get('filters'));
-     // filtersJson = { ...filtersJson, ...{ props }}
+      filtersJson = { ...filtersJson, ...{ props }}
       searchParams.set('filters', JSON.stringify(filtersJson));
       let newUrl = decodeURIComponent(searchParams.toString());
 
@@ -199,6 +199,8 @@ async function plausibleStatsProxy(plausibleUrl, props) {
           "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.3",
 //          referrer: "http://localhost:9000/marketing/community/2",
 //          referer: "http://localhost:9000/marketing/community/2",
+          referer: "https://pl-eu.citizens.is/staging-yp.is",
+          referrer: "https://pl-eu.citizens.is/staging-yp.is",
           Authorization: `Bearer ${process.env["PLAUSIBLE_API_KEY"]}`,
           "Content-Type": "application/json",
           Accept: 'application/json'
