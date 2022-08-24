@@ -439,9 +439,44 @@ async function addPlausibleEvent(
   });
 }
 
+async function sendPlausibleFavicon(sourceName) {
+  return await new Promise((resolve, reject) => {
+    if (process.env["PLAUSIBLE_BASE_URL"] && process.env["PLAUSIBLE_API_KEY"]) {
+      const url =  process.env["PLAUSIBLE_BASE_URL"].replace("/api/v1/","/favicon/sources/")+sourceName;
+      const options = {
+        url,
+        headers: {
+          Authorization: `Bearer ${process.env["PLAUSIBLE_API_KEY"]}`,
+          "Content-Type": "image/x-icon",
+          "X-Forwarded-For": "127.0.0.1"
+        },
+        encoding: null
+      };
+
+      log.info(JSON.stringify(options));
+
+      request.get(options, (error, content) => {
+        if (content && content.statusCode != 200) {
+          log.error(error);
+          log.error(content);
+          reject(content.statusCode);
+        } else {
+          console.log(content.body);
+          resolve(content.body);
+        }
+      });
+    } else {
+      log.warn("No plausible base url or api key");
+      resolve();
+    }
+  });
+
+}
+
 module.exports = {
   addPlausibleEvent,
   getPlausibleStats,
   addAllPlausibleGoals,
-  plausibleStatsProxy
+  plausibleStatsProxy,
+  sendPlausibleFavicon
 };
