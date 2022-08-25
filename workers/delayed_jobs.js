@@ -161,7 +161,7 @@ const delayedCreateActivityFromApp = (workPackage, callback) => {
     actor: { appActor: workData.body.actor },
     object: {
       name: workData.body.object,
-      target: workData.body.target ? JSON.parse(workData.body.target) : null,
+      target: workData.body.target,
     },
     context: {
       pathName: workData.body.path_name,
@@ -170,7 +170,14 @@ const delayedCreateActivityFromApp = (workPackage, callback) => {
       sessionId: workData.body.sessionId,
       userAgent: workData.body.user_agent,
       userLocale: workData.body.userLocale,
+      userAutoTranslate: workData.body.userAutoTranslate,
       server_timestamp: workData.body.server_timestamp,
+      url: workData.body.url,
+      screenWidth: workData.body.screen_width,
+      referrer: workData.body.referrer,
+      ipAddress: workData.body.ipAddress,
+      originalQueryString: workData.body.originalQueryString,
+      props: workData.body.props
     },
     user_id: workData.userId,
     domain_id: workData.domainId,
