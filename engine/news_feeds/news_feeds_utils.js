@@ -297,20 +297,6 @@ var activitiesDefaultIncludes = function (options) {
           model: models.Image, as: 'UserProfileImages',
           attributes: models.Image.defaultAttributesPublic,
           required: false
-        },
-        {
-          model: models.Organization,
-          as: 'OrganizationUsers',
-          required: false,
-          attributes: ['id', 'name'],
-          include: [
-            {
-              model: models.Image,
-              as: 'OrganizationLogoImages',
-              attributes: ['id', 'formats'],
-              required: false
-            }
-          ]
         }
       ]
     },
@@ -330,6 +316,11 @@ var activitiesDefaultIncludes = function (options) {
           model: models.Group,
           required: false,
           attributes: ['id', 'configuration', 'theme_id', 'access']
+        },
+        {
+          model: models.User,
+          attributes: ['id'],
+          required: false
         },
         {
           model: models.Image,
@@ -361,7 +352,7 @@ var activitiesDefaultIncludes = function (options) {
     {
       model: models.Point,
       required: false,
-      attributes: models.Point.defaultAttributesPublic,
+      attributes: [...models.Point.defaultAttributesPublic, ...['user_id']],
       include: [
         {
           model: models.PointRevision,
@@ -384,6 +375,11 @@ var activitiesDefaultIncludes = function (options) {
         {
           model: models.Post,
           attributes: ['id', 'group_id'],
+          required: false
+        },
+        {
+          model: models.User,
+          attributes: ['id'],
           required: false
         }
       ]

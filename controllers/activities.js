@@ -44,26 +44,42 @@ var getActivities = function (req, res, options, callback) {
       [ models.User, { model: models.Image, as: 'UserProfileImages' }, 'created_at', 'asc' ],
       [ models.Post, { model: models.Image, as: 'PostHeaderImages' }, 'created_at', 'asc' ],
       [ models.Group, { model: models.Image, as: 'GroupLogoImages' }, 'created_at', 'asc' ],
-      [ models.User, { model: models.Organization, as: 'OrganizationUsers' }, { model: models.Image, as: 'OrganizationLogoImages' }, 'created_at', 'asc' ]
     ],
       include: activitiesDefaultIncludes(options),
       limit: 20
   }).then(function(activities) {
     var slicedActivitesBecauseOfLimitBug = _.take(activities, 20);
 
-    var collectedPostIds = _.map(slicedActivitesBecauseOfLimitBug, function (activity) {
+    let collectedPostIds = _.map(slicedActivitesBecauseOfLimitBug, function (activity) {
       if (activity.Post) {
         return activity.Post.id;
       }
     });
 
-    var collectedPointIds = _.map(slicedActivitesBecauseOfLimitBug, function (activity) {
+    let collectedPointIds = _.map(slicedActivitesBecauseOfLimitBug, function (activity) {
       if (activity.Point) {
         return activity.Point.id;
       }
     });
 
-    async.series([
+    let collectedPosts = _.map(slicedActivitesBecauseOfLimitBug, function (activity) {
+      if (activity.Post) {
+        return activity.Post;
+      }
+    });
+
+    let collectedPoints = _.map(slicedActivitesBecauseOfLimitBug, function (activity) {
+      if (activity.Point) {
+        return activity.Point;
+      }
+    });
+
+    collectedPostIds = collectedPostIds.filter(e => e !== undefined);
+    collectedPointIds = collectedPointIds.filter(e => e !== undefined);
+    collectedPosts = collectedPosts.filter(e => e !== undefined);
+    collectedPoints = collectedPoints.filter(e => e !== undefined);
+
+    async.parallel([
       (innerCallback) => {
         models.Post.getVideosForPosts(collectedPostIds, (error, videos) => {
           if (error) {
@@ -86,6 +102,16 @@ var getActivities = function (req, res, options, callback) {
             }
             innerCallback();
           }
+        })
+      },
+      (innerCallback) => {
+        models.Point.setOrganizationUsersForPoints(collectedPoints, (error) => {
+          innerCallback(error);
+        })
+      },
+      (innerCallback) => {
+        models.Post.setOrganizationUsersForPosts(collectedPosts, (error) => {
+          innerCallback(error);
         })
       }
     ], (error) =>{
