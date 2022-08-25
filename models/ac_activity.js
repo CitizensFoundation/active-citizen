@@ -102,6 +102,57 @@ module.exports = (sequelize, DataTypes) => {
   AcActivity.ACCESS_GROUP = 2;
   AcActivity.ACCESS_PRIVATE = 3;
 
+  //TODO Refactor duplicate code with Post and point
+  AcActivity.setOrganizationUsersForActivities = (activities, done) => {
+    const userIds = activities.map(p=>{
+      return p.User.id
+    })
+    sequelize.models.User.findAll({
+      attributes:  ['id','created_at'],
+      where: {
+        id: {
+          $in: userIds
+        }
+      },
+      include: [
+        {
+          model: sequelize.models.Organization,
+          as: 'OrganizationUsers',
+          required: true,
+          attributes: ['id','name'],
+          include: [
+            {
+              model: sequelize.models.Image,
+              as: 'OrganizationLogoImages',
+              attributes: ['id', 'formats'],
+              required: false
+            }
+          ]
+        }
+      ],
+      order: [
+        [ { model: sequelize.models.Organization, as: 'OrganizationUsers' }, { model: sequelize.models.Image, as: 'OrganizationLogoImages' }, 'created_at', 'asc' ]
+      ]
+    }).then(users => {
+      if (users && users.length>0) {
+        for (let u=0; u<users.length; u++) {
+          for (let p=0; p<activities.length; p++) {
+            if (activities[p].User.id===users[u].id) {
+              activities[p].User.OrganizationUsers = users[u].OrganizationUsers;
+              activities[p].User.setDataValue('OrganizationUsers', users[u].OrganizationUsers);
+            }
+          }
+        }
+        done();
+      } else {
+        done();
+      }
+    }).catch( error => {
+      done(error);
+    })
+  }
+
+
   AcActivity.createActivity = (options, callback) => {
     queue.add('delayed-job', { type: 'create-priority-activity', workData: options }, 'high');
     callback();

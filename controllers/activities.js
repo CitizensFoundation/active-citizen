@@ -113,6 +113,11 @@ var getActivities = function (req, res, options, callback) {
         models.Post.setOrganizationUsersForPosts(collectedPosts, (error) => {
           innerCallback(error);
         })
+      },
+      (innerCallback) => {
+        models.AcActivity.setOrganizationUsersForActivities(slicedActivitesBecauseOfLimitBug, (error) => {
+          innerCallback(error);
+        })
       }
     ], (error) =>{
       if (error) {

@@ -68,7 +68,6 @@ var getNotifications = function (req, res, options, callback) {
           ["updated_at", "desc"],
           [ { model: models.AcActivity, as: 'AcActivities'} ,'created_at', 'desc' ],
           [ { model: models.AcActivity, as: 'AcActivities'}, models.User, { model: models.Image, as: 'UserProfileImages' }, 'created_at', 'asc' ],
-          [ { model: models.AcActivity, as: 'AcActivities'}, models.User, { model: models.Organization, as: 'OrganizationUsers' }, { model: models.Image, as: 'OrganizationLogoImages' }, 'created_at', 'asc' ]
         ],
         include: [
           {
@@ -91,21 +90,6 @@ var getNotifications = function (req, res, options, callback) {
                     model: models.Image, as: 'UserProfileImages',
                     attributes: ['id', 'formats'],
                     required: false
-                  },
-                  {
-                    model: models.Organization,
-                    as: 'OrganizationUsers',
-                    required: false,
-                    attributes: ['id', 'name'],
-                    include: [
-                      {
-                        model: models.Image,
-                        as: 'OrganizationLogoImages',
-                        //TODO: Figure out why there are no formats attributes coming through here
-                        attributes: ['id', 'formats'],
-                        required: false
-                      }
-                    ]
                   }
                 ]
               },
@@ -151,11 +135,27 @@ var getNotifications = function (req, res, options, callback) {
     if (error) {
       callback(error);
     } else {
-      res.send({
-        notifications: notifications,
-        unViewedCount: unViewedCount,
-        oldestProcessedNotificationAt: notifications.length>0 ? _.last(notifications).created_at : null
-      });
+      const allActivities = [];
+      for (let n=0;n<notifications.length;n++) {
+        if (notifications[n].AcActivities) {
+          for (let a=0;a<notifications[n].AcActivities.length;a++) {
+            allActivities.push(notifications[n].AcActivities[a])
+          }
+        }
+      }
+      models.AcActivity.setOrganizationUsersForActivities(allActivities, (error) => {
+        if (error) {
+          log.error(error);
+          res.sendStatus(500);
+        } else {
+          res.send({
+            notifications: notifications,
+            unViewedCount: unViewedCount,
+            oldestProcessedNotificationAt: notifications.length>0 ? _.last(notifications).created_at : null
+          });
+        }
+      })
+
     }
   });
 };

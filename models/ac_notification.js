@@ -168,6 +168,7 @@ module.exports = (sequelize, DataTypes) => {
     }
   };
 
+
   AcNotification.createReportNotifications = (user, activity, callback) => {
     log.info('createReportNotifications');
 
