@@ -176,6 +176,9 @@ const delayedCreateActivityFromApp = (workPackage, callback) => {
       screenWidth: workData.body.screen_width,
       referrer: workData.body.referrer,
       ipAddress: workData.body.ipAddress,
+      object: workData.body.object,
+      type: workData.body.type,
+      useTypeNameUnchanged: workData.body.useTypeNameUnchanged,
       originalQueryString: workData.body.originalQueryString,
       props: workData.body.props
     },
