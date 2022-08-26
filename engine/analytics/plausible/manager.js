@@ -316,7 +316,7 @@ async function addPlausibleEvent(
       process.env["PLAUSIBLE_API_KEY"]
     ) {
       let communityId;
-      let projectId;
+      let projectId, externalId;
       let useUrl = url;
 
       try {
@@ -388,7 +388,8 @@ async function addPlausibleEvent(
           });
 
           if (community && community.configuration) {
-            projectId = community.configuration.projectId || community.configuration.externalId
+            projectId = community.configuration.projectId;
+            externalId = community.configuration.externalId;
           }
         }
       } catch (error) {
@@ -409,7 +410,8 @@ async function addPlausibleEvent(
           userId: workData.userId ? parseInt(workData.userId) : -1,
           userLocale: workData.body.userLocale,
           userAutoTranslate: workData.body.userAutoTranslate,
-          projectId: projectId
+          projectId: projectId,
+          externalId: externalId
         }
       };
 
