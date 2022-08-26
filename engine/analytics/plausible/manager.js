@@ -410,7 +410,7 @@ async function addPlausibleEvent(
           userId: workData.userId ? parseInt(workData.userId) : -1,
           userLocale: workData.body.userLocale,
           userAutoTranslate: workData.body.userAutoTranslate,
-          projectId: projectId,
+          projectId: projectId || externalId,
           externalId: externalId
         }
       };
