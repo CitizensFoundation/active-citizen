@@ -316,6 +316,7 @@ async function addPlausibleEvent(
       process.env["PLAUSIBLE_API_KEY"]
     ) {
       let communityId;
+      let projectId;
       let useUrl = url;
 
       try {
@@ -377,6 +378,19 @@ async function addPlausibleEvent(
           typeof workData.body.userAutoTranslate === "string") {
           workData.body.userAutoTranslate = workData.body.userAutoTranslate.toLowerCase() === 'true'
         }
+
+        if (communityId) {
+          const community = await models.Community.findOne({
+            where: {
+              id: communityId
+            },
+            attributes: ['id','configuration']
+          });
+
+          if (community && community.configuration) {
+            projectId = community.configuration.projectId || community.configuration.externalId
+          }
+        }
       } catch (error) {
         reject(error);
         return;
@@ -394,7 +408,8 @@ async function addPlausibleEvent(
           pointId: workData.pointId ? parseInt(workData.pointId) : undefined,
           userId: workData.userId ? parseInt(workData.userId) : -1,
           userLocale: workData.body.userLocale,
-          userAutoTranslate: workData.body.userAutoTranslate
+          userAutoTranslate: workData.body.userAutoTranslate,
+          projectId: projectId
         }
       };
 
