@@ -202,8 +202,8 @@ async function plausibleStatsProxy(plausibleUrl, props) {
         filtersContent = searchParams.get('filters');
         filtersContent = `${filtersContent};event:props:${customPropertyName}==${customPropertyValue}`
         searchParams.set('filters', filtersContent);
-        searchParams.delete('metrics');
-        searchParams.set('metrics', 'visitors')
+        //searchParams.delete('metrics');
+        //searchParams.set('metrics', 'visitors')
         searchParams.delete('with_imported');
         let period = searchParams.get('period')
         if (period === "all") {
