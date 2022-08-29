@@ -3,6 +3,7 @@ const _ = require("lodash");
 const log = require("../../../utils/logger");
 const request = require("request");
 const https = require('https');
+const moment = require("moment");
 
 // This SQL is needed to allow the site API
 // UPDATE api_keys SET scopes = '{sites:provision:*}' WHERE name = 'Development';
@@ -188,14 +189,48 @@ const getFromAnalyticsApi = (
 async function plausibleStatsProxy(plausibleUrl, props) {
   return await new Promise((resolve, reject) => {
     if (process.env["PLAUSIBLE_BASE_URL"] && process.env["PLAUSIBLE_API_KEY"]) {
+      const firstPartOfUrl = plausibleUrl.split("?")[0];
+      const searchParams = new URLSearchParams(plausibleUrl.split("?")[1]);
+      let filtersContent;
+      let baseUrl;
 
-      const searchParams = new URLSearchParams(plausibleUrl);
-      let filtersJson = JSON.parse(searchParams.get('filters'));
-      filtersJson = { ...filtersJson, ...{ props }}
-      searchParams.set('filters', JSON.stringify(filtersJson));
-      let newUrl = decodeURIComponent(searchParams.toString());
+      baseUrl = process.env["PLAUSIBLE_BASE_URL"].replace("/api/v1/", "");
 
-      const baseUrl = process.env["PLAUSIBLE_BASE_URL"].replace("/api/v1/", "");
+      if (plausibleUrl.indexOf("timeseries") > -1) {
+        const customPropertyName = Object.keys(props)[0];
+        const customPropertyValue = Object.values(props)[0];
+        filtersContent = searchParams.get('filters');
+        filtersContent = `${filtersContent};event:props:${customPropertyName}==${customPropertyValue}`
+        searchParams.set('filters', filtersContent);
+        searchParams.delete('metrics');
+        searchParams.set('metrics', 'visitors')
+        searchParams.delete('with_imported');
+        let period = searchParams.get('period')
+        if (period === "all") {
+          searchParams.delete('date');
+          searchParams.set('period', "custom");
+          const statsBeginTime = moment(searchParams.get('statsBegin'))
+          const plausibleBeginTime = moment("2022-08-13")
+          let beingTime;
+
+          if (statsBeginTime<plausibleBeginTime) {
+            beingTime = plausibleBeginTime.format("YYYY-MM-DD");
+          } else {
+            beingTime = statsBeginTime.format("YYYY-MM-DD");
+          }
+          const dateNow = moment(new Date()).format("YYYY-MM-DD");
+          searchParams.set('date', `${beingTime},${dateNow}`);
+        }
+        searchParams.delete('statsBegin');
+        baseUrl = `https://${baseUrl.split("@")[1]}`;
+      } else {
+        filtersContent = JSON.parse(searchParams.get('filters'));
+        filtersContent = { ...filtersContent, ...{ props }}
+        searchParams.set('filters', JSON.stringify(filtersContent));
+      }
+
+      let newUrl = firstPartOfUrl+"?"+decodeURIComponent(searchParams.toString());
+
       const options = {
         url: baseUrl+ newUrl,
         headers: {
@@ -208,7 +243,7 @@ async function plausibleStatsProxy(plausibleUrl, props) {
       };
 
       log.debug(JSON.stringify(options));
-
+      
       request.get(options, (error, content) => {
         if (content && content.statusCode != 200) {
           log.error(error);
