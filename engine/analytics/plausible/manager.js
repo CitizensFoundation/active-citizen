@@ -154,6 +154,11 @@ const allGoals = [
   "evaluated - post toxicity low",
   "evaluated - post toxicity medium",
   "evaluated - post toxicity high",
+  "open - share dialog options",
+  "open - share dialog - brand:whatsapp",
+  "open - share dialog - brand:facebook",
+  "open - share dialog - brand:twitter",
+  "open - share dialog - clipboard"
 ];
 
 const getFromAnalyticsApi = (
