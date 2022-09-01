@@ -137,6 +137,8 @@ const allGoals = [
   "filter - change",
   "post.ratings - add",
   "post.ratings - delete",
+  "post.ratings - completed",
+  "post.ratings.dialog - open",
   "setEmail - cancel",
   "setEmail - logout",
   "forgotPasswordFromSetEmail - open",
@@ -243,7 +245,7 @@ async function plausibleStatsProxy(plausibleUrl, props) {
       };
 
       log.debug(JSON.stringify(options));
-      
+
       request.get(options, (error, content) => {
         if (content && content.statusCode != 200) {
           log.error(error);
