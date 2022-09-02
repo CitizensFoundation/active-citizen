@@ -589,12 +589,12 @@ const sendPostAnalyticsEvent = (post) => {
           originalQueryString: post.data.originalQueryString,
           userLocale: post.data.userLocale,
           userAutoTranslate: post.data.userAutoTranslate,
-          referrer: post.data.referrer,
-          url: post.data.url,
-          screen_width: post.data.screen_width,
+          referrer: post.data.referrer || "",
+          url: post.data.url || "",
+          screen_width: post.data.screen_width || "1200",
           props: moderationScore,
-          user_agent: post.user_agent,
-          ipAddress: post.ip_address,
+          user_agent: post.user_agent || "Internal systems",
+          ipAddress: post.ip_address || "127.0.0.1",
           server_timestamp: Date.now()
         }
       };
@@ -633,12 +633,12 @@ const sendPointAnalyticsEvent = (point) => {
           originalQueryString: point.data.originalQueryString,
           userLocale: point.data.userLocale,
           userAutoTranslate: point.data.userAutoTranslate,
-          referrer: point.data.referrer,
-          url: point.data.url,
-          screen_width: point.data.screen_width,
+          referrer: point.data.referrer || "",
+          url: point.data.url || "",
+          screen_width: point.data.screen_width || "1200",
           props: moderationScore,
-          user_agent: point.user_agent,
-          ipAddress: point.ip_address,
+          user_agent: point.user_agent || "Internal systems",
+          ipAddress: point.ip_address || "127.0.0.1",
           server_timestamp: Date.now()
         }
       };
