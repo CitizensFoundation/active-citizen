@@ -11,6 +11,8 @@ const communityIncludes = require('./get_moderation_items').communityIncludes;
 const groupIncludes = require('./get_moderation_items').groupIncludes;
 const userIncludes = require('./get_moderation_items').userIncludes;
 
+const recountCommunity = require('../../../utils/recount_utils.js').recountCommunity;
+
 const moderationItemActionMaster = (req, res, options) => {
   getAnonymousUser((error, anonymousUser) => {
     if (error) {
@@ -252,7 +254,7 @@ const performManyModerationActions = (workPackage, callback) => {
         parallelCallback();
       }
     }
-    ], error => {
+    ], async error => {
       if (!error) {
         if (pointIds) {
           _.map(pointIds, (pointId) => {
@@ -264,8 +266,34 @@ const performManyModerationActions = (workPackage, callback) => {
             queue.add('process-similarities', { type: 'update-collection', postId: postId }, 'low', { delay: 5000 });
           });
         }
+        if ((postIds &&
+             postIds.length>0) ||
+           (pointIds &&
+            pointIds.length>0)) {
+          if (workPackage.groupId) {
+            models.Group.findOne({
+              where: {
+                id: workPackage.groupId
+              },
+              attributes: ['id','community_id']
+            }).then( group => {
+              if (group) {
+                recountCommunity(group.community_id, callback)
+              } else {
+                callback("Can't find group for recount")
+              }
+            })
+          } else if (workPackage.communityId) {
+            recountCommunity(workPackage.communityId, callback)
+          } else {
+            callback();
+          }
+        } else {
+          callback();
+        }
+      } else {
+        callback(error);
       }
-      callback(error);
     }
   );
 };
