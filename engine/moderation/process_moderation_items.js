@@ -204,7 +204,7 @@ const performSingleModerationAction = (req, res, options) => {
 
 };
 
-const performManyModerationActions = (workPackage, callback) => {
+const performManyModerationActions = async (workPackage, callback) => {
   const postItems = _.filter(workPackage.items, (item) => {
     return item.modelType === 'post';
   });
@@ -217,7 +217,7 @@ const performManyModerationActions = (workPackage, callback) => {
     return item.modelType === 'point';
   });
 
-  const pointIds = _.map(pointItems, item => {
+  let pointIds = _.map(pointItems, item => {
     return item.id
   });
 
@@ -234,6 +234,40 @@ const performManyModerationActions = (workPackage, callback) => {
   }  else {
     callback("Wrong action parameters", workPackage);
     return;
+  }
+
+  //TODO: Also do this for singleModerationAction and refactor
+  if (postIds && postIds.length>0) {
+    try {
+      const posts = await models.Post.findAll({
+        where: {
+          id: {
+            [models.Sequelize.Op.in]: postIds
+          }
+        },
+        attributes: ['id'],
+        include: [
+          {
+            model: models.Point,
+            required: true,
+            attributes: ['id']
+          }
+        ]
+      });
+
+      if (posts) {
+        const morePointsIds = [];
+        for (let p=0;p<posts.length;p++) {
+          for (let n=0;n<posts[p].Points.length;n++) {
+            morePointsIds.push(posts[p].Points[n].id);
+          }
+        }
+
+        pointIds = [...pointIds, ...morePointsIds]
+      }
+    } catch (error) {
+      log.error();
+    }
   }
 
   const pointWorkPackage = _.cloneDeep(workPackage);
