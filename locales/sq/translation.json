@@ -11,6 +11,11 @@
       "statusChangeSubject": "Statusi postimit u ndryshua"
     },
     "email": {
+      "possibleFraudFooter": "Klikoni në lidhjen e komunitetit më poshtë, identifikohuni si administrator dhe zgjidhni \"Menaxhimi i mashtrimit\" nga menyja.",
+      "possibleFraudSubHeader": "Numri i aktiviteteve të mundshme mashtruese me rreth 75% mundësi mashtrimi",
+      "possibleFraudInformation": "Sistemi ynë i automatizuar ka identifikuar aktivitete të mundshme mashtruese. Mund të hidhni një vështrim më të afërt nëpërmjet ndërfaqes së administratorit të Komunitetit. Disa nga ky aktivitet mund të kenë arsye jomashtruese, prandaj kini kujdes që të hetoni tërësisht përpara se të fshini përmbajtjen.",
+      "possibleFraudHeader": "Aktivitete të mundshme mashtruese",
+      "settings": "Cilësimet e Emailit",
       "automaticToxicityDetection": "Kjo përmbajtje është sinjalizuar automatikisht si toksike duke përdorur algoritmet e IA-së që vlerësojnë toksicitetin e përmbajtjes. Ju mund ta fshini përmbajtjen nëse është e nevojshme.",
       "automaticToxicityDetectionDisclaimer": "Nganjëherë algoritmi i IA-së llogarit një rezultat të gabuar, në atë rast mos u shqetësoni, nuk duhet të ndërmerrni asnjë veprim të mëtejshëm dhe mund ta shpërfillni këtë email.",
       "automaticToxicityHowLikely": "Sa gjasa ka (%) të jetë toksik",
