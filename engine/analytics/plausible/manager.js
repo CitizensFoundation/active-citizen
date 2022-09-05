@@ -257,8 +257,12 @@ async function plausibleStatsProxy(plausibleUrl, props) {
           log.error(content);
           reject(content.statusCode);
         } else {
-          log.debug(content.body);
-          resolve(content.body);
+          if (content) {
+            log.debug(content.body);
+            resolve(content.body);
+          } else {
+            reject("No body for plausible content")
+          }
         }
       });
     } else {
