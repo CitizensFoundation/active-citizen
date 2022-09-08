@@ -485,13 +485,12 @@ async function addPlausibleEvent(
       };
 
       //log.info(JSON.stringify(options));
-      log.debug(
-        `${ipAddress} Plausible ${eventName} - ${JSON.stringify(props)} - ${useUrl} - ${referrer}`
-      );
+      const logLine = `${ipAddress} Plausible ${eventName} - ${JSON.stringify(props)} - ${useUrl} - ${referrer} -${userAgent}`;
+      log.debug(logLine);
 
       request.post(options, async (error, content) => {
         if (content && content.statusCode != 202) {
-          log.error(`Error in sending to plausible ${content.statusCode}`);
+          log.error(`Error in sending to plausible ${content.statusCode} ${content.error} ${logLine}`);
           log.error(content);
           reject(content.statusCode);
         } else {
