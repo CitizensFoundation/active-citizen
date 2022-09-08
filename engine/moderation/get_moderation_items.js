@@ -255,20 +255,6 @@ const getAllModeratedItemsByMaster = (options, callback) => {
           attributes:["formats",'updated_at']
         },
         {
-          model: models.Video,
-          required: false,
-          attributes: ['id','formats','updated_at','viewable','public_meta','meta'],
-          as: 'PostVideos',
-          include: [
-            {
-              model: models.Image,
-              as: 'VideoImages',
-              attributes:["formats",'updated_at'],
-              required: false
-            },
-          ]
-        },
-        {
           model: models.Audio,
           required: false,
           attributes: ['id','formats','updated_at','listenable','public_meta','meta'],
@@ -284,34 +270,22 @@ const getAllModeratedItemsByMaster = (options, callback) => {
 
       const order = [
         [ { model: models.Image, as: 'PostHeaderImages' } ,'updated_at', 'asc' ],
-        [ { model: models.Video, as: "PostVideos" }, 'updated_at', 'desc' ],
         [ { model: models.Audio, as: "PostAudios" }, 'updated_at', 'desc' ],
-        [ { model: models.Video, as: "PostVideos" }, { model: models.Image, as: 'VideoImages' } ,'updated_at', 'asc' ]
       ];
 
       const attributes = ['id','created_at','counter_flags','language','data','name','cover_media_type','description','status','public_data','user_id'];
 
       getModelModeration(_.merge(_.cloneDeep(options), {model: models.Post, includes: postIncludes, order, attributes }), (error, postsIn) => {
-        parallelCallback(error);
-        posts = postsIn;
+        if (error) {
+          parallelCallback(error);
+        } else {
+          posts = postsIn;
+          models.Post.setVideosForPosts(posts, parallelCallback);
+        }
       })
     },
     parallelCallback => {
       let pointIncludes = pointBaseIncludes.concat([
-        {
-          model: models.Video,
-          required: false,
-          attributes: ['id','formats','updated_at','viewable','public_meta','meta'],
-          as: 'PointVideos',
-          include: [
-            {
-              model: models.Image,
-              as: 'VideoImages',
-              attributes:["formats",'updated_at'],
-              required: false
-            },
-          ]
-        },
         {
           model: models.Audio,
           required: false,
@@ -332,17 +306,15 @@ const getAllModeratedItemsByMaster = (options, callback) => {
       }
 
       const order = [
-        [ { model: models.Video, as: "PointVideos" }, 'updated_at', 'desc' ],
         [ { model: models.Audio, as: "PointAudios" }, 'updated_at', 'desc' ],
         [ models.PointRevision, 'created_at', 'asc' ],
-        [ { model: models.Video, as: "PointVideos" }, { model: models.Image, as: 'VideoImages' } ,'updated_at', 'asc' ]
       ];
 
       const attributes = ['id','created_at','counter_flags','name','language','data','post_id','status','public_data','user_id'];
 
       getModelModeration(_.merge(_.cloneDeep(options), {model: models.Point, attributes, includes: pointIncludes, order }), (error, pointsIn) => {
         points = pointsIn;
-        parallelCallback(error);
+        models.Point.setVideosForPoints(points, parallelCallback);
       })
     }
   ], error => {
