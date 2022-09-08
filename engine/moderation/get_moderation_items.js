@@ -255,7 +255,8 @@ const countModelModeration = (options, callback) => {
           status: "in_moderation_queue"
         }
       ],
-    }
+    },
+    include: options.includes
   }).then(count => {
     callback(null, count);
   }).catch(error => {
@@ -409,9 +410,6 @@ const countAllModeratedItemsByGroup = (options, callback) => {
 const countAllModeratedItemsByUser = (options, callback) => {
   countAllModeratedItemsByMaster(_.merge(options, {includes: userIncludes(options.userId) }), callback);
 };
-
-
-
 
 module.exports = {
   domainIncludes,
