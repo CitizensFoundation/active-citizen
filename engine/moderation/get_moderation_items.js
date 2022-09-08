@@ -229,11 +229,35 @@ const getModelModeration = (options, callback) => {
         }
       ],
     },
+    //TODO: Have paging here at some point
+    limit: 7500,
     order: options.order,
     include: options.includes,
     attributes: options.attributes
   }).then(items => {
     callback(null, items);
+  }).catch(error => {
+    callback(error);
+  })
+};
+
+const countModelModeration = (options, callback) => {
+  options.model.unscoped().count({
+    where: {
+      deleted: false,
+      $or: [
+        {
+          counter_flags: {
+            $gt: options.allContent ? -1 : 0
+          },
+        },
+        {
+          status: "in_moderation_queue"
+        }
+      ],
+    }
+  }).then(count => {
+    callback(null, count);
   }).catch(error => {
     callback(error);
   })
@@ -323,6 +347,37 @@ const getAllModeratedItemsByMaster = (options, callback) => {
   });
 };
 
+const countAllModeratedItemsByMaster = (options, callback) => {
+  let totalCount = 0;
+
+  async.series([
+    parallelCallback => {
+
+      countModelModeration(_.merge(_.cloneDeep(options), {model: models.Post }), (error, count) => {
+        if (error) {
+          parallelCallback(error);
+        } else {
+          totalCount += count;
+          parallelCallback();
+        }
+      })
+    },
+    parallelCallback => {
+      countModelModeration(_.merge(_.cloneDeep(options), {model: models.Point }), (error, count) => {
+        if (error) {
+          parallelCallback(error);
+        } else {
+          totalCount += count;
+          parallelCallback();
+        }
+      })
+    }
+  ], error => {
+    log.info("count_moderation_items got items from database");
+    callback(error, totalCount);
+  });
+};
+
 const getAllModeratedItemsByDomain = (options, callback) => {
   getAllModeratedItemsByMaster(_.merge(options, {includes: domainIncludes(options.domainId) }), callback);
 };
@@ -339,6 +394,25 @@ const getAllModeratedItemsByUser = (options, callback) => {
   getAllModeratedItemsByMaster(_.merge(options, {includes: userIncludes(options.userId) }), callback);
 };
 
+const countAllModeratedItemsByDomain = (options, callback) => {
+  countAllModeratedItemsByMaster(_.merge(options, {includes: domainIncludes(options.domainId) }), callback);
+};
+
+const countAllModeratedItemsByCommunity = (options, callback) => {
+  countAllModeratedItemsByMaster(_.merge(options, {includes: communityIncludes(options.communityId) }), callback);
+};
+
+const countAllModeratedItemsByGroup = (options, callback) => {
+  countAllModeratedItemsByMaster(_.merge(options, {includes: groupIncludes(options.groupId) }), callback);
+};
+
+const countAllModeratedItemsByUser = (options, callback) => {
+  countAllModeratedItemsByMaster(_.merge(options, {includes: userIncludes(options.userId) }), callback);
+};
+
+
+
+
 module.exports = {
   domainIncludes,
   communityIncludes,
@@ -347,5 +421,9 @@ module.exports = {
   getAllModeratedItemsByDomain,
   getAllModeratedItemsByUser,
   getAllModeratedItemsByCommunity,
-  getAllModeratedItemsByGroup
+  getAllModeratedItemsByGroup,
+  countAllModeratedItemsByDomain,
+  countAllModeratedItemsByCommunity,
+  countAllModeratedItemsByGroup,
+  countAllModeratedItemsByUser
 };
