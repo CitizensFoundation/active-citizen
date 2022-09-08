@@ -527,7 +527,7 @@ async function sendPlausibleFavicon(sourceName) {
           log.error(content);
           reject(content.statusCode);
         } else {
-          console.log(content.body);
+//          console.log(content.body);
           resolve(content.body);
         }
       });
