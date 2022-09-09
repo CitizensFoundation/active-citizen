@@ -490,9 +490,14 @@ async function addPlausibleEvent(
 
       request.post(options, async (error, content) => {
         if (content && content.statusCode != 202) {
-          log.error(`Error in sending to plausible ${content.statusCode} ${content.error} ${logLine}`);
-          log.error(content);
-          reject(content.statusCode);
+          if (content.statusCode == 403) {
+            log.warn(`Got 403 from plausible for ${logLine}`)
+            resolve();
+          } else {
+            log.error(`Error in sending to plausible ${content.statusCode} ${content.error} ${logLine}`);
+            log.error(content);
+            reject(content.statusCode);
+          }
         } else {
           resolve();
         }
