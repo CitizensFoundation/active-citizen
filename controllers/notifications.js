@@ -50,8 +50,12 @@ var getNotifications = function (req, res, options, callback) {
         ],
         limit: 20
       }).then(function(inNotifications) {
-        notifications = inNotifications;
-        seriesCallback();
+        if (inNotifications) {
+          notifications = inNotifications;
+          seriesCallback();
+        } else {
+          seriesCallback("Notifications return null");
+        }
       }).catch(function(error) {
         seriesCallback(error);
       });

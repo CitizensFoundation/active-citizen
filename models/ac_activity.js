@@ -107,7 +107,7 @@ module.exports = (sequelize, DataTypes) => {
     const filteredActivities = activities.filter(p=>p.User);
 
     if (filteredActivities && filteredActivities.length>0) {
-      const userIds = activities.map(p=>{
+      const userIds = filteredActivities.map(p=>{
         return p.User.id
       })
       sequelize.models.User.findAll({
@@ -139,10 +139,10 @@ module.exports = (sequelize, DataTypes) => {
       }).then(users => {
         if (users && users.length>0) {
           for (let u=0; u<users.length; u++) {
-            for (let p=0; p<activities.length; p++) {
-              if (activities[p].User.id===users[u].id) {
-                activities[p].User.OrganizationUsers = users[u].OrganizationUsers;
-                activities[p].User.setDataValue('OrganizationUsers', users[u].OrganizationUsers);
+            for (let p=0; p<filteredActivities.length; p++) {
+              if (filteredActivities[p].User.id===users[u].id) {
+                filteredActivities[p].User.OrganizationUsers = users[u].OrganizationUsers;
+                filteredActivities[p].User.setDataValue('OrganizationUsers', users[u].OrganizationUsers);
               }
             }
           }
