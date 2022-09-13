@@ -203,7 +203,8 @@ async function plausibleStatsProxy(plausibleUrl, props) {
 
       baseUrl = process.env["PLAUSIBLE_BASE_URL"].replace("/api/v1/", "");
 
-      if (plausibleUrl.indexOf("timeseries") > -1) {
+      if (plausibleUrl.indexOf("timeseries") > -1 ||
+          plausibleUrl.indexOf("aggregate") > -1) {
         const customPropertyName = Object.keys(props)[0];
         const customPropertyValue = Object.values(props)[0];
         filtersContent = searchParams.get('filters');
