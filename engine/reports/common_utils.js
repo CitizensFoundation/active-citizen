@@ -542,7 +542,7 @@ const getGroupPosts = (group, hostName, callback) => {
     where: {
       group_id: group.id
     },
-    attributes: ['id','deleted','counter_endorsements_down','counter_endorsements_up','status','counter_points','public_data','name','description','language','location','data','created_at'],
+    attributes: ['id','counter_endorsements_down','counter_endorsements_up','status','counter_points','public_data','name','description','language','location','data','created_at'],
 
     order: [
       ['created_at', 'asc' ],
