@@ -1513,6 +1513,30 @@ const removeManyGroupAdmins = (workPackage, callback) => {
   }
 };
 
+const removeManyGroupPromoters = (workPackage, callback) => {
+  if (workPackage.userIds && workPackage.userIds.length>0 && workPackage.groupId) {
+    async.forEachLimit(workPackage.userIds, 100, (userId, seriesCallback) => {
+      getGroupAndUser(workPackage.groupId, userId, null, (error, group, user) => {
+        if (error) {
+          seriesCallback(error);
+        } else if (user && group) {
+          group.removeGroupPromoters(user).then((results) => {
+            log.info('Promoter removed', {context: 'remove_promoter', groupId: workPackage.groupId, userRemovedId: userId});
+            seriesCallback()
+          });
+        } else {
+          seriesCallback("User or group not found for removeManyGroupPromoters");
+        }
+      });
+    }, (error) => {
+      callback(error);
+    });
+  } else {
+    callback("No userIds for removeManyGroupPromoters");
+  }
+};
+
+
 const removeManyCommunityAdmins = (workPackage, callback) => {
   if (workPackage.userIds && workPackage.userIds.length>0 && workPackage.communityId) {
     async.forEachLimit(workPackage.userIds, 100, (userId, seriesCallback) => {
@@ -1535,6 +1559,30 @@ const removeManyCommunityAdmins = (workPackage, callback) => {
     callback("No userIds for removeManyCommunityAdmins");
   }
 };
+
+const removeManyCommunityPromoters = (workPackage, callback) => {
+  if (workPackage.userIds && workPackage.userIds.length>0 && workPackage.communityId) {
+    async.forEachLimit(workPackage.userIds, 100, (userId, seriesCallback) => {
+      getCommunityAndUser(workPackage.communityId, userId, null, (error, community, user) => {
+        if (error) {
+          seriesCallback(error);
+        } else if (user && community) {
+          community.removeCommunityPromoters(user).then((results) => {
+            log.info('Promoter removed', {context: 'remove_promoter', communityId: workPackage.communityId, userRemovedId: userId});
+            seriesCallback()
+          });
+        } else {
+          seriesCallback("User or community not found for removeManyCommunityPromoters");
+        }
+      });
+    }, (error) => {
+      callback(error);
+    });
+  } else {
+    callback("No userIds for removeManyCommunityPromoters");
+  }
+};
+
 
 const removeManyDomainAdmins = (workPackage, callback) => {
   if (workPackage.userIds && workPackage.userIds.length>0 && workPackage.domainId) {
@@ -1864,6 +1912,9 @@ DeletionWorker.prototype.process = (workPackage, callback) => {
         case 'remove-many-group-admins':
           removeManyGroupAdmins(workPackage, callback);
           break;
+        case 'remove-many-group-promoters':
+          removeManyGroupPromoters(workPackage, callback);
+          break;
         case 'remove-many-group-users':
           removeManyGroupUsers(workPackage, callback);
           break;
@@ -1872,6 +1923,9 @@ DeletionWorker.prototype.process = (workPackage, callback) => {
           break;
         case 'remove-many-community-admins':
           removeManyCommunityAdmins(workPackage, callback);
+          break;
+        case 'remove-many-community-promoters':
+          removeManyCommunityPromoters(workPackage, callback);
           break;
         case 'remove-many-community-users':
           removeManyCommunityUsers(workPackage, callback);
