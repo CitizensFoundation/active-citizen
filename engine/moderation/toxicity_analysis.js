@@ -213,8 +213,11 @@ const getTranslatedTextForPost = (post, callback) => {
         models.AcTranslationCache.getSurveyAnswerTranslations(post.id, "en", (error, translations) => {
           if (error) {
             parallelCallback(error);
-          } else {
+          } else if (translations) {
             postStructuredAnswers = translations.join(". ");
+            parallelCallback();
+          } else {
+            log.warn("No translations for survey answers");
             parallelCallback();
           }
         });
