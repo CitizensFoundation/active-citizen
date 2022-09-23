@@ -228,7 +228,7 @@ const getTranslatedTextForPost = (post, callback) => {
 
   ], error => {
     if (postName && (postDescription || postStructuredAnswers)) {
-      callback(error, `${postName.content} ${postDescription.content} ${postStructuredAnswers} ${postTranscript? postTranscript.content : ''}`);
+      callback(error, `${postName.content} ${postDescription ? postDescription.content : ''} ${postStructuredAnswers} ${postTranscript ? postTranscript.content : ''}`);
     } else {
       log.error("No postname for toxicity!", { error });
       callback(error);
