@@ -237,7 +237,7 @@ async function plausibleStatsProxy(plausibleUrl, props) {
         searchParams.set('filters', JSON.stringify(filtersContent));
       }
 
-      let newUrl = firstPartOfUrl+"?"+decodeURIComponent(searchParams.toString());
+      let newUrl = firstPartOfUrl+"?"+searchParams.toString();
 
       const options = {
         url: baseUrl+ newUrl,
