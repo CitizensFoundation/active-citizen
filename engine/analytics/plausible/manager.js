@@ -233,7 +233,13 @@ async function plausibleStatsProxy(plausibleUrl, props) {
         baseUrl = `https://${baseUrl.split("@")[1]}`;
       } else {
         filtersContent = JSON.parse(searchParams.get('filters'));
+
+        if (firstPartOfUrl.indexOf("/property/") > -1) {
+          props = {}
+        }
+
         filtersContent = { ...filtersContent, ...{ props }}
+
         searchParams.set('filters', JSON.stringify(filtersContent));
       }
 
