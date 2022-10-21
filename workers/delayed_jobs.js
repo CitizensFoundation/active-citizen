@@ -7,6 +7,7 @@ const toJson = require("../utils/to_json");
 const _ = require("lodash");
 
 const { addPlausibleEvent } = require("../engine/analytics/plausible/manager");
+const {recountGroupFolder} = require("./recount");
 
 let airbrake = null;
 if (process.env.AIRBRAKE_PROJECT_ID) {
@@ -231,6 +232,7 @@ const delayedCreateActivityFromApp = (workPackage, callback) => {
     });
 };
 
+
 DelayedJobWorker.prototype.process = (workPackage, callback) => {
   switch (workPackage.type) {
     case "create-activity-from-app":
@@ -238,6 +240,9 @@ DelayedJobWorker.prototype.process = (workPackage, callback) => {
       break;
     case "create-priority-activity":
       delayedCreatePriorityActivity(workPackage, callback);
+      break;
+    case "recount-group-folder":
+      recountGroupFolder(workPackage, callback);
       break;
     default:
       callback("Unknown type for workPackage: " + workPackage.type);
