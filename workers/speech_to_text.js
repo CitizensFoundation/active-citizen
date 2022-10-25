@@ -17,7 +17,7 @@ if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON && process.env.GOOGLE_TRANSC
     credentials: JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)
   };
   GOOGLE_APPLICATION_CREDENTIALS=JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
-  speech = require('@google-cloud/speech').v1p1beta1;
+  speech = require('@google-cloud/speech');
   Storage = require('@google-cloud/storage').Storage;
 }
 
