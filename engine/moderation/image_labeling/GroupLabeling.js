@@ -5,7 +5,7 @@ class GroupLabeling extends ImageLabelingBase {
   async getCollection() {
     return await new Promise(async (resolve, reject) => {
       try {
-        const group = await models.Group.findOne({
+        this.collection = await models.Group.findOne({
           where: {
             id: this.workPackage.collectionId,
           },
@@ -41,7 +41,7 @@ class GroupLabeling extends ImageLabelingBase {
             },
           ],
         });
-        resolve(group);
+        resolve();
       } catch (error) {
         reject(error);
       }

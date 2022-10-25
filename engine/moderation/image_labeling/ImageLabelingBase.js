@@ -1,4 +1,6 @@
 const { InvalidVideoFormat } = require("sitemap/lib/errors");
+const vision = require('@google-cloud/vision');
+const models = require("../../../../models");
 
 class ImageLabelingBase {
   constructor(workPackage) {
@@ -34,6 +36,7 @@ class ImageLabelingBase {
           mediaType,
           mediaId,
         };
+        await this.collection.reload();
         if (!this.collection.data) {
           this.collection.set("data", {});
         }
@@ -98,14 +101,20 @@ class ImageLabelingBase {
 
   async reviewAndLabelImages(images) {
     return await new Promise(async (resolve, reject) => {
-      for (let image of images) {
-        if (!this.hasImageIdBeenReviewed(image.id)) {
-          await this.reviewAndLabelUrl(
-            image.formats[image.formats.length - 1],
-            "Image",
-            image.id
-          );
+      try {
+        for (let image of images) {
+          if (!this.hasImageIdBeenReviewed(image.id)) {
+            const imageFormat = JSON.parse(image.formats);
+            await this.reviewAndLabelUrl(
+              imageFormat[imageFormat.length - 1],
+              "Image",
+              image.id
+            );
+          }
         }
+        resolve();
+      } catch (error) {
+        reject(error);
       }
     });
   }
@@ -117,7 +126,7 @@ class ImageLabelingBase {
   ) {
     return await new Promise(async (resolve, reject) => {
       try {
-        const videos = models.Video.findAll({
+        const videos = await models.Video.findAll({
           attributes: [
             "id",
             "formats",
@@ -128,9 +137,9 @@ class ImageLabelingBase {
           ],
           include: [
             {
-              model: sequelize.models.Image,
+              model: models.Image,
               as: "VideoImages",
-              attributes: ["formats", "created_at"],
+              attributes: ["formats", "created_at",'id'],
               required: false,
             },
             {
@@ -145,7 +154,7 @@ class ImageLabelingBase {
           ],
           order: [
             [
-              { model: sequelize.models.Image, as: "VideoImages" },
+              { model: models.Image, as: "VideoImages" },
               "created_at",
               "asc",
             ],
@@ -179,10 +188,11 @@ class ImageLabelingBase {
                 ]
               );
               for (let image of searchImages) {
+                const imageFormat = JSON.parse(image.formats);
                 const { imageLabels, imageReviews } =
-                  await this.reviewAndLabelUrl(
-                    image.formats[image.formats.length - 1],
-                    collectionAssociation,
+                await this.reviewAndLabelUrl(
+                  imageFormat[imageFormat.length - 1],
+                    "Video",
                     image.id
                   );
                 if (!video.meta) {

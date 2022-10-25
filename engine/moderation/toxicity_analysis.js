@@ -251,9 +251,9 @@ const estimateToxicityScoreForCollection = (options, callback) => {
           attributes: ['id', 'access', 'domain_id']
         }
       ]
-      attributes = ['id','language','name','objectives'];
+      attributes = ['id','language','name','objectives','data'];
     } else {
-      attributes = ['id','language','name','domain_id', 'description'];
+      attributes = ['id','language','name','domain_id', 'description','data'];
     }
 
     model.unscoped().findOne({
@@ -284,17 +284,19 @@ const estimateToxicityScoreForCollection = (options, callback) => {
               if (error) {
                 callback(error);
               } else if (results) {
-                setupModelPublicDataScore(collection, textUsed, results);
-                collection.save().then(() => {
-                  if (hasModelBreachedToxicityThreshold(collection)) {
-                    collection.report({ disableNotification: !hasModelBreachedToxicityEmailThreshold(collection) },
-                      "perspectiveAPI",
-                      callback);
-                  } else {
-                    callback();
-                  }
-                }).catch( error => {
-                  callback(error);
+                collection.reload().then(()=>{
+                  setupModelPublicDataScore(collection, textUsed, results);
+                  collection.save().then(() => {
+                    if (hasModelBreachedToxicityThreshold(collection)) {
+                      collection.report({ disableNotification: !hasModelBreachedToxicityEmailThreshold(collection) },
+                        "perspectiveAPI",
+                        callback);
+                    } else {
+                      callback();
+                    }
+                  }).catch( error => {
+                    callback(error);
+                  })
                 })
               } else {
                 log.warn("No results from getToxicityScoreForText");
@@ -390,18 +392,20 @@ const estimateToxicityScoreForPost = (options, callback) => {
                 if (error) {
                   callback(error);
                 } else if (results) {
-                  setupModelPublicDataScore(post, textUsed, results);
-                  post.save().then(() => {
-                    sendPostAnalyticsEvent(post);
-                    if (hasModelBreachedToxicityThreshold(post)) {
-                      post.report({ disableNotification: !hasModelBreachedToxicityEmailThreshold(post) },
-                                  "perspectiveAPI",
-                                  callback);
-                    } else {
-                      callback();
-                    }
-                  }).catch( error => {
-                    callback(error);
+                  post.reload().then(()=>{
+                    setupModelPublicDataScore(post, textUsed, results);
+                    post.save().then(() => {
+                      sendPostAnalyticsEvent(post);
+                      if (hasModelBreachedToxicityThreshold(post)) {
+                        post.report({ disableNotification: !hasModelBreachedToxicityEmailThreshold(post) },
+                          "perspectiveAPI",
+                          callback);
+                      } else {
+                        callback();
+                      }
+                    }).catch( error => {
+                      callback(error);
+                    })
                   })
                 } else {
                   log.warn("No results for toxicity");
@@ -504,50 +508,52 @@ const estimateToxicityScoreForPoint = (options, callback) => {
                 if (error) {
                   callback(error);
                 } else if (results) {
-                  setupModelPublicDataScore(point, textUsed, results);
-                  point.save().then(() => {
-                    sendPointAnalyticsEvent(point);
-                    if (hasModelBreachedToxicityThreshold(point)) {
-                      if (point.post_id) {
-                        models.Post.unscoped().findOne({
-                          where: {
-                            id: point.post_id
-                          },
-                          attributes: ["id",'data'],
-                          include: [
-                            {
-                              model: models.Group,
-                              attributes: ['id'],
-                              include: [
-                                {
-                                  model: models.Community,
-                                  attributes: ['id'],
-                                  include: [
-                                    {
-                                      model: models.Domain,
-                                      attributes: ['id']
-                                    }
-                                  ]
-                                }
-                              ]
-                            }
-                          ]
-                        }).then(post => {
+                  point.reload().then(()=>{
+                    setupModelPublicDataScore(point, textUsed, results);
+                    point.save().then(() => {
+                      sendPointAnalyticsEvent(point);
+                      if (hasModelBreachedToxicityThreshold(point)) {
+                        if (point.post_id) {
+                          models.Post.unscoped().findOne({
+                            where: {
+                              id: point.post_id
+                            },
+                            attributes: ["id",'data'],
+                            include: [
+                              {
+                                model: models.Group,
+                                attributes: ['id'],
+                                include: [
+                                  {
+                                    model: models.Community,
+                                    attributes: ['id'],
+                                    include: [
+                                      {
+                                        model: models.Domain,
+                                        attributes: ['id']
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }).then(post => {
+                            point.report({ disableNotification: !hasModelBreachedToxicityEmailThreshold(point) },
+                              'perspectiveAPI',
+                              post, callback);
+                          }).catch( error => {
+                            callback(error);
+                          });
+                        } else {
                           point.report({ disableNotification: !hasModelBreachedToxicityEmailThreshold(point) },
-                                       'perspectiveAPI',
-                                        post, callback);
-                        }).catch( error => {
-                          callback(error);
-                        });
+                            'perspectiveAPI', null, callback);
+                        }
                       } else {
-                        point.report({ disableNotification: !hasModelBreachedToxicityEmailThreshold(point) },
-                                    'perspectiveAPI', null, callback);
+                        callback();
                       }
-                    } else {
-                      callback();
-                    }
-                  }).catch( error => {
-                    callback(error);
+                    }).catch( error => {
+                      callback(error);
+                    })
                   })
                 } else {
                   log.warn("No results for toxicity");

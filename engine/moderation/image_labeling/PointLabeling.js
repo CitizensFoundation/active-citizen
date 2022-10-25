@@ -5,14 +5,14 @@ class PointLabeling extends ImageLabelingBase {
   async getCollection() {
     return await new Promise(async (resolve, reject) => {
       try {
-        const post = await models.Point.findOne({
+        this.collection = await models.Point.findOne({
           where: {
             id: this.workPackage.pointId,
           },
           attributes: ["id","data"],
         });
-        resolve(post);
-      } catch (post) {
+        resolve();
+      } catch (error) {
         reject(error);
       }
     });

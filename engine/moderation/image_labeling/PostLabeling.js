@@ -5,7 +5,7 @@ class PostLabeling extends ImageLabelingBase {
   async getCollection() {
     return await new Promise(async (resolve, reject) => {
       try {
-        const post = await models.Post.findOne({
+        this.collection = await models.Post.findOne({
           where: {
             id: this.workPackage.postId,
           },
@@ -31,8 +31,8 @@ class PostLabeling extends ImageLabelingBase {
             }
           ],
         });
-        resolve(post);
-      } catch (post) {
+        resolve();
+      } catch (error) {
         reject(error);
       }
     });

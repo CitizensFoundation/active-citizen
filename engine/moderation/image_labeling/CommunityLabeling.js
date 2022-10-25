@@ -5,7 +5,7 @@ class CommunityLabeling extends ImageLabelingBase {
   async getCollection() {
     return await new Promise(async (resolve, reject) => {
       try {
-        const community = await models.Community.findOne({
+        this.collection = await models.Community.findOne({
           where: {
             id: this.workPackage.collectionId,
           },
@@ -25,7 +25,7 @@ class CommunityLabeling extends ImageLabelingBase {
             },
           ],
         });
-        resolve(community);
+        resolve();
       } catch (error) {
         reject(error);
       }
