@@ -199,7 +199,7 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
               if (point.data && point.data.moderation) {
                 moderation = point.data.moderation;
                 if (moderation.lastReportedBy && moderation.lastReportedBy.length>0) {
-                 source = moderation.lastReportedBy[0].source;
+                 source = moderation.lastReportedBy[moderation.lastReportedBy.length-1].source;
                 }
               }
             } else {
@@ -209,7 +209,7 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
               if (post && post.data && post.data.moderation) {
                 moderation = post.data.moderation;
                 if (moderation.lastReportedBy && moderation.lastReportedBy.length>0) {
-                  source =  moderation.lastReportedBy[0].source;
+                  source =  moderation.lastReportedBy[moderation.lastReportedBy.length-1].source;
                 }
               }
             }
@@ -226,6 +226,7 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
               moderation: moderation,
               source: source,
               isAutomated: source && (source!=='user' && source!=='fromUser'),
+              isAutomatedVision: source && (source==='visionAPI'),
               isReportingContent: true,
               community: community,
               post: notification.AcActivities[0].Post.toJSON(),

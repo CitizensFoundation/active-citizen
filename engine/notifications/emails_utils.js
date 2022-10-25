@@ -239,6 +239,8 @@ var sendOneEmail = function (emailLocals, callback) {
       emailLocals.isReportingContent = false;
     if (!emailLocals.isAutomated)
       emailLocals.isAutomated = false;
+    if (!emailLocals.isAutomatedVision)
+      emailLocals.isAutomatedVision = false;
 
     if (emailLocals.user && emailLocals.user.email) {
       async.series([

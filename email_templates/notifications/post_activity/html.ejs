@@ -10,12 +10,19 @@
   <h1 style="font-weight: 600;line-height: 1.1em;margin: 0;font-size: 16pt;padding-top: 8px;"><%= t('notification.email.postReport') %></h1>
 <% } %>
 
-<% if (isReportingContent && isAutomated) { %>
+<% if (isReportingContent && isAutomated && !isAutomatedVision) { %>
   <p style="padding-top: 8px;line-height: 1.2em">
     <b><%= t('notification.email.automaticToxicityDetection') %></b><br>
     <em><%= t('notification.email.automaticToxicityDetectionDisclaimer') %></em><br><br>
     <%= t('notification.email.automaticToxicityHowLikely') %>: <b><%= moderation.toxicityScorePercent %></b><br><br>
     <%= t('notification.email.automaticToxicityEnglishText') %>:<br><b><%= moderation.textUsedForScore %></b>
+  </p>
+<% } %>
+
+<% if (isReportingContent && isAutomatedVision) { %>
+  <p style="padding-top: 10px;line-height: 1.2em">
+    <b><%= t('notification.email.automaticToxicityDetectionVision') %></b><br>
+    <em><%= t('notification.email.automaticToxicityDetectionDisclaimer') %></em><br><br>
   </p>
 <% } %>
 

@@ -13,12 +13,17 @@
 <%= t('notification.email.pointReport') %>
 <% } %>
 
-<% if (isReportingContent && isAutomated) { %>
+<% if (isReportingContent && isAutomated && !isAutomatedVision) { %>
     <%= t('notification.email.automaticToxicityDetection') %>
     <%= t('notification.email.automaticToxicityDetectionDisclaimer') %>
     <%= t('notification.email.automaticToxicityHowLikely') %>: <%= moderation.toxicityScorePercent %>
     <%= t('notification.email.automaticToxicityEnglishText') %>:
     <%= moderation.textUsedForScore %>
+<% } %>
+
+<% if (isReportingContent && isAutomatedVision) { %>
+    <%= t('notification.email.automaticToxicityDetectionVision') %>
+    <%= t('notification.email.automaticToxicityDetectionDisclaimer') %><
 <% } %>
 
 <% if (post) { %>

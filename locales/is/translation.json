@@ -13,6 +13,7 @@
     "email": {
       "settings": "Tölvupóststillingar",
       "automaticToxicityDetection": "Þetta efni hefur verið merkt sem hugsanlega 'eitrað' af gervigreindarkerfi. Þú getur eytt efni ef með þarf.",
+      "automaticToxicityDetectionVision": "Myndefni hefur verið merkt sem hugsanlega óviðeigandi af gervigreindarkerfi. Þú getur eytt efni ef með þarf",
       "automaticToxicityDetectionDisclaimer": "Stundum reiknar gervigreindarkerfi rangt, ef að það gerist þá þarft þú ekki að gera neitt og getur hunsað þennan tölvupóst.",
       "automaticToxicityHowLikely": "Hversu líklegt að efni sé eitrað",
       "automaticToxicityEnglishText": "Enskur texti notaður við útreikninga",
