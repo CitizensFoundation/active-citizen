@@ -67,7 +67,7 @@ class ImageLabelingBase {
   async reportImageToModerators(options) {
     return await new Promise(async (resolve, reject) => {
       try {
-        collection.report(options, "visionAPI", (error) => {
+        this.collection.report(options, "visionAPI", (error) => {
           if (error) {
             reject(error);
           } else {
