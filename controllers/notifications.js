@@ -138,16 +138,18 @@ var getNotifications = function (req, options, callback) {
   ], function (error) {
     if (error) {
       callback(error);
+    } else if (!notifications) {
+      callback("No notifications found");
     } else {
-      const allActivities = [];
-      for (let n=0;n<notifications.length;n++) {
-        if (notifications[n].AcActivities) {
-          for (let a=0;a<notifications[n].AcActivities.length;a++) {
-            allActivities.push(notifications[n].AcActivities[a])
+      try {
+        const allActivities = [];
+        for (let n=0;n<notifications.length;n++) {
+          if (notifications[n].AcActivities) {
+            for (let a=0;a<notifications[n].AcActivities.length;a++) {
+              allActivities.push(notifications[n].AcActivities[a])
+            }
           }
         }
-      }
-      try {
         models.AcActivity.setOrganizationUsersForActivities(allActivities, (error) => {
           if (error) {
             callback(error);
