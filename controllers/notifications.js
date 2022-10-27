@@ -9,7 +9,7 @@ var async = require('async');
 
 var getCommonWhereDateOptions = require('../engine/news_feeds/news_feeds_utils').getCommonWhereDateOptions;
 
-var getNotifications = function (req, res, options, callback) {
+var getNotifications = function (req, options, callback) {
   options = _.merge(options, {
     dateColumn: 'updated_at'
   });
@@ -147,29 +147,37 @@ var getNotifications = function (req, res, options, callback) {
           }
         }
       }
-      models.AcActivity.setOrganizationUsersForActivities(allActivities, (error) => {
-        if (error) {
-          log.error(error);
-          res.sendStatus(500);
-        } else {
-          res.send({
-            notifications: notifications,
-            unViewedCount: unViewedCount,
-            oldestProcessedNotificationAt: notifications.length>0 ? _.last(notifications).created_at : null
-          });
-        }
-      })
-
+      try {
+        models.AcActivity.setOrganizationUsersForActivities(allActivities, (error) => {
+          if (error) {
+            callback(error);
+          } else {
+            callback(null, {
+              notifications: notifications,
+              unViewedCount: unViewedCount,
+              oldestProcessedNotificationAt: notifications.length>0 ? _.last(notifications).created_at : null
+            });
+          }
+        })
+      } catch (error) {
+        callback(error);
+      }
     }
   });
 };
 
 router.get('/', auth.isLoggedInNoAnonymousCheck, function(req, res) {
   var options = {};
-  getNotifications(req, res, options, function (error) {
+  log.info("notifications debug 1");
+  getNotifications(req, options, function (error, notifications) {
+    log.info("notifications debug 2");
     if (error) {
+      log.info("notifications debug 3");
       log.error("Notifications Error", { userId: req.user ? req.user.id : null, errorStatus:  500, err: error });
       res.sendStatus(500);
+    } else {
+      log.info("notifications debug 4");
+      res.send(notifications);
     }
   });
 });
