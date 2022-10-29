@@ -3,6 +3,7 @@ const vision = require('@google-cloud/vision');
 const models = require("../../../../models");
 var downloadFile = require('download-file');
 const fs = require("fs");
+const log = require('../../../utils/logger');
 
 class ImageLabelingBase {
   constructor(workPackage) {
@@ -42,37 +43,47 @@ class ImageLabelingBase {
               ...this.visionRequesBase,
                 image: { source: { filename: fileNameWithPath } }
             });
-            if (result.error) {
-              reject(result.error.message);
-            } else {
-              const imageLabels = { ...result.labelAnnotations, mediaType, mediaId };
-              const imageReviews = {
-                ...result.safeSearchAnnotation,
-                mediaType,
-                mediaId,
-              };
-              await this.collection.reload();
-              if (!this.collection.data) {
-                this.collection.set("data", {});
-              }
-              if (!this.collection.data.labels) {
-                this.collection.set("data.labels", {});
-              }
-              if (!this.collection.data.moderation) {
-                this.collection.set("data.moderation", {});
-              }
-              if (!this.collection.data.moderation.imageReviews) {
-                this.collection.set("data.moderation.imageReviews", []);
-              }
-              if (!this.collection.data.labels.images) {
-                this.collection.set("data.labels.images", []);
-              }
-              this.collection.data.moderation.imageReviews.push(imageReviews);
-              this.collection.data.labels.images.push(imageLabels);
-              this.collection.changed("data", true);
-              await this.collection.save();
-              await this.evaluteImageReviews(imageReviews);
-              resolve({ imageLabels, imageReviews });
+
+            try {
+              fs.unlink(fileNameWithPath, async (unlinkError) => {
+                if (unlinkError)
+                  log.error(unlinkError);
+                if (result.error) {
+                  reject(result.error.message);
+                } else {
+                  const imageLabels = { ...result.labelAnnotations, mediaType, mediaId };
+                  const imageReviews = {
+                    ...result.safeSearchAnnotation,
+                    mediaType,
+                    mediaId,
+                  };
+                  log.info(`Image Labels: ${imageReviews ? JSON.stringify(imageReviews) : ''}`);
+                  await this.collection.reload();
+                  if (!this.collection.data) {
+                    this.collection.set("data", {});
+                  }
+                  if (!this.collection.data.labels) {
+                    this.collection.set("data.labels", {});
+                  }
+                  if (!this.collection.data.moderation) {
+                    this.collection.set("data.moderation", {});
+                  }
+                  if (!this.collection.data.moderation.imageReviews) {
+                    this.collection.set("data.moderation.imageReviews", []);
+                  }
+                  if (!this.collection.data.labels.images) {
+                    this.collection.set("data.labels.images", []);
+                  }
+                  this.collection.data.moderation.imageReviews.push(imageReviews);
+                  this.collection.data.labels.images.push(imageLabels);
+                  this.collection.changed("data", true);
+                  await this.collection.save();
+                  await this.evaluteImageReviews(imageReviews);
+                  resolve({ imageLabels, imageReviews });
+                }
+              });
+            } catch (error) {
+              reject(error);
             }
           }
         });
