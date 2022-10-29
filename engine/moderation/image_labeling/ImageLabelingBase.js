@@ -1,6 +1,8 @@
 const { InvalidVideoFormat } = require("sitemap/lib/errors");
 const vision = require('@google-cloud/vision');
 const models = require("../../../../models");
+var downloadFile = require('download-file');
+const fs = require("fs");
 
 class ImageLabelingBase {
   constructor(workPackage) {
@@ -26,42 +28,54 @@ class ImageLabelingBase {
   async reviewAndLabelUrl(imageUrl, mediaType, mediaId) {
     return await new Promise(async (resolve, reject) => {
       try {
-        const [result] = await this.visionClient.annotateImage({
-          ...this.visionRequesBase,
-          image: { source: { imageUri: imageUrl } },
+        const splitUrl = imageUrl.split('/');
+        const fileName =  splitUrl[splitUrl.length-1];
+        const fileNameWithPath = '/tmp/'+fileName;
+        downloadFile(imageUrl, { filename: fileName, directory: '/tmp/'}, async (error) => {
+          if (error) {
+            fs.unlink(fileNameWithPath, unlinkError => {
+              reject('Could not download file');
+              return;
+            })
+          } else {
+            const [result] = await this.visionClient.annotateImage({
+              ...this.visionRequesBase,
+                image: { source: { filename: fileNameWithPath } }
+            });
+            if (result.error) {
+              reject(result.error.message);
+            } else {
+              const imageLabels = { ...result.labelAnnotations, mediaType, mediaId };
+              const imageReviews = {
+                ...result.safeSearchAnnotation,
+                mediaType,
+                mediaId,
+              };
+              await this.collection.reload();
+              if (!this.collection.data) {
+                this.collection.set("data", {});
+              }
+              if (!this.collection.data.labels) {
+                this.collection.set("data.labels", {});
+              }
+              if (!this.collection.data.moderation) {
+                this.collection.set("data.moderation", {});
+              }
+              if (!this.collection.data.moderation.imageReviews) {
+                this.collection.set("data.moderation.imageReviews", []);
+              }
+              if (!this.collection.data.labels.images) {
+                this.collection.set("data.labels.images", []);
+              }
+              this.collection.data.moderation.imageReviews.push(imageReviews);
+              this.collection.data.labels.images.push(imageLabels);
+              this.collection.changed("data", true);
+              await this.collection.save();
+              await this.evaluteImageReviews(imageReviews);
+              resolve({ imageLabels, imageReviews });
+            }
+          }
         });
-        if (result.error) {
-          reject(result.error.message);
-        } else {
-          const imageLabels = { ...result.labelAnnotations, mediaType, mediaId };
-          const imageReviews = {
-            ...result.safeSearchAnnotation,
-            mediaType,
-            mediaId,
-          };
-          await this.collection.reload();
-          if (!this.collection.data) {
-            this.collection.set("data", {});
-          }
-          if (!this.collection.data.labels) {
-            this.collection.set("data.labels", {});
-          }
-          if (!this.collection.data.moderation) {
-            this.collection.set("data.moderation", {});
-          }
-          if (!this.collection.data.moderation.imageReviews) {
-            this.collection.set("data.moderation.imageReviews", []);
-          }
-          if (!this.collection.data.labels.images) {
-            this.collection.set("data.labels.images", []);
-          }
-          this.collection.data.moderation.imageReviews.push(imageReviews);
-          this.collection.data.labels.images.push(imageLabels);
-          this.collection.changed("data", true);
-          await this.collection.save();
-          await this.evaluteImageReviews(imageReviews);
-          resolve({ imageLabels, imageReviews });
-        }
       } catch (error) {
         reject(error);
       }
