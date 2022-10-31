@@ -422,7 +422,7 @@ const setupGroup = (doc, group, ratingsHeaders, title, done) => {
             data: fs.readFileSync(imageFilename),
             transformation: { width: 432, height: 243 },
           });
-          children.push(new Paragraph({ children: [image1]}));
+          children.push(new Paragraph({ children: [image1] }));
         }
 
         children.push(
