@@ -31,7 +31,7 @@ const getToxicityScoreForText = (text, doNotStore, callback) => {
           error.stack &&
           error.stack.indexOf("ResponseError: Attribute") > -1 &&
           error.stack.indexOf("does not support request languages") > -1) {
-        log.warn("getToxicityScoreForText warning", { error });
+        log.warn("getToxicityScoreForText warning", { warning: error });
         callback();
       } else {
         log.error("getToxicityScoreForText error", { error });
