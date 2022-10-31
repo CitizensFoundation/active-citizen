@@ -96,13 +96,23 @@ class ImageLabelingBase {
   async reportImageToModerators(options) {
     return await new Promise(async (resolve, reject) => {
       try {
-        this.collection.report(options, "visionAPI", (error) => {
-          if (error) {
-            reject(error);
-          } else {
-            resolve();
-          }
-        });
+        if (this.workPackage.pointId) {
+          this.collection.report(options, "visionAPI", null, (error) => {
+            if (error) {
+              reject(error);
+            } else {
+              resolve();
+            }
+          });
+        } else {
+          this.collection.report(options, "visionAPI", (error) => {
+            if (error) {
+              reject(error);
+            } else {
+              resolve();
+            }
+          });
+        }
       } catch (error) {
         reject(error);
       }
