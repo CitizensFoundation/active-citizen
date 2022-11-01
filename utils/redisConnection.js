@@ -1,21 +1,25 @@
 const redis = require("redis");
 let redisClient;
-
 if (process.env.REDIS_URL) {
   let redisUrl = process.env.REDIS_URL;
 
   if (redisUrl.startsWith("redis://h:")) {
-    redisUrl = redisUrl.replace("redis://h:","redis://:")
+    redisUrl = redisUrl.replace("redis://h:", "redis://:");
   }
 
   if (redisUrl.includes("rediss://")) {
-    redisClient = redis.createClient(redisUrl, { tls: { rejectUnauthorized: false } });
+    redisClient = redis.createClient({
+      legacyMode: true,
+      url: redisUrl,
+      socket: { tls: true, rejectUnauthorized: false },
+    });
   } else {
-    redisClient = redis.createClient(redisUrl);
+    redisClient = redis.createClient({ legacyMode: true, url: redisUrl});
   }
-
 } else {
-  redisClient = redis.createClient();
+  redisClient = redis.createClient({ legacyMode: true });
 }
+
+redisClient.connect().catch(console.error);
 
 module.exports = redisClient;
