@@ -5,7 +5,6 @@ var toJson = require("../../utils/to_json");
 var async = require("async");
 var path = require("path");
 var nodemailer = require("nodemailer");
-var smtpTransport = require("nodemailer-smtp-transport");
 const nodemailerSendgrid = require("nodemailer-sendgrid");
 var ejs = require("ejs");
 var i18n = require("../../utils/i18n");
@@ -82,7 +81,7 @@ if (process.env.SENDGRID_API_KEY) {
     },
   };
 
-  transport = nodemailer.createTransport(smtpTransport(smtpConfig));
+  transport = nodemailer.createTransport(smtpConfig);
 
   transport.verify(function (error, success) {
     if (error) {
