@@ -74,7 +74,7 @@ async function addUsers(worksheet, model, modelId, asUsersCode, registrationQues
         {
           model: models.User,
           as: asUsersCode,
-          attributes: ['id','email','ssn','name','private_profile_data'],
+          attributes: ['id','email','ssn','name','private_profile_data','created_at'],
         }
       ],
     });
@@ -93,6 +93,7 @@ async function addUsers(worksheet, model, modelId, asUsersCode, registrationQues
             name: users[i].name,
             ssn: users[i].ssn,
             id: users[i].id,
+            createdAt: moment(users[i].created_at).format("DD/MM/YY HH:mm")
           }
 
           if (registrationQuestions && users[i].private_profile_data && users[i].private_profile_data.registration_answers) {
@@ -120,14 +121,37 @@ async function addCommunity(workbook, community) {
 
   const worksheet = workbook.addWorksheet(`Community Users ${community.id} ${name}`);
 
-  worksheet.columns = [
+  const columns = [
     { header: "User Id", key: "id", width: 10 },
+    { header: "Created at", key: "createdAt", width: 15 },
     { header: "Name", key: "name", width: 30 },
     { header: "National Id", key: "ssn", width: 15 },
     { header: "Email", key: "email", width: 40 },
   ];
 
-  await addUsers(worksheet, models.Community, community.id,"CommunityUsers");
+  const registrationQuestions = community.configuration.registrationQuestionsJson;
+
+  if (registrationQuestions) {
+    for (let i=0;i<registrationQuestions.length;i++) {
+      if (registrationQuestions[i].type!=="segment" && registrationQuestions[i].type!=="textDescription") {
+        try {
+          columns.push({
+            header: registrationQuestions[i].text,
+            key: registrationQuestions[i].text,
+            style: { numFmt: '@' },
+            alignment: { wrapText: true },
+            width: 30
+          })
+        } catch (ex) {
+          log.error(ex);
+        }
+      }
+    }
+  }
+
+  worksheet.columns = columns;
+
+  await addUsers(worksheet, models.Community, community.id,"CommunityUsers",registrationQuestions);
   formatWorksheet(worksheet);
 }
 
@@ -139,6 +163,7 @@ async function addGroup(workbook, group) {
 
   let columns = [
     { header: "User Id", key: "id", width: 10 },
+    { header: "Created at", key: "createdAt", width: 15 },
     { header: "Name", key: "name", width: 35 },
     { header: "National Id", key: "ssn", width: 15 },
     { header: "Email", key: "email", width: 40 },
@@ -182,9 +207,10 @@ async function exportToXls(options, callback) {
 
     for (let i=0; i<groupsLength; i++) {
       await addGroup(workbook, community.Groups[i]);
+      const jobProgress = Math.min(15+(Math.round(85/(groupsLength)))*i,95);
       await models.AcBackgroundJob.update(
         {
-          progress: 15+(Math.round(85/(groupsLength)))*i,
+          progress: jobProgress,
         },
         {
           where: { id: options.jobId },
@@ -261,6 +287,8 @@ const createXlsCommunityUsersReport = (workPackage, callback) => {
             if (error) {
               seriesCallback(error);
             } else {
+              console.log(`Updating job 100 with DATA`)
+
               models.AcBackgroundJob.update(
                 {
                   progress: 100,
