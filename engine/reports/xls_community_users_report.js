@@ -93,7 +93,7 @@ async function addUsers(worksheet, model, modelId, asUsersCode, registrationQues
             name: users[i].name,
             ssn: users[i].ssn,
             id: users[i].id,
-            createdAt: moment(users[i].created_at).format("DD/MM/YY HH:mm")
+            createdAt: users[i].created_at
           }
 
           if (registrationQuestions && users[i].private_profile_data && users[i].private_profile_data.registration_answers) {
