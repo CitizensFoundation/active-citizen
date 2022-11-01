@@ -1,4 +1,3 @@
-const { InvalidVideoFormat } = require("sitemap/lib/errors");
 const vision = require('@google-cloud/vision');
 const models = require("../../../../models");
 var downloadFile = require('download-file');
