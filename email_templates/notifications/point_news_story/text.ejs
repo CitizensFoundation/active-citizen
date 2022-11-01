@@ -1,4 +1,4 @@
-<% include ../header.html.ejs %>
+<%- include('../header.html.ejs') %>
 
 <%= t('notification.email.newsStory') %>
 <% if (post) { %>
@@ -18,4 +18,4 @@
 <% if (!point.Post && !point.Group && !point.community) { %>
 <%- linkTo("https://"+community.hostname+"."+domain.domain_name+"/domain/"+point.Domain.id+"/news/"+activity.id) %>
 <% } %>
-<% include ../footer.html.ejs %>
+<%- include('../footer.html.ejs') %>
