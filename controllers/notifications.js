@@ -170,15 +170,11 @@ var getNotifications = function (req, options, callback) {
 
 router.get('/', auth.isLoggedInNoAnonymousCheck, function(req, res) {
   var options = {};
-  log.info("notifications debug 1");
   getNotifications(req, options, function (error, notifications) {
-    log.info("notifications debug 2");
     if (error) {
-      log.info("notifications debug 3");
       log.error("Notifications Error", { userId: req.user ? req.user.id : null, errorStatus:  500, err: error });
       res.sendStatus(500);
     } else {
-      log.info("notifications debug 4");
       res.send(notifications);
     }
   });
