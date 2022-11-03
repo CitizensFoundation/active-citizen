@@ -463,7 +463,7 @@ var sendOneEmail = function (emailLocals, callback) {
               replyTo = "support@smarter.nj.gov";
             } else if (
               process.env.EMAIL_FROM ||
-              (emailLocals && emailLocals.envValues)
+              (emailLocals.envValues)
             ) {
               fromEmail = process.env.EMAIL_FROM || emailLocals.envValues.email;
             } else {
