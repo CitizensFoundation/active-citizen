@@ -1,6 +1,4 @@
 var models = require("../../../models");
-var log = require('../../utils/logger');
-var toJson = require('../../utils/to_json');
 var async = require('async');
 var addNotificationsForUsers = require('./notifications_utils').addNotificationsForUsers;
 var _ = require('lodash');

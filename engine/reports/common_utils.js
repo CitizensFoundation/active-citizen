@@ -1,6 +1,5 @@
 var models = require('../../../models/index');
 var async = require('async');
-var ip = require('ip');
 var _ = require('lodash');
 const moment = require('moment');
 const skipEmail = false;
@@ -8,7 +7,6 @@ const aws = require('aws-sdk');
 const log = require('../../utils/logger');
 const request = require('request');
 const fs = require('fs');
-const path = require('path');
 
 const downloadImage = (uri, filename, callback) => {
   request.head(uri, (err, res, body) => {

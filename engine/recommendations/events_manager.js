@@ -4,7 +4,6 @@ const async = require('async');
 const log = require('../../utils/logger');
 const request = require('request');
 
-let engine = null;
 let airbrake = null;
 
 if(process.env.AIRBRAKE_PROJECT_ID) {

@@ -1,6 +1,5 @@
 const models = require("../../../models");
 const log = require('../../utils/logger');
-const toJson = require('../../utils/to_json');
 const async = require('async');
 const getModelAndUsersByType = require('./notifications_utils').getModelAndUsersByType;
 const addNotificationsForUsers = require('./notifications_utils').addNotificationsForUsers;

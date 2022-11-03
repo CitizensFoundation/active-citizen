@@ -1,6 +1,4 @@
-var queue = require('../../workers/queue');
 var models = require("../../../models");
-var i18n = require('../../utils/i18n');
 var async = require('async');
 var log = require('../../utils/logger');
 var _ = require('lodash');

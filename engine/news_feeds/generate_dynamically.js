@@ -1,12 +1,8 @@
-var queue = require('../../workers/queue');
 var models = require("../../../models");
-var i18n = require('../../utils/i18n');
 var async = require('async');
 var log = require('../../utils/logger');
 var _ = require('lodash');
-var toJson = require('../../utils/to_json');
 
-var isItemRecommended = require('../recommendations/events_manager').isItemRecommended;
 var getRecommendationFor = require('../recommendations/events_manager').getRecommendationFor;
 
 var getProcessedRange = require('./news_feeds_utils').getProcessedRange;

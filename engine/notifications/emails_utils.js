@@ -1,7 +1,6 @@
 var DEBUG_EMAILS_TO_TEMP_FIlE = true;
 
 var log = require("../../utils/logger");
-var toJson = require("../../utils/to_json");
 var async = require("async");
 var path = require("path");
 var nodemailer = require("nodemailer");
@@ -556,15 +555,15 @@ var sendOneEmail = function (emailLocals, callback) {
                         if (error) {
                           log.error("EmailWorker", {
                             errorHeaders:
-                              error && error.response
+                              error.response
                                 ? error.response.headers
                                 : null,
                             errorBody:
-                              error && error.response
+                              error.response
                                 ? error.response.body
                                 : null,
                             errorBodyString:
-                              error && error.response && error.response.body
+                              error.response && error.response.body
                                 ? JSON.stringify(error.response.body)
                                 : null,
                             err: error,

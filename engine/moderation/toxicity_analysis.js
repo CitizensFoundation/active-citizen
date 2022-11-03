@@ -1,8 +1,6 @@
 const models = require("../../../models");
 const async = require('async');
-const moment = require('moment');
 const log = require('../../utils/logger');
-const _ = require('lodash');
 
 const TOXICITY_THRESHOLD = 0.50;
 const TOXICITY_EMAIL_THRESHOLD = 0.75;
@@ -385,9 +383,9 @@ const estimateToxicityScoreForPost = (options, callback) => {
           log.info("getToxicityScoreForText post getting translated text");
           getTranslatedTextForPost(post, (error, translatedText) => {
             //log.info("getToxicityScoreForText post got translated text", { translatedText, error });
-            if (error)
+            if (error) {
               callback(error);
-            else
+            } else {
               textUsed = translatedText;
               getToxicityScoreForText(textUsed, doNotStoreValue, (error, results) => {
                 if (error) {
@@ -413,6 +411,7 @@ const estimateToxicityScoreForPost = (options, callback) => {
                   callback();
                 }
               });
+            }
           });
         } else {
           log.warn("getToxicityScoreForText post No text for toxicity");

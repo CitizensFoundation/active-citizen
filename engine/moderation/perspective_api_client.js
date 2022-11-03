@@ -51,7 +51,7 @@ class Perspective {
       try {
         resource = this.getAnalyzeCommentPayload(text, options);
       } catch (error) {
-        reject(error);
+        return reject(error);
       }
       axios
         .post(COMMENT_ANALYZER_URL, resource, {

@@ -1,31 +1,12 @@
-const queue = require("../../workers/queue");
 const models = require("../../../models");
-const i18n = require("../../utils/i18n");
 const async = require("async");
 const moment = require("moment");
 const log = require("../../utils/logger");
 const _ = require("lodash");
-const fs = require("fs");
 const Excel = require("exceljs");
 
-const getGroupPosts = require("./common_utils").getGroupPosts;
-const getContactData = require("./common_utils").getContactData;
-const getAttachmentData = require("./common_utils").getAttachmentData;
-const getMediaTranscripts = require("./common_utils").getMediaTranscripts;
-const getPostRatings = require("./common_utils").getPostRatings;
-const getPostUrl = require("./common_utils").getPostUrl;
-const getLocation = require("./common_utils").getLocation;
-const getCategory = require("./common_utils").getCategory;
-const getUserEmail = require("./common_utils").getUserEmail;
-
-const getMediaFormatUrl = require("./common_utils").getMediaFormatUrl;
-const getMediaURLs = require("./common_utils").getMediaURLs;
-const getPointsUpOrDown = require("./common_utils").getPointsUpOrDown;
 const getPointsUp = require("./common_utils").getPointsUp;
 const getPointsDown = require("./common_utils").getPointsDown;
-
-const getTranslatedPoints = require("./common_utils").getTranslatedPoints;
-const getTranslation = require("./common_utils").getTranslation;
 
 const getOrderedPosts = require("./common_utils").getOrderedPosts;
 const updateJobStatusIfNeeded = require("./common_utils")
@@ -38,7 +19,6 @@ const uploadToS3 = require("./common_utils").uploadToS3;
 const sanitizeFilename = require("sanitize-filename");
 const {getAnswerFor} = require("./xls_community_users_report");
 const {addPostPointsToSheet} = require("./add_points_to_sheet");
-const getImageFromUrl = require("./common_utils").getImageFromUrl;
 
 const getSubCodeFromDropdown = (dropdowns, answer) => {
   let subCode = answer.value.trim();
