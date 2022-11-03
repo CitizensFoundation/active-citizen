@@ -6,7 +6,7 @@ const log = require('../../utils/logger');
 const _ = require('lodash');
 
 const sendSmsToUser = (twilioClient, listUser, campaign, configuration, done) => {
-  const body = campaign.message + " "+ campaign.data.baseUrl+"?yu="+listUser.id+"&yc="+campaign.id;
+  /*const body = campaign.message + " "+ campaign.data.baseUrl+"?yu="+listUser.id+"&yc="+campaign.id;
   twilioClient.messages.create({
     from: configuration.twilioFromSmsNumber,
     to: listUser.sms,
@@ -16,7 +16,7 @@ const sendSmsToUser = (twilioClient, listUser, campaign, configuration, done) =>
     done();
   }).catch(error=>{
     done(error);
-  });
+  });*/
 };
 
 const updateListUserSent = (listUser, campaign, done) => {

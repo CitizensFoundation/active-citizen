@@ -162,38 +162,6 @@ const allGoals = [
   "open - share dialog - clipboard"
 ];
 
-const getFromAnalyticsApi = (
-  req,
-  featureType,
-  collectionType,
-  collectionId,
-  done
-) => {
-  const options = {
-    url:
-      process.env["PLAUSIBLE_BASE_URL"] +
-      featureType +
-      "/" +
-      collectionType +
-      "/" +
-      process.env.AC_ANALYTICS_CLUSTER_ID +
-      "/" +
-      collectionId,
-    headers: {
-      "X-API-KEY": process.env["PLAUSIBLE_API_KEY"],
-    },
-  };
-
-  request.get(options, (error, content) => {
-    if (content && content.statusCode != 200) {
-      error = content.statusCode;
-    } else {
-      //resolve()
-    }
-    done(error, content);
-  });
-};
-
 async function plausibleStatsProxy(plausibleUrl, props) {
   return await new Promise((resolve, reject) => {
     if (process.env["PLAUSIBLE_BASE_URL"] && process.env["PLAUSIBLE_API_KEY"]) {
@@ -264,13 +232,11 @@ async function plausibleStatsProxy(plausibleUrl, props) {
           log.error(error);
           log.error(content);
           reject(content.statusCode);
+        } else if (content) {
+          log.debug(content.body);
+          resolve(content.body);
         } else {
-          if (content) {
-            log.debug(content.body);
-            resolve(content.body);
-          } else {
-            reject("No body for plausible content")
-          }
+          reject("No body for plausible content")
         }
       });
     } else {
@@ -299,9 +265,11 @@ async function getPlausibleStats(statsParams) {
           log.error(error);
           log.error(content);
           reject(content.statusCode);
-        } else {
+        } else if (content) {
           console.log(content.body);
           resolve(content.body);
+        } else {
+          reject("No body for plausible content");
         }
       });
     } else {
@@ -345,9 +313,11 @@ async function addPlausibleGoal(eventName) {
           log.error(error);
           log.error(content);
           reject(content.statusCode);
-        } else {
+        } else if (content) {
           console.log(content.body);
           resolve(content.body);
+        } else {
+          reject("No body for plausible content");
         }
       });
     } else {
@@ -538,9 +508,10 @@ async function sendPlausibleFavicon(sourceName) {
           log.error(error);
           log.error(content);
           reject(content.statusCode);
-        } else {
-//          console.log(content.body);
+        } else if (content) {
           resolve(content.body);
+        } else {
+          reject("No content");
         }
       });
     } else {

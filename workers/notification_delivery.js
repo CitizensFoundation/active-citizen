@@ -229,7 +229,7 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
               isAutomatedVision: source && (source==='visionAPI'),
               isReportingContent: true,
               community: community,
-              post: notification.AcActivities[0].Post.toJSON(),
+              post: notification.AcActivities[0].Post ? notification.AcActivities[0].Post.toJSON() : null,
               point: notification.AcActivities[0].Point ?  notification.AcActivities[0].Point.toJSON() : null,
               activity: notification.AcActivities[0].toJSON()
             }, 'critical');

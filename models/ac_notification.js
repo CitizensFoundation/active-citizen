@@ -243,7 +243,7 @@ module.exports = (sequelize, DataTypes) => {
                 if (results) {
                   const notificationJson = { id: notification.id };
                   queue.add('process-notification-delivery', notificationJson, 'high');
-                  log.info('Notification Created', { notificationId: notification ?  notification.id : -1, userId: admin.id});
+                  log.info('Notification Created', { notificationId: notification.id, userId: admin.id});
                   innerSeriesCallback();
                 } else {
                   innerSeriesCallback("Notification Error Can't add activity");

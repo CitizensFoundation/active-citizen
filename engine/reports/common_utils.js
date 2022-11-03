@@ -17,7 +17,7 @@ const downloadImage = (uri, filename, callback) => {
 };
 
 const getImageFromUrl = (url, done) => {
-  const tmpFilename = "/tmp/"+Math.random(232132132)+(url.replace("http://","").replace(/\//g,''));
+  const tmpFilename = "/tmp/"+Math.random()+(url.replace("http://","").replace(/\//g,''));
 
   downloadImage(url, tmpFilename, () => {
     done(null, tmpFilename);
@@ -109,53 +109,49 @@ async function preparePosts(workPackage, callback) {
     if (error) {
       callback(error);
     } else {
-      if (error) {
-        callback(error);
-      } else {
-        const posts = [];
-        const totalPosts = postsIn.length;
+      const posts = [];
+      const totalPosts = postsIn.length;
 
-        async.eachLimit(postsIn, 1, async (post) => {
-          if (!post.deleted) {
-            const postRatings = (post.public_data && post.public_data.ratings) ? post.public_data.ratings : null;
+      async.eachLimit(postsIn, 1, async (post) => {
+        if (!post.deleted) {
+          const postRatings = (post.public_data && post.public_data.ratings) ? post.public_data.ratings : null;
 
-            posts.push({
-              id: post.id,
-              name: clean(post.name),
-              translatedName: targetLanguage ? await getTranslation(post,'postName', targetLanguage) : null,
-              translatedDescription: targetLanguage ? await getTranslation(post,'postContent', targetLanguage) : null,
-              realPost: post,
-              url: getPostUrl(post, hostName),
-              category: getCategory(post),
-              userEmail: getUserEmail(post),
-              userName: post.User.name,
-              location: getLocation(post),
-              endorsementsUp: post.counter_endorsements_up,
-              endorsementsDown: post.counter_endorsements_down,
-              status: post.status,
-              User: post.User,
-              counterPoints: post.counter_points,
-              pointsUp: getPointsUp(post),
-              Points: post.Points,
-              translatedPoints: targetLanguage ? await getTranslatedPoints(post.Points, targetLanguage) : null,
-              images: getImages(post),
-              pointsDown: getPointsDown(post),
-              contactData: getContactData(post),
-              attachmentData: getAttachmentData(post),
-              mediaURLs: getMediaURLs(post),
-              mediaTranscripts: getMediaTranscripts(post),
-              postRatings: getPostRatings(customRatings, postRatings)
-            });
-          }
+          posts.push({
+            id: post.id,
+            name: clean(post.name),
+            translatedName: targetLanguage ? await getTranslation(post,'postName', targetLanguage) : null,
+            translatedDescription: targetLanguage ? await getTranslation(post,'postContent', targetLanguage) : null,
+            realPost: post,
+            url: getPostUrl(post, hostName),
+            category: getCategory(post),
+            userEmail: getUserEmail(post),
+            userName: post.User.name,
+            location: getLocation(post),
+            endorsementsUp: post.counter_endorsements_up,
+            endorsementsDown: post.counter_endorsements_down,
+            status: post.status,
+            User: post.User,
+            counterPoints: post.counter_points,
+            pointsUp: getPointsUp(post),
+            Points: post.Points,
+            translatedPoints: targetLanguage ? await getTranslatedPoints(post.Points, targetLanguage) : null,
+            images: getImages(post),
+            pointsDown: getPointsDown(post),
+            contactData: getContactData(post),
+            attachmentData: getAttachmentData(post),
+            mediaURLs: getMediaURLs(post),
+            mediaTranscripts: getMediaTranscripts(post),
+            postRatings: getPostRatings(customRatings, postRatings)
+          });
+        }
 //          seriesCallback();
-        }, function (error) {
-          if (error) {
-            callback(error)
-          } else {
-            callback(null,{ jobId, group, posts, customRatings, categories });
-          }
-        });
-      }
+      }, function (error) {
+        if (error) {
+          callback(error)
+        } else {
+          callback(null,{ jobId, group, posts, customRatings, categories });
+        }
+      });
     }
   });
 };

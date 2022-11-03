@@ -290,20 +290,18 @@ const performManyModerationActions = async (workPackage, callback) => {
     }
     ], async error => {
       if (!error) {
-        if (pointIds) {
+        if (pointIds.length>0) {
           _.map(pointIds, (pointId) => {
             queue.add('process-similarities', { type: 'update-collection', pointId: pointId }, 'low', { delay: 5000 });
           });
         }
-        if (postIds) {
+        if (postIds.length>0) {
           _.map(postIds, (postId) => {
             queue.add('process-similarities', { type: 'update-collection', postId: postId }, 'low', { delay: 5000 });
           });
         }
-        if ((postIds &&
-             postIds.length>0) ||
-           (pointIds &&
-            pointIds.length>0)) {
+        if (postIds.length>0 ||
+            pointIds.length>0) {
           if (workPackage.groupId) {
             models.Group.findOne({
               where: {

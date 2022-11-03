@@ -137,7 +137,7 @@ const setDescriptionsNewStyle = (group, post, buildPost) => {
   if (group.configuration && group.configuration.exportSubCodesForRadiosAndCheckboxes)
     useSubCodes = true;
 
-  const questionComponents = group.configuration.structuredQuestionsJson;
+  const questionComponents = group.configuration ? group.configuration.structuredQuestionsJson : [];
 
   for (let i = 0; i < questionComponents.length; i++) {
     questionsById[questionComponents[i].uniqueId] = questionComponents[i];
@@ -621,7 +621,7 @@ async function exportToXls(options, callback) {
     { header: "Down Votes", key: "downVotes", width: 15 }
   );
 
-  if (ratingsHeaders) {
+  if (ratingsHeaders.length > 0) {
     columns = columns.concat(ratingsHeaders);
   }
 
