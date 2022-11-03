@@ -1,8 +1,6 @@
 const models = require("../../../../models");
-const _ = require("lodash");
 const log = require("../../../utils/logger");
 const request = require("request");
-const https = require('https');
 const moment = require("moment");
 
 // This SQL is needed to allow the site API
@@ -347,7 +345,7 @@ async function addPlausibleEvent(
       let useUrl = url;
 
       try {
-        if (!communityId && workData.groupId) {
+        if (workData.groupId) {
           const group = await models.Group.findOne({
             where: {
               id: workData.groupId,

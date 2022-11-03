@@ -4,7 +4,6 @@ var models = require("../../models");
 var auth = require('../../authorization');
 var log = require('../utils/logger');
 var async = require('async');
-var toJson = require('../utils/to_json');
 var _ = require('lodash');
 
 var getCommonWhereOptions = require('../engine/news_feeds/news_feeds_utils').getCommonWhereOptions;

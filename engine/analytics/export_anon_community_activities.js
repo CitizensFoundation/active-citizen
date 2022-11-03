@@ -3,7 +3,6 @@ const _ = require('lodash');
 const async = require('async');
 const log = require('../../../utils/logger');
 const crypto = require('crypto');
-const algorithm = 'aes-256-cbc';
 const fs = require('fs');
 
 //const request = require('request');

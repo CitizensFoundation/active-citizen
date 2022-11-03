@@ -1,5 +1,4 @@
 const models = require('../../../models');
-const _ = require('lodash');
 const log = require('../../../utils/logger');
 const importDomain = require('./utils').importDomain;
 const importCommunity = require('./utils').importCommunity;

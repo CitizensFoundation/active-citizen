@@ -1,9 +1,5 @@
 const models = require("../../../models");
-const i18n = require('../../utils/i18n');
 const async = require('async');
-const moment = require('moment');
-const log = require('../../utils/logger');
-const _ = require('lodash');
 
 const sendSmsToUser = (twilioClient, listUser, campaign, configuration, done) => {
   /*const body = campaign.message + " "+ campaign.data.baseUrl+"?yu="+listUser.id+"&yc="+campaign.id;
