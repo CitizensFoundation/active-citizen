@@ -99,6 +99,7 @@ const allGoals = [
   "createReportXls - open",
   "group.deleteContent - open",
   "group.clone - open",
+  "community.clone - open",
   "group.anonymize - open",
   "category.new - open",
   "twitter - pointShareOpen",
