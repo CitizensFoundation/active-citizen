@@ -1,6 +1,5 @@
 const models = require("../../../models");
 const log = require('../../utils/logger');
-const toJson = require('../../utils/to_json');
 const moment = require('moment');
 const _ = require('lodash');
 

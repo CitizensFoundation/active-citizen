@@ -1,5 +1,4 @@
 const _ = require("lodash");
-const moment = require("moment");
 
 const FraudGetBase = require('./FraudGetBase.js');
 const models = require("../../../../models");
@@ -53,7 +52,7 @@ class FraudGetPointQualities extends FraudGetBase {
     let topItems = this.setupTopItems(items);
     const postIds = this.getPostIdsFromItems(topItems);
     const postCount = _.uniq(postIds).length;
-    
+
     const pointMultiplier = 10;
 
     if (type==="byIpUserAgentPostId") {

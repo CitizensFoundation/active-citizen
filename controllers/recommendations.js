@@ -16,7 +16,7 @@ if(process.env.AIRBRAKE_PROJECT_ID) {
 var OVERALL_LIMIT=7;
 
 var DATE_OPTIONS = { name:"date", after: moment().add(-1000, 'months').toISOString() };
-var DATE_OPTIONS_YEAR = { name:"date", after: moment().add(-300, 'months').toISOString() };
+//var DATE_OPTIONS_YEAR = { name:"date", after: moment().add(-300, 'months').toISOString() };
 
 var setupOptions = function (req) {
   var options = {

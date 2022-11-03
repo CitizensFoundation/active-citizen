@@ -1,5 +1,4 @@
 const _ = require("lodash");
-const moment = require("moment");
 
 const FraudGetEndorsements = require('./FraudGetEndorsements.js');
 const models = require("../../../../models");
