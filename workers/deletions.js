@@ -353,7 +353,10 @@ const recountCommunity = (workPackage, callback) => {
     include: [
       {
         model: models.Group,
-        attributes: ['id','counter_posts', 'counter_points','counter_users']
+        attributes: ['id','counter_posts', 'counter_points','counter_users'],
+        where: {
+          is_group_folder: false
+        },
       },
       {
         model: models.User,
