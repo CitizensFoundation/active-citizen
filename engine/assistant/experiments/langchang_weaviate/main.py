@@ -4,6 +4,7 @@ import pickle
 from pathlib import Path
 from typing import Optional
 import weaviate
+import json
 
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.templating import Jinja2Templates
@@ -19,11 +20,24 @@ templates = Jinja2Templates(directory="templates")
 vectorstore: Optional[VectorStore] = None
 client: Optional[weaviate.Client] = None
 
+client = weaviate.Client("http://localhost:8080")
+vectorstore = Weaviate(client, "Posts", "englishNameAndContent")
+nearText = {"concepts": ["dogs"]}
+
+result = (
+    client.query
+    .get("Posts", ["englishNameAndContent"])
+    .with_near_text(nearText)
+    .with_limit(5)
+    .do()
+)
+
+print(json.dumps(result, indent=4))
+
+
 @app.on_event("startup")
 async def startup_event():
     logging.info("loading vectorstore")
-    client = weaviate.Client("http://localhost:8080")
-    vectorstore = Weaviate(client, "Posts", "englishNameAndContent")
 
 @app.get("/")
 async def get(request: Request):

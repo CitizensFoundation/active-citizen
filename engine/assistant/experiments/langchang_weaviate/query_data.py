@@ -45,6 +45,14 @@ def get_chain(
         streaming_llm, chain_type="stuff", prompt=QA_PROMPT, callback_manager=manager
     )
 
+    print("1")
+    print(vectorstore)
+    print("2")
+    print(doc_chain)
+    print("2")
+    print(question_generator)
+    print(manager)
+
     qa = ChatVectorDBChain(
         vectorstore=vectorstore,
         combine_docs_chain=doc_chain,
