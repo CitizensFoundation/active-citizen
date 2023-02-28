@@ -22,13 +22,13 @@ client: Optional[weaviate.Client] = None
 
 client = weaviate.Client("http://localhost:8080")
 vectorstore = Weaviate(client, "Posts", "englishNameAndContent")
-nearText = {"concepts": ["dogs"]}
+nearText = {"concepts": ["cats"]}
 
 result = (
     client.query
     .get("Posts", ["englishNameAndContent"])
     .with_near_text(nearText)
-    .with_limit(5)
+    .with_limit(15)
     .do()
 )
 
@@ -88,4 +88,4 @@ async def websocket_endpoint(websocket: WebSocket):
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=9000)
+    uvicorn.run(app, host="0.0.0.0", port=9000, debug=True)

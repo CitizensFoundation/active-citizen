@@ -29,11 +29,13 @@ def get_chain(
     question_gen_llm = OpenAI(
         temperature=0,
         verbose=True,
+        max_tokens=1000,
         callback_manager=question_manager,
     )
     streaming_llm = OpenAI(
         streaming=True,
         callback_manager=stream_manager,
+        max_tokens=1000,
         verbose=True,
         temperature=0,
     )
@@ -45,18 +47,14 @@ def get_chain(
         streaming_llm, chain_type="stuff", prompt=QA_PROMPT, callback_manager=manager
     )
 
-    print("1")
-    print(vectorstore)
-    print("2")
-    print(doc_chain)
-    print("2")
-    print(question_generator)
-    print(manager)
-
     qa = ChatVectorDBChain(
         vectorstore=vectorstore,
         combine_docs_chain=doc_chain,
         question_generator=question_generator,
         callback_manager=manager,
+        top_k_docs_for_context=10,
+        verbose=True,
+        tracing=True
     )
+
     return qa
