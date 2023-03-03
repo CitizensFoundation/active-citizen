@@ -54,7 +54,7 @@ def get_chain(
         combine_docs_chain=doc_chain,
         question_generator=question_generator,
         callback_manager=manager,
-        top_k_docs_for_context=10,
+        top_k_docs_for_context=15,
         verbose=True,
         tracing=True
     )
