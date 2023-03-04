@@ -40,19 +40,23 @@ short_points_against_summary_prefix = """
 """
 
 shortPostNameTemplate = """
-  {name}
-  neighborhood: {group_name}
+  Idea: {name}
+
+  Neighborhood name: {group_name}
+
   source: {source}\n
 """
 
 summaryTemplate = """
-  {summary}
-  neighborhood: {group_name}
+  Idea: {summary}
+
+  Neighborhood name: {group_name}
+
   source: {source}\n
 """
 
 summaryWithPointsTemplate = """
-  {summary}
+  Idea: {summary}
 
   Points for:
   {points_for}
@@ -60,10 +64,25 @@ summaryWithPointsTemplate = """
   Points against:
   {points_against}
 
-  neighborhood: {group_name}
+  Neighborhood name: {group_name}
+
   source: {source}\n
 """
 
+summaryWithPointsAndImageTemplate = """
+  Idea: {summary}
+
+  Points for:
+  {points_for}
+
+  Points against:
+  {points_against}
+
+  Neighborhood name: {group_name}
+
+  image_url: {image_url}
+  source: {source}\n
+"""
 
 def summarize_text(prompt, text, max_tokens=1000):
     completion = openai.ChatCompletion.create(
@@ -152,10 +171,16 @@ def get_short_post_summary_with_points(post: Post):
 
     short_summary = summarize_short_summary(f"{post.name}\n{post.description}")
 
-    points_for_short_summary = summarize_short_points_for_summary(
-        f"{post.name}\n{post.points_for}")
-    points_against_short_summary = summarize_short_points_against_summary(
-        f"{post.name}\n{post.points_against}")
+    points_for_short_summary = ""
+    points_against_short_summary = ""
+
+    if post.points_for!="":
+        points_for_short_summary = summarize_short_points_for_summary(
+            f"{post.name}\n{post.points_for}")
+
+    if post.points_against!="":
+        points_against_short_summary = summarize_short_points_against_summary(
+            f"{post.name}\n{post.points_against}")
 
     print(short_summary)
     print(points_for_short_summary)
@@ -164,22 +189,27 @@ def get_short_post_summary_with_points(post: Post):
     return prompt.format(summary=short_summary, group_name=post.group_name, source=post.post_id,
                    points_for=points_for_short_summary, points_against=points_against_short_summary)
 
-
-
 def get_full_post_summary_with_points(post: Post):
     prompt = PromptTemplate(
         input_variables=["group_name",
-                         "source", 'points_for', 'points_against',"summary"],
-        template=summaryWithPointsTemplate,
+                         "source", 'points_for', 'points_against',"summary","image_url"],
+        template=summaryWithPointsAndImageTemplate,
     )
 
     short_summary = summarize_full_summary(f"{post.name}\n{post.description}")
 
-    points_for_short_summary = summarize_full_points_for_summary(
-        f"{post.name}\n{post.points_for}")
-    points_against_short_summary = summarize_full_points_against_summary(
-        f"{post.name}\n{post.points_against}")
+    points_for_short_summary = ""
+    points_against_short_summary = ""
+
+    if post.points_for!="":
+        points_for_short_summary = summarize_full_points_for_summary(
+            f"{post.name}\n{post.points_for}")
+
+    if post.points_against!="":
+        points_against_short_summary = summarize_full_points_against_summary(
+            f"{post.name}\n{post.points_against}")
 
     return prompt.format(summary=short_summary, group_name=post.group_name, source=post.post_id,
+                   image_url=post.image_url,
                    points_for=points_for_short_summary, points_against=points_against_short_summary)
 
