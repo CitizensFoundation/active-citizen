@@ -18,18 +18,6 @@ schema = {
            "vectorizer": "text2vec-transformers",
            "properties": [
                {
-                "name": "postName",
-                "dataType": ["string"],
-                "description": "The name of the post.",
-                "moduleConfig": {
-                    "text2vec-transformers": {
-                        "skip": False,
-                        "vectorizePropertyName": False,
-                        "vectorizeClassName": False
-                    }
-                }
-               },
-               {
                    "name": "content",
                    "dataType": ["text"],
                    "description": "The text content the post",
@@ -53,10 +41,10 @@ schema = {
                     }
                    }
                },
-               {
-                   "name": "nameAndContent",
+                              {
+                   "name": "shortName",
                    "dataType": ["text"],
-                   "description": "The text name and content the post",
+                   "description": "Short summary of the post",
                    "moduleConfig": {
                     "text2vec-transformers": {
                         "skip": False,
@@ -66,9 +54,45 @@ schema = {
                    }
                },
                {
-                   "name": "englishNameAndContent",
+                   "name": "shortSummary",
                    "dataType": ["text"],
-                   "description": "The English text name and content the post",
+                   "description": "Short summary of the post",
+                   "moduleConfig": {
+                    "text2vec-transformers": {
+                        "skip": False,
+                        "vectorizePropertyName": False,
+                        "vectorizeClassName": False
+                    }
+                   }
+               },
+               {
+                   "name": "fullSummary",
+                   "dataType": ["text"],
+                   "description": "Full summary of the post",
+                   "moduleConfig": {
+                    "text2vec-transformers": {
+                        "skip": False,
+                        "vectorizePropertyName": False,
+                        "vectorizeClassName": False
+                    }
+                   }
+               },
+               {
+                   "name": "shortSummaryWithPoints",
+                   "dataType": ["text"],
+                   "description": "Short summary of the post",
+                   "moduleConfig": {
+                    "text2vec-transformers": {
+                        "skip": False,
+                        "vectorizePropertyName": False,
+                        "vectorizeClassName": False
+                    }
+                   }
+               },
+               {
+                   "name": "fullSummaryWithPoints",
+                   "dataType": ["text"],
+                   "description": "Full summary of the post",
                    "moduleConfig": {
                     "text2vec-transformers": {
                         "skip": False,
@@ -125,7 +149,42 @@ schema = {
                     }
                    }
                },
-
+               {
+                   "name": "counter_points_for",
+                   "dataType": ["int"],
+                   "description": "The up count",
+                   "moduleConfig": {
+                    "text2vec-transformers": {
+                        "skip": True,
+                        "vectorizePropertyName": False,
+                        "vectorizeClassName": False
+                    }
+                   }
+               },
+               {
+                   "name": "counter_points_against",
+                   "dataType": ["int"],
+                   "description": "The down count",
+                   "moduleConfig": {
+                    "text2vec-transformers": {
+                        "skip": True,
+                        "vectorizePropertyName": False,
+                        "vectorizeClassName": False
+                    }
+                   }
+               },
+               {
+                   "name": "language",
+                   "dataType": ["string"],
+                   "description": "Language",
+                   "moduleConfig": {
+                    "text2vec-transformers": {
+                        "skip": True,
+                        "vectorizePropertyName": False,
+                        "vectorizeClassName": False
+                    }
+                   }
+               }
                {
                    "name": "userId",
                    "dataType": ["int"],

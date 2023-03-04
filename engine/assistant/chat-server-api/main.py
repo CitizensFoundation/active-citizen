@@ -12,8 +12,10 @@ from langchain.vectorstores import VectorStore
 from langchain.vectorstores.weaviate import Weaviate
 
 from callback import QuestionGenCallbackHandler, StreamingLLMCallbackHandler
-from query_data import get_chain
+from chat_chain import get_chain
 from schemas import ChatResponse
+
+from routers import post_router
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
@@ -34,6 +36,7 @@ result = (
 
 print(json.dumps(result, indent=4))
 
+app.include_router(post_router)
 
 @app.on_event("startup")
 async def startup_event():

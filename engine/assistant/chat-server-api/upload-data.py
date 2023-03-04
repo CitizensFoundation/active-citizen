@@ -86,7 +86,7 @@ for group in groups:
             english_name = name
             english_description = description
         else:
-            english_name = get_english_translation(post[0],"postName",name)
+            english_name = get_english_translation(post[0],"name",name)
             english_description = get_english_translation(post[0],"PostAnswer",description)
 
         print(f"{english_name} - {english_description}")

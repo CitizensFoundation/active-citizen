@@ -27,7 +27,7 @@ def get_chain(
         stream_manager.add_handler(tracer)
 
     question_gen_llm = OpenAIChat(
-        temperature=0.7,
+        temperature=0.2,
         verbose=True,
         max_tokens=1000,
         model="gpt-3.5-turbo",
@@ -39,7 +39,7 @@ def get_chain(
         model="gpt-3.5-turbo",
         max_tokens=1000,
         verbose=True,
-        temperature=0.7,
+        temperature=0.2,
     )
 
     question_generator = LLMChain(
