@@ -38,11 +38,31 @@ short_points_against_summary_prefix = """
 
 """
 
-shortNameTemplate = """
+shortPostNameTemplate = """
   {name}
   neighborhood: {group_name}
   source: {source}\n
 """
+
+summaryTemplate = """
+  {summary}
+  neighborhood: {group_name}
+  source: {source}\n
+"""
+
+summaryWithPointsTemplate = """
+  {summary}
+
+  Points for:
+  {points_for}
+
+  Points against:
+  {points_against}
+
+  neighborhood: {group_name}
+  source: {source}\n
+"""
+
 
 def summarize_text(prompt, text, max_tokens=1000):
     completion = openai.ChatCompletion.create(
@@ -56,35 +76,108 @@ def summarize_text(prompt, text, max_tokens=1000):
 
     return completion.choices[0].message.content
 
+
 def summarize_short_name(text):
     return summarize_text(short_name_prompt_prefix, text)
+
 
 def summarize_short_summary(text):
     return summarize_text(short_summary_prefix, text)
 
+
 def summarize_full_summary(text):
     return summarize_text(full_summary_prefix, text)
+
 
 def summarize_full_points_for_summary(text):
     return summarize_text(full_points_for_summary_prefix, text)
 
+
 def summarize_short_points_for_summary(text):
     return summarize_text(short_points_for_summary_prefix, text)
+
 
 def summarize_full_points_against_summary(text):
     return summarize_text(full_points_against_summary_prefix, text)
 
+
 def summarize_short_points_against_summary(text):
     return summarize_text(short_points_against_summary_prefix, text)
 
-def get_short_name_summary(name,group_name,id):
-  prompt = PromptTemplate(
-    input_variables=["name", "source"],
-    template=shortNameTemplate,
-  )
 
-  short_name = summarize_short_name(name)
+def get_short_post_name_summary(id, name, group_name):
+    prompt = PromptTemplate(
+        input_variables=["name", "group_name", "source"],
+        template=shortPostNameTemplate,
+    )
 
-  prompt.compile(name=short_name, group_name=group_name, source=id)
+    short_name = summarize_short_name(name)
 
-  return prompt
+    prompt.compile(name=short_name, group_name=group_name, source=id)
+
+    return prompt
+
+
+def get_short_post_summary(id, name, description, group_name):
+    prompt = PromptTemplate(
+        input_variables=["name", "group_name", "source"],
+        template=summaryTemplate,
+    )
+
+    short_summary = summarize_short_summary(f"{name}\n{description}")
+
+    prompt.compile(summary=short_summary, group_name=group_name, source=id)
+
+    return prompt
+
+
+def get_full_post_summary(id, name, description, group_name):
+    prompt = PromptTemplate(
+        input_variables=["name", "group_name", "source"],
+        template=summaryTemplate,
+    )
+
+    full_summary = summarize_full_summary(f"{name}\n{description}")
+
+    prompt.compile(summary=full_summary, group_name=group_name, source=id)
+
+    return prompt
+
+
+def get_short_post_summary_with_points(id, name, description, group_name, points_for, points_against):
+    prompt = PromptTemplate(
+        input_variables=["name", "group_name",
+                         "source", 'points_for', 'points_against'],
+        template=summaryTemplate,
+    )
+
+    short_summary = summarize_short_summary(f"{name}\n{description}")
+
+    points_for_short_summary = summarize_short_points_for_summary(
+        f"{name}\n{points_for}")
+    points_against_short_summary = summarize_short_points_against_summary(
+        f"{name}\n{points_against}")
+
+    prompt.compile(summary=short_summary, group_name=group_name, source=id,
+                   points_for=points_for_short_summary, points_against=points_against_short_summary)
+
+    return prompt
+
+def get_full_post_summary_with_points(id, name, description, group_name, points_for, points_against):
+    prompt = PromptTemplate(
+        input_variables=["name", "group_name",
+                         "source", 'points_for', 'points_against'],
+        template=summaryTemplate,
+    )
+
+    short_summary = summarize_full_summary(f"{name}\n{description}")
+
+    points_for_short_summary = summarize_full_points_for_summary(
+        f"{name}\n{points_for}")
+    points_against_short_summary = summarize_full_points_against_summary(
+        f"{name}\n{points_against}")
+
+    prompt.compile(summary=short_summary, group_name=group_name, source=id,
+                   points_for=points_for_short_summary, points_against=points_against_short_summary)
+
+    return prompt
