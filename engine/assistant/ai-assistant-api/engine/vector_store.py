@@ -8,10 +8,10 @@ import time
 def upsert_post_in_vector_store(post: Post):
     client = weaviate.Client("http://localhost:8080")
 
-    uuid = generate_uuid5(Post.id, "Posts")
+    uuid = generate_uuid5(Post.post_id, "Posts")
 
     data_properties = {
-        "id": post.id,
+        "postId": post.post_id,
         "name": post.name,
         "description": post.description,
         "language": post.language,

@@ -114,7 +114,7 @@ def get_short_post_name(post: Post):
 
     short_name = summarize_short_name(post.name)
 
-    prompt.compile(name=short_name, group_name=post.group_name, source=post.id)
+    prompt.compile(name=short_name, group_name=post.group_name, source=post.post_id)
 
     return prompt
 
@@ -127,7 +127,7 @@ def get_short_post_summary(post: Post):
 
     short_summary = summarize_short_summary(f"{post.name}\n{post.description}")
 
-    prompt.compile(summary=short_summary, group_name=post.group_name, source=post.id)
+    prompt.compile(summary=short_summary, group_name=post.group_name, source=post.post_id)
 
     return prompt
 
@@ -140,7 +140,7 @@ def get_full_post_summary(post: Post):
 
     full_summary = summarize_full_summary(f"{post.name}\n{post.description}")
 
-    prompt.compile(summary=full_summary, group_name=post.group_name, source=post.id)
+    prompt.compile(summary=full_summary, group_name=post.group_name, source=post.post_id)
 
     return prompt
 
@@ -159,7 +159,7 @@ def get_short_post_summary_with_points(post: Post):
     points_against_short_summary = summarize_short_points_against_summary(
         f"{post.name}\n{post.points_against}")
 
-    prompt.compile(summary=short_summary, group_name=post.group_name, source=post.id,
+    prompt.compile(summary=short_summary, group_name=post.group_name, source=post.post_id,
                    points_for=points_for_short_summary, points_against=points_against_short_summary)
 
     return prompt
@@ -178,7 +178,7 @@ def get_full_post_summary_with_points(post: Post):
     points_against_short_summary = summarize_full_points_against_summary(
         f"{post.name}\n{post.points_against}")
 
-    prompt.compile(summary=short_summary, group_name=post.group_name, source=post.id,
+    prompt.compile(summary=short_summary, group_name=post.group_name, source=post.post_id,
                    points_for=points_for_short_summary, points_against=points_against_short_summary)
 
     return prompt
