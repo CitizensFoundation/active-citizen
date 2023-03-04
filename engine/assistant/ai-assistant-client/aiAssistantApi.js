@@ -1,6 +1,12 @@
 const _ = require('lodash');
 const request = require('request');
-const models = require('../../../models');
+const models = require('../../../../models');
+
+// import farmhash
+const farmhash = require('farmhash');
+
+// import Op
+const Op = models.Sequelize.Op;
 
 const convertToString = (integer, type) => {
   if (integer) {
@@ -24,7 +30,7 @@ const importDomain = (domain, done) => {
     });
 
   const options = {
-    url: process.env["AC_AI_ASSISTANT_BASE_URL"]+"domains/"+process.env.AC_ANALYTICS_CLUSTER_ID+"/"+domain.id,
+    url: process.env["AC_AI_ASSISTANT_BASE_URL"]+"domains/"+process.env.AC_AI_ASSISTANT_CLUSTER_ID+"/"+domain.id,
     headers: {
       'X-API-KEY': process.env["AC_AI_ASSISTANT_KEY"]
     },
@@ -51,7 +57,7 @@ const importCommunity = (community, done) => {
     });
 
   const options = {
-    url: process.env["AC_AI_ASSISTANT_BASE_URL"]+"communities/"+process.env.AC_ANALYTICS_CLUSTER_ID+"/"+community.id,
+    url: process.env["AC_AI_ASSISTANT_BASE_URL"]+"communities/"+process.env.AC_AI_ASSISTANT_CLUSTER_ID+"/"+community.id,
     headers: {
       'X-API-KEY': process.env["AC_AI_ASSISTANT_KEY"]
     },
@@ -78,7 +84,7 @@ const importGroup = (group, done) => {
     });
 
   const options = {
-    url: process.env["AC_AI_ASSISTANT_BASE_URL"]+"groups/"+process.env.AC_ANALYTICS_CLUSTER_ID+"/"+group.id,
+    url: process.env["AC_AI_ASSISTANT_BASE_URL"]+"groups/"+process.env.AC_AI_ASSISTANT_CLUSTER_ID+"/"+group.id,
     headers: {
       'X-API-KEY': process.env["AC_AI_ASSISTANT_KEY"]
     },
@@ -90,28 +96,85 @@ const importGroup = (group, done) => {
   });
 };
 
-const getPoints = (points, forPoints) => {
+getEnglishPoint = async (point, textType) => {
+  return new Promise(async (resolve, reject) => {
+    models.AcTranslationCache.getTranslation({query: {textType: textType, targetLanguage: "en"}}, point, async (error, translation) => {
+      if (!error && translation) {
+        resolve(translation.content);
+      } else
+        resolve("");
+      }
+    );
+  });
+}
+
+const getPoints = async (points, forPoints) => {
   let outPoints = "";
   for (let i=0; i<points.length; i+=1) {
-    if (forPoints && points[i].value>0 || !forPoints && points[i].value<0) {
+    if (forPoints===true && points[i].value>0 || forPoints===false && points[i].value<0) {
       const point = points[i];
       if (point.PointRevisions && point.PointRevisions.length>0) {
-        outPoints+=point.PointRevisions[point.PointRevisions.length-1].content+"\n\n";
+        let pointContent = point.PointRevisions[point.PointRevisions.length-1].content;
+        if (pointContent) {
+          const englishPoint = await getEnglishPoint(point, "pointContent");
+          outPoints+=`${cleanup_text(englishPoint)}\n\n`;
+        }
       } else {
-        content=point.content+"\n\n";
+        if (point.content) {
+          const englishPoint = await getEnglishPoint(point, "pointContent");
+          outPoints+=`${cleanup_text(englishPoint)}\n\n`;
+        }
       }
     }
   }
 
+  console.error("=====================outPoints: "+outPoints)
+
   return outPoints;
 }
 
-const getPointsForPost = (points) => {
-  return getPoints(points, true);
+const getPointsForPost = async (points) => {
+  return await getPoints(points, true);
 }
 
-const getPointsAginstPost = (points) => {
-  return getPoints(points, false);
+const getPointsAgainstPost = async (points) => {
+  return await getPoints(points, false);
+}
+
+const cleanup_text = (text) => {
+  if (typeof text === 'object') {
+    text = text.toString();
+  }
+  if (typeof text === 'string') {
+    return text.replace(/'/g, '').replace(/"/g, '').replace(/\\/g, '').replace(/(\r\n|\n|\r)/gm, " ").replace(/\s+/g, " ").trim();
+  } else {
+    return `XXXXXXXXXXXXXXXXXXX wrong type: ${typeof text} - ${text}}`;
+  }
+}
+
+const get_english_translation = async (modelInstance, textType) => {
+  const targetLanguage = "en";
+
+  return new Promise(async (resolve, reject) => {
+    if (textType=="PostAnswer") {
+      models.AcTranslationCache.getSurveyAnswerTranslations(modelInstance.id, targetLanguage, async (error, translation) => {
+        if (!error && translation) {
+          resolve(translation);
+        } else
+          resolve("");
+        }
+      );
+
+    } else {
+      models.AcTranslationCache.getTranslation({query: {textType: textType, targetLanguage}}, modelInstance, async (error, translation) => {
+        if (!error && translation) {
+          resolve(translation.content);
+        } else
+          resolve("");
+        }
+      );
+    }
+  });
 }
 
 const importPost = async (post, done) => {
@@ -205,8 +268,25 @@ const importPost = async (post, done) => {
   //TODO: Add endorsements up and down for ratings for 3d maps
   //TODO: Add English translation if there and make train english maps for all items
 
-  const pointsFor = getPointsForPost(post.Points);
-  const pointsAgainst = getPointsAgainstPost(post.Points);
+  let postName = post.name;
+
+  const englishName = await get_english_translation(post,"postName",postName)
+  const englishDescription = await get_english_translation(post,"PostAnswer",description)
+
+  console.log(`English name: ${englishName} English description: ${englishDescription}`)
+
+  if (englishName) {
+    postName = englishName;
+  }
+
+  if (englishDescription) {
+    description = englishDescription;
+  }
+  console.log(`Name: ${postName} Description: ${description}`)
+
+
+  const pointsFor = await getPointsForPost(post.Points);
+  const pointsAgainst = await getPointsAgainstPost(post.Points);
 
   properties = _.merge(properties,
     {
@@ -214,14 +294,17 @@ const importPost = async (post, done) => {
       community_id: convertToString(post.Group.Community.id, 'community_id'),
       group_id: convertToString(post.Group.id, 'group_id'),
       user_id: convertToString(post.user_id, 'user_id'),
-      description: description,
+      description: cleanup_text(description),
       counter_endorsements_up: post.counter_endorsements_up,
       counter_endorsements_down: post.counter_endorsements_down,
-      counter_points: post.counter_points,
+      counter_points_for: 0,//post.counter_points,
+      counter_points_against: 0,//post.counter_points,
       counter_flags: post.counter_flags,
+      group_name: post.Group.name,
       created_at: post.created_at,
       updated_at: post.updated_at,
-      name: post.name,
+      name: cleanup_text(postName),
+      total_number_of_posts: 1,
       image_url: imageUrl,
       video_url: videoUrl,
       points_for: pointsFor,
@@ -240,15 +323,17 @@ const importPost = async (post, done) => {
     }
   );
 
+  console.error(properties);
+
   const options = {
-    url: process.env["AC_AI_ASSISTANT_BASE_URL"]+"posts/"+process.env.AC_ANALYTICS_CLUSTER_ID+"/"+post.id,
+    url: process.env["AC_AI_ASSISTANT_BASE_URL"]+"posts/"+process.env.AC_AI_ASSISTANT_CLUSTER_ID+"/"+post.id,
     headers: {
       'X-API-KEY': process.env["AC_AI_ASSISTANT_KEY"]
     },
     json: properties
   };
 
-  request.post(options, (error) => {
+  request.put(options, (error) => {
     done(error);
   });
 };
@@ -348,7 +433,7 @@ const importPoint = (point, done) => {
   );
 
   const options = {
-    url: process.env["AC_AI_ASSISTANT_BASE_URL"]+"points/"+process.env.AC_ANALYTICS_CLUSTER_ID+"/"+point.id,
+    url: process.env["AC_AI_ASSISTANT_BASE_URL"]+"points/"+process.env.AC_AI_ASSISTANT_CLUSTER_ID+"/"+point.id,
     headers: {
       'X-API-KEY': process.env["AC_AI_ASSISTANT_KEY"]
     },

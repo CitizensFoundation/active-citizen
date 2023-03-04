@@ -1,5 +1,5 @@
-const models = require('../../../models');
-const log = require('../../../utils/logger');
+const models = require('../../../../models');
+const log = require('../../../../utils/logger');
 const importDomain = require('./aiAssistantApi').importDomain;
 const importCommunity = require('./aiAssistantApi').importCommunity;
 const importGroup = require('./aiAssistantApi').importGroup;
@@ -112,7 +112,7 @@ const updatePost = (postId, done) => {
         {
           model: models.Point.unscoped(),
           required: false,
-          attributes: ['id','content'],
+          attributes: ['id','content','value'],
           include: [
             {
               model: models.PointRevision,
@@ -124,7 +124,7 @@ const updatePost = (postId, done) => {
         {
           model: models.Group.unscoped(),
           required: true,
-          attributes: ['id','access','status','configuration'],
+          attributes: ['id','access','status','name','configuration'],
           include: [
             {
               attributes: ['id','formats'],

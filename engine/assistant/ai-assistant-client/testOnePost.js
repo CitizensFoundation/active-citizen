@@ -1,10 +1,10 @@
-const models = require('../../../models');
+const models = require('../../../../models');
 const _ = require('lodash');
 const async = require('async');
-const log = require('../../../utils/logger');
+const log = require('../../../../utils/logger');
 const updateCollection = require('./aiAssistantClient').updateCollection;
 
-if (process.env["AC_AI_ASSISTANT_KEY"] && process.env["AC__AI_ASSISTANT_URL"] ) {
+if (process.env["AC_AI_ASSISTANT_KEY"] && process.env["AC_AI_ASSISTANT_BASE_URL"] ) {
   updateCollection({
     postId: 71592
   }, (error, result) => {

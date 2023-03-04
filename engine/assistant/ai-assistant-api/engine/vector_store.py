@@ -8,14 +8,15 @@ import time
 def upsert_post_in_vector_store(post: Post):
     client = weaviate.Client("http://localhost:8080")
 
-    uuid = generate_uuid5(Post.post_id, "Posts")
+    print(post)
+
+    uuid = generate_uuid5(post.post_id, "Posts")
 
     data_properties = {
         "postId": post.post_id,
         "name": post.name,
         "description": post.description,
         "language": post.language,
-        "public_data": post.public_data,
         "counter_endorsements_up": post.counter_endorsements_up,
         "counter_endorsements_down": post.counter_endorsements_down,
         "status": post.status,
@@ -23,9 +24,8 @@ def upsert_post_in_vector_store(post: Post):
         "community_id": post.community_id,
         "domain_id": post.domain_id,
         "cluster_id": post.cluster_id,
-        "user_id": post.user_id,
-        "created_at": post.created_at,
-        "updated_at": post.updated_at,
+        "created_at": post.date,
+        "updated_at": post.date,
         "shortName": get_short_post_name(post),
         "shortSummary": get_short_post_summary(post),
         "fullSummary": get_full_post_summary(post),
@@ -33,9 +33,11 @@ def upsert_post_in_vector_store(post: Post):
         "fullSummaryWithPoints": get_full_post_summary_with_points(post),
     }
 
+    print(data_properties)
+
     # client.batch.add_data_object(data_properties, "Document", id, doc_vector)
-    client.data_object.create(
-        data_object=data_properties,
-        class_name="Posts",
-        uuid=uuid
-    )
+    #client.data_object.upsert(
+    #    data_object=data_properties,
+    #    class_name="Posts",
+    #    uuid=uuid
+    #)

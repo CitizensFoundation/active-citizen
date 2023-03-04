@@ -1,7 +1,7 @@
-const models = require('../../../models');
+const models = require('../../../../models');
 const _ = require('lodash');
 const async = require('async');
-const log = require('../../../utils/logger');
+const log = require('../../../../utils/logger');
 const importDomain = require('./utils').importDomain;
 const importCommunity = require('./utils').importCommunity;
 const importGroup = require('./utils').importGroup;
@@ -117,7 +117,7 @@ const importAllPosts = (done) => {
         {
           model: models.Point,
           required: false,
-          attributes: ['id','content'],
+          attributes: ['id','content','value'],
           include: [
             {
               model: models.PointRevision,

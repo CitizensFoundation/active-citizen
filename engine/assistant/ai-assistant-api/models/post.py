@@ -1,27 +1,26 @@
-from typing import Union, List
+from typing import Union, List, Optional
 
 from pydantic import BaseModel
 
 class Post(BaseModel):
-    post_id: int
+    post_id: Optional[int] = None
     name: str
     description: str
     language: str
     group_name: str
-    image_url: str
-    long_lat: List[float]
+    image_url: Optional[str] = None
+    long_lat: Optional[str] = None
     counter_endorsements_up: int
     counter_endorsements_down: int
-    counter_points_for: int
-    counter_points_against: int
-    points_for: List[str]
-    points_against: List[str]
-    total_number_of_posts: int
+    counter_points_for: Optional[int] = 0
+    counter_points_against: Optional[int] = 0
+    points_for: str
+    points_against: str
+    total_number_of_posts: Optional[int] = 0
     group_id: int
     community_id: int
     domain_id: int
-    cluser_id: int
-    created_at: str
-    updated_at: str
+    cluster_id: Optional[int] = None
+    date: str
     status: str
-    official_status: str
+    official_status: Optional[str] = None
