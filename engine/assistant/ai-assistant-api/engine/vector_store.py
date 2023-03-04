@@ -36,8 +36,8 @@ def upsert_post_in_vector_store(post: Post):
     print(data_properties)
 
     # client.batch.add_data_object(data_properties, "Document", id, doc_vector)
-    #client.data_object.upsert(
-    #    data_object=data_properties,
-    #    class_name="Posts",
-    #    uuid=uuid
-    #)
+    client.data_object.create(
+        data_object=data_properties,
+        class_name="Posts",
+        uuid=uuid
+    )
