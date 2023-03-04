@@ -23,3 +23,5 @@ class Post(BaseModel):
     cluser_id: int
     created_at: str
     updated_at: str
+    status: str
+    official_status: str
