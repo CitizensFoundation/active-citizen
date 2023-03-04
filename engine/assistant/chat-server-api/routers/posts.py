@@ -1,13 +1,13 @@
 from requests import Request
+from engine.vector_store import upsert_post_in_vector_store
 from fastapi import APIRouter, Response
 from models.post import Post
 
-router = APIRouter()
+post_router = APIRouter()
 
-@router.put("/api/v1/post/{post_id}")
+@post_router.put("/api/v1/post/{post_id}")
 async def update_post(post_id: int, post: Post):
-    # Create a short langchain summary of the post name and description
-
+    upsert_post_in_vector_store(post);
 
     return Response(content="OK", status_code=200)
 

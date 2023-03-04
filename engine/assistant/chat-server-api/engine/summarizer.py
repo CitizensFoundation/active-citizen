@@ -1,3 +1,4 @@
+from models.post import Post
 import openai
 from langchain import PromptTemplate
 
@@ -105,79 +106,79 @@ def summarize_short_points_against_summary(text):
     return summarize_text(short_points_against_summary_prefix, text)
 
 
-def get_short_post_name_summary(id, name, group_name):
+def get_short_post_name(post: Post):
     prompt = PromptTemplate(
         input_variables=["name", "group_name", "source"],
         template=shortPostNameTemplate,
     )
 
-    short_name = summarize_short_name(name)
+    short_name = summarize_short_name(post.name)
 
-    prompt.compile(name=short_name, group_name=group_name, source=id)
+    prompt.compile(name=short_name, group_name=post.group_name, source=post.id)
 
     return prompt
 
 
-def get_short_post_summary(id, name, description, group_name):
+def get_short_post_summary(post: Post):
     prompt = PromptTemplate(
         input_variables=["name", "group_name", "source"],
         template=summaryTemplate,
     )
 
-    short_summary = summarize_short_summary(f"{name}\n{description}")
+    short_summary = summarize_short_summary(f"{post.name}\n{post.description}")
 
-    prompt.compile(summary=short_summary, group_name=group_name, source=id)
+    prompt.compile(summary=short_summary, group_name=post.group_name, source=post.id)
 
     return prompt
 
 
-def get_full_post_summary(id, name, description, group_name):
+def get_full_post_summary(post: Post):
     prompt = PromptTemplate(
         input_variables=["name", "group_name", "source"],
         template=summaryTemplate,
     )
 
-    full_summary = summarize_full_summary(f"{name}\n{description}")
+    full_summary = summarize_full_summary(f"{post.name}\n{post.description}")
 
-    prompt.compile(summary=full_summary, group_name=group_name, source=id)
+    prompt.compile(summary=full_summary, group_name=post.group_name, source=post.id)
 
     return prompt
 
 
-def get_short_post_summary_with_points(id, name, description, group_name, points_for, points_against):
+def get_short_post_summary_with_points(post: Post):
     prompt = PromptTemplate(
         input_variables=["name", "group_name",
                          "source", 'points_for', 'points_against'],
         template=summaryTemplate,
     )
 
-    short_summary = summarize_short_summary(f"{name}\n{description}")
+    short_summary = summarize_short_summary(f"{post.name}\n{post.description}")
 
     points_for_short_summary = summarize_short_points_for_summary(
-        f"{name}\n{points_for}")
+        f"{post.name}\n{post.points_for}")
     points_against_short_summary = summarize_short_points_against_summary(
-        f"{name}\n{points_against}")
+        f"{post.name}\n{post.points_against}")
 
-    prompt.compile(summary=short_summary, group_name=group_name, source=id,
+    prompt.compile(summary=short_summary, group_name=post.group_name, source=post.id,
                    points_for=points_for_short_summary, points_against=points_against_short_summary)
 
     return prompt
 
-def get_full_post_summary_with_points(id, name, description, group_name, points_for, points_against):
+def get_full_post_summary_with_points(post: Post):
     prompt = PromptTemplate(
         input_variables=["name", "group_name",
                          "source", 'points_for', 'points_against'],
         template=summaryTemplate,
     )
 
-    short_summary = summarize_full_summary(f"{name}\n{description}")
+    short_summary = summarize_full_summary(f"{post.name}\n{post.description}")
 
     points_for_short_summary = summarize_full_points_for_summary(
-        f"{name}\n{points_for}")
+        f"{post.name}\n{post.points_for}")
     points_against_short_summary = summarize_full_points_against_summary(
-        f"{name}\n{points_against}")
+        f"{post.name}\n{post.points_against}")
 
-    prompt.compile(summary=short_summary, group_name=group_name, source=id,
+    prompt.compile(summary=short_summary, group_name=post.group_name, source=post.id,
                    points_for=points_for_short_summary, points_against=points_against_short_summary)
 
     return prompt

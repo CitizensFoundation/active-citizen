@@ -15,7 +15,7 @@ from callback import QuestionGenCallbackHandler, StreamingLLMCallbackHandler
 from chat_chain import get_chain
 from schemas import ChatResponse
 
-from routers import post_router
+from routers.posts import post_router
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
@@ -45,7 +45,6 @@ async def startup_event():
 @app.get("/")
 async def get(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
-
 @app.websocket("/chat")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
