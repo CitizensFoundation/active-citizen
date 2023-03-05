@@ -42,7 +42,7 @@ short_points_against_summary_prefix = """
 shortPostNameTemplate = """
   Idea: {name}
 
-  Neighborhood name: {group_name}
+  Neighborhood: {group_name}
 
   source: {source}\n
 """
@@ -50,7 +50,7 @@ shortPostNameTemplate = """
 summaryTemplate = """
   Idea: {summary}
 
-  Neighborhood name: {group_name}
+  Neighborhood: {group_name}
 
   source: {source}\n
 """
@@ -64,8 +64,10 @@ summaryWithPointsTemplate = """
   Points against:
   {points_against}
 
-  Neighborhood name: {group_name}
+  Neighborhood: {group_name}
 
+  likes: {counter_endorsements_up}
+  dislikes: {counter_endorsements_down}
   source: {source}\n
 """
 
@@ -78,9 +80,11 @@ summaryWithPointsAndImageTemplate = """
   Points against:
   {points_against}
 
-  Neighborhood name: {group_name}
+  Neighborhood: {group_name}
 
   image_url: {image_url}
+  likes: {counter_endorsements_up}
+  dislikes: {counter_endorsements_down}
   source: {source}\n
 """
 
@@ -165,6 +169,7 @@ def get_full_post_summary(post: Post):
 def get_short_post_summary_with_points(post: Post):
     prompt = PromptTemplate(
         input_variables=["group_name",
+                         "counter_endorsements_up", "counter_endorsements_down",
                          "source", 'points_for', 'points_against',"summary"],
         template=summaryWithPointsTemplate,
     )
@@ -187,11 +192,13 @@ def get_short_post_summary_with_points(post: Post):
     print(points_against_short_summary)
 
     return prompt.format(summary=short_summary, group_name=post.group_name, source=post.post_id,
+                  counter_endorsements_up=post.counter_endorsements_up, counter_endorsements_down=post.counter_endorsements_down,
                    points_for=points_for_short_summary, points_against=points_against_short_summary)
 
 def get_full_post_summary_with_points(post: Post):
     prompt = PromptTemplate(
         input_variables=["group_name",
+                         "counter_endorsements_up", "counter_endorsements_down",
                          "source", 'points_for', 'points_against',"summary","image_url"],
         template=summaryWithPointsAndImageTemplate,
     )
@@ -211,5 +218,6 @@ def get_full_post_summary_with_points(post: Post):
 
     return prompt.format(summary=short_summary, group_name=post.group_name, source=post.post_id,
                    image_url=post.image_url,
+                   counter_endorsements_up=post.counter_endorsements_up, counter_endorsements_down=post.counter_endorsements_down,
                    points_for=points_for_short_summary, points_against=points_against_short_summary)
 

@@ -23,12 +23,12 @@ vectorstore: Optional[VectorStore] = None
 client: Optional[weaviate.Client] = None
 
 client = weaviate.Client("http://localhost:8080")
-vectorstore = Weaviate(client, "Posts", "fullSummaryWithPoints")
+vectorstore = Weaviate(client, "Posts", "shortSummaryWithPoints")
 nearText = {"concepts": ["west"]}
 
 result = (
     client.query
-    .get("Posts", ["fullSummaryWithPoints"])
+    .get("Posts", ["shortSummaryWithPoints"])
     .with_near_text(nearText)
     .with_limit(15)
     .do()
