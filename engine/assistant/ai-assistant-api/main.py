@@ -5,6 +5,8 @@ from pathlib import Path
 from typing import Optional
 import weaviate
 import json
+import os
+os.environ["LANGCHAIN_HANDLER"] = "langchain"
 
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.templating import Jinja2Templates

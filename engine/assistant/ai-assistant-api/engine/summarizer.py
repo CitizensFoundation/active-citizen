@@ -40,52 +40,57 @@ short_points_against_summary_prefix = """
 """
 
 shortPostNameTemplate = """
-  Idea: {name}
+  {name}
 
-  Neighborhood: {group_name}
+  Neighborhood
+  {group_name}
 
-  source: {source}\n
+  <|source={source}|>\n\n
 """
 
 summaryTemplate = """
-  Idea: {summary}
+  {summary}
 
-  Neighborhood: {group_name}
+  Neighborhood
+  {group_name}
 
-  source: {source}\n
+  <|source={source}|>\n\n
 """
 
 summaryWithPointsTemplate = """
-  Idea: {summary}
+  {summary}
 
-  Points for:
+  Neighborhood
+  {group_name}
+
+  Points for
   {points_for}
 
-  Points against:
+  Points against
   {points_against}
 
-  Neighborhood: {group_name}
-
-  likes: {counter_endorsements_up}
-  dislikes: {counter_endorsements_down}
-  source: {source}\n
+  <|image_url={image_url}|>
+  <|likes={counter_endorsements_up}|>
+  <|dislikes={counter_endorsements_down}|>
+  <|source={source}|>\n\n
 """
 
 summaryWithPointsAndImageTemplate = """
-  Idea: {summary}
+  {summary}
 
-  Points for:
+  Neighborhood
+  {group_name}
+
+  Points for
   {points_for}
 
-  Points against:
+  Points against
   {points_against}
 
-  Neighborhood: {group_name}
-
-  image_url: {image_url}
-  likes: {counter_endorsements_up}
-  dislikes: {counter_endorsements_down}
-  source: {source}\n
+  <|image_url={image_url}|>
+  <|likes={counter_endorsements_up}|>
+  <|dislikes={counter_endorsements_down}|>
+  <|source={source}|>\n\n
 """
 
 def summarize_text(prompt, text, max_tokens=1000):
@@ -170,7 +175,7 @@ def get_short_post_summary_with_points(post: Post):
     prompt = PromptTemplate(
         input_variables=["group_name",
                          "counter_endorsements_up", "counter_endorsements_down",
-                         "source", 'points_for', 'points_against',"summary"],
+                         "source", 'points_for', 'points_against',"summary","image_url"],
         template=summaryWithPointsTemplate,
     )
 
@@ -192,6 +197,7 @@ def get_short_post_summary_with_points(post: Post):
     print(points_against_short_summary)
 
     return prompt.format(summary=short_summary, group_name=post.group_name, source=post.post_id,
+                           image_url=post.image_url,
                   counter_endorsements_up=post.counter_endorsements_up, counter_endorsements_down=post.counter_endorsements_down,
                    points_for=points_for_short_summary, points_against=points_against_short_summary)
 
