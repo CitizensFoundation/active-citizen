@@ -3,6 +3,7 @@ import logging
 import pickle
 from pathlib import Path
 from typing import Optional
+from engine.chat_manager import ChatManager
 import weaviate
 import json
 import os
@@ -26,7 +27,7 @@ client: Optional[weaviate.Client] = None
 
 client = weaviate.Client("http://localhost:8080")
 vectorstore = Weaviate(client, "Posts", "shortSummaryWithPoints")
-nearText = {"concepts": ["west"]}
+nearText = {"concepts": ["Klambratún","playground"]}
 
 result = (
     client.query
@@ -47,35 +48,15 @@ async def startup_event():
 @app.get("/")
 async def get(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
+
 @app.websocket("/chat")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
-    question_handler = QuestionGenCallbackHandler(websocket)
-    stream_handler = StreamingLLMCallbackHandler(websocket)
-    chat_history = []
-    qa_chain = get_chain(vectorstore, question_handler, stream_handler, tracing=True)
-    # Use the below line instead of the above line to enable tracing
-    # Ensure `langchain-server` is running
-    # qa_chain = get_chain(vectorstore, question_handler, stream_handler, tracing=True)
+    chat_manager = ChatManager(websocket)
 
     while True:
         try:
-            # Receive and send back the client message
-            question = await websocket.receive_text()
-            resp = ChatResponse(sender="you", message=question, type="stream")
-            await websocket.send_json(resp.dict())
-
-            # Construct a response
-            start_resp = ChatResponse(sender="bot", message="", type="start")
-            await websocket.send_json(start_resp.dict())
-
-            result = await qa_chain.acall(
-                {"question": question, "chat_history": chat_history}
-            )
-            chat_history.append((question, result["answer"]))
-
-            end_resp = ChatResponse(sender="bot", message="", type="end")
-            await websocket.send_json(end_resp.dict())
+           await chat_manager.chat_loop()
         except WebSocketDisconnect:
             logging.info("websocket disconnect")
             break
