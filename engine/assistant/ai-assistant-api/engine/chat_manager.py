@@ -4,7 +4,6 @@ from routers.posts import post_router
 from schemas import ChatResponse
 from chains.vector_db_chain_chain import get_qa_chain
 from callback import QuestionGenCallbackHandler, StreamingLLMCallbackHandler
-from langchain.vectorstores.weaviate import Weaviate
 from langchain.vectorstores import VectorStore
 from callback import QuestionGenCallbackHandler, StreamingLLMCallbackHandler
 from schemas import ChatResponse
@@ -14,6 +13,7 @@ import logging
 import pickle
 from pathlib import Path
 from typing import Optional
+from vectorstores.yrpri_weaviate import YrpriWeaviate
 import weaviate
 import traceback
 import json
@@ -27,7 +27,11 @@ vectorstore: Optional[VectorStore] = None
 client: Optional[weaviate.Client] = None
 
 client = weaviate.Client("http://localhost:8080")
-vectorstore = Weaviate(client, "Posts", "fullSummaryWithPoints")
+short_summary_vectorstore = YrpriWeaviate(client, "Posts", "shortSummary")
+full_summary_vectorstore = YrpriWeaviate(client, "Posts", "fullSummary")
+short_summary_with_points_vectorstore = YrpriWeaviate(client, "Posts", "shortSummaryWithPoints")
+full_summary_with_points_vectorstore = YrpriWeaviate(client, "Posts", "fullSummaryWithPoints")
+
 nearText = {"concepts": ["Klambratún", "playground"]}
 
 result = (
@@ -59,7 +63,7 @@ class ChatManager:
         self.question_handler = QuestionGenCallbackHandler(self.websocket)
         self.stream_handler = StreamingLLMCallbackHandler(self.websocket)
         print(1)
-        self.qa_chain = get_qa_chain(vectorstore, self.question_handler,
+        self.qa_chain = get_qa_chain(short_summary_vectorstore, self.question_handler,
                                   self.stream_handler, tracing=True)
 
     async def get_concepts_and_refined_question(self, question):
@@ -86,8 +90,10 @@ class ChatManager:
                 concepts = conceptsJSON['concepts']
             except json.JSONDecodeError:
                 # Handle invalid JSON input
-                question_type = None
+                question_type = "asking_about_many_ideas"
                 concepts = None
+                vectorstore = short_summary_vectorstore
+                top_k_docs_for_context = 12
 
             print("----------------------")
             print(conceptsJSON)
@@ -95,6 +101,20 @@ class ChatManager:
             print(concepts)
             print("----------------------")
 
+            if question_type == "asking_about_many_ideas":
+                self.qa_chain.vectorstore = short_summary_vectorstore
+                top_k_docs_for_context = 20
+            elif question_type == "asking_about_one_idea":
+                self.qa_chain.vectorstore = full_summary_with_points_vectorstore
+                top_k_docs_for_context = 6
+            elif question_type == "asking_about_points_for_or_against":
+                self.qa_chain.vectorstore = short_summary_with_points_vectorstore
+                top_k_docs_for_context = 12
+            else:
+                self.qa_chain.vectorstore = short_summary_vectorstore
+                top_k_docs_for_context = 20
+
+            print(f"XXXXXXXXXXXXXXXXXXXXXXXXXx - vectorstore: {self.qa_chain.vectorstore}")
 
             # Construct a response
             start_resp = ChatResponse(sender="bot", message="", type="start")
@@ -105,6 +125,7 @@ class ChatManager:
                      "question": question,
                      "question_type": question_type,
                      "concepts": concepts,
+                     "top_k_docs_for_context": top_k_docs_for_context,
                      "chat_history": self.chat_history}
             )
 

@@ -4,6 +4,7 @@ import pickle
 from pathlib import Path
 from typing import Optional
 from engine.chat_manager import ChatManager
+from vectorstores.yrpri_weaviate import YrpriWeaviate
 import weaviate
 import json
 import os
@@ -14,7 +15,6 @@ logging.basicConfig(level=logging.DEBUG)
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.templating import Jinja2Templates
 from langchain.vectorstores import VectorStore
-from langchain.vectorstores.weaviate import Weaviate
 
 from callback import QuestionGenCallbackHandler, StreamingLLMCallbackHandler
 from chains.vector_db_chain_chain import get_qa_chain
@@ -28,7 +28,7 @@ vectorstore: Optional[VectorStore] = None
 client: Optional[weaviate.Client] = None
 
 client = weaviate.Client("http://localhost:8080")
-vectorstore = Weaviate(client, "Posts", "shortName")
+vectorstore = YrpriWeaviate(client, "Posts", "shortName")
 nearText = {"concepts": ["children","playground"], "distance": 0.25}
 
 result = (

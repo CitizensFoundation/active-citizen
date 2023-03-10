@@ -45,6 +45,9 @@ def get_qa_chain(
         llm=question_gen_llm, prompt=CONDENSE_QUESTION_PROMPT, callback_manager=manager
     )
     qa_prompt = PROMPT_SELECTOR.get_prompt(streaming_llm)
+
+    print(qa_prompt)
+
     doc_chain = load_qa_chain(
         streaming_llm, chain_type="stuff", prompt=qa_prompt, callback_manager=manager
     )
