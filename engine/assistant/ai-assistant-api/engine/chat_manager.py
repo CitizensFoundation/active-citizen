@@ -104,7 +104,7 @@ class ChatManager:
 
             if question_type == "asking_about_many_ideas":
                 self.qa_chain.vectorstore = short_summary_vectorstore
-                top_k_docs_for_context = 45
+                top_k_docs_for_context = 42
             elif question_type == "asking_about_one_idea":
                 self.qa_chain.vectorstore = full_summary_with_points_vectorstore
                 top_k_docs_for_context = 12
@@ -113,7 +113,7 @@ class ChatManager:
                 top_k_docs_for_context = 12
             else:
                 self.qa_chain.vectorstore = short_summary_vectorstore
-                top_k_docs_for_context = 45
+                top_k_docs_for_context = 42
 
             print(f"XXXXXXXXXXXXXXXXXXXXXXXXXx - vectorstore: {self.qa_chain.vectorstore}")
 
