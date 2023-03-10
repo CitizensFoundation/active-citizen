@@ -82,6 +82,8 @@ class ChatManager:
             await self.websocket.send_json(resp.dict())
 
             question_analysis = get_question_analysis(question)
+            print("----------------------")
+            print(question_analysis)
 
             try:
                 # Parse question_analysis into JSON and create a dict object
@@ -95,7 +97,6 @@ class ChatManager:
                 vectorstore = short_summary_vectorstore
                 top_k_docs_for_context = 12
 
-            print("----------------------")
             print(conceptsJSON)
             print(question_type)
             print(concepts)
@@ -103,16 +104,16 @@ class ChatManager:
 
             if question_type == "asking_about_many_ideas":
                 self.qa_chain.vectorstore = short_summary_vectorstore
-                top_k_docs_for_context = 20
+                top_k_docs_for_context = 45
             elif question_type == "asking_about_one_idea":
                 self.qa_chain.vectorstore = full_summary_with_points_vectorstore
-                top_k_docs_for_context = 6
-            elif question_type == "asking_about_points_for_or_against":
+                top_k_docs_for_context = 12
+            elif question_type == "asking_about_points_for_or_against" or "asking_about_pros_or_cons":
                 self.qa_chain.vectorstore = short_summary_with_points_vectorstore
                 top_k_docs_for_context = 12
             else:
                 self.qa_chain.vectorstore = short_summary_vectorstore
-                top_k_docs_for_context = 20
+                top_k_docs_for_context = 45
 
             print(f"XXXXXXXXXXXXXXXXXXXXXXXXXx - vectorstore: {self.qa_chain.vectorstore}")
 
