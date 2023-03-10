@@ -5,6 +5,8 @@ from vector_db_chain_chain import get_chain
 from callback import QuestionGenCallbackHandler, StreamingLLMCallbackHandler
 from langchain.vectorstores.weaviate import Weaviate
 from langchain.vectorstores import VectorStore
+from callback import QuestionGenCallbackHandler, StreamingLLMCallbackHandler
+from schemas import ChatResponse
 from fastapi.templating import Jinja2Templates
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 import logging
@@ -68,8 +70,8 @@ class ChatManager:
             start_resp = ChatResponse(sender="bot", message="", type="start")
             await self.websocket.send_json(start_resp.dict())
 
-            result = await self.qa_chain(
-                {"question": question}, return_only_outputs=True
+            result = await self.qa_chain.acall(
+                 {"question": question, "chat_history":self.chat_history}
             )
             self.chat_history.append((question, result["answer"]))
 
