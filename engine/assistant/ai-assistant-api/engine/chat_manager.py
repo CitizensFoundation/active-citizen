@@ -1,7 +1,8 @@
 """Main entrypoint for the app."""
+from engine.question_analysis import get_question_analysis
 from routers.posts import post_router
 from schemas import ChatResponse
-from chains.vector_db_chain_chain import get_chain
+from chains.vector_db_chain_chain import get_qa_chain
 from callback import QuestionGenCallbackHandler, StreamingLLMCallbackHandler
 from langchain.vectorstores.weaviate import Weaviate
 from langchain.vectorstores import VectorStore
@@ -17,6 +18,8 @@ import weaviate
 import traceback
 import json
 import os
+import openai
+
 from langchain.schema import (
     HumanMessage,
 )
@@ -56,8 +59,12 @@ class ChatManager:
         self.question_handler = QuestionGenCallbackHandler(self.websocket)
         self.stream_handler = StreamingLLMCallbackHandler(self.websocket)
         print(1)
-        self.qa_chain = get_chain(vectorstore, self.question_handler,
+        self.qa_chain = get_qa_chain(vectorstore, self.question_handler,
                                   self.stream_handler, tracing=True)
+
+    async def get_concepts_and_refined_question(self, question):
+
+        return result["concepts"], result["answer"]
 
     async def chat_loop(self):
         try:
@@ -67,12 +74,27 @@ class ChatManager:
             await self.websocket.send_json(resp.dict())
 
             # Construct a response
+            resp = ChatResponse(sender="bot", message="", type="thinking")
+            await self.websocket.send_json(resp.dict())
+
+            question_analysis = get_question_analysis(question)
+
+            # Parse question_analysis into JSON
+            conceptsJSON = json.loads(question_analysis)
+
+
+            # Construct a response
             start_resp = ChatResponse(sender="bot", message="", type="start")
             await self.websocket.send_json(start_resp.dict())
 
             result = await self.qa_chain.acall(
-                 {"question": question, "chat_history":self.chat_history}
+                 {
+                     "question": question,
+                     "question_type": question_analysis["question_type"],
+                     "concepts": question_analysis["concepts"],
+                     "chat_history": self.chat_history}
             )
+
             self.chat_history.append((question, result["answer"]))
 
             end_resp = ChatResponse(sender="bot", message="", type="end")

@@ -1,3 +1,4 @@
+from chains.chat_chain import ChatChainWithSources
 from langchain.callbacks.base import AsyncCallbackManager
 from langchain.callbacks.tracers import LangChainTracer
 from langchain.chains import ChatVectorDBChain
@@ -9,7 +10,7 @@ from langchain.chat_models import ChatOpenAI
 from langchain.vectorstores.base import VectorStore
 
 
-def get_chain(
+def get_qa_chain(
     vectorstore: VectorStore, question_handler, stream_handler, tracing: bool = False
 ) -> ChatVectorDBChain:
     """Create a ChatVectorDBChain for question/answering."""
@@ -31,6 +32,7 @@ def get_chain(
         max_tokens=1200,
         callback_manager=question_manager,
     )
+
     streaming_llm = ChatOpenAI(
         streaming=True,
         callback_manager=stream_manager,
@@ -47,7 +49,7 @@ def get_chain(
         streaming_llm, chain_type="stuff", prompt=qa_prompt, callback_manager=manager
     )
 
-    qa = ChatVectorDBChain(
+    qa = ChatChainWithSources(
         vectorstore=vectorstore,
         combine_docs_chain=doc_chain,
         question_generator=question_generator,

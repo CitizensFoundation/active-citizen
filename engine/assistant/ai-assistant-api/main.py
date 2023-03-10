@@ -17,7 +17,7 @@ from langchain.vectorstores import VectorStore
 from langchain.vectorstores.weaviate import Weaviate
 
 from callback import QuestionGenCallbackHandler, StreamingLLMCallbackHandler
-from chains.vector_db_chain_chain import get_chain
+from chains.vector_db_chain_chain import get_qa_chain
 from schemas import ChatResponse
 
 from routers.posts import post_router
@@ -29,7 +29,7 @@ client: Optional[weaviate.Client] = None
 
 client = weaviate.Client("http://localhost:8080")
 vectorstore = Weaviate(client, "Posts", "shortName")
-nearText = {"concepts": ["Klambratún","playground"], "certainty": 0.7}
+nearText = {"concepts": ["children","playground"], "distance": 0.25}
 
 result = (
     client.query
