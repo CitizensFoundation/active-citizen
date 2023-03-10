@@ -79,8 +79,21 @@ class ChatManager:
 
             question_analysis = get_question_analysis(question)
 
-            # Parse question_analysis into JSON
-            conceptsJSON = json.loads(question_analysis)
+            try:
+                # Parse question_analysis into JSON and create a dict object
+                conceptsJSON = json.loads(question_analysis)
+                question_type = conceptsJSON['question_type']
+                concepts = conceptsJSON['concepts']
+            except json.JSONDecodeError:
+                # Handle invalid JSON input
+                question_type = None
+                concepts = None
+
+            print("----------------------")
+            print(conceptsJSON)
+            print(question_type)
+            print(concepts)
+            print("----------------------")
 
 
             # Construct a response
@@ -90,8 +103,8 @@ class ChatManager:
             result = await self.qa_chain.acall(
                  {
                      "question": question,
-                     "question_type": question_analysis["question_type"],
-                     "concepts": question_analysis["concepts"],
+                     "question_type": question_type,
+                     "concepts": concepts,
                      "chat_history": self.chat_history}
             )
 

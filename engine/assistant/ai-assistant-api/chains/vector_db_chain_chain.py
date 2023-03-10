@@ -53,7 +53,7 @@ def get_qa_chain(
         vectorstore=vectorstore,
         combine_docs_chain=doc_chain,
         question_generator=question_generator,
-        top_k_docs_for_context=15,
+        top_k_docs_for_context=12,
         callback_manager=manager,
     )
     return qa
