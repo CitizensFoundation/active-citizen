@@ -28,12 +28,14 @@ def get_chain(
     question_gen_llm = ChatOpenAI(
         temperature=0,
         verbose=True,
+        max_tokens=1200,
         callback_manager=question_manager,
     )
     streaming_llm = ChatOpenAI(
         streaming=True,
         callback_manager=stream_manager,
         verbose=True,
+        max_tokens=1200,
         temperature=0,
     )
 
@@ -49,7 +51,7 @@ def get_chain(
         vectorstore=vectorstore,
         combine_docs_chain=doc_chain,
         question_generator=question_generator,
-        top_k_docs_for_context=20,
+        top_k_docs_for_context=15,
         callback_manager=manager,
     )
     return qa
