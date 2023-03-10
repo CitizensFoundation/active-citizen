@@ -15,7 +15,7 @@ from langchain.vectorstores import VectorStore
 from langchain.vectorstores.weaviate import Weaviate
 
 from callback import QuestionGenCallbackHandler, StreamingLLMCallbackHandler
-from vector_db_chain_chain import get_chain
+from chains.vector_db_chain_chain import get_chain
 from schemas import ChatResponse
 
 from routers.posts import post_router

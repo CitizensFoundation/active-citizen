@@ -1,7 +1,7 @@
 """Main entrypoint for the app."""
 from routers.posts import post_router
 from schemas import ChatResponse
-from vector_db_chain_chain import get_chain
+from chains.vector_db_chain_chain import get_chain
 from callback import QuestionGenCallbackHandler, StreamingLLMCallbackHandler
 from langchain.vectorstores.weaviate import Weaviate
 from langchain.vectorstores import VectorStore

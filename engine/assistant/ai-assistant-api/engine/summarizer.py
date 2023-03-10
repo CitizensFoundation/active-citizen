@@ -2,10 +2,13 @@ from models.post import Post
 import openai
 from langchain import PromptTemplate
 
-system_message = "You are an effective text summarization system."
+system_message = """You are an effective text summarization and shortening system.
+If you can't shorten text just output the original text.
+Always output text without an explaination.
+"""
 
 short_name_prompt_prefix = """
-  Please shorten this idea name as much as possible without using abbreviations:
+  Please shorten the idea name as much as possible without using abbreviations.
 
 """
 

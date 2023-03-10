@@ -2,7 +2,7 @@ from langchain.callbacks.base import AsyncCallbackManager
 from langchain.callbacks.tracers import LangChainTracer
 from langchain.chains import ChatVectorDBChain
 from langchain.chains.chat_vector_db.prompts import CONDENSE_QUESTION_PROMPT
-from langchain.chains.question_answering.stuff_prompt import PROMPT_SELECTOR
+from langchain.chains.question_answering.map_reduce_prompt import COMBINE_PROMPT_SELECTOR
 from langchain.chains.llm import LLMChain
 from langchain.chains.question_answering import load_qa_chain
 from langchain.chat_models import ChatOpenAI
@@ -40,15 +40,20 @@ def get_chain(
     question_generator = LLMChain(
         llm=question_gen_llm, prompt=CONDENSE_QUESTION_PROMPT, callback_manager=manager
     )
-    qa_prompt = PROMPT_SELECTOR.get_prompt(streaming_llm)
+    qa_prompt = COMBINE_PROMPT_SELECTOR.get_prompt(streaming_llm)
     doc_chain = load_qa_chain(
-        streaming_llm, chain_type="stuff", prompt=qa_prompt, callback_manager=manager
+        streaming_llm,
+        chain_type="map_reduce",
+        #prompt=qa_prompt,
+        callback_manager=manager
     )
 
     qa = ChatVectorDBChain(
         vectorstore=vectorstore,
         combine_docs_chain=doc_chain,
+        prompt=qa_prompt,
         question_generator=question_generator,
+        top_k_docs_for_context=2000,
         callback_manager=manager,
     )
     return qa
