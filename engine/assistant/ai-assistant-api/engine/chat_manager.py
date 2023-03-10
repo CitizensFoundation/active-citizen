@@ -1,7 +1,7 @@
 """Main entrypoint for the app."""
 from routers.posts import post_router
 from schemas import ChatResponse
-from chat_chain import get_chain
+from vector_db_chain_chain import get_chain
 from callback import QuestionGenCallbackHandler, StreamingLLMCallbackHandler
 from langchain.vectorstores.weaviate import Weaviate
 from langchain.vectorstores import VectorStore
@@ -12,21 +12,22 @@ import pickle
 from pathlib import Path
 from typing import Optional
 import weaviate
+import traceback
 import json
 import os
-os.environ["LANGCHAIN_HANDLER"] = "langchain"
-
-
+from langchain.schema import (
+    HumanMessage,
+)
 vectorstore: Optional[VectorStore] = None
 client: Optional[weaviate.Client] = None
 
 client = weaviate.Client("http://localhost:8080")
-vectorstore = Weaviate(client, "Posts", "shortSummaryWithPoints")
+vectorstore = Weaviate(client, "Posts", "shortName")
 nearText = {"concepts": ["Klambratún", "playground"]}
 
 result = (
     client.query
-    .get("Posts", ["shortSummaryWithPoints"])
+    .get("Posts", ["shortName"])
     .with_near_text(nearText)
     .with_limit(15)
     .do()
@@ -34,12 +35,25 @@ result = (
 
 print(json.dumps(result, indent=4))
 
+states = {
+    "waiting": {
+        "start": "thinking"
+    },
+    "thinking": {
+        "end": "responding"
+    },
+    "responding": {
+        "reset": "waiting"
+    }
+}
+
 class ChatManager:
     def __init__(self, websocket):
         self.chat_history = []
         self.websocket = websocket
         self.question_handler = QuestionGenCallbackHandler(self.websocket)
         self.stream_handler = StreamingLLMCallbackHandler(self.websocket)
+        print(1)
         self.qa_chain = get_chain(vectorstore, self.question_handler,
                                   self.stream_handler, tracing=True)
 
@@ -54,8 +68,8 @@ class ChatManager:
             start_resp = ChatResponse(sender="bot", message="", type="start")
             await self.websocket.send_json(start_resp.dict())
 
-            result = await self.qa_chain.acall(
-                {"question": question, "chat_history": self.chat_history}
+            result = await self.qa_chain(
+                {"question": question}, return_only_outputs=True
             )
             self.chat_history.append((question, result["answer"]))
 
@@ -64,5 +78,7 @@ class ChatManager:
         except WebSocketDisconnect:
             logging.info("websocket disconnect")
         except Exception as e:
+            print("JIJIJIJIJ")
+            print(traceback.format_exc())
             logging.error(e)
             raise e

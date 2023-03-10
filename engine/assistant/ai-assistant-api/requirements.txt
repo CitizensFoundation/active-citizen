@@ -1,6 +1,7 @@
 openai
 fastapi
 black
+tiktoken
 isort
 websockets
 pydantic

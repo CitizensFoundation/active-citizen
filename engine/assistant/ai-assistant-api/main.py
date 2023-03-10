@@ -15,7 +15,7 @@ from langchain.vectorstores import VectorStore
 from langchain.vectorstores.weaviate import Weaviate
 
 from callback import QuestionGenCallbackHandler, StreamingLLMCallbackHandler
-from chat_chain import get_chain
+from vector_db_chain_chain import get_chain
 from schemas import ChatResponse
 
 from routers.posts import post_router
@@ -26,12 +26,12 @@ vectorstore: Optional[VectorStore] = None
 client: Optional[weaviate.Client] = None
 
 client = weaviate.Client("http://localhost:8080")
-vectorstore = Weaviate(client, "Posts", "shortSummaryWithPoints")
-nearText = {"concepts": ["Klambratún","playground"]}
+vectorstore = Weaviate(client, "Posts", "shortName")
+nearText = {"concepts": ["Klambratún","playground"], "certainty": 0.7}
 
 result = (
     client.query
-    .get("Posts", ["shortSummaryWithPoints"])
+    .get("Posts", ["shortName"])
     .with_near_text(nearText)
     .with_limit(15)
     .do()

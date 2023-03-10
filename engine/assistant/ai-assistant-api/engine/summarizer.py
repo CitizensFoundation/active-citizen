@@ -39,58 +39,48 @@ short_points_against_summary_prefix = """
 
 """
 
-shortPostNameTemplate = """
-  {name}
+shortPostNameTemplate = """Idea: {name}
 
-  Neighborhood
-  {group_name}
+  Neighborhood: {group_name}
 
-  <|source={source}|>\n\n
+  Source: {source}\n\n
 """
 
-summaryTemplate = """
-  {summary}
+summaryTemplate = """Idea: {summary}
 
-  Neighborhood
-  {group_name}
+  Neighborhood: {group_name}
 
-  <|source={source}|>\n\n
+  Source: {source}
 """
 
-summaryWithPointsTemplate = """
-  {summary}
+summaryWithPointsTemplate = """Idea: {summary}
 
-  Neighborhood
-  {group_name}
+  Neighborhood: {group_name}
 
-  Points for
-  {points_for}
+  Points for: {points_for}
 
-  Points against
-  {points_against}
+  Points against: {points_against}
 
-  <|image_url={image_url}|>
-  <|likes={counter_endorsements_up}|>
-  <|dislikes={counter_endorsements_down}|>
-  <|source={source}|>\n\n
+  Source: {source}
+
+  <image_url={image_url}>
+  <likes={counter_endorsements_up}>
+  <dislikes={counter_endorsements_down}>\n\n
 """
 
-summaryWithPointsAndImageTemplate = """
-  {summary}
+summaryWithPointsAndImageTemplate = """Idea: {summary}
 
-  Neighborhood
-  {group_name}
+  Neighborhood: {group_name}
 
-  Points for
-  {points_for}
+  Points for: {points_for}
 
-  Points against
-  {points_against}
+  Points against: {points_against}
 
-  <|image_url={image_url}|>
-  <|likes={counter_endorsements_up}|>
-  <|dislikes={counter_endorsements_down}|>
-  <|source={source}|>\n\n
+  Source: {source}
+
+  <image_url={image_url}>
+  <likes={counter_endorsements_up}>
+  <dislikes={counter_endorsements_down}>\n\n
 """
 
 def summarize_text(prompt, text, max_tokens=1000):
