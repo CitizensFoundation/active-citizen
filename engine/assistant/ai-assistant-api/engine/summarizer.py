@@ -3,8 +3,8 @@ import openai
 from langchain import PromptTemplate
 
 system_message = """You are an effective text summarization and shortening system.
-If you can't shorten text just output the original text.
-Always output text without an explaination.
+If you can't shorten or summarize the text just output the original text.
+Always output text without an explaination. Never say you are sorry, just output the original text.
 """
 
 short_name_prompt_prefix = """

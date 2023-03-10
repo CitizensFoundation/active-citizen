@@ -9,6 +9,8 @@ import json
 import os
 os.environ["LANGCHAIN_HANDLER"] = "langchain"
 
+logging.basicConfig(level=logging.DEBUG)
+
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.templating import Jinja2Templates
 from langchain.vectorstores import VectorStore
@@ -73,4 +75,4 @@ async def websocket_endpoint(websocket: WebSocket):
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=9000, debug=True)
+    uvicorn.run(app, host="0.0.0.0", port=9000, debug=True, log_level="debug")
