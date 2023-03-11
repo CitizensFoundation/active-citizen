@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from pydantic import BaseModel
-
+from langchain.docstore.document import Document
 from langchain.chains.base import Chain
 from langchain.chains.chat_vector_db.prompts import CONDENSE_QUESTION_PROMPT
 from langchain.chains.combine_documents.base import BaseCombineDocumentsChain
@@ -123,9 +123,13 @@ class ChatChainWithSources(Chain, BaseModel):
         docs = self.vectorstore.similarity_search_concepts(
             concepts, group_name,
             k=local_top_k_docs_for_context,
-            search_distance=0.7,
+            search_distance=0.5,
             **vectordbkwargs
         )
+        if len(docs) == 0:
+            docs = [
+                   Document(page_content="No ideas found for their question, please report so to the user", metadata="")
+            ]
         new_inputs = inputs.copy()
         new_inputs["question"] = new_question
         new_inputs["chat_history"] = chat_history_str
