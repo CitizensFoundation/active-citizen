@@ -8,12 +8,12 @@ def get_question_analysis(original_question, max_tokens=1000):
 - "question_type": Can be one of: \
 "asking_about_one_idea, "asking_about_many_ideas", \
 "asking_about_points_for_or_against", "asking_about_pros_or_cons"
-- "neightborhood_name: Can be nothing or Actual neighborhood names: \
+- "neighborhood_name: Can be nothing or Actual neighborhood names: \
 "Vesturbær", "Laugardalur", "Hlíðar", "Grafarvogur (og Bryggjuhverfi)", "Háaleiti og Bústaðir", \
 "Árbær (og Norðlingaholt)", "Norðlingaholt", "Breiðholt", "Miðborg", "Grafarholt og Úlfarsárdalur" \
 "Kjalarnes" or variations on those name like "Vesturbæ" or "Háaleiti" or "Ábær" or "Bryggjuhverfi".
 If there is a variation of neighborhood name then use the \
-Actual neightborhood name for the neightborhood_name JSON field.
+Actual neightborhood name for the neighborhood_name JSON field.
 Never list "idea","ideas", "points for/against" or neighborhood names in the "concepts" JSON.
 Never return any Note: or comments after the JSON_ANSWER,
 Never return more than one JSON_ANSWER per question and always stop after you have provided the answer.
@@ -24,7 +24,7 @@ Never return more than one JSON_ANSWER per question and always stop after you ha
     {
         "question": "Are there any ideas connected to dogs and fun?",
         "question_type": "asking_about_many_ideas",
-        "neightborhood_name": null,
+        "neighborhood_name": null,
         "concepts": [
             "dogs",
             "fun"
@@ -37,7 +37,7 @@ Never return more than one JSON_ANSWER per question and always stop after you ha
     {
         "question": "Is there an idea about a dog? If so give me the best points for and against the idea.",
         "question_type": "asking_about_points_for_or_against",
-        "neightborhood_name": null,
+        "neighborhood_name": null,
         "concepts": [
             "dog"
         ]
@@ -49,7 +49,7 @@ Never return more than one JSON_ANSWER per question and always stop after you ha
     {
         "question": "Tell me more about that playground idea in Vesturbær",
         "question_type": "asking_about_one_idea",
-        "neightborhood_name": "Vesturbær",
+        "neighborhood_name": "Vesturbær",
         "concepts": [
             "playground"
         ]

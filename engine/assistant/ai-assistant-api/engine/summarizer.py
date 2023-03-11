@@ -6,38 +6,31 @@ system_message = """You are an effective text summarization and shortening syste
 If you can't shorten or summarize the text just output the original text.
 """
 
-short_name_prompt_prefix = """
-  Please shorten the idea name as much as possible without using abbreviations.
+short_name_prompt_prefix = """Please shorten the idea name as much as possible without using abbreviations.
 
 """
 
-short_summary_prefix = """
-  Please summarize the text below as much as possible without using abbreviations in one short paragraph. Please keep it as short as possible.
+short_summary_prefix = """Please summarize the text below as much as possible without using abbreviations in one short paragraph. Please keep it as short as possible.
 
 """
 
-full_summary_prefix = """
-  Please summarize the text below in detail and leave no part of the concept out.
+full_summary_prefix = """Please summarize the text below in detail and leave no part of the concept out.
 
 """
 
-full_points_for_summary_prefix = """
-  Please summarize the points for the idea below in full detail, in one to three paragraphs, and leave nothing out. All opinions in the points below must be included in this summary.
+full_points_for_summary_prefix = """Please summarize the points for the idea below in full detail, in one to three paragraphs, and leave nothing out. All opinions in the points below must be included in this summary.
 
 """
 
-short_points_for_summary_prefix = """
-  Please summarize the points for below as much as possible without using abbreviations in one short paragraph. Please keep it very short, only a few sentences.
+short_points_for_summary_prefix = """Please summarize the points for below as much as possible without using abbreviations in one short paragraph. Please keep it very short, only a few sentences.
 
 """
 
-full_points_against_summary_prefix = """
-  Please summarize the points against the idea below in full detail, in one to three paragraphs, and leave nothing out. All opinions in the points below must be included in this summary.
+full_points_against_summary_prefix = """Please summarize the points against the idea below in full detail, in one to three paragraphs, and leave nothing out. All opinions in the points below must be included in this summary.
 
 """
 
-short_points_against_summary_prefix = """
-  Please summarize the points against below as much as possible without using abbreviations in one short paragraph. Please keep it very short, only a few sentences.
+short_points_against_summary_prefix = """Please summarize the points against below as much as possible without using abbreviations in one short paragraph. Please keep it very short, only a few sentences.
 
 """
 

@@ -13,7 +13,7 @@ import logging
 import pickle
 from pathlib import Path
 from typing import Optional
-from vectorstores.yrpri_weaviate import YrpriWeaviate
+from vectorstores.ac_weaviate import AcWeaviate
 import weaviate
 import traceback
 import json
@@ -27,10 +27,10 @@ vectorstore: Optional[VectorStore] = None
 client: Optional[weaviate.Client] = None
 
 client = weaviate.Client("http://localhost:8080")
-short_summary_vectorstore = YrpriWeaviate(client, "Posts", "shortSummary")
-full_summary_vectorstore = YrpriWeaviate(client, "Posts", "fullSummary")
-short_summary_with_points_vectorstore = YrpriWeaviate(client, "Posts", "shortSummaryWithPoints")
-full_summary_with_points_vectorstore = YrpriWeaviate(client, "Posts", "fullSummaryWithPoints")
+short_summary_vectorstore = AcWeaviate(client, "Posts", "shortSummary", attributes=["group_name"])
+full_summary_vectorstore = AcWeaviate(client, "Posts", "fullSummary")
+short_summary_with_points_vectorstore = AcWeaviate(client, "Posts", "shortSummaryWithPoints")
+full_summary_with_points_vectorstore = AcWeaviate(client, "Posts", "fullSummaryWithPoints")
 
 nearText = {"concepts": ["Klambratún", "playground"]}
 
@@ -90,11 +90,12 @@ class ChatManager:
                 conceptsJSON = json.loads(question_analysis)
                 question_type = conceptsJSON['question_type']
                 concepts = conceptsJSON['concepts']
+                group_name = conceptsJSON['neighborhood_name']
             except json.JSONDecodeError:
                 # Handle invalid JSON input
                 question_type = "asking_about_many_ideas"
                 concepts = None
-                vectorstore = short_summary_vectorstore
+                group_name = None
                 top_k_docs_for_context = 12
 
             print(conceptsJSON)
@@ -115,7 +116,6 @@ class ChatManager:
                 self.qa_chain.vectorstore = short_summary_vectorstore
                 top_k_docs_for_context = 42
 
-            print(f"XXXXXXXXXXXXXXXXXXXXXXXXXx - vectorstore: {self.qa_chain.vectorstore}")
 
             # Construct a response
             start_resp = ChatResponse(sender="bot", message="", type="start")
@@ -126,6 +126,7 @@ class ChatManager:
                      "question": question,
                      "question_type": question_type,
                      "concepts": concepts,
+                     "group_name": group_name,
                      "top_k_docs_for_context": top_k_docs_for_context,
                      "chat_history": self.chat_history}
             )

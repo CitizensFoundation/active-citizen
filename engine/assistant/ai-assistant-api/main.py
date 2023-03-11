@@ -4,7 +4,7 @@ import pickle
 from pathlib import Path
 from typing import Optional
 from engine.chat_manager import ChatManager
-from vectorstores.yrpri_weaviate import YrpriWeaviate
+from vectorstores.ac_weaviate import AcWeaviate
 import weaviate
 import json
 import os
@@ -28,7 +28,7 @@ vectorstore: Optional[VectorStore] = None
 client: Optional[weaviate.Client] = None
 
 client = weaviate.Client("http://localhost:8080")
-vectorstore = YrpriWeaviate(client, "Posts", "shortName")
+vectorstore = AcWeaviate(client, "Posts", "shortName")
 nearText = {"concepts": ["children","playground"], "distance": 0.25}
 
 result = (

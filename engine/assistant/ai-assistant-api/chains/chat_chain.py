@@ -107,6 +107,7 @@ class ChatChainWithSources(Chain, BaseModel):
     async def _acall(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         question = inputs["question"]
         concepts = inputs["concepts"]
+        group_name = inputs["group_name"]
         local_top_k_docs_for_context = inputs["top_k_docs_for_context"]
 
         get_chat_history = self.get_chat_history or _get_chat_history
@@ -120,7 +121,10 @@ class ChatChainWithSources(Chain, BaseModel):
             new_question = question
         # TODO: This blocks the event loop, but it's not clear how to avoid it.
         docs = self.vectorstore.similarity_search_concepts(
-            concepts, k=local_top_k_docs_for_context, **vectordbkwargs
+            concepts, group_name,
+            k=local_top_k_docs_for_context,
+            search_distance=0.7,
+            **vectordbkwargs
         )
         new_inputs = inputs.copy()
         new_inputs["question"] = new_question

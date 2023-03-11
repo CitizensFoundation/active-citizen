@@ -26,6 +26,7 @@ def upsert_post_in_vector_store(post: Post):
         "cluster_id": post.cluster_id,
         "created_at": post.date,
         "updated_at": post.date,
+        "group_name": post.group_name,
         "shortName": get_short_post_name(post),
         "shortSummary": get_short_post_summary(post),
         "fullSummary": get_full_post_summary(post),

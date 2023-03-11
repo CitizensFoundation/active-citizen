@@ -1,7 +1,7 @@
 import weaviate
 import time
 client = weaviate.Client("http://localhost:8080")
-client.schema.delete_class("Posts")
+#client.schema.delete_class("Posts")
 schema = {
     "classes": [
         {
@@ -76,6 +76,17 @@ schema = {
                     "name": "content",
                     "dataType": ["text"],
                     "description": "The text content the post",
+                    "moduleConfig": {
+                            "text2vec-openai": {
+                                "skip": False,
+                                "vectorizePropertyName": False
+                            }
+                    },
+                },
+                {
+                    "name": "group_name",
+                    "dataType": ["text"],
+                    "description": "The group name",
                     "moduleConfig": {
                             "text2vec-openai": {
                                 "skip": False,
