@@ -134,6 +134,8 @@ class ChatManager:
 
             end_resp = ChatResponse(sender="bot", message="", type="end")
             await self.websocket.send_json(end_resp.dict())
+
+
         except WebSocketDisconnect:
             logging.info("websocket disconnect")
         except Exception as e:

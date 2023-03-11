@@ -41,44 +41,37 @@ short_points_against_summary_prefix = """
 
 """
 
-shortPostNameTemplate = """Idea: {name}
+shortPostNameTemplate = """{name} [{source}]
+
+  Neighborhood: {group_name}\n\n
+"""
+
+summaryTemplate = """{summary} [{source}]
 
   Neighborhood: {group_name}
 
-  Source: {source}\n\n
 """
 
-summaryTemplate = """Idea: {summary}
-
-  Neighborhood: {group_name}
-
-  Source: {source}
-"""
-
-summaryWithPointsTemplate = """Idea: {summary}
+summaryWithPointsTemplate = """{summary} [{source}]
 
   Neighborhood: {group_name}
 
   Points for: {points_for}
 
   Points against: {points_against}
-
-  Source: {source}
 
   <image_url={image_url}>
   <likes={counter_endorsements_up}>
   <dislikes={counter_endorsements_down}>\n\n
 """
 
-summaryWithPointsAndImageTemplate = """Idea: {summary}
+summaryWithPointsAndImageTemplate = """{summary} [{source}]
 
   Neighborhood: {group_name}
 
   Points for: {points_for}
 
   Points against: {points_against}
-
-  Source: {source}
 
   <image_url={image_url}>
   <likes={counter_endorsements_up}>
