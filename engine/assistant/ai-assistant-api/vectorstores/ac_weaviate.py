@@ -37,6 +37,9 @@ class AcWeaviate(Weaviate):
             result = query_obj.with_near_text(content).with_limit(k).do()
         docs = []
         print (result)
+
+        # If using concepts and no results try without certainty
+
         for res in result["data"]["Get"][self._index_name]:
             text = res.pop(self._text_key)
             docs.append(Document(page_content=text, metadata=res))

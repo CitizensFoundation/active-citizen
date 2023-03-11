@@ -108,7 +108,7 @@ class ChatManager:
                 top_k_docs_for_context = 42
             elif question_type == "asking_about_one_idea":
                 self.qa_chain.vectorstore = full_summary_with_points_vectorstore
-                top_k_docs_for_context = 12
+                top_k_docs_for_context = 8
             elif question_type == "asking_about_points_for_or_against" or "asking_about_pros_or_cons":
                 self.qa_chain.vectorstore = short_summary_with_points_vectorstore
                 top_k_docs_for_context = 12
