@@ -1,5 +1,6 @@
 """Main entrypoint for the app."""
 from chains.question_analysis import get_question_analysis
+from prompts.about_project_prompt import get_about_project_prompt
 from prompts.follow_up_questions_prompt import get_follow_up_questions_prompt
 from routers.posts import post_router
 from schemas import ChatResponse
@@ -189,10 +190,15 @@ class ChatManager:
             start_resp = ChatResponse(sender="bot", message="", type="start")
             await self.websocket.send_json(start_resp.dict())
 
+            if question_analysis["question_type"] == "asking_about_the_project_rules_and_overall_organization_of_the_project":
+                current_messages = get_about_project_prompt(question)
+            else:
+                current_messages = ChatPromptTemplate.from_messages(self.chat_messages)
+
             result = await self.qa_chain.acall(
                 {
                     "question": question,
-                    "messages": ChatPromptTemplate.from_messages(self.chat_messages),
+                    "messages": current_messages,
                     "question_type": question_analysis["question_type"],
                     "concepts": question_analysis["concepts"],
                     "group_name": question_analysis["group_name"],
@@ -209,13 +215,10 @@ class ChatManager:
             start_resp = ChatResponse(sender="bot", message="", type="start_followup")
             await self.websocket.send_json(start_resp.dict())
 
-            followup_template = get_follow_up_questions_prompt(result["answer"])
+            followup_template = get_follow_up_questions_prompt(question, result["answer"])
 
-            print(f"19191919191919119 - {followup_template}")
             chain = LLMChain(llm=self.followup_question_gen_llm, prompt=followup_template)
             await chain.arun({})
-
-            #await self.followup_question_gen_llm.agenerate(followup_template)
 
             start_resp = ChatResponse(sender="bot", message="", type="end_followup")
             await self.websocket.send_json(start_resp.dict())

@@ -37,7 +37,7 @@ def get_qa_chain(
         streaming=True,
         callback_manager=stream_manager,
         verbose=True,
-        max_tokens=1000,
+        max_tokens=720,
         temperature=0,
     )
 

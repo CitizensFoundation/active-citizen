@@ -122,16 +122,20 @@ class ChatChainWithSources(Chain, BaseModel):
         else:
             new_question = question
         # TODO: This blocks the event loop, but it's not clear how to avoid it.
-        docs = self.vectorstore.similarity_search_concepts(
-            concepts, group_name,
-            k=local_top_k_docs_for_context,
-            search_distance=0.5,
-            **vectordbkwargs
-        )
-        if len(docs) == 0:
-            docs = [
-                   Document(page_content="No ideas found for their question, please report so to the user", metadata="")
-            ]
+
+        if inputs['question_type']=="asking_about_the_project_rules_and_overall_organization_of_the_project":
+            docs = [Document(page_content="")]
+        else:
+            docs = self.vectorstore.similarity_search_concepts(
+                concepts, group_name,
+                k=local_top_k_docs_for_context,
+                search_distance=0.5,
+                **vectordbkwargs
+            )
+            if len(docs) == 0:
+                docs = [
+                    Document(page_content="No ideas found for their question, please report so to the user", metadata="")
+                ]
         new_inputs = inputs.copy()
         new_inputs["question"] = new_question
         new_inputs["chat_history"] = chat_history_str

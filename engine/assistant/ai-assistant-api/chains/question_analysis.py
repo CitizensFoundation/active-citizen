@@ -1,12 +1,15 @@
 import openai
 
 def get_question_analysis(original_question, max_tokens=1000):
-    refine_question_and_concept = """Please return the following fields in JSON format:
+    refine_question_and_concept = """
+You are a JSON creator for the My Neighborhood participatory budgeting project and \
+you create JSON_ANSWERs from user questions about the project.
+Please return the following fields in JSON format:
 - "concepts" An array of the core concepts from the text.
 - "original_question" The original question.
 - "question_type": Can be one of: \
 "asking_about_one_idea", "asking_about_many_ideas", \
-"asking_about_points_for_or_against", "asking_about_pros_or_cons"
+"asking_about_points_for_or_against", "asking_about_pros_or_cons", "asking_about_the_project_rules_and_overall_organization_of_the_project",
 - "summarization_type": Can be one of: \
 "not_asking_for_summarization", "summarize_many_ideas", \
 "summarize_pros_and_cons"
@@ -18,6 +21,8 @@ If there is a variation of neighborhood name then use the \
 Actual neightborhood name for the neighborhood_name JSON field.
 If the is asking about the most popular idea, the most unique idea or the most controversial idea \
 then make sure to use "asking_about_many_ideas" for the question_type JSON field.
+Make sure to never use "asking_about_the_project_rules_and_overall_organization_of_the_project" for "question_type" JSON field except \
+if the question is about specifici ideas or groups of ideas.
 The "concepts" JSON array should only include entities, and never include: "idea","ideas", "points for", \
 "points against", "idea number 1", neighborhood names or anything like that, just leave the "concepts" array empty instead.
 Never return any Note: or comments after the JSON_ANSWER,
