@@ -1,7 +1,7 @@
 import weaviate
 import time
 client = weaviate.Client("http://localhost:8080")
-#client.schema.delete_class("Posts")
+client.schema.delete_class("Posts")
 schema = {
     "classes": [
         {

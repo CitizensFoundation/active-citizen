@@ -98,6 +98,9 @@ class ChatManager:
                 group_name = None
                 top_k_docs_for_context = 12
 
+            # Remove by hand idea, ideas, points for, points against, pros, cons, pro, con from the concepts array
+            concepts = [x for x in concepts if x not in ["idea", "ideas", "point for", "points for", "point against", "points against", "pro", "pros", "con", "cons"]]
+
             print(conceptsJSON)
             print(question_type)
             print(concepts)

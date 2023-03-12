@@ -16,7 +16,7 @@ If there is a variation of neighborhood name then use the \
 Actual neightborhood name for the neighborhood_name JSON field.
 If the is asking about the most popular idea, the most unique idea or the most controversial idea \
 then make sure to use "asking_about_many_ideas" for the question_type JSON field.
-Never list "idea","ideas", "points for/against" or neighborhood names in the "concepts" JSON.
+Never include the concepts: "idea","ideas", "points for", "points against" or neighborhood names in the "concepts" JSON array field.
 Never return any Note: or comments after the JSON_ANSWER,
 Never return more than one JSON_ANSWER per question and always stop after you have provided the answer.
 
