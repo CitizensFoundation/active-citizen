@@ -19,6 +19,20 @@ import traceback
 import json
 import os
 import openai
+from langchain import PromptTemplate
+from langchain.chains.prompt_selector import (
+    ConditionalPromptSelector,
+    is_chat_model,
+)
+
+from prompts.main_system_prompt import main_system_prompt
+
+from langchain.prompts.chat import (
+    ChatPromptTemplate,
+    SystemMessagePromptTemplate,
+    HumanMessagePromptTemplate,
+    AIMessagePromptTemplate,
+)
 
 from langchain.schema import (
     HumanMessage,
@@ -68,12 +82,80 @@ class ChatManager:
         self.websocket = websocket
         self.question_handler = QuestionGenCallbackHandler(self.websocket)
         self.stream_handler = StreamingLLMCallbackHandler(self.websocket)
-        print(1)
+
+        self.chat_messages = [
+            SystemMessagePromptTemplate.from_template(main_system_prompt),
+        ]
+
         self.qa_chain = get_qa_chain(short_summary_vectorstore, self.question_handler,
                                      self.stream_handler, tracing=True)
 
-    async def get_concepts_and_refined_question(self, question):
+    def perform_question_analysis(self, question):
+        question_analysis = get_question_analysis(question)
 
+        print("----------------------")
+        print(question_analysis)
+
+        try:
+            # Parse question_analysis into JSON and create a dict object
+            conceptsJSON = json.loads(question_analysis)
+            question_type = conceptsJSON['question_type']
+            concepts = conceptsJSON['concepts']
+            group_name = conceptsJSON['neighborhood_name']
+        except json.JSONDecodeError:
+            # Handle invalid JSON input
+            question_type = "asking_about_many_ideas"
+            if self.last_concepts and len(self.last_concepts) > 0:
+                concepts = self.last_concepts
+            else:
+                concepts = []
+
+            if self.last_group_name and len(self.last_group_name) > 0:
+                group_name = self.last_group_name
+
+            top_k_docs_for_context = 12
+
+        if len(concepts) == 0:
+            concepts = self.last_concepts
+        else:
+            self.last_concepts = concepts
+
+        if group_name == None and self.last_group_name and len(self.last_group_name) > 0:
+            group_name = self.last_group_name
+        else:
+            self.last_group_name = group_name
+
+        # Remove by hand idea, ideas, points for, points against, pros, cons, pro, con from the concepts array
+        concepts = [x for x in concepts if x not in ["idea", "ideas", "point for",
+                                                        "points for", "point against", "points against", "pro", "pros", "con", "cons"]]
+
+        print(conceptsJSON)
+        print(question_type)
+        print(concepts)
+        print(group_name)
+        print("----------------------")
+
+        if question_type == "asking_about_many_ideas":
+            self.qa_chain.vectorstore = short_summary_vectorstore
+            top_k_docs_for_context = 42
+        elif question_type == "asking_about_one_idea":
+            self.qa_chain.vectorstore = full_summary_with_points_vectorstore
+            top_k_docs_for_context = 8
+        elif question_type == "asking_about_points_for_or_against" or "asking_about_pros_or_cons":
+            self.qa_chain.vectorstore = short_summary_with_points_vectorstore
+            top_k_docs_for_context = 12
+        else:
+            self.qa_chain.vectorstore = short_summary_vectorstore
+            top_k_docs_for_context = 42
+
+        return {
+            "question_type": question_type,
+            "concepts": concepts,
+            "group_name": group_name,
+            "top_k_docs_for_context": top_k_docs_for_context
+        }
+
+    async def get_concepts_and_refined_question(self, question):
         return result["concepts"], result["answer"]
 
     async def chat_loop(self):
@@ -87,77 +169,26 @@ class ChatManager:
             resp = ChatResponse(sender="bot", message="", type="thinking")
             await self.websocket.send_json(resp.dict())
 
-            question_analysis = get_question_analysis(question)
-            print("----------------------")
-            print(question_analysis)
+            question_analysis = self.perform_question_analysis(question)
 
-            try:
-                # Parse question_analysis into JSON and create a dict object
-                conceptsJSON = json.loads(question_analysis)
-                question_type = conceptsJSON['question_type']
-                concepts = conceptsJSON['concepts']
-                group_name = conceptsJSON['neighborhood_name']
-            except json.JSONDecodeError:
-                # Handle invalid JSON input
-                question_type = "asking_about_many_ideas"
-                if self.last_concepts and len(self.last_concepts) > 0:
-                    concepts = self.last_concepts
-                else:
-                    concepts = []
+            self.chat_messages.append(HumanMessagePromptTemplate.from_template("{question}")),
 
-                if self.last_group_name and len(self.last_group_name) > 0:
-                    group_name = self.last_group_name
-
-                top_k_docs_for_context = 12
-
-            if len(concepts) == 0:
-                concepts = self.last_concepts
-            else:
-                self.last_concepts = concepts
-
-            if group_name == None and self.last_group_name and len(self.last_group_name) > 0:
-                group_name = self.last_group_name
-            else:
-                self.last_group_name = group_name
-
-            # Remove by hand idea, ideas, points for, points against, pros, cons, pro, con from the concepts array
-            concepts = [x for x in concepts if x not in ["idea", "ideas", "point for",
-                                                         "points for", "point against", "points against", "pro", "pros", "con", "cons"]]
-
-            print(conceptsJSON)
-            print(question_type)
-            print(concepts)
-            print(group_name)
-            print("----------------------")
-
-            if question_type == "asking_about_many_ideas":
-                self.qa_chain.vectorstore = short_summary_vectorstore
-                top_k_docs_for_context = 42
-            elif question_type == "asking_about_one_idea":
-                self.qa_chain.vectorstore = full_summary_with_points_vectorstore
-                top_k_docs_for_context = 8
-            elif question_type == "asking_about_points_for_or_against" or "asking_about_pros_or_cons":
-                self.qa_chain.vectorstore = short_summary_with_points_vectorstore
-                top_k_docs_for_context = 12
-            else:
-                self.qa_chain.vectorstore = short_summary_vectorstore
-                top_k_docs_for_context = 42
-
-            # Construct a response
             start_resp = ChatResponse(sender="bot", message="", type="start")
             await self.websocket.send_json(start_resp.dict())
 
             result = await self.qa_chain.acall(
                 {
                     "question": question,
-                    "question_type": question_type,
-                    "concepts": concepts,
-                    "group_name": group_name,
-                    "top_k_docs_for_context": top_k_docs_for_context,
+                    "messages": ChatPromptTemplate.from_messages(self.chat_messages),
+                    "question_type": question_analysis["question_type"],
+                    "concepts": question_analysis["concepts"],
+                    "group_name": question_analysis["group_name"],
+                    "top_k_docs_for_context": question_analysis["top_k_docs_for_context"],
                     "chat_history": self.chat_history}
             )
 
             self.chat_history.append((question, result["answer"]))
+            self.chat_messages.append(AIMessagePromptTemplate.from_template(result["answer"])),
 
             end_resp = ChatResponse(sender="bot", message="", type="end")
             await self.websocket.send_json(end_resp.dict())

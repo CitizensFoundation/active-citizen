@@ -1,5 +1,4 @@
 import openai
-from prompts.refine_question_prompt import get_refine_question_prompt
 
 def get_question_analysis(original_question, max_tokens=1000):
     refine_question_and_concept = """Please return the following fields in JSON format:
@@ -19,8 +18,8 @@ If there is a variation of neighborhood name then use the \
 Actual neightborhood name for the neighborhood_name JSON field.
 If the is asking about the most popular idea, the most unique idea or the most controversial idea \
 then make sure to use "asking_about_many_ideas" for the question_type JSON field.
-The "concepts" JSON array should only include entities and never include: "idea","ideas", "points for", \
-"points against", neighborhood names or anything like that, just leave the "concepts" array empty instead.
+The "concepts" JSON array should only include entities, and never include: "idea","ideas", "points for", \
+"points against", "idea number 1", neighborhood names or anything like that, just leave the "concepts" array empty instead.
 Never return any Note: or comments after the JSON_ANSWER,
 Never return more than one JSON_ANSWER per question and always stop after you have provided the answer.
 
@@ -86,7 +85,7 @@ Never return more than one JSON_ANSWER per question and always stop after you ha
         temperature=0.2,
         max_tokens=128,
         messages=[
-            {"role": "system", "content": "You are a very smart and capable computer system that produces highly detailed and accurate JSON_ANSWERs from questions."},
+            {"role": "system", "content": "You are a very smart and capable computer system that produces highly detailed and accurate JSON_ANSWERs from questions. If you don't know the answer, leave an empty JSON_ANSWER."},
             {"role": "user", "content": f"{refine_question_and_concept}"}
         ]
     )

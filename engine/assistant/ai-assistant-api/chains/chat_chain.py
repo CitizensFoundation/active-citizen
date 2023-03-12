@@ -108,12 +108,14 @@ class ChatChainWithSources(Chain, BaseModel):
         question = inputs["question"]
         concepts = inputs["concepts"]
         group_name = inputs["group_name"]
+        print(f"NNNNNNNNNNNNNNNNNNNNN - { self.combine_docs_chain}")
+        self.combine_docs_chain.llm_chain.prompt = inputs["messages"]
         local_top_k_docs_for_context = inputs["top_k_docs_for_context"]
 
         get_chat_history = self.get_chat_history or _get_chat_history
         chat_history_str = get_chat_history(inputs["chat_history"])
         vectordbkwargs = inputs.get("vectordbkwargs", {})
-        if chat_history_str:
+        if False and chat_history_str:
             new_question = await self.question_generator.arun(
                 question=question, chat_history=chat_history_str
             )

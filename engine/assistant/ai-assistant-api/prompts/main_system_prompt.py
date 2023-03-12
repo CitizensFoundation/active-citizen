@@ -9,8 +9,7 @@ from langchain.prompts.chat import (
     HumanMessagePromptTemplate,
 )
 
-prompt_template = """
-Here are your core instructions; please follow those carefully:
+main_system_prompt = """Here are your core instructions; please follow those carefully:
 - You are a polite, cheerful, and helpful AI assistant for the My Neighborhood participatory budgeting project.
 - When the user asks for a list of ideas, show at most 10 in a list and then output at the end: \n\nAnd more...
 - If a user asks for a price estimate, only offer low, medium, and high price ranges.
@@ -35,15 +34,3 @@ Use square brackets to reference the idea id, e.g., [123432]. Don't combine sour
 {context}
 ----------------
 """
-
-custom_prompt = PromptTemplate(
-    input_variables=["context"],
-    template=prompt_template,
-)
-
-messages = [
-    SystemMessagePromptTemplate.from_template(prompt_template),
-    HumanMessagePromptTemplate.from_template("{question}"),
-]
-
-MAIN_CHAT_PROMPT = ChatPromptTemplate.from_messages(messages)
