@@ -17,6 +17,8 @@ class ChatResponse(BaseModel):
 
     @validator("type")
     def validate_message_type(cls, v):
-        if v not in ["start", "stream", "end", "error", "info","thinking"]:
+        if v not in ["start", "stream", "end", "error",
+                     "info","thinking",
+                     "stream_followup","start_followup","end_followup"]:
             raise ValueError("type must be start, stream or end")
         return v

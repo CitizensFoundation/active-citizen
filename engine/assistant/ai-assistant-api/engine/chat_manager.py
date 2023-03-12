@@ -1,11 +1,11 @@
 """Main entrypoint for the app."""
-from engine.question_analysis import get_question_analysis
+from chains.question_analysis import get_question_analysis
+from prompts.follow_up_questions_prompt import get_follow_up_questions_prompt
 from routers.posts import post_router
 from schemas import ChatResponse
 from chains.vector_db_chain_chain import get_qa_chain
-from callback import QuestionGenCallbackHandler, StreamingLLMCallbackHandler
+from callback import FollowupQuestionGenCallbackHandler, StreamingLLMCallbackHandler
 from langchain.vectorstores import VectorStore
-from callback import QuestionGenCallbackHandler, StreamingLLMCallbackHandler
 from schemas import ChatResponse
 from fastapi.templating import Jinja2Templates
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
@@ -18,12 +18,15 @@ import weaviate
 import traceback
 import json
 import os
+from langchain.callbacks.base import AsyncCallbackManager
 import openai
 from langchain import PromptTemplate
 from langchain.chains.prompt_selector import (
     ConditionalPromptSelector,
     is_chat_model,
 )
+from langchain.chains import LLMChain
+from langchain.chat_models import ChatOpenAI
 
 from prompts.main_system_prompt import main_system_prompt
 
@@ -80,15 +83,25 @@ class ChatManager:
         self.last_concepts = []
         self.last_group_name = None
         self.websocket = websocket
-        self.question_handler = QuestionGenCallbackHandler(self.websocket)
-        self.stream_handler = StreamingLLMCallbackHandler(self.websocket)
+        self.followup_question_handler = FollowupQuestionGenCallbackHandler(self.websocket)
+        self.main_stream_handler = StreamingLLMCallbackHandler(self.websocket)
 
         self.chat_messages = [
             SystemMessagePromptTemplate.from_template(main_system_prompt),
         ]
 
-        self.qa_chain = get_qa_chain(short_summary_vectorstore, self.question_handler,
-                                     self.stream_handler, tracing=True)
+        self.qa_chain = get_qa_chain(short_summary_vectorstore, self.followup_question_handler,
+                                     self.main_stream_handler, tracing=True)
+
+        followup_question_manager = AsyncCallbackManager([self.followup_question_handler])
+
+        self.followup_question_gen_llm = ChatOpenAI(
+            streaming=True,
+            temperature=0,
+            verbose=True,
+            max_tokens=128,
+            callback_manager=followup_question_manager,
+        )
 
     def perform_question_analysis(self, question):
         question_analysis = get_question_analysis(question)
@@ -137,7 +150,7 @@ class ChatManager:
 
         if question_type == "asking_about_many_ideas":
             self.qa_chain.vectorstore = short_summary_vectorstore
-            top_k_docs_for_context = 42
+            top_k_docs_for_context = 38
         elif question_type == "asking_about_one_idea":
             self.qa_chain.vectorstore = full_summary_with_points_vectorstore
             top_k_docs_for_context = 8
@@ -146,7 +159,7 @@ class ChatManager:
             top_k_docs_for_context = 12
         else:
             self.qa_chain.vectorstore = short_summary_vectorstore
-            top_k_docs_for_context = 42
+            top_k_docs_for_context = 38
 
         return {
             "question_type": question_type,
@@ -192,6 +205,20 @@ class ChatManager:
 
             end_resp = ChatResponse(sender="bot", message="", type="end")
             await self.websocket.send_json(end_resp.dict())
+
+            start_resp = ChatResponse(sender="bot", message="", type="start_followup")
+            await self.websocket.send_json(start_resp.dict())
+
+            followup_template = get_follow_up_questions_prompt(result["answer"])
+
+            print(f"19191919191919119 - {followup_template}")
+            chain = LLMChain(llm=self.followup_question_gen_llm, prompt=followup_template)
+            await chain.arun({})
+
+            #await self.followup_question_gen_llm.agenerate(followup_template)
+
+            start_resp = ChatResponse(sender="bot", message="", type="end_followup")
+            await self.websocket.send_json(start_resp.dict())
 
         except WebSocketDisconnect:
             logging.info("websocket disconnect")

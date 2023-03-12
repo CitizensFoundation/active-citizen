@@ -16,8 +16,6 @@ from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.templating import Jinja2Templates
 from langchain.vectorstores import VectorStore
 
-from callback import QuestionGenCallbackHandler, StreamingLLMCallbackHandler
-from chains.vector_db_chain_chain import get_qa_chain
 from schemas import ChatResponse
 
 from routers.posts import post_router
