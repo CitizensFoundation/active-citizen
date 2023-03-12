@@ -6,8 +6,11 @@ def get_question_analysis(original_question, max_tokens=1000):
 - "concepts" An array of the core concepts from the text.
 - "original_question" The original question.
 - "question_type": Can be one of: \
-"asking_about_one_idea, "asking_about_many_ideas", \
+"asking_about_one_idea", "asking_about_many_ideas", \
 "asking_about_points_for_or_against", "asking_about_pros_or_cons"
+- "summarization_type": Can be one of: \
+"not_asking_for_summarization", "summarize_many_ideas", \
+"summarize_pros_and_cons"
 - "neighborhood_name: Can be nothing or Actual neighborhood names: \
 "Vesturbær", "Laugardalur", "Hlíðar", "Grafarvogur (og Bryggjuhverfi)", "Háaleiti og Bústaðir", \
 "Árbær (og Norðlingaholt)", "Norðlingaholt", "Breiðholt", "Miðborg", "Grafarholt og Úlfarsárdalur" \
@@ -27,6 +30,7 @@ Never return more than one JSON_ANSWER per question and always stop after you ha
     {
         "question": "Are there any ideas connected to dogs and fun?",
         "question_type": "asking_about_many_ideas",
+        "summarization_type": "not_asking_for_summarization",
         "neighborhood_name": null,
         "concepts": [
             "dogs",
@@ -40,6 +44,7 @@ Never return more than one JSON_ANSWER per question and always stop after you ha
     {
         "question": "Is there an idea about a dog? If so give me the best points for and against the idea.",
         "question_type": "asking_about_points_for_or_against",
+        "summarization_type": "summarize_pros_and_cons",
         "neighborhood_name": null,
         "concepts": [
             "dog"
@@ -52,10 +57,20 @@ Never return more than one JSON_ANSWER per question and always stop after you ha
     {
         "question": "Tell me more about that playground idea in Vesturbær",
         "question_type": "asking_about_one_idea",
+        "summarization_type": "not_asking_for_summarization",
         "neighborhood_name": "Vesturbær",
         "concepts": [
             "playground"
         ]
+    }
+
+    JSON_ANSWER:
+    {
+        "question": "What are the main themes of all ideas",
+        "question_type": "asking_about_many_ideas",
+        "summarization_type": "summarize_many_ideas",
+        "neighborhood_name": null,
+        "concepts": []
     }
 
     Original question: {original_question}
