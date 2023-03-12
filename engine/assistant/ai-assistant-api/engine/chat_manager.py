@@ -27,10 +27,13 @@ vectorstore: Optional[VectorStore] = None
 client: Optional[weaviate.Client] = None
 
 client = weaviate.Client("http://localhost:8080")
-short_summary_vectorstore = AcWeaviate(client, "Posts", "shortSummary", attributes=["group_name"])
+short_summary_vectorstore = AcWeaviate(
+    client, "Posts", "shortSummary", attributes=["group_name"])
 full_summary_vectorstore = AcWeaviate(client, "Posts", "fullSummary")
-short_summary_with_points_vectorstore = AcWeaviate(client, "Posts", "shortSummaryWithPoints")
-full_summary_with_points_vectorstore = AcWeaviate(client, "Posts", "fullSummaryWithPoints")
+short_summary_with_points_vectorstore = AcWeaviate(
+    client, "Posts", "shortSummaryWithPoints")
+full_summary_with_points_vectorstore = AcWeaviate(
+    client, "Posts", "fullSummaryWithPoints")
 
 nearText = {"concepts": ["Klambratún", "playground"]}
 
@@ -56,15 +59,18 @@ states = {
     }
 }
 
+
 class ChatManager:
     def __init__(self, websocket):
         self.chat_history = []
+        self.last_concepts = []
+        self.last_group_name = None
         self.websocket = websocket
         self.question_handler = QuestionGenCallbackHandler(self.websocket)
         self.stream_handler = StreamingLLMCallbackHandler(self.websocket)
         print(1)
         self.qa_chain = get_qa_chain(short_summary_vectorstore, self.question_handler,
-                                  self.stream_handler, tracing=True)
+                                     self.stream_handler, tracing=True)
 
     async def get_concepts_and_refined_question(self, question):
 
@@ -94,16 +100,34 @@ class ChatManager:
             except json.JSONDecodeError:
                 # Handle invalid JSON input
                 question_type = "asking_about_many_ideas"
-                concepts = None
-                group_name = None
+                if self.last_concepts and len(self.last_concepts) > 0:
+                    concepts = self.last_concepts
+                else:
+                    concepts = []
+
+                if self.last_group_name and len(self.last_group_name) > 0:
+                    group_name = self.last_group_name
+
                 top_k_docs_for_context = 12
 
+            if len(concepts) == 0:
+                concepts = self.last_concepts
+            else:
+                self.last_concepts = concepts
+
+            if group_name == None and self.last_group_name and len(self.last_group_name) > 0:
+                group_name = self.last_group_name
+            else:
+                self.last_group_name = group_name
+
             # Remove by hand idea, ideas, points for, points against, pros, cons, pro, con from the concepts array
-            concepts = [x for x in concepts if x not in ["idea", "ideas", "point for", "points for", "point against", "points against", "pro", "pros", "con", "cons"]]
+            concepts = [x for x in concepts if x not in ["idea", "ideas", "point for",
+                                                         "points for", "point against", "points against", "pro", "pros", "con", "cons"]]
 
             print(conceptsJSON)
             print(question_type)
             print(concepts)
+            print(group_name)
             print("----------------------")
 
             if question_type == "asking_about_many_ideas":
@@ -119,26 +143,24 @@ class ChatManager:
                 self.qa_chain.vectorstore = short_summary_vectorstore
                 top_k_docs_for_context = 42
 
-
             # Construct a response
             start_resp = ChatResponse(sender="bot", message="", type="start")
             await self.websocket.send_json(start_resp.dict())
 
             result = await self.qa_chain.acall(
-                 {
-                     "question": question,
-                     "question_type": question_type,
-                     "concepts": concepts,
-                     "group_name": group_name,
-                     "top_k_docs_for_context": top_k_docs_for_context,
-                     "chat_history": self.chat_history}
+                {
+                    "question": question,
+                    "question_type": question_type,
+                    "concepts": concepts,
+                    "group_name": group_name,
+                    "top_k_docs_for_context": top_k_docs_for_context,
+                    "chat_history": self.chat_history}
             )
 
             self.chat_history.append((question, result["answer"]))
 
             end_resp = ChatResponse(sender="bot", message="", type="end")
             await self.websocket.send_json(end_resp.dict())
-
 
         except WebSocketDisconnect:
             logging.info("websocket disconnect")
