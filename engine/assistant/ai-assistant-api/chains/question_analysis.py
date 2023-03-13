@@ -102,7 +102,9 @@ Never return more than one JSON_ANSWER per question and always stop after you ha
         "question_intent": "asking_about_the_project_rules_and_overall_organization_of_the_project",
         "summarization_type": "summarize_project_rules",
         "neighborhood_name": null,
-        "concepts": []
+        "concepts": [
+            "eligibility"
+        ]
     }
 
     Original question: What are the main themes of all ideas
@@ -124,7 +126,9 @@ Never return more than one JSON_ANSWER per question and always stop after you ha
         "question_intent": "asking_about_the_project_rules_and_overall_organization_of_the_project",
         "summarization_type": "summarize_many_ideas",
         "neighborhood_name": null,
-        "concepts": []
+        "concepts": [
+            "rules"
+        ]
     }
 
     Original question: {original_question}
