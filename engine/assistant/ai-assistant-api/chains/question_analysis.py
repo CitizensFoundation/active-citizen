@@ -40,7 +40,7 @@ The "concepts" JSON array should only include entities, and never include: "idea
 Never return any Note: or comments after the JSON_ANSWER,
 Never return more than one JSON_ANSWER per question and always stop after you have provided the answer.
 
-    Question: Are there any ideas connected to dogs and fun?
+    Original question: Are there any ideas connected to dogs and fun?
 
     JSON_ANSWER:
     {
