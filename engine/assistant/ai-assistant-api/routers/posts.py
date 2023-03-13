@@ -25,7 +25,7 @@ async def get_post(post_id: int):
     }
     result = (
         client.query.
-        get("Posts", ["name","postId"]).
+        get("Posts", ["name","imageUrl","postId"]).
         with_limit(1).
         with_where(where_filter).
         do()
