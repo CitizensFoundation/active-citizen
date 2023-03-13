@@ -20,6 +20,7 @@ def upsert_post_in_vector_store(post: Post):
         "counter_endorsements_up": post.counter_endorsements_up,
         "counter_endorsements_down": post.counter_endorsements_down,
         "status": post.status,
+        "imageUrl": post.image_url,
         "group_id": post.group_id,
         "community_id": post.community_id,
         "domain_id": post.domain_id,

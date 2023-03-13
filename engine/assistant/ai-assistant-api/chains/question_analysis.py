@@ -9,17 +9,29 @@ Please return the following fields in JSON format:
 - "original_question" The original question.
 - "question_type": Can be one of: \
 "asking_about_one_idea", "asking_about_many_ideas", \
-"asking_about_points_for_or_against", "asking_about_pros_or_cons", "asking_about_the_project_rules_and_overall_organization_of_the_project",
+"asking_about_points_for_or_against", "asking_about_pros_or_cons", \
+"asking_about_the_project_rules_and_overall_organization_of_the_project",
 - "summarization_type": Can be one of: \
 "not_asking_for_summarization", "summarize_many_ideas", \
 "summarize_pros_and_cons"
-- "neighborhood_name: Can be nothing or Actual neighborhood names: \
-"Vesturbær", "Laugardalur", "Hlíðar", "Grafarvogur (og Bryggjuhverfi)", "Háaleiti og Bústaðir", \
-"Árbær (og Norðlingaholt)", "Norðlingaholt", "Breiðholt", "Miðborg", "Grafarholt og Úlfarsárdalur" \
-"Kjalarnes" or variations on those name like "Vesturbæ" or "Háaleiti" or "Ábær" or "Bryggjuhverfi".
+- "neighborhood_name: Can be one of:
+-- "Vesturbær"
+-- "Laugardalur"
+-- "Hlíðar"
+-- "Grafarvogur (og Bryggjuhverfi)"
+-- "Háaleiti og Bústaðir"
+-- "Árbær (og Norðlingaholt)"
+-- "Norðlingaholt"
+-- "Breiðholt"
+-- "Miðborg"
+-- "Grafarholt og Úlfarsárdalur"
+-- "Kjalarnes"
+-- close variations on those name like "Vesturbæ" or "Háaleiti" or "Ábær" or "Bryggjuhverfi"
+-- null
 If there is a variation of neighborhood name then use the \
-Actual neightborhood name for the neighborhood_name JSON field.
-If the is asking about the most popular idea, the most unique idea or the most controversial idea \
+actual neightborhood name for the neighborhood_name JSON field.
+If there is no close variation of neighborhood name then use null for the neighborhood_name JSON field.
+If the user is asking about the most popular idea, the most unique idea or the most controversial idea \
 then make sure to use "asking_about_many_ideas" for the question_type JSON field.
 Make sure to never use "asking_about_the_project_rules_and_overall_organization_of_the_project" for "question_type" JSON field except \
 if the question is about specifici ideas or groups of ideas.
@@ -70,8 +82,26 @@ Never return more than one JSON_ANSWER per question and always stop after you ha
 
     JSON_ANSWER:
     {
+        "question": "What ideas are eligible?",
+        "question_type": "asking_about_the_project_rules_and_overall_organization_of_the_project",
+        "summarization_type": "summarize_many_ideas",
+        "neighborhood_name": null,
+        "concepts": []
+    }
+
+    JSON_ANSWER:
+    {
         "question": "What are the main themes of all ideas",
         "question_type": "asking_about_many_ideas",
+        "summarization_type": "summarize_many_ideas",
+        "neighborhood_name": null,
+        "concepts": []
+    }
+
+    JSON_ANSWER:
+    {
+        "question": "What are the rules of this project",
+        "question_type": "asking_about_the_project_rules_and_overall_organization_of_the_project",
         "summarization_type": "summarize_many_ideas",
         "neighborhood_name": null,
         "concepts": []

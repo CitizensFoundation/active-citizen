@@ -134,7 +134,7 @@ class ChatChainWithSources(Chain, BaseModel):
             )
             if len(docs) == 0:
                 docs = [
-                    Document(page_content="No ideas found for their question, please report so to the user", metadata="")
+                    Document(page_content="No ideas found for their question, please report so to the user. Never make up your own ideas. Just tell the users that no ideas were found in the context.", metadata="")
                 ]
         new_inputs = inputs.copy()
         new_inputs["question"] = new_question

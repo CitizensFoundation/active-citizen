@@ -105,7 +105,7 @@ schema = {
                             }
                     },
                 },
-                             {
+                {
                     "name": "shortName",
                     "dataType": ["text"],
                     "description": "The text name the post",
@@ -167,6 +167,17 @@ schema = {
                     "moduleConfig": {
                             "text2vec-openai": {
                                 "skip": False,
+                                "vectorizePropertyName": False
+                            }
+                    },
+                },
+                {
+                    "name": "imageUrl",
+                    "dataType": ["string"],
+                    "description": "The image url",
+                    "moduleConfig": {
+                            "text2vec-openai": {
+                                "skip": True,
                                 "vectorizePropertyName": False
                             }
                     },
