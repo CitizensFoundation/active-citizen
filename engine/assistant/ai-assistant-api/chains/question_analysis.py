@@ -135,7 +135,7 @@ Never return more than one JSON_ANSWER per question and always stop after you ha
     Original question: {original_question}
 
     JSON_ANSWER:
-        """
+    """
 
     # Replace the text "{original_question}" with the original_question in refine_question_and_concept
     refine_question_and_concept = refine_question_and_concept.replace("{original_question}", original_question)
