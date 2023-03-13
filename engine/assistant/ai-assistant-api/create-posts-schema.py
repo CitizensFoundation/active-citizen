@@ -106,6 +106,28 @@ schema = {
                     },
                 },
                 {
+                    "name": "emojiSummary",
+                    "dataType": ["text"],
+                    "description": "The emojiSummary",
+                    "moduleConfig": {
+                            "text2vec-openai": {
+                                "skip": False,
+                                "vectorizePropertyName": False
+                            }
+                    },
+                },
+                {
+                    "name": "oneWordSummary",
+                    "dataType": ["text"],
+                    "description": "The oneWordSummary",
+                    "moduleConfig": {
+                            "text2vec-openai": {
+                                "skip": False,
+                                "vectorizePropertyName": False
+                            }
+                    },
+                },
+                {
                     "name": "shortName",
                     "dataType": ["text"],
                     "description": "The text name the post",

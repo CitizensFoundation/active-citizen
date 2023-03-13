@@ -1,9 +1,24 @@
 from models.post import Post
 import openai
+import string
+
 from langchain import PromptTemplate
 
 system_message = """You are an effective text summarization and shortening system.
 If you can't shorten or summarize the text just output the original text.
+"""
+
+emoji_system_message = """You are a helpful Emoji generator. You must always output 2 Emojis, not 1 and not 3."""
+
+one_word_system_message = """You are a helpful and advanced summary tool. You can take the text and create a one-word emotional summary. """
+
+emoji_prompt_prefix  = """Please read the text here carefully and then create two Emojis to represent the concept. \
+Only output two emojis and no text. Let's think step by step:
+
+"""
+
+one_word_prompt_prefix = """Please read the text here carefully and then output one word that best describes the idea in the most emotional way. Do not use the most obvious word, like Dog, for dog-related ideas. Dive deeper. Only output one word. Let's think step by step:
+
 """
 
 short_name_prompt_prefix = """Please shorten the idea name as much as possible without using abbreviations.
@@ -32,7 +47,12 @@ full_points_against_summary_prefix = """Please summarize the points against the 
 
 short_points_against_summary_prefix = """Please summarize the points against below as much as possible without using abbreviations in one short paragraph. Please keep it very short, only a few sentences.
 
+
 """
+
+emojiSummaryTemplate = """{emojis}"""
+
+oneWordSummaryTemplate = """{one_word}"""
 
 shortPostNameTemplate = """{name} [{source}]
 
@@ -71,26 +91,29 @@ summaryWithPointsAndImageTemplate = """{summary} [{source}]
   <dislikes={counter_endorsements_down}>\n\n
 """
 
-def summarize_text(prompt, text, max_tokens=1000):
+def summarize_text(prompt, text, custom_system_message = None):
     completion = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         temperature=0.2,
         messages=[
-            {"role": "system", "content": system_message},
+            {"role": "system", "content": custom_system_message or system_message},
             {"role": "user", "content": f"{prompt}{text}"}
         ]
     )
 
     return completion.choices[0].message.content
 
+def summarize_emoji(text):
+    return summarize_text(emoji_prompt_prefix, text, emoji_system_message)
+
+def summarize_one_word(text):
+    return summarize_text(one_word_prompt_prefix, text,one_word_system_message)
 
 def summarize_short_name(text):
     return summarize_text(short_name_prompt_prefix, text)
 
-
 def summarize_short_summary(text):
     return summarize_text(short_summary_prefix, text)
-
 
 def summarize_full_summary(text):
     return summarize_text(full_summary_prefix, text)
@@ -111,6 +134,32 @@ def summarize_full_points_against_summary(text):
 def summarize_short_points_against_summary(text):
     return summarize_text(short_points_against_summary_prefix, text)
 
+def get_emoji_summary(post: Post):
+    prompt = PromptTemplate(
+        input_variables=["emojis"],
+        template=emojiSummaryTemplate,
+    )
+
+    emoji_summary = summarize_emoji(f"{post.name}\n{post.description}")
+
+    print(emoji_summary)
+
+    return prompt.format(emojis=emoji_summary)
+
+
+def get_one_word_summary(post: Post):
+    prompt = PromptTemplate(
+        input_variables=["one_word"],
+        template=oneWordSummaryTemplate,
+    )
+
+    one_word_summary = summarize_one_word(f"{post.name}\n{post.description}")
+
+    print(one_word_summary)
+
+    one_word_summary = one_word_summary.translate(str.maketrans('', '', string.punctuation))
+
+    return prompt.format(one_word=one_word_summary)
 
 def get_short_post_name(post: Post):
     prompt = PromptTemplate(
@@ -123,7 +172,6 @@ def get_short_post_name(post: Post):
     print(short_name)
 
     return prompt.format(name=short_name, group_name=post.group_name, source=post.post_id)
-
 
 def get_short_post_summary(post: Post):
     prompt = PromptTemplate(

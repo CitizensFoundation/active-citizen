@@ -113,12 +113,12 @@ class ChatManager:
         try:
             # Parse question_analysis into JSON and create a dict object
             conceptsJSON = json.loads(question_analysis)
-            question_type = conceptsJSON['question_type']
+            question_intent = conceptsJSON['question_intent']
             concepts = conceptsJSON['concepts']
             group_name = conceptsJSON['neighborhood_name']
         except json.JSONDecodeError:
             # Handle invalid JSON input
-            question_type = "asking_about_many_ideas"
+            question_intent = "asking_about_many_ideas"
             if self.last_concepts and len(self.last_concepts) > 0:
                 concepts = self.last_concepts
             else:
@@ -144,18 +144,18 @@ class ChatManager:
                                                         "points for", "point against", "points against", "pro", "pros", "con", "cons"]]
 
         print(conceptsJSON)
-        print(question_type)
+        print(question_intent)
         print(concepts)
         print(group_name)
         print("----------------------")
 
-        if question_type == "asking_about_many_ideas":
+        if question_intent == "asking_about_many_ideas":
             self.qa_chain.vectorstore = short_summary_vectorstore
             top_k_docs_for_context = 38
-        elif question_type == "asking_about_one_idea":
+        elif question_intent == "asking_about_one_idea":
             self.qa_chain.vectorstore = full_summary_with_points_vectorstore
             top_k_docs_for_context = 8
-        elif question_type == "asking_about_points_for_or_against" or "asking_about_pros_or_cons":
+        elif question_intent == "asking_about_points_for_or_against" or "asking_about_pros_or_cons":
             self.qa_chain.vectorstore = short_summary_with_points_vectorstore
             top_k_docs_for_context = 12
         else:
@@ -163,7 +163,7 @@ class ChatManager:
             top_k_docs_for_context = 38
 
         return {
-            "question_type": question_type,
+            "question_intent": question_intent,
             "concepts": concepts,
             "group_name": group_name,
             "top_k_docs_for_context": top_k_docs_for_context
@@ -190,7 +190,7 @@ class ChatManager:
             start_resp = ChatResponse(sender="bot", message="", type="start")
             await self.websocket.send_json(start_resp.dict())
 
-            if question_analysis["question_type"] == "asking_about_the_project_rules_and_overall_organization_of_the_project":
+            if question_analysis["question_intent"] == "asking_about_the_project_rules_and_overall_organization_of_the_project":
                 current_messages = get_about_project_prompt(question)
             else:
                 current_messages = ChatPromptTemplate.from_messages(self.chat_messages)
@@ -199,7 +199,7 @@ class ChatManager:
                 {
                     "question": question,
                     "messages": current_messages,
-                    "question_type": question_analysis["question_type"],
+                    "question_intent": question_analysis["question_intent"],
                     "concepts": question_analysis["concepts"],
                     "group_name": question_analysis["group_name"],
                     "top_k_docs_for_context": question_analysis["top_k_docs_for_context"],

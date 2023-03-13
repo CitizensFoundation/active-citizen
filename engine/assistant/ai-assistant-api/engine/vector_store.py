@@ -1,4 +1,4 @@
-from engine.summarizer import get_full_post_summary, get_full_post_summary_with_points, get_short_post_name, get_short_post_summary, get_short_post_summary_with_points
+from engine.summarizer import get_emoji_summary, get_full_post_summary, get_full_post_summary_with_points, get_one_word_summary, get_short_post_name, get_short_post_summary, get_short_post_summary_with_points
 from models.post import Post
 import weaviate
 from weaviate.util import generate_uuid5
@@ -28,6 +28,8 @@ def upsert_post_in_vector_store(post: Post):
         "created_at": post.date,
         "updated_at": post.date,
         "group_name": post.group_name,
+        "emojiSummary": get_emoji_summary(post),
+        "oneWordSummary": get_one_word_summary(post),
         "shortName": get_short_post_name(post),
         "shortSummary": get_short_post_summary(post),
         "fullSummary": get_full_post_summary(post),

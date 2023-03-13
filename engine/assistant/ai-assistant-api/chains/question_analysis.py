@@ -7,7 +7,7 @@ you create JSON_ANSWERs from user questions about the project.
 Please return the following fields in JSON format:
 - "concepts" An array of the core concepts from the text.
 - "original_question" The original question.
-- "question_type": Can be one of: \
+- "question_intent": Can be one of: \
 "asking_about_one_idea", "asking_about_many_ideas", \
 "asking_about_points_for_or_against", "asking_about_pros_or_cons", \
 "asking_about_the_project_rules_and_overall_organization_of_the_project",
@@ -32,8 +32,8 @@ If there is a variation of neighborhood name then use the \
 actual neightborhood name for the neighborhood_name JSON field.
 If there is no close variation of neighborhood name then use null for the neighborhood_name JSON field.
 If the user is asking about the most popular idea, the most unique idea or the most controversial idea \
-then make sure to use "asking_about_many_ideas" for the question_type JSON field.
-Make sure to never use "asking_about_the_project_rules_and_overall_organization_of_the_project" for "question_type" JSON field except \
+then make sure to use "asking_about_many_ideas" for the question_intent JSON field.
+Make sure to never use "asking_about_the_project_rules_and_overall_organization_of_the_project" for "question_intent" JSON field except \
 if the question is about specifici ideas or groups of ideas.
 The "concepts" JSON array should only include entities, and never include: "idea","ideas", "points for", \
 "points against", "idea number 1", neighborhood names or anything like that, just leave the "concepts" array empty instead.
@@ -45,7 +45,7 @@ Never return more than one JSON_ANSWER per question and always stop after you ha
     JSON_ANSWER:
     {
         "question": "Are there any ideas connected to dogs and fun?",
-        "question_type": "asking_about_many_ideas",
+        "question_intent": "asking_about_many_ideas",
         "summarization_type": "not_asking_for_summarization",
         "neighborhood_name": null,
         "concepts": [
@@ -59,7 +59,7 @@ Never return more than one JSON_ANSWER per question and always stop after you ha
     JSON_ANSWER:
     {
         "question": "Is there an idea about a dog? If so give me the best points for and against the idea.",
-        "question_type": "asking_about_points_for_or_against",
+        "question_intent": "asking_about_points_for_or_against",
         "summarization_type": "summarize_pros_and_cons",
         "neighborhood_name": null,
         "concepts": [
@@ -72,7 +72,7 @@ Never return more than one JSON_ANSWER per question and always stop after you ha
     JSON_ANSWER:
     {
         "question": "Tell me more about that playground idea in Vesturbær",
-        "question_type": "asking_about_one_idea",
+        "question_intent": "asking_about_one_idea",
         "summarization_type": "not_asking_for_summarization",
         "neighborhood_name": "Vesturbær",
         "concepts": [
@@ -80,28 +80,48 @@ Never return more than one JSON_ANSWER per question and always stop after you ha
         ]
     }
 
+    Original question: Are there any school related ideas close to Klambratún?
+
+    JSON_ANSWER:
+    {
+        "question": "Are there any school related ideas close to Klambratún?",
+        "question_intent": "asking_about_many_ideas",
+        "summarization_type": "not_asking_for_summarization",
+        "neighborhood_name": null,
+        "concepts": [
+            "school",
+            "Klambratún"
+        ]
+    }
+
+    Original question: What ideas are eligible?
+
     JSON_ANSWER:
     {
         "question": "What ideas are eligible?",
-        "question_type": "asking_about_the_project_rules_and_overall_organization_of_the_project",
-        "summarization_type": "summarize_many_ideas",
+        "question_intent": "asking_about_the_project_rules_and_overall_organization_of_the_project",
+        "summarization_type": "summarize_project_rules",
         "neighborhood_name": null,
         "concepts": []
     }
+
+    Original question: What are the main themes of all ideas
 
     JSON_ANSWER:
     {
         "question": "What are the main themes of all ideas",
-        "question_type": "asking_about_many_ideas",
+        "question_intent": "asking_about_many_ideas",
         "summarization_type": "summarize_many_ideas",
         "neighborhood_name": null,
         "concepts": []
     }
 
+    Original question: What are the rules of this project
+
     JSON_ANSWER:
     {
         "question": "What are the rules of this project",
-        "question_type": "asking_about_the_project_rules_and_overall_organization_of_the_project",
+        "question_intent": "asking_about_the_project_rules_and_overall_organization_of_the_project",
         "summarization_type": "summarize_many_ideas",
         "neighborhood_name": null,
         "concepts": []
