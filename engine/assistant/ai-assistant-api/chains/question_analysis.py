@@ -142,7 +142,7 @@ Never return more than one JSON_ANSWER per question and always stop after you ha
 
     completion = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
-        temperature=0.2,
+        temperature=0.0,
         max_tokens=128,
         messages=[
             {"role": "system", "content": "You are a very smart and capable computer system that produces highly detailed and accurate JSON_ANSWERs from questions. If you don't know the answer, leave an empty JSON_ANSWER."},
