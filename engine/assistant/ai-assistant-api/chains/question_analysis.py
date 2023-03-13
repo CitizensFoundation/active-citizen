@@ -55,16 +55,16 @@ Never return more than one JSON_ANSWER per question and always stop after you ha
         ]
     }
 
-    Original question: Is there an idea about a dog? If so give me the best points for and against the idea.
+    Original question: Is there an idea about a cat? If so give me the best points for and against the idea.
 
     JSON_ANSWER:
     {
-        "question": "Is there an idea about a dog? If so give me the best points for and against the idea.",
+        "question": "Is there an idea about a cat? If so give me the best points for and against the idea.",
         "question_intent": "asking_about_points_for_or_against",
         "summarization_type": "summarize_pros_and_cons",
         "neighborhood_name": null,
         "concepts": [
-            "dog"
+            "cat"
         ]
     }
 
