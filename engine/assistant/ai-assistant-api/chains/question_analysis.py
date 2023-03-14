@@ -8,13 +8,16 @@ you create JSON_ANSWERs from user questions about the project.
 Please return the following fields in JSON format:
 - "concepts" An array of the core concepts from the text.
 - "original_question" The original question.
-- "question_intent": Can be one of: \
-"asking_about_one_idea", "asking_about_many_ideas", \
-"asking_about_points_for_or_against", "asking_about_pros_or_cons", \
-"asking_about_the_project_rules_and_overall_organization_of_the_project",
-- "summarization_type": Can be one of: \
-"not_asking_for_summarization", "summarize_many_ideas", \
-"summarize_pros_and_cons"
+- "question_intent": Can be one of:
+-- "asking_about_one_idea"
+-- "asking_about_many_ideas"
+-- "asking_about_points_for_or_against"
+-- "asking_about_pros_or_cons"
+-- "asking_about_the_project_rules_and_overall_organization_of_the_project",
+- "summarization_type": Can be one of:
+-- "not_asking_for_summarization"
+-- "summarize_many_ideas"
+-- "summarize_pros_and_cons"
 - "neighborhood_name: Can be one of:
 -- "Vesturbær"
 -- "Laugardalur"

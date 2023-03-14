@@ -30,8 +30,8 @@ def get_follow_up_questions_prompt(last_question,last_ai_answer):
 
     messages = [
         SystemMessagePromptTemplate.from_template("""
-    You are an accomplished followup question generator. \
-    You always create the best followup questions that are very short and important in the context of \
+    You are an accomplished follow-up question generator. \
+    You always create the best follow-up questions that are very short and important in the context of \
     participatory budgeting idea generation projects."
     """),
         HumanMessagePromptTemplate.from_template(f"{last_question}"),

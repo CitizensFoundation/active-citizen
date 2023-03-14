@@ -29,7 +29,7 @@ from langchain.chains.prompt_selector import (
 from langchain.chains import LLMChain
 from langchain.chat_models import ChatOpenAI
 
-from prompts.main_system_prompt import main_system_prompt
+from prompts.main_system_prompt import main_system_prompt, many_ideas_user_question_prefix
 
 from langchain.prompts.chat import (
     ChatPromptTemplate,
@@ -149,7 +149,7 @@ class ChatManager:
         print(group_name)
         print("----------------------")
 
-        if question_intent == "asking_about_many_ideas":
+        if question_intent == "asking_about_many_ideas" or "asking_about_the_project_rules_and_overall_organization_of_the_project":
             self.qa_chain.vectorstore = short_summary_vectorstore
             top_k_docs_for_context = 38
         elif question_intent == "asking_about_one_idea":
@@ -161,6 +161,7 @@ class ChatManager:
         else:
             self.qa_chain.vectorstore = short_summary_vectorstore
             top_k_docs_for_context = 38
+            question_intent = "unknown"
 
         return {
             "question_intent": question_intent,
@@ -184,6 +185,9 @@ class ChatManager:
             await self.websocket.send_json(resp.dict())
 
             question_analysis = self.perform_question_analysis(question)
+
+            if question_analysis["question_intent"] == "asking_about_many_ideas" or "unknown":
+                question = f"{many_ideas_user_question_prefix}\ņMy question is: {question}"
 
             self.chat_messages.append(HumanMessagePromptTemplate.from_template("{question}")),
 
