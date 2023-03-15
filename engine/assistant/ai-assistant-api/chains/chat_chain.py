@@ -108,7 +108,6 @@ class ChatChainWithSources(Chain, BaseModel):
         question = inputs["question"]
         concepts = inputs["concepts"]
         group_name = inputs["group_name"]
-        print(f"NNNNNNNNNNNNNNNNNNNNN - { self.combine_docs_chain}")
         self.combine_docs_chain.llm_chain.prompt = inputs["messages"]
         local_top_k_docs_for_context = inputs["top_k_docs_for_context"]
 
