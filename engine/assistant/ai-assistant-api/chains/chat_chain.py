@@ -97,7 +97,6 @@ class ChatChainWithSources(Chain, BaseModel):
         )
         new_inputs = inputs.copy()
         new_inputs["question"] = new_question
-        new_inputs["chat_history"] = chat_history_str
         answer, _ = self.combine_docs_chain.combine_docs(docs, **new_inputs)
         if self.return_source_documents:
             return {self.output_key: answer, "source_documents": docs}
@@ -111,15 +110,8 @@ class ChatChainWithSources(Chain, BaseModel):
         self.combine_docs_chain.llm_chain.prompt = inputs["messages"]
         local_top_k_docs_for_context = inputs["top_k_docs_for_context"]
 
-        get_chat_history = self.get_chat_history or _get_chat_history
-        chat_history_str = get_chat_history(inputs["chat_history"])
         vectordbkwargs = inputs.get("vectordbkwargs", {})
-        if False and chat_history_str:
-            new_question = await self.question_generator.arun(
-                question=question, chat_history=chat_history_str
-            )
-        else:
-            new_question = question
+        new_question = question
 
         # TODO: This blocks the event loop, but it's not clear how to avoid it.
         if inputs['question_intent']=="asking_about_the_project_rules_and_overall_organization_of_the_project":
@@ -137,7 +129,6 @@ class ChatChainWithSources(Chain, BaseModel):
                 ]
         new_inputs = inputs.copy()
         new_inputs["question"] = new_question
-        new_inputs["chat_history"] = chat_history_str
         answer, _ = await self.combine_docs_chain.acombine_docs(docs, **new_inputs)
         if self.return_source_documents:
             return {self.output_key: answer, "source_documents": docs}

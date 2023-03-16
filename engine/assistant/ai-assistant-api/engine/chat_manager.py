@@ -1,5 +1,6 @@
 """Main entrypoint for the app."""
 from chains.question_analysis import get_question_analysis
+from memory.dynamic_chat_memory import DynamicChatMemory
 from prompts.about_project_prompt import get_about_project_prompt
 from prompts.follow_up_questions_prompt import get_follow_up_questions_prompt
 from routers.posts import post_router
@@ -37,6 +38,8 @@ from langchain.prompts.chat import (
     HumanMessagePromptTemplate,
     AIMessagePromptTemplate,
 )
+
+import asyncio
 
 from langchain.schema import (
     HumanMessage,
@@ -87,9 +90,10 @@ class ChatManager:
         self.followup_question_handler = FollowupQuestionGenCallbackHandler(self.websocket)
         self.main_stream_handler = StreamingLLMCallbackHandler(self.websocket)
 
-        self.chat_messages = [
-            SystemMessagePromptTemplate.from_template(main_system_prompt),
-        ]
+        self.dynamic_chat_memory = DynamicChatMemory()
+        self.dynamic_chat_memory.add_system_message(
+             SystemMessagePromptTemplate.from_template(main_system_prompt)
+        )
 
         self.qa_chain = get_qa_chain(short_summary_vectorstore, self.followup_question_handler,
                                      self.main_stream_handler, tracing=True)
@@ -173,6 +177,18 @@ class ChatManager:
     async def get_concepts_and_refined_question(self, question):
         return result["concepts"], result["answer"]
 
+    async def process_followups(self, question, result):
+        start_resp = ChatResponse(sender="bot", message="", type="start_followup")
+        await self.websocket.send_json(start_resp.dict())
+
+        followup_template = get_follow_up_questions_prompt(question, result["answer"])
+
+        chain = LLMChain(llm=self.followup_question_gen_llm, prompt=followup_template)
+        await chain.arun({})
+
+        start_resp = ChatResponse(sender="bot", message="", type="end_followup")
+        await self.websocket.send_json(start_resp.dict())
+
     async def chat_loop(self):
         try:
             # Receive and send back the client message
@@ -189,7 +205,8 @@ class ChatManager:
             if question_analysis["question_intent"] == "asking_about_many_ideas" or "unknown":
                 question = f"{many_ideas_user_question_prefix}\ņMy question is: {question}"
 
-            self.chat_messages.append(HumanMessagePromptTemplate.from_template("{question}")),
+            previous_chat_messages = self.dynamic_chat_memory.chat_memory.messages.copy()
+            previous_chat_messages.append(HumanMessagePromptTemplate.from_template("{question}")),
 
             start_resp = ChatResponse(sender="bot", message="", type="start")
             await self.websocket.send_json(start_resp.dict())
@@ -197,7 +214,7 @@ class ChatManager:
             if question_analysis["question_intent"] == "asking_about_the_project_rules_and_overall_organization_of_the_project":
                 current_messages = get_about_project_prompt(question)
             else:
-                current_messages = ChatPromptTemplate.from_messages(self.chat_messages)
+                current_messages = ChatPromptTemplate.from_messages(previous_chat_messages)
 
             result = await self.qa_chain.acall(
                 {
@@ -207,26 +224,21 @@ class ChatManager:
                     "concepts": question_analysis["concepts"],
                     "group_name": question_analysis["group_name"],
                     "top_k_docs_for_context": question_analysis["top_k_docs_for_context"],
-                    "chat_history": self.chat_history}
+                    "chat_history": []}
             )
-
-            self.chat_history.append((question, result["answer"]))
-            self.chat_messages.append(AIMessagePromptTemplate.from_template(result["answer"])),
 
             end_resp = ChatResponse(sender="bot", message="", type="end")
             await self.websocket.send_json(end_resp.dict())
 
-            start_resp = ChatResponse(sender="bot", message="", type="start_followup")
-            await self.websocket.send_json(start_resp.dict())
+            self.dynamic_chat_memory.save_context({"input": question}, {"output": result["answer"]})
+            #TODO: What is there is an error then the pairs go out of sync
 
-            followup_template = get_follow_up_questions_prompt(question, result["answer"])
+            tasks = [
+                self.process_followups(question, result),
+                self.dynamic_chat_memory.process_memory()
+            ]
 
-            chain = LLMChain(llm=self.followup_question_gen_llm, prompt=followup_template)
-            await chain.arun({})
-
-            start_resp = ChatResponse(sender="bot", message="", type="end_followup")
-            await self.websocket.send_json(start_resp.dict())
-
+            await asyncio.gather(*tasks)
         except WebSocketDisconnect:
             logging.info("websocket disconnect")
         except Exception as e:
