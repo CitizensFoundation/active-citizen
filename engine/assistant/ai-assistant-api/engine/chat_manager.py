@@ -98,7 +98,7 @@ class ChatManager:
         self.qa_chain = get_qa_chain(short_summary_vectorstore, self.followup_question_handler,
                                      self.main_stream_handler, tracing=True)
 
-        followup_question_manager = AsyncCallbackManager([self.followup_question_handler])
+        followup_question_manager = AsyncCallbackManager(handlers=[self.followup_question_handler])
 
         self.followup_question_gen_llm = ChatOpenAI(
             streaming=True,
