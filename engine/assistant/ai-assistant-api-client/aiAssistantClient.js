@@ -106,7 +106,8 @@ const updatePost = (postId, done) => {
   models.Post.unscoped().findOne(
     {
       where: {
-        id: postId
+        id: postId,
+        status: 'published'
       },
       include: [
         {

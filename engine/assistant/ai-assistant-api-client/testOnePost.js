@@ -9,6 +9,9 @@ if (process.env["AC_AI_ASSISTANT_KEY"] && process.env["AC_AI_ASSISTANT_BASE_URL"
 
   models.Post.findAll({
     attributes: ['id'],
+    where: {
+      status: 'published'
+    },
     include: [
       {
         model: models.Group,

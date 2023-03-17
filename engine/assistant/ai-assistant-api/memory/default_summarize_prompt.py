@@ -10,14 +10,16 @@ from langchain.prompts.chat import (
     HumanMessagePromptTemplate,
 )
 
-default_system_template = """Your are an advanced text summarizer, \
-the best in the business and you never make mistakes. You think things through."""
+default_system_template = """Your are an advanced text summarizer. \
+You think things through.
+"""
 
 default_chat_summary_template = """Please summarize the chat message below, keep the summary very short and relevant to the chat history. \
 Make sure all entities are mentioned in the summary.
+You always talk about ideas you are summarizing not Chatbot suggests". Those are ideas from people who submitted them.
 
-Chat history:
-{chat_history}
+Shortened chat history:
+{shortened_chat_history}
 
 Is the summary for user or chatbot: {user_or_chatbot}
 
@@ -26,21 +28,26 @@ Chat message to summarize: {chat_message}
 
 default_chat_summary_prompt = PromptTemplate(
     template=default_chat_summary_template,
-    input_variables=["chat_history", "user_or_chatbot", "chat_message"],
+    input_variables=["shortened_chat_history", "user_or_chatbot", "chat_message"],
 )
 
-
 def get_chat_summary_prompt(
-        chat_message,
-        chat_history,
+        shortened_chat_history,
         user_or_chatbot,
-        summary_prompt=default_chat_summary_prompt,
+        chat_message,
+        summary_prompt,
         system_template=default_system_template):
-
+    if summary_prompt == None:
+        summary_prompt = default_chat_summary_prompt
+    print(f"7777777777777777 1 {shortened_chat_history}")
+    print(f"7777777777777777 2 {user_or_chatbot}")
+    print(f"7777777777777777 3 {chat_message}")
+    print(f"7777777777777777 4 {summary_prompt}")
+    print(f"7777777777777777 5 {system_template}")
     messages = [
         SystemMessagePromptTemplate.from_template(system_template),
         HumanMessagePromptTemplate.from_template(summary_prompt.format(
-            chat_history=chat_history,
+            shortened_chat_history=shortened_chat_history,
             user_or_chatbot=user_or_chatbot,
             chat_message=chat_message
         )

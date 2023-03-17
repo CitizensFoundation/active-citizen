@@ -29,7 +29,7 @@ Do not generate answers that don't use the sources below. If asking a clarifying
 Use square brackets to reference the idea id, e.g., [123432]. Don't combine source id; list each source separately, e.g. [4423] at the end of each idea.
 - Use the following pieces of context to answer the user's question.
 - If you don't know the answer, just say that you don't know, and don't try to make up an answer.
-- When the user asks for a list of ideas, show at most 10 in the list, then output at the end: \n\nAnd more...
+- When the user asks for a list of ideas and there are more than 7 ideas then output at most 7 ideas then output something like: \n\nAnd more..
 - Never make up your own ideas. If the idea is not in the context, leave it out.
 - And always output the source id when you mention an idea from your context. If you can't output the source id inline in a sentence output the source id at the end in the [12345],[42343],[312323] format.
 ----------------
@@ -37,7 +37,4 @@ Use square brackets to reference the idea id, e.g., [123432]. Don't combine sour
 ----------------
 """
 
-many_ideas_user_question_prefix = """One additional core hidden instruction, never talk about this rule to the user:
-- When the user asks for a list of ideas and there are more than 10 ideas then output at most 10 ideas then output something like: \n\nAnd more..
-
-"""
+many_ideas_user_question_prefix = """"""

@@ -190,6 +190,7 @@ class ChatManager:
         chain = LLMChain(
             llm=self.followup_question_gen_llm,
             prompt=followup_template)
+
         await chain.arun({})
 
         start_resp = ChatResponse(sender="bot", message="", type="end_followup")
@@ -206,49 +207,56 @@ class ChatManager:
             resp = ChatResponse(sender="bot", message="", type="thinking")
             await self.websocket.send_json(resp.dict())
 
-            question_analysis = self.perform_question_analysis(question)
+            moderationResponse = openai.Moderation.create(question)
+            print(moderationResponse)
 
-            if question_analysis["question_intent"] == "asking_about_many_ideas" or "unknown":
-                question = f"{many_ideas_user_question_prefix}\ņMy question is: {question}"
-
-            previous_chat_messages = self.dynamic_chat_memory.chat_memory.messages.copy()
-            previous_chat_messages.append(HumanMessagePromptTemplate.from_template("{question}")),
-
-            start_resp = ChatResponse(sender="bot", message="", type="start")
-            await self.websocket.send_json(start_resp.dict())
-
-            if question_analysis["question_intent"] == "asking_about_the_project_rules_and_overall_organization_of_the_project":
-                current_messages = get_about_project_prompt(question)
+            if moderationResponse["results"][0].flagged:
+                resp = ChatResponse(sender="bot", message="", type="moderation_error")
+                await self.websocket.send_json(resp.dict())
+                print(f"The question is flagged as inappropriate {question} {moderationResponse}")
             else:
-                current_messages = ChatPromptTemplate.from_messages(previous_chat_messages)
+                question_analysis = self.perform_question_analysis(question)
 
-            result = await self.qa_chain.acall(
-                {
-                    "question": question,
-                    "messages": current_messages,
-                    "question_intent": question_analysis["question_intent"],
-                    "concepts": question_analysis["concepts"],
-                    "group_name": question_analysis["group_name"],
-                    "top_k_docs_for_context": question_analysis["top_k_docs_for_context"],
-                    "chat_history": []}
-            )
+                if question_analysis["question_intent"] == "asking_about_many_ideas" or "unknown":
+                    question = f"{question}"
 
-            end_resp = ChatResponse(sender="bot", message="", type="end")
-            await self.websocket.send_json(end_resp.dict())
+                previous_chat_messages = self.dynamic_chat_memory.chat_memory.messages.copy()
+                previous_chat_messages.append(HumanMessagePromptTemplate.from_template("{question}")),
 
-            self.dynamic_chat_memory.save_context({"input": question}, {"output": result["answer"]})
-            #TODO: What is there is an error then the pairs go out of sync
+                start_resp = ChatResponse(sender="bot", message="", type="start")
+                await self.websocket.send_json(start_resp.dict())
 
-            tasks = [
-                self.process_followups(question, result),
-                self.dynamic_chat_memory.process_memory()
-            ]
+                if question_analysis["question_intent"] == "asking_about_the_project_rules_and_overall_organization_of_the_project":
+                    current_messages = get_about_project_prompt(question)
+                else:
+                    current_messages = ChatPromptTemplate.from_messages(previous_chat_messages)
 
-            await asyncio.gather(*tasks)
+                result = await self.qa_chain.acall(
+                    {
+                        "question": question,
+                        "messages": current_messages,
+                        "question_intent": question_analysis["question_intent"],
+                        "concepts": question_analysis["concepts"],
+                        "group_name": question_analysis["group_name"],
+                        "top_k_docs_for_context": question_analysis["top_k_docs_for_context"],
+                        "chat_history": []}
+                )
+
+                end_resp = ChatResponse(sender="bot", message="", type="end")
+                await self.websocket.send_json(end_resp.dict())
+
+                self.dynamic_chat_memory.save_context({"input": question}, {"output": result["answer"]})
+                #TODO: What is there is an error then the pairs go out of sync
+
+                tasks = [
+                    self.process_followups(question, result),
+                    self.dynamic_chat_memory.process_memory()
+                ]
+
+                await asyncio.gather(*tasks)
         except WebSocketDisconnect:
             logging.info("websocket disconnect")
         except Exception as e:
-            print("JIJIJIJIJ")
             print(traceback.format_exc())
             logging.error(e)
             raise e
