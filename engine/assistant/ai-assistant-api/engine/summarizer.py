@@ -50,6 +50,10 @@ short_points_against_summary_prefix = """Please summarize the points against bel
 
 """
 
+is_prefix_postfix = """
+
+"""
+
 emojiSummaryTemplate = """{emojis}"""
 
 oneWordSummaryTemplate = """{one_word}"""
@@ -93,7 +97,8 @@ summaryWithPointsAndImageTemplate = """{summary} [{source}]
 
 def summarize_text(prompt, text, custom_system_message = None):
     completion = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
+#        model="gpt-3.5-turbo",
+        model="gpt-4",
         temperature=0.2,
         messages=[
             {"role": "system", "content": custom_system_message or system_message},

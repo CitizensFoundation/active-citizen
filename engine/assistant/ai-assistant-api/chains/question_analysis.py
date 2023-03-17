@@ -145,6 +145,8 @@ Never return more than one JSON_ANSWER per question and always stop after you ha
 
     completion = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
+        #TODO: Tune prompt for gpt-4, it's returning far too many concepts that are not entities or just use 3.5 for routing
+        #model="gpt-4",
         temperature=0.0,
         max_tokens=128,
         messages=[

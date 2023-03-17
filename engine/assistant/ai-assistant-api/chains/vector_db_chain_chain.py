@@ -29,12 +29,14 @@ def get_qa_chain(
     question_gen_llm = ChatOpenAI(
         temperature=0,
         verbose=True,
+        model="gpt-4",
         max_tokens=1200,
         callback_manager=question_manager,
     )
 
     streaming_llm = ChatOpenAI(
         streaming=True,
+        model="gpt-4",
         callback_manager=stream_manager,
         verbose=True,
         max_tokens=720,

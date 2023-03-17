@@ -103,6 +103,7 @@ class ChatManager:
         self.followup_question_gen_llm = ChatOpenAI(
             streaming=True,
             temperature=0,
+            model="gpt-4",
             verbose=True,
             max_tokens=128,
             callback_manager=followup_question_manager,
@@ -113,6 +114,9 @@ class ChatManager:
 
         print("----------------------")
         print(question_analysis)
+
+        group_name = None
+        conceptsJSON = None
 
         try:
             # Parse question_analysis into JSON and create a dict object
@@ -144,7 +148,7 @@ class ChatManager:
             self.last_group_name = group_name
 
         # Remove by hand idea, ideas, points for, points against, pros, cons, pro, con from the concepts array
-        concepts = [x for x in concepts if x not in ["idea", "ideas", "point for",
+        concepts = [x for x in concepts if x not in ["idea", "ideas", "point for","table",
                                                         "points for", "point against", "points against", "pro", "pros", "con", "cons"]]
 
         print(conceptsJSON)
@@ -183,7 +187,9 @@ class ChatManager:
 
         followup_template = get_follow_up_questions_prompt(question, result["answer"])
 
-        chain = LLMChain(llm=self.followup_question_gen_llm, prompt=followup_template)
+        chain = LLMChain(
+            llm=self.followup_question_gen_llm,
+            prompt=followup_template)
         await chain.arun({})
 
         start_resp = ChatResponse(sender="bot", message="", type="end_followup")
