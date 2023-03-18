@@ -49,18 +49,18 @@ client: Optional[weaviate.Client] = None
 
 client = weaviate.Client("http://localhost:8080")
 short_summary_vectorstore = AcWeaviate(
-    client, "Posts", "shortSummary", attributes=["group_name"])
-full_summary_vectorstore = AcWeaviate(client, "Posts", "fullSummary")
+    client, "PostsIs", "shortSummary", attributes=["group_name"])
+full_summary_vectorstore = AcWeaviate(client, "PostsIs", "fullSummary")
 short_summary_with_points_vectorstore = AcWeaviate(
-    client, "Posts", "shortSummaryWithPoints")
+    client, "PostsIs", "shortSummaryWithPoints")
 full_summary_with_points_vectorstore = AcWeaviate(
-    client, "Posts", "fullSummaryWithPoints")
+    client, "PostsIs", "fullSummaryWithPoints")
 
 nearText = {"concepts": ["Klambratún", "playground"]}
 
 result = (
     client.query
-    .get("Posts", ["fullSummaryWithPoints"])
+    .get("PostsIs", ["fullSummaryWithPoints"])
     .with_near_text(nearText)
     .with_limit(15)
     .do()

@@ -20,6 +20,8 @@ services:
       AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
       PERSISTENCE_DATA_PATH: "./data"
       DEFAULT_VECTORIZER_MODULE: text2vec-openai
-      ENABLE_MODULES: text2vec-openai
+      ENABLE_MODULES: text2vec-openai,text2vec-cohere
       OPENAI_APIKEY: ${OPENAI_API_KEY}
+      COHERE_APIKEY: ${COHERE_APIKEY}
+      COHERE_API_KEY: ${COHERE_APIKEY}
       CLUSTER_HOSTNAME: 'node1'

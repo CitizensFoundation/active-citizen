@@ -10,7 +10,9 @@ def upsert_post_in_vector_store(post: Post):
 
     print(post)
 
-    uuid = generate_uuid5(post.post_id, "Posts")
+    weaviate_class = "PostsIs" if post.language == "is" else "Posts"
+
+    uuid = generate_uuid5(post.post_id, weaviate_class)
 
     data_properties = {
         "postId": post.post_id,
@@ -42,6 +44,6 @@ def upsert_post_in_vector_store(post: Post):
     # client.batch.add_data_object(data_properties, "Document", id, doc_vector)
     client.data_object.create(
         data_object=data_properties,
-        class_name="Posts",
+        class_name=weaviate_class,
         uuid=uuid
     )

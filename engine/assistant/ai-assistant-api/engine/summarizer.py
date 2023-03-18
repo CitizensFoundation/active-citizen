@@ -4,6 +4,8 @@ import string
 
 from langchain import PromptTemplate
 
+TEMP_LANGUAGE_LOCALE = "is"
+
 system_message = """You are an effective text summarization and shortening system.
 If you can't shorten or summarize the text just output the original text.
 """
@@ -50,7 +52,7 @@ short_points_against_summary_prefix = """Please summarize the points against bel
 
 """
 
-is_prefix_postfix = """
+is_prefix_postfix = """Always return Icelandic summarizations
 
 """
 
@@ -77,7 +79,6 @@ summaryWithPointsTemplate = """{summary} [{source}]
 
   Points against: {points_against}
 
-  <image_url={image_url}>
   <likes={counter_endorsements_up}>
   <dislikes={counter_endorsements_down}>\n\n
 """
@@ -90,54 +91,61 @@ summaryWithPointsAndImageTemplate = """{summary} [{source}]
 
   Points against: {points_against}
 
-  <image_url={image_url}>
   <likes={counter_endorsements_up}>
   <dislikes={counter_endorsements_down}>\n\n
 """
 
-def summarize_text(prompt, text, custom_system_message = None):
+def summarize_text(prompt, text, custom_system_message = None, skip_icelandic = False):
+    final_is_postfix = is_prefix_postfix if not skip_icelandic else ""
     completion = openai.ChatCompletion.create(
 #        model="gpt-3.5-turbo",
         model="gpt-4",
         temperature=0.2,
         messages=[
-            {"role": "system", "content": custom_system_message or system_message},
+            {"role": "system", "content": custom_system_message or f"{system_message}\n{final_is_postfix}"},
             {"role": "user", "content": f"{prompt}{text}"}
         ]
     )
 
     return completion.choices[0].message.content
 
+#TODO: Refactor all of this into classes and use the post.language here with more options than "is"
+def get_final_prefix(prefix):
+    if False and TEMP_LANGUAGE_LOCALE == "is":
+        return prefix + is_prefix_postfix
+    else:
+        return prefix
+
 def summarize_emoji(text):
-    return summarize_text(emoji_prompt_prefix, text, emoji_system_message)
+    return summarize_text(get_final_prefix(emoji_prompt_prefix), text, emoji_system_message, True)
 
 def summarize_one_word(text):
-    return summarize_text(one_word_prompt_prefix, text,one_word_system_message)
+    return summarize_text(get_final_prefix(one_word_prompt_prefix), text,one_word_system_message)
 
 def summarize_short_name(text):
-    return summarize_text(short_name_prompt_prefix, text)
+    return summarize_text(get_final_prefix(short_name_prompt_prefix), text)
 
 def summarize_short_summary(text):
-    return summarize_text(short_summary_prefix, text)
+    return summarize_text(get_final_prefix(short_summary_prefix), text)
 
 def summarize_full_summary(text):
-    return summarize_text(full_summary_prefix, text)
+    return summarize_text(get_final_prefix(full_summary_prefix), text)
 
 
 def summarize_full_points_for_summary(text):
-    return summarize_text(full_points_for_summary_prefix, text)
+    return summarize_text(get_final_prefix(full_points_for_summary_prefix), text)
 
 
 def summarize_short_points_for_summary(text):
-    return summarize_text(short_points_for_summary_prefix, text)
+    return summarize_text(get_final_prefix(short_points_for_summary_prefix), text)
 
 
 def summarize_full_points_against_summary(text):
-    return summarize_text(full_points_against_summary_prefix, text)
+    return summarize_text(get_final_prefix(full_points_against_summary_prefix), text)
 
 
 def summarize_short_points_against_summary(text):
-    return summarize_text(short_points_against_summary_prefix, text)
+    return summarize_text(get_final_prefix(short_points_against_summary_prefix), text)
 
 def get_emoji_summary(post: Post):
     prompt = PromptTemplate(
@@ -206,7 +214,7 @@ def get_short_post_summary_with_points(post: Post):
     prompt = PromptTemplate(
         input_variables=["group_name",
                          "counter_endorsements_up", "counter_endorsements_down",
-                         "source", 'points_for', 'points_against',"summary","image_url"],
+                         "source", 'points_for', 'points_against',"summary"],
         template=summaryWithPointsTemplate,
     )
 
@@ -228,7 +236,6 @@ def get_short_post_summary_with_points(post: Post):
     print(points_against_short_summary)
 
     return prompt.format(summary=short_summary, group_name=post.group_name, source=post.post_id,
-                           image_url=post.image_url,
                   counter_endorsements_up=post.counter_endorsements_up, counter_endorsements_down=post.counter_endorsements_down,
                    points_for=points_for_short_summary, points_against=points_against_short_summary)
 
@@ -236,7 +243,7 @@ def get_full_post_summary_with_points(post: Post):
     prompt = PromptTemplate(
         input_variables=["group_name",
                          "counter_endorsements_up", "counter_endorsements_down",
-                         "source", 'points_for', 'points_against',"summary","image_url"],
+                         "source", 'points_for', 'points_against',"summary"],
         template=summaryWithPointsAndImageTemplate,
     )
 
@@ -254,7 +261,6 @@ def get_full_post_summary_with_points(post: Post):
             f"{post.name}\n{post.points_against}")
 
     return prompt.format(summary=short_summary, group_name=post.group_name, source=post.post_id,
-                   image_url=post.image_url,
                    counter_endorsements_up=post.counter_endorsements_up, counter_endorsements_down=post.counter_endorsements_down,
                    points_for=points_for_short_summary, points_against=points_against_short_summary)
 

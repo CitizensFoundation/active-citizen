@@ -25,16 +25,16 @@ async def get_post(post_id: int):
     }
     result = (
         client.query.
-        get("Posts", ["name","imageUrl","postId","emojiSummary","oneWordSummary"]).
+        get("PostsIs", ["name","imageUrl","postId","emojiSummary","oneWordSummary"]).
         with_limit(1).
         with_where(where_filter).
         do()
     )
     print(result)
-    print(result["data"]["Get"]["Posts"][0])
+    print(result["data"]["Get"]["PostsIs"][0])
 
     #result["data"]["Get"][self._index_name]:
-    json_str = json.dumps(result["data"]["Get"]["Posts"][0], indent=4, default=str)
+    json_str = json.dumps(result["data"]["Get"]["PostsIs"][0], indent=4, default=str)
     print (json_str)
     return Response(content=json_str, status_code=200)
 

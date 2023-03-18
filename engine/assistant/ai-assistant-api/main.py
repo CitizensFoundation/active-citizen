@@ -26,12 +26,12 @@ vectorstore: Optional[VectorStore] = None
 client: Optional[weaviate.Client] = None
 
 client = weaviate.Client("http://localhost:8080")
-vectorstore = AcWeaviate(client, "Posts", "shortName")
+vectorstore = AcWeaviate(client, "PostsIs", "shortName")
 nearText = {"concepts": ["children","playground"], "distance": 0.25}
 
 result = (
     client.query
-    .get("Posts", ["shortName"])
+    .get("PostsIs", ["shortName"])
     .with_near_text(nearText)
     .with_limit(15)
     .do()

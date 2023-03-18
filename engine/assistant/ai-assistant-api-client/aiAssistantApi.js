@@ -1,3 +1,5 @@
+TEMP_LANGUAGE_LOCALE = "is"
+
 const _ = require('lodash');
 const request = require('request');
 const models = require('../../../../models');
@@ -108,7 +110,7 @@ getEnglishPoint = async (point, textType) => {
   });
 }
 
-const getPoints = async (points, forPoints) => {
+const getPoints = async (points, forPoints, language) => {
   let outPoints = "";
   for (let i=0; i<points.length; i+=1) {
     if (forPoints===true && points[i].value>0 || forPoints===false && points[i].value<0) {
@@ -116,13 +118,13 @@ const getPoints = async (points, forPoints) => {
       if (point.PointRevisions && point.PointRevisions.length>0) {
         let pointContent = point.PointRevisions[point.PointRevisions.length-1].content;
         if (pointContent) {
-          const englishPoint = await getEnglishPoint(point, "pointContent");
-          outPoints+=`${cleanup_text(englishPoint)}\n\n`;
+          const finalPoint = language == "en" ? await getEnglishPoint(point, "pointContent") : pointContent;
+          outPoints+=`${cleanup_text(finalPoint)}\n\n`;
         }
       } else {
         if (point.content) {
-          const englishPoint = await getEnglishPoint(point, "pointContent");
-          outPoints+=`${cleanup_text(englishPoint)}\n\n`;
+          const finalPoint = language == "en" ? await getEnglishPoint(point, "pointContent")  : pointContent;;
+          outPoints+=`${cleanup_text(finalPoint)}\n\n`;
         }
       }
     }
@@ -133,12 +135,12 @@ const getPoints = async (points, forPoints) => {
   return outPoints;
 }
 
-const getPointsForPost = async (points) => {
-  return await getPoints(points, true);
+const getPointsForPost = async (points, language) => {
+  return await getPoints(points, true, language);
 }
 
-const getPointsAgainstPost = async (points) => {
-  return await getPoints(points, false);
+const getPointsAgainstPost = async (points, language) => {
+  return await getPoints(points, false, language);
 }
 
 const cleanup_text = (text) => {
@@ -275,18 +277,18 @@ const importPost = async (post, done) => {
 
   console.log(`English name: ${englishName} English description: ${englishDescription}`)
 
-  if (englishName) {
+  if (englishName && TEMP_LANGUAGE_LOCALE==="en") {
     postName = englishName;
   }
 
-  if (englishDescription) {
+  if (englishDescription && TEMP_LANGUAGE_LOCALE==="en"){
     description = englishDescription;
   }
   console.log(`Name: ${postName} Description: ${description}`)
 
 
-  const pointsFor = await getPointsForPost(post.Points);
-  const pointsAgainst = await getPointsAgainstPost(post.Points);
+  const pointsFor = await getPointsForPost(post.Points, TEMP_LANGUAGE_LOCALE);
+  const pointsAgainst = await getPointsAgainstPost(post.Points, TEMP_LANGUAGE_LOCALE);
 
   properties = _.merge(properties,
     {

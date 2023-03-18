@@ -120,7 +120,7 @@ class ChatChainWithSources(Chain, BaseModel):
             docs = self.vectorstore.similarity_search_concepts(
                 concepts, group_name,
                 k=local_top_k_docs_for_context,
-                search_distance=0.5,
+                #search_distance=0.5,
                 **vectordbkwargs
             )
             if len(docs) == 0:
