@@ -113,6 +113,9 @@ const updatePost = (postId, done) => {
         {
           model: models.Point.unscoped(),
           required: false,
+          where: {
+            status: 'published'
+          },
           attributes: ['id','content','value'],
           include: [
             {
