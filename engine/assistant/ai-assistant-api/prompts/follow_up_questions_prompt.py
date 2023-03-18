@@ -11,7 +11,7 @@ from langchain.prompts.chat import (
 )
 
 followup_questions_prompt_template = """
-    Generate three very brief follow-up questions from your previous answer, something the user would likely ask about the ideas in the My Neighborhood participatory budgeting project.
+    Generate three very brief follow-up questions from your previous answer, something the user would likely ask about the ideas in the Hverfið mitt participatory budgeting project.
     Use double angle brackets to reference the questions, e.g. <<Are the ideas about cats?>> or <<Tell me more about the dog park idea>>.
     Try not to repeat questions that have already been asked.
     Keep the follow-up question generated very short, at the most 5 to 8 words.

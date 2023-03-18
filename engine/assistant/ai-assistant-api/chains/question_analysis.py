@@ -2,7 +2,7 @@ import openai
 
 def get_question_analysis(original_question, max_tokens=1000):
     refine_question_and_concept = """
-You are a JSON creator for the My Neighborhood participatory budgeting project and \
+You are a JSON creator for the Hverfið mitt participatory budgeting project and \
 you create JSON_ANSWERs from user questions about the project.
 
 Please return the following fields in JSON format:
