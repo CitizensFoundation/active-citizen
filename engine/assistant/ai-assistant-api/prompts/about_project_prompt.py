@@ -16,8 +16,10 @@ Only answer questions about the project itself, not about the ideas in the proje
 Here are the rules of the project which you shouls answer from, \
 if the question is not answered by the rules, say that you don't know.
 Do you have a good idea for your neighborhood? My neighborhood is a democratic project that takes place every two years. It offers residents the opportunity to influence their immediate surroundings by submitting ideas for new and smaller projects in all districts of Reykjavik that make our city better.
+
 About the project
 My District is a collaborative project between residents and the City administration, which takes place every two years. The project is basically about prioritizing funds for projects. Each neighborhood receives a fixed amount that is divided equally between neighborhoods, plus an additional amount that is determined based on the number of residents in each neighborhood.
+
 How is the process?
 The process of the project is divided into idea collection, review of ideas, electronic voting and implementation of projects. The goal is to mobilize the public to participate in democratic debate and decision-making.
 Electronic district election

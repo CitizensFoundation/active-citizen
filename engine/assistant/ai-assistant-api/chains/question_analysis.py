@@ -40,6 +40,7 @@ then make sure to use "asking_about_many_ideas" for the question_intent JSON fie
 Make sure to never use "asking_about_the_project_rules_and_overall_organization_of_the_project" for "question_intent" JSON field except \
 if the question is about specifici ideas or groups of ideas.
 The "concepts" JSON array should only include entities, and never include: "idea","ideas", "points for", \
+"hugmynd","hugmyndir", \
 "points against", "idea number 1", neighborhood names or anything like that, just leave the "concepts" array empty instead.
 Never return any Note: or comments after the JSON_ANSWER,
 Never return more than one JSON_ANSWER per question and always stop after you have provided the answer.
