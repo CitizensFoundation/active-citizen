@@ -39,7 +39,7 @@ def get_qa_chain(
         model="gpt-4",
         callback_manager=stream_manager,
         verbose=True,
-        max_tokens=720,
+        max_tokens=1024,
         temperature=0,
     )
 

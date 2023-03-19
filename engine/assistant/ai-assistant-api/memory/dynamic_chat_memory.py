@@ -28,7 +28,7 @@ class DynamicChatMemory(BaseChatMemory):
     custom_summarize_prompt: ChatPromptTemplate = None
     custom_refined_history_prompt: ChatPromptTemplate = None
     full_chats_length = 0
-    summarized_chats_length = 2
+    summarized_chats_length = 3
     latest_refined_user_chat_history: str = ""
     latest_refined_chatbot_chat_history: str = ""
 
@@ -100,8 +100,8 @@ class DynamicChatMemory(BaseChatMemory):
         print(f"7777777777777777 999999999 {last_user_message.content} {last_bot_message.content}")
 
         tasks = [
-            self.generate_summary("user",last_user_message.content),
-            self.generate_summary("chatbot",last_bot_message.content)
+            #self.generate_summary("user",last_user_message.content),
+            #self.generate_summary("chatbot",last_bot_message.content)
         ]
 
         if False and self.memory_pair_count() > self.summarized_chats_length+self.full_chats_length:
@@ -110,11 +110,11 @@ class DynamicChatMemory(BaseChatMemory):
                 self.generate_refined_history(self.latest_refined_chatbot_chat_history, "chatbot",last_bot_message)
             ])
 
-        results = await asyncio.gather(*tasks)
-        print(f"7777XXXXXX {results}")
+        #results = await asyncio.gather(*tasks)
+        #print(f"7777XXXXXX {results}")
 
-        self.chat_memory.messages[-2].content = results[0]
-        self.chat_memory.messages[-1].content = results[1]
+        #self.chat_memory.messages[-2].content = results[0]
+        #self.chat_memory.messages[-1].content = results[1]
 
         if self.memory_pair_count() > self.summarized_chats_length+self.full_chats_length:
             #self.latest_refined_chatbot_chat_history = results[2][0].generations[0][0].text
