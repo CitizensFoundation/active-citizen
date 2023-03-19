@@ -163,7 +163,7 @@ class ChatManager:
 
         if question_intent == "asking_about_many_ideas" or "asking_about_the_project_rules_and_overall_organization_of_the_project":
             self.qa_chain.vectorstore = short_summary_vectorstore
-            top_k_docs_for_context = 42
+            top_k_docs_for_context = 38
         elif question_intent == "asking_about_one_idea":
             self.qa_chain.vectorstore = full_summary_with_points_vectorstore
             top_k_docs_for_context = 12
@@ -172,7 +172,7 @@ class ChatManager:
             top_k_docs_for_context = 12
         else:
             self.qa_chain.vectorstore = short_summary_vectorstore
-            top_k_docs_for_context = 42
+            top_k_docs_for_context = 38
             question_intent = "unknown"
 
         return {
@@ -264,13 +264,14 @@ class ChatManager:
                     self.dynamic_chat_memory.save_context(
                         {"input": question}, {"output": result["answer"]})
                     # TODO: What is there is an error then the pairs go out of sync
-
+                    await self.process_followups(question, result)
+                    await self.dynamic_chat_memory.process_memory()
                     tasks = [
-                        self.process_followups(question, result),
-                        self.dynamic_chat_memory.process_memory()
+                        #self.process_followups(question, result),
+                        #self.dynamic_chat_memory.process_memory()
                     ]
 
-                    await asyncio.gather(*tasks)
+                    #await asyncio.gather(*tasks)
         except WebSocketDisconnect:
             logging.info("websocket disconnect")
         except Exception as e:
