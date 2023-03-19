@@ -1,10 +1,61 @@
 from models.post import Post
 import openai
 import string
+import time
 
 from langchain import PromptTemplate
 
 TEMP_LANGUAGE_LOCALE = "is"
+
+import random
+
+def retry_with_exponential_backoff(
+    func,
+    initial_delay: float = 1,
+    exponential_base: float = 2,
+    jitter: bool = True,
+    max_retries: int = 10000,
+    errors: tuple = (openai.error.RateLimitError,),
+):
+    """Retry a function with exponential backoff."""
+
+    def wrapper(*args, **kwargs):
+        # Initialize variables
+        num_retries = 0
+        delay = initial_delay
+
+        # Loop until a successful response or max_retries is hit or an exception is raised
+        while True:
+            try:
+                return func(*args, **kwargs)
+
+            # Retry on specified errors
+            except errors as e:
+                # Increment retries
+                num_retries += 1
+
+                # Check if max retries has been reached
+                if num_retries > max_retries:
+                    raise Exception(
+                        f"Maximum number of retries ({max_retries}) exceeded."
+                    )
+
+                # Increment the delay
+                delay *= exponential_base * (1 + jitter * random.random())
+
+                # Sleep for the delay
+                time.sleep(delay)
+                print(f"Sleeping for {delay} seconds num retries {num_retries}")
+
+            # Raise exceptions for any errors not specified
+            except Exception as e:
+                raise e
+
+    return wrapper
+
+@retry_with_exponential_backoff
+def completions_with_backoff(**kwargs):
+    return openai.ChatCompletion.create(**kwargs)
 
 system_message = """You are an effective text summarization and shortening system.
 If you can't shorten or summarize the text just output the original text.
@@ -97,7 +148,7 @@ summaryWithPointsAndImageTemplate = """{summary} [{source}]
 
 def summarize_text(prompt, text, custom_system_message = None, skip_icelandic = False):
     final_is_postfix = is_prefix_postfix if not skip_icelandic else ""
-    completion = openai.ChatCompletion.create(
+    completion = completions_with_backoff(
 #        model="gpt-3.5-turbo",
         model="gpt-4",
         temperature=0.2,
