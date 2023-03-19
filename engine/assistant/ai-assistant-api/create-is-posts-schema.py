@@ -23,7 +23,7 @@ schema = {
                     "dataType": ["int"],
                     "description": "The id.",
                     "moduleConfig": {
-                            "text2vec-openai": {
+                            "text2vec-cohere": {
                                 "skip": True,
                                 "vectorizePropertyName": False
                             }
@@ -34,7 +34,7 @@ schema = {
                     "dataType": ["int"],
                     "description": "The group id.",
                     "moduleConfig": {
-                            "text2vec-openai": {
+                            "text2vec-cohere": {
                                 "skip": True,
                                 "vectorizePropertyName": False
                             }
@@ -45,7 +45,7 @@ schema = {
                     "dataType": ["int"],
                     "description": "The community id.",
                     "moduleConfig": {
-                            "text2vec-openai": {
+                            "text2vec-cohere": {
                                 "skip": True,
                                 "vectorizePropertyName": False
                             }
@@ -56,7 +56,7 @@ schema = {
                     "dataType": ["int"],
                     "description": "The domain id.",
                     "moduleConfig": {
-                            "text2vec-openai": {
+                            "text2vec-cohere": {
                                 "skip": True,
                                 "vectorizePropertyName": False
                             }
@@ -67,7 +67,7 @@ schema = {
                     "dataType": ["int"],
                     "description": "The cluster id.",
                     "moduleConfig": {
-                            "text2vec-openai": {
+                            "text2vec-cohere": {
                                 "skip": True,
                                 "vectorizePropertyName": False
                             }
@@ -78,7 +78,7 @@ schema = {
                     "dataType": ["text"],
                     "description": "The text content the post",
                     "moduleConfig": {
-                            "text2vec-openai": {
+                            "text2vec-cohere": {
                                 "skip": False,
                                 "vectorizePropertyName": False
                             }
@@ -89,7 +89,7 @@ schema = {
                     "dataType": ["text"],
                     "description": "The group name",
                     "moduleConfig": {
-                            "text2vec-openai": {
+                            "text2vec-cohere": {
                                 "skip": False,
                                 "vectorizePropertyName": False
                             }
@@ -100,7 +100,7 @@ schema = {
                     "dataType": ["text"],
                     "description": "The text name the post",
                     "moduleConfig": {
-                            "text2vec-openai": {
+                            "text2vec-cohere": {
                                 "skip": False,
                                 "vectorizePropertyName": False
                             }
@@ -111,7 +111,7 @@ schema = {
                     "dataType": ["text"],
                     "description": "The emojiSummary",
                     "moduleConfig": {
-                            "text2vec-openai": {
+                            "text2vec-cohere": {
                                 "skip": False,
                                 "vectorizePropertyName": False
                             }
@@ -122,7 +122,7 @@ schema = {
                     "dataType": ["text"],
                     "description": "The oneWordSummary",
                     "moduleConfig": {
-                            "text2vec-openai": {
+                            "text2vec-cohere": {
                                 "skip": False,
                                 "vectorizePropertyName": False
                             }
@@ -133,7 +133,7 @@ schema = {
                     "dataType": ["text"],
                     "description": "The text name the post",
                     "moduleConfig": {
-                            "text2vec-openai": {
+                            "text2vec-cohere": {
                                 "skip": False,
                                 "vectorizePropertyName": False
                             }
@@ -144,7 +144,7 @@ schema = {
                     "dataType": ["text"],
                     "description": "Short summary of the post",
                     "moduleConfig": {
-                            "text2vec-openai": {
+                            "text2vec-cohere": {
                                 "skip": False,
                                 "vectorizePropertyName": False
                             }
@@ -155,7 +155,7 @@ schema = {
                     "dataType": ["text"],
                     "description": "Full summary of the post",
                     "moduleConfig": {
-                            "text2vec-openai": {
+                            "text2vec-cohere": {
                                 "skip": False,
                                 "vectorizePropertyName": False
                             }
@@ -166,7 +166,7 @@ schema = {
                     "dataType": ["text"],
                     "description": "Short summary of the post",
                     "moduleConfig": {
-                            "text2vec-openai": {
+                            "text2vec-cohere": {
                                 "skip": False,
                                 "vectorizePropertyName": False
                             }
@@ -177,7 +177,7 @@ schema = {
                     "dataType": ["text"],
                     "description": "Full summary of the post",
                     "moduleConfig": {
-                            "text2vec-openai": {
+                            "text2vec-cohere": {
                                 "skip": False,
                                 "vectorizePropertyName": False
                             }
@@ -188,7 +188,7 @@ schema = {
                     "dataType": ["string"],
                     "description": "The name of the user who posted the post",
                     "moduleConfig": {
-                            "text2vec-openai": {
+                            "text2vec-cohere": {
                                 "skip": False,
                                 "vectorizePropertyName": False
                             }
@@ -199,7 +199,7 @@ schema = {
                     "dataType": ["string"],
                     "description": "The image url",
                     "moduleConfig": {
-                            "text2vec-openai": {
+                            "text2vec-cohere": {
                                 "skip": True,
                                 "vectorizePropertyName": False
                             }
@@ -210,7 +210,7 @@ schema = {
                     "dataType": ["int"],
                     "description": "The up count",
                     "moduleConfig": {
-                            "text2vec-openai": {
+                            "text2vec-cohere": {
                                 "skip": True,
                                 "vectorizePropertyName": False
                             }
@@ -221,7 +221,7 @@ schema = {
                     "dataType": ["int"],
                     "description": "The up count",
                     "moduleConfig": {
-                            "text2vec-openai": {
+                            "text2vec-cohere": {
                                 "skip": True,
                                 "vectorizePropertyName": False
                             }
@@ -232,7 +232,7 @@ schema = {
                     "dataType": ["int"],
                     "description": "The up count",
                     "moduleConfig": {
-                            "text2vec-openai": {
+                            "text2vec-cohere": {
                                 "skip": True,
                                 "vectorizePropertyName": False
                             }
@@ -243,7 +243,7 @@ schema = {
                     "dataType": ["int"],
                     "description": "The down count",
                     "moduleConfig": {
-                            "text2vec-openai": {
+                            "text2vec-cohere": {
                                 "skip": True,
                                 "vectorizePropertyName": False
                             }
@@ -254,7 +254,7 @@ schema = {
                     "dataType": ["string"],
                     "description": "The up count",
                     "moduleConfig": {
-                            "text2vec-openai": {
+                            "text2vec-cohere": {
                                 "skip": True,
                                 "vectorizePropertyName": False
                             }
@@ -265,7 +265,7 @@ schema = {
                     "dataType": ["date"],
                     "description": "When Created",
                     "moduleConfig": {
-                            "text2vec-openai": {
+                            "text2vec-cohere": {
                                 "skip": True,
                                 "vectorizePropertyName": False
                             }
@@ -276,7 +276,7 @@ schema = {
                     "dataType": ["date"],
                     "description": "When updated",
                     "moduleConfig": {
-                            "text2vec-openai": {
+                            "text2vec-cohere": {
                                 "skip": True,
                                 "vectorizePropertyName": False
                             }
@@ -287,7 +287,7 @@ schema = {
                     "dataType": ["int"],
                     "description": "The user number.",
                     "moduleConfig": {
-                            "text2vec-openai": {
+                            "text2vec-cohere": {
                                 "skip": True,
                                 "vectorizePropertyName": False
                             }
