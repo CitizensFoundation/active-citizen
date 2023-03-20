@@ -14,6 +14,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 from langchain.vectorstores import VectorStore
 
 from schemas import ChatResponse
@@ -21,6 +22,8 @@ from schemas import ChatResponse
 from routers.posts import post_router
 
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 templates = Jinja2Templates(directory="templates")
 vectorstore: Optional[VectorStore] = None
 client: Optional[weaviate.Client] = None
