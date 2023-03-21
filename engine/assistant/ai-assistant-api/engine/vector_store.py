@@ -5,7 +5,7 @@ from weaviate.util import generate_uuid5
 from uuid import uuid4
 import time
 
-def upsert_post_in_vector_store(post: Post):
+async def upsert_post_in_vector_store(post: Post):
     client = weaviate.Client("http://localhost:8080")
 
     print(post)
@@ -30,13 +30,13 @@ def upsert_post_in_vector_store(post: Post):
         "created_at": post.date,
         "updated_at": post.date,
         "group_name": post.group_name,
-        "emojiSummary": get_emoji_summary(post),
-        "oneWordSummary": get_one_word_summary(post),
-        "shortName": get_short_post_name(post),
-        "shortSummary": get_short_post_summary(post),
-        "fullSummary": get_full_post_summary(post),
-        "shortSummaryWithPoints": get_short_post_summary_with_points(post),
-        "fullSummaryWithPoints": get_full_post_summary_with_points(post),
+        "emojiSummary": await get_emoji_summary(post),
+        "oneWordSummary": await get_one_word_summary(post),
+        "shortName": await get_short_post_name(post),
+        "shortSummary": await get_short_post_summary(post),
+        "fullSummary": await get_full_post_summary(post),
+        "shortSummaryWithPoints": await get_short_post_summary_with_points(post),
+        "fullSummaryWithPoints": await get_full_post_summary_with_points(post),
     }
 
     print(data_properties)

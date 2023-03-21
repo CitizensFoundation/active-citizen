@@ -2,60 +2,84 @@ from models.post import Post
 import openai
 import string
 import time
+import openai_async
+import os
 
 from langchain import PromptTemplate
 
 TEMP_LANGUAGE_LOCALE = "is"
 
 import random
+import asyncio
 
-def retry_with_exponential_backoff(
+async def retry_with_exponential_backoff(
     func,
     initial_delay: float = 1,
     exponential_base: float = 2,
     jitter: bool = True,
     max_retries: int = 10000,
     errors: tuple = (openai.error.RateLimitError,),
+    **kwargs,
 ):
     """Retry a function with exponential backoff."""
 
-    def wrapper(*args, **kwargs):
-        # Initialize variables
-        num_retries = 0
-        delay = initial_delay
+    # Initialize variables
+    num_retries = 0
+    delay = initial_delay
 
-        # Loop until a successful response or max_retries is hit or an exception is raised
-        while True:
-            try:
-                return func(*args, **kwargs)
+    # Loop until a successful response or max_retries is hit or an exception is raised
+    while True:
+        try:
+            return await func(**kwargs)
 
-            # Retry on specified errors
-            except errors as e:
-                # Increment retries
-                num_retries += 1
+        # Retry on specified errors
+        except Exception as e:
+            # Increment retries
+            num_retries += 1
 
-                # Check if max retries has been reached
-                if num_retries > max_retries:
-                    raise Exception(
-                        f"Maximum number of retries ({max_retries}) exceeded."
-                    )
+            # Check if max retries has been reached
+            if num_retries > max_retries:
+                raise Exception(
+                    f"Maximum number of retries ({max_retries}) exceeded."
+                )
 
-                # Increment the delay
-                delay *= exponential_base * (1 + jitter * random.random())
+            # Increment the delay
+            delay *= exponential_base * (1 + jitter * random.random())
 
-                # Sleep for the delay
-                time.sleep(delay)
-                print(f"Sleeping for {delay} seconds num retries {num_retries}")
+            print(f"Sleeping for {delay} seconds num retries {num_retries}")
+            await asyncio.sleep(delay)
 
-            # Raise exceptions for any errors not specified
-            except Exception as e:
-                raise e
+        # Raise exceptions for any errors not specified
+        #except Exception as e:
+        #    raise e
 
-    return wrapper
+async def completions_with_backoff(**kwargs):
+    response = await openai_async.chat_complete(
+          os.getenv('OPENAI_API_KEY'),
+          timeout=45,
+          payload=kwargs)
+    print (response.json())
+    return response.json()["choices"][0]["message"]["content"]
 
-@retry_with_exponential_backoff
-def completions_with_backoff(**kwargs):
-    return openai.ChatCompletion.create(**kwargs)
+async def summarize_text(prompt, text, custom_system_message = None, skip_icelandic = False):
+    final_is_postfix = is_prefix_postfix if not skip_icelandic else ""
+    return await retry_with_exponential_backoff(
+        completions_with_backoff,
+        initial_delay=1,
+        exponential_base=2,
+        max_retries=100,
+        errors=(openai.error.RateLimitError,),
+        **{
+            "model": "gpt-4",
+            "temperature": 0.2,
+            "messages": [
+                {"role": "system", "content": custom_system_message or f"{system_message}\n{final_is_postfix}"},
+                {"role": "user", "content": f"{prompt}{text}"}
+            ]
+        }
+    )
+
+    #return completion.choices[0].message.content
 
 system_message = """You are an effective text summarization and shortening system.
 If you can't shorten or summarize the text just output the original text.
@@ -146,20 +170,6 @@ summaryWithPointsAndImageTemplate = """{summary} [{source}]
   <dislikes={counter_endorsements_down}>\n\n
 """
 
-def summarize_text(prompt, text, custom_system_message = None, skip_icelandic = False):
-    final_is_postfix = is_prefix_postfix if not skip_icelandic else ""
-    completion = completions_with_backoff(
-#        model="gpt-3.5-turbo",
-        model="gpt-4",
-        temperature=0.2,
-        messages=[
-            {"role": "system", "content": custom_system_message or f"{system_message}\n{final_is_postfix}"},
-            {"role": "user", "content": f"{prompt}{text}"}
-        ]
-    )
-
-    return completion.choices[0].message.content
-
 #TODO: Refactor all of this into classes and use the post.language here with more options than "is"
 def get_final_prefix(prefix):
     if False and TEMP_LANGUAGE_LOCALE == "is":
@@ -167,57 +177,57 @@ def get_final_prefix(prefix):
     else:
         return prefix
 
-def summarize_emoji(text):
-    return summarize_text(get_final_prefix(emoji_prompt_prefix), text, emoji_system_message, True)
+async def summarize_emoji(text):
+    return await summarize_text(get_final_prefix(emoji_prompt_prefix), text, emoji_system_message, True)
 
-def summarize_one_word(text):
-    return summarize_text(get_final_prefix(one_word_prompt_prefix), text,one_word_system_message)
+async def summarize_one_word(text):
+    return await summarize_text(get_final_prefix(one_word_prompt_prefix), text,one_word_system_message)
 
-def summarize_short_name(text):
-    return summarize_text(get_final_prefix(short_name_prompt_prefix), text)
+async def summarize_short_name(text):
+    return await summarize_text(get_final_prefix(short_name_prompt_prefix), text)
 
-def summarize_short_summary(text):
-    return summarize_text(get_final_prefix(short_summary_prefix), text)
+async def summarize_short_summary(text):
+    return await summarize_text(get_final_prefix(short_summary_prefix), text)
 
-def summarize_full_summary(text):
-    return summarize_text(get_final_prefix(full_summary_prefix), text)
-
-
-def summarize_full_points_for_summary(text):
-    return summarize_text(get_final_prefix(full_points_for_summary_prefix), text)
+async def summarize_full_summary(text):
+    return await summarize_text(get_final_prefix(full_summary_prefix), text)
 
 
-def summarize_short_points_for_summary(text):
-    return summarize_text(get_final_prefix(short_points_for_summary_prefix), text)
+async def summarize_full_points_for_summary(text):
+    return await summarize_text(get_final_prefix(full_points_for_summary_prefix), text)
 
 
-def summarize_full_points_against_summary(text):
-    return summarize_text(get_final_prefix(full_points_against_summary_prefix), text)
+async def summarize_short_points_for_summary(text):
+    return await summarize_text(get_final_prefix(short_points_for_summary_prefix), text)
 
 
-def summarize_short_points_against_summary(text):
-    return summarize_text(get_final_prefix(short_points_against_summary_prefix), text)
+async def summarize_full_points_against_summary(text):
+    return await summarize_text(get_final_prefix(full_points_against_summary_prefix), text)
 
-def get_emoji_summary(post: Post):
+
+async def summarize_short_points_against_summary(text):
+    return await summarize_text(get_final_prefix(short_points_against_summary_prefix), text)
+
+async def get_emoji_summary(post: Post):
     prompt = PromptTemplate(
         input_variables=["emojis"],
         template=emojiSummaryTemplate,
     )
 
-    emoji_summary = summarize_emoji(f"{post.name}\n{post.description}")
+    emoji_summary = await summarize_emoji(f"{post.name}\n{post.description}")
 
     print(emoji_summary)
 
     return prompt.format(emojis=emoji_summary)
 
 
-def get_one_word_summary(post: Post):
+async def get_one_word_summary(post: Post):
     prompt = PromptTemplate(
         input_variables=["one_word"],
         template=oneWordSummaryTemplate,
     )
 
-    one_word_summary = summarize_one_word(f"{post.name}\n{post.description}")
+    one_word_summary = await summarize_one_word(f"{post.name}\n{post.description}")
 
     print(one_word_summary)
 
@@ -225,43 +235,43 @@ def get_one_word_summary(post: Post):
 
     return prompt.format(one_word=one_word_summary)
 
-def get_short_post_name(post: Post):
+async def get_short_post_name(post: Post):
     prompt = PromptTemplate(
         input_variables=["name", "group_name", "source"],
         template=shortPostNameTemplate,
     )
 
-    short_name = summarize_short_name(post.name)
+    short_name = await summarize_short_name(post.name)
 
     print(short_name)
 
     return prompt.format(name=short_name, group_name=post.group_name, source=post.post_id)
 
-def get_short_post_summary(post: Post):
+async def get_short_post_summary(post: Post):
     prompt = PromptTemplate(
         input_variables=["group_name", "source","summary"],
         template=summaryTemplate,
     )
 
-    short_summary = summarize_short_summary(f"{post.name}\n{post.description}")
+    short_summary = await summarize_short_summary(f"{post.name}\n{post.description}")
 
     print(short_summary)
 
     return prompt.format(summary=short_summary, group_name=post.group_name, source=post.post_id)
 
 
-def get_full_post_summary(post: Post):
+async def get_full_post_summary(post: Post):
     prompt = PromptTemplate(
                input_variables=["group_name", "source","summary"],
         template=summaryTemplate,
     )
 
-    full_summary = summarize_full_summary(f"{post.name}\n{post.description}")
+    full_summary = await summarize_full_summary(f"{post.name}\n{post.description}")
     print(full_summary)
 
     return prompt.format(summary=full_summary, group_name=post.group_name, source=post.post_id)
 
-def get_short_post_summary_with_points(post: Post):
+async def get_short_post_summary_with_points(post: Post):
     prompt = PromptTemplate(
         input_variables=["group_name",
                          "counter_endorsements_up", "counter_endorsements_down",
@@ -269,17 +279,17 @@ def get_short_post_summary_with_points(post: Post):
         template=summaryWithPointsTemplate,
     )
 
-    short_summary = summarize_short_summary(f"{post.name}\n{post.description}")
+    short_summary = await summarize_short_summary(f"{post.name}\n{post.description}")
 
     points_for_short_summary = ""
     points_against_short_summary = ""
 
     if post.points_for!="":
-        points_for_short_summary = summarize_short_points_for_summary(
+        points_for_short_summary = await summarize_short_points_for_summary(
             f"{post.name}\n{post.points_for}")
 
     if post.points_against!="":
-        points_against_short_summary = summarize_short_points_against_summary(
+        points_against_short_summary = await summarize_short_points_against_summary(
             f"{post.name}\n{post.points_against}")
 
     print(short_summary)
@@ -290,7 +300,7 @@ def get_short_post_summary_with_points(post: Post):
                   counter_endorsements_up=post.counter_endorsements_up, counter_endorsements_down=post.counter_endorsements_down,
                    points_for=points_for_short_summary, points_against=points_against_short_summary)
 
-def get_full_post_summary_with_points(post: Post):
+async def get_full_post_summary_with_points(post: Post):
     prompt = PromptTemplate(
         input_variables=["group_name",
                          "counter_endorsements_up", "counter_endorsements_down",
@@ -298,17 +308,17 @@ def get_full_post_summary_with_points(post: Post):
         template=summaryWithPointsAndImageTemplate,
     )
 
-    short_summary = summarize_full_summary(f"{post.name}\n{post.description}")
+    short_summary = await summarize_full_summary(f"{post.name}\n{post.description}")
 
     points_for_short_summary = ""
     points_against_short_summary = ""
 
     if post.points_for!="":
-        points_for_short_summary = summarize_full_points_for_summary(
+        points_for_short_summary = await summarize_full_points_for_summary(
             f"{post.name}\n{post.points_for}")
 
     if post.points_against!="":
-        points_against_short_summary = summarize_full_points_against_summary(
+        points_against_short_summary = await summarize_full_points_against_summary(
             f"{post.name}\n{post.points_against}")
 
     return prompt.format(summary=short_summary, group_name=post.group_name, source=post.post_id,

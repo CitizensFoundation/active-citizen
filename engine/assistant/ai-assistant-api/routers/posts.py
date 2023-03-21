@@ -40,7 +40,7 @@ async def update_post(cluster_id: int, post_id: int, post: Post):
     if postFound==False:
         post.post_id = post_id
         post.cluster_id = cluster_id
-        upsert_post_in_vector_store(post);
+        await upsert_post_in_vector_store(post);
 
     return Response(content="OK", status_code=200)
 

@@ -143,7 +143,6 @@ Never return more than one JSON_ANSWER per question and always stop after you ha
     JSON_ANSWER:
     """
 
-    # Replace the text "{original_question}" with the original_question in refine_question_and_concept
     refine_question_and_concept = refine_question_and_concept.replace(
         "{original_question}", original_question)
 
@@ -164,13 +163,5 @@ Never return more than one JSON_ANSWER per question and always stop after you ha
 
         }
     )
-
-    #  )
-
-    # completion = openai.ChatCompletion.create(
-    #    model="gpt-3.5-turbo",
-    #    temperature=0.2,
-    #    messages=get_refine_question_prompt(original_question)
-    # )
 
     return response.json()["choices"][0]["message"]["content"]

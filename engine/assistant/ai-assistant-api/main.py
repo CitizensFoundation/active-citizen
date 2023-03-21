@@ -77,12 +77,10 @@ async def websockets_auth(websocket: WebSocket):
         await websocket.close(code=websockets.CloseCode.POLICY_VIOLATION)
         return False
 
-    # Extract the base64-encoded credentials from the header
     encoded_credentials = auth_header.split(" ")[1]
     credentials = b64decode(encoded_credentials).decode("utf-8")
     username, password = credentials.split(":")
 
-    # Verify the credentials
     if not (
         secrets.compare_digest(username, USER)
         and secrets.compare_digest(password, PASSWORD)
