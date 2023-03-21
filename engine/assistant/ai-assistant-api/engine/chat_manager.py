@@ -113,8 +113,8 @@ class ChatManager:
             SystemMessagePromptTemplate.from_template(main_system_prompt)
         )
 
-    def perform_question_analysis(self, question):
-        question_analysis = get_question_analysis(question)
+    async def perform_question_analysis(self, question):
+        question_analysis = await get_question_analysis(question)
 
         print("----------------------")
         print(question_analysis)
@@ -228,7 +228,7 @@ class ChatManager:
                     print(
                         f"The question is flagged as inappropriate {question} {moderationResponse}")
                 else:
-                    question_analysis = self.perform_question_analysis(question)
+                    question_analysis = await self.perform_question_analysis(question)
 
                     if question_analysis["question_intent"] == "asking_about_many_ideas" or "unknown":
                         question = f"{question}"

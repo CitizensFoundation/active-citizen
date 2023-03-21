@@ -21,7 +21,7 @@ async def get_post(post_id: int):
     where_filter = {
         "path": ["postId"],
         "operator": "Equal",
-        "valueNumber": post_id,
+        "valueInt": post_id,
     }
     result = (
         client.query.

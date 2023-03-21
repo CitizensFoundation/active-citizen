@@ -1,6 +1,8 @@
 import openai
+import openai_async
+import os
 
-def get_question_analysis(original_question, max_tokens=1000):
+async def get_question_analysis(original_question, max_tokens=1000):
     refine_question_and_concept = """
 You are a JSON creator for the Hverfið mitt participatory budgeting project and \
 you create JSON_ANSWERs from user questions about the project.
@@ -142,24 +144,33 @@ Never return more than one JSON_ANSWER per question and always stop after you ha
     """
 
     # Replace the text "{original_question}" with the original_question in refine_question_and_concept
-    refine_question_and_concept = refine_question_and_concept.replace("{original_question}", original_question)
+    refine_question_and_concept = refine_question_and_concept.replace(
+        "{original_question}", original_question)
 
-    completion = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        #TODO: Tune prompt for gpt-4, it's returning far too many concepts that are not entities or just use 3.5 for routing
-        #model="gpt-4",
-        temperature=0.0,
-        max_tokens=128,
-        messages=[
-            {"role": "system", "content": "You are a very smart and capable computer system that produces highly detailed and accurate JSON_ANSWERs from questions. If you don't know the answer, leave an empty JSON_ANSWER."},
-            {"role": "user", "content": f"{refine_question_and_concept}"}
-        ]
+    response = await openai_async.chat_complete(
+        os.getenv('OPENAI_API_KEY'),
+        timeout=20,
+        payload={
+            "model": "gpt-3.5-turbo",
+            "temperature": 0.0,
+            "max_tokens": 128,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "You are a very smart and capable computer system that produces highly detailed and accurate JSON_ANSWERs from questions. If you don't know the answer, leave an empty JSON_ANSWER.",
+                },
+                {"role": "user", "content": f"{refine_question_and_concept}"},
+            ],
+
+        }
     )
 
-    #completion = openai.ChatCompletion.create(
+    #  )
+
+    # completion = openai.ChatCompletion.create(
     #    model="gpt-3.5-turbo",
     #    temperature=0.2,
     #    messages=get_refine_question_prompt(original_question)
-    #)
+    # )
 
-    return completion.choices[0].message.content
+    return response.json()["choices"][0]["message"]["content"]

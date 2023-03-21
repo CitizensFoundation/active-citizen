@@ -124,9 +124,14 @@ class ChatChainWithSources(Chain, BaseModel):
                 **vectordbkwargs
             )
             if len(docs) == 0:
-                docs = [
-                    Document(page_content="No ideas found for their question, please report so to the user. Never make up your own ideas. Just tell the users that no ideas were found in the context.", metadata="")
-                ]
+                if group_name != None:
+                    docs = [
+                        Document(page_content="No ideas found for context for this question and neighborhood! Please report back to the user that no ideas are found in this neighborhood for their question and never make up ideas. Just tell the users that no ideas were found for their question.", metadata="")
+                    ]
+                else:
+                    docs = [
+                        Document(page_content="No ideas found for context! Please report this back to the the user and never make up ideas. Just tell the users that no ideas were found for their question.", metadata="")
+                    ]
         new_inputs = inputs.copy()
         new_inputs["question"] = new_question
         answer, _ = await self.combine_docs_chain.acombine_docs(docs, **new_inputs)
