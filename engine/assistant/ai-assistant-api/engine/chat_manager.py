@@ -152,7 +152,7 @@ class ChatManager:
             self.last_group_name = group_name
 
         # Remove by hand idea, ideas, points for, points against, pros, cons, pro, con from the concepts array
-        concepts = [x for x in concepts if x not in ["idea", "ideas", "point for", "table",
+        concepts = [x for x in concepts if x not in ["idea", "ideas", "point for", "table","hugmyndir","hugmynd",
                                                      "points for", "point against", "points against", "pro", "pros", "con", "cons"]]
 
         print(conceptsJSON)
