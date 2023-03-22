@@ -82,8 +82,11 @@ states = {
 
 
 class ChatManager:
-    def __init__(self, websocket):
+    def __init__(self, websocket, cluster_id, community_id):
         self.websocket = websocket
+        self.cluster_id = cluster_id
+        self.community_id = community_id
+
         self.reset_memory()
         self.followup_question_handler = FollowupQuestionGenCallbackHandler(
             self.websocket)
@@ -252,6 +255,8 @@ class ChatManager:
 
                     result = await self.qa_chain.acall(
                         {
+                            "cluster_id": self.cluster_id,
+                            "community_id": self.community_id,
                             "question": question,
                             "messages": current_messages,
                             "question_intent": question_analysis["question_intent"],

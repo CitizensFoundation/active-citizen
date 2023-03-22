@@ -10,7 +10,7 @@ async def upsert_post_in_vector_store(post: Post):
 
     print(post)
 
-    weaviate_class = "PostsIs" if post.language == "is" else "Posts"
+    weaviate_class = "PostsIs" if post.language == "is" or post.language=="es" else "Posts"
 
     uuid = generate_uuid5(post.post_id, weaviate_class)
 

@@ -94,17 +94,17 @@ async def websockets_auth(websocket: WebSocket):
 async def startup_event():
     logging.info("loading vectorstore")
 
-@app.get("/")
+@app.get("/{cluster_id}/{community_id}")
 async def get(request: Request, credentials: HTTPBasicCredentials = Depends(verify_credentials)):
     return templates.TemplateResponse("index.html", {"request": request})
 
-@app.websocket("/chat")
-async def websocket_endpoint(websocket: WebSocket):
+@app.websocket("/chat/{cluster_id}/{community_id}")
+async def websocket_endpoint(websocket: WebSocket, cluster_id: str, community_id: str):
     if IS_PRODUCTION and not await websockets_auth(websocket):
         return
 
     await websocket.accept()
-    chat_manager = ChatManager(websocket)
+    chat_manager = ChatManager(websocket, cluster_id, community_id)
 
     while True:
         try:

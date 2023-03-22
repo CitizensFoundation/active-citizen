@@ -50,6 +50,13 @@ const generateNotificationsForNewPost = (activity, callback) => {
 
 const generateNotificationsForEndorsements = (activity, callback) => {
   // Notifications for endorsement on posts I've created
+  let mutePost = false;
+
+  if (activity.Community &&
+      activity.Community.configuration &&
+      activity.Community.configuration.muteNotificationsForEndorsements) {
+        mutePost = true;
+  }
   models.Post.findOne({
     where: { id: activity.post_id },
     include: [
@@ -65,7 +72,7 @@ const generateNotificationsForEndorsements = (activity, callback) => {
       }
     ]
   }).then((post) => {
-    if (post) {
+    if (post && !mutePost) {
       addOrPossiblyGroupNotification(post, 'notification.post.endorsement', 'my_posts_endorsements', activity, post.User, 50, callback);
     } else {
       log.warn("Generate Post Notification Not found or muted", { userId: activity.user_id, type: activity.type});
