@@ -9,34 +9,50 @@ from langchain.embeddings.base import Embeddings
 from langchain.vectorstores.base import VectorStore
 from langchain.vectorstores.weaviate import Weaviate
 
+
 class AcWeaviate(Weaviate):
     def similarity_search_concepts(
-        self, concepts: Any, group_name: Any, k: int = 4, **kwargs: Any
+        self, concepts: Any, group_name: Any, cluster_id: Any, community_id: Any, k: int = 4, **kwargs: Any
     ) -> List[Document]:
         """Look up similar documents in weaviate."""
         content: Dict[str, Any] = {"concepts": concepts}
-        print(content)
+
         if kwargs.get("search_distance"):
             content["certainty"] = kwargs.get("search_distance")
 
-        where_filter = None
+        where_filter = {
+            "operator": "And",
+            "operands": [
+                {
+                    "path": ["cluster_id"],
+                    "operator": "Equal",
+                    "valueInt": cluster_id
+                },
+                {
+                    "path": ["community_id"],
+                     "operator": "Equal",
+                    "valueInt": community_id
+                }
+            ]
+        }
 
-        if group_name!=None:
-            where_filter = {
+        if group_name != None:
+            where_filter["operands"].append({
                 "path": ["group_name"],
                 "operator": "Equal",
                 "valueText": group_name,
-            }
+            })
 
         print(f"1010101010101010 - {where_filter}")
 
         query_obj = self._client.query.get(self._index_name, self._query_attrs)
         if where_filter:
-            result = query_obj.with_near_text(content).with_limit(k).with_where(where_filter).do()
+            result = query_obj.with_near_text(content).with_limit(
+                k).with_where(where_filter).do()
         else:
             result = query_obj.with_near_text(content).with_limit(k).do()
         docs = []
-        print (result)
+        print(result)
 
         # If using concepts and no results try without certainty
 

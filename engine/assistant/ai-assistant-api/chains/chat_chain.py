@@ -107,6 +107,8 @@ class ChatChainWithSources(Chain, BaseModel):
         question = inputs["question"]
         concepts = inputs["concepts"]
         group_name = inputs["group_name"]
+        cluster_id = inputs["cluster_id"]
+        community_id = inputs["community_id"]
         self.combine_docs_chain.llm_chain.prompt = inputs["messages"]
         local_top_k_docs_for_context = inputs["top_k_docs_for_context"]
 
@@ -118,7 +120,7 @@ class ChatChainWithSources(Chain, BaseModel):
             docs = [Document(page_content="")]
         else:
             docs = self.vectorstore.similarity_search_concepts(
-                concepts, group_name,
+                concepts, group_name, cluster_id, community_id,
                 k=local_top_k_docs_for_context,
                 #search_distance=0.5,
                 **vectordbkwargs
