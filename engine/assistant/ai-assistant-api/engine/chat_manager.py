@@ -128,6 +128,8 @@ class ChatManager:
             question_intent = conceptsJSON['question_intent']
             concepts = conceptsJSON['concepts']
             group_name = conceptsJSON['neighborhood_name']
+            if conceptsJSON['asking_about_all_neighborhoods']==True:
+                self.last_group_name = None
         except json.JSONDecodeError:
             # Handle invalid JSON input
             question_intent = "asking_about_many_ideas"
@@ -157,6 +159,7 @@ class ChatManager:
 
         print(conceptsJSON)
         print(question_intent)
+        print("----------------------")
         print(concepts)
         print(group_name)
         print("----------------------")

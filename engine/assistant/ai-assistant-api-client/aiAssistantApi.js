@@ -18,6 +18,12 @@ const convertToString = (integer, type) => {
   }
 };
 
+const readCommunityAIConfigurationFromTestFolder = (communityId) => {
+  const assistantConfiguration = {
+
+  }
+}
+
 const importDomain = (domain, done) => {
   var properties = {};
 
@@ -55,7 +61,8 @@ const importCommunity = (community, done) => {
       created_at: community.created_at,
       updated_at: community.updated_at,
       language: community.default_locale ? community.default_locale : community.Domain.default_locale,
-      status: community.deleted ? 'deleted' : 'published'
+      status: community.deleted ? 'deleted' : 'published',
+      assistantConfiguration: readCommunityAIConfigurationFromTestFolder(community.id)
     });
 
   const options = {

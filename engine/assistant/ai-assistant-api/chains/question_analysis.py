@@ -34,6 +34,9 @@ Please return the following fields in JSON format:
 -- "Kjalarnes"
 -- close variations on those name like "Vesturbæ" or "Háaleiti" or "Ábær" or "Bryggjuhverfi"
 -- null
+- "asking_about_all_neighborhoods": Can be one of:
+-- true
+-- false
 If there is a variation of neighborhood name then use the \
 actual neightborhood name for the neighborhood_name JSON field.
 If there is no close variation of neighborhood name then use null for the neighborhood_name JSON field.
@@ -53,6 +56,7 @@ Never return more than one JSON_ANSWER per question and always stop after you ha
     {
         "question": "Are there any ideas connected to dogs and fun?",
         "question_intent": "asking_about_many_ideas",
+        "asking_about_all_neighborhoods": false,
         "summarization_type": "not_asking_for_summarization",
         "neighborhood_name": null,
         "concepts": [
@@ -67,6 +71,7 @@ Never return more than one JSON_ANSWER per question and always stop after you ha
     {
         "question": "Is there an idea about a cat? If so give me the best points for and against the idea.",
         "question_intent": "asking_about_points_for_or_against",
+        "asking_about_all_neighborhoods": false,
         "summarization_type": "summarize_pros_and_cons",
         "neighborhood_name": null,
         "concepts": [
@@ -80,6 +85,7 @@ Never return more than one JSON_ANSWER per question and always stop after you ha
     {
         "question": "Tell me more about that playground idea in Vesturbær",
         "question_intent": "asking_about_one_idea",
+        "asking_about_all_neighborhoods": false,
         "summarization_type": "not_asking_for_summarization",
         "neighborhood_name": "Vesturbær",
         "concepts": [
@@ -93,6 +99,7 @@ Never return more than one JSON_ANSWER per question and always stop after you ha
     {
         "question": "Are there any school related ideas close to Klambratún?",
         "question_intent": "asking_about_many_ideas",
+        "asking_about_all_neighborhoods": false,
         "summarization_type": "not_asking_for_summarization",
         "neighborhood_name": null,
         "concepts": [
@@ -105,8 +112,9 @@ Never return more than one JSON_ANSWER per question and always stop after you ha
 
     JSON_ANSWER:
     {
-        "question": "What ideas are eligible?",
-        "question_intent": "asking_about_the_project_rules_and_overall_organization_of_the_project",
+        "question": "Ideas in any neighborhood",
+        "question_intent": "asking_about_many_ideas",
+        "asking_about_all_neighborhoods": true,
         "summarization_type": "summarize_project_rules",
         "neighborhood_name": null,
         "concepts": [
@@ -120,6 +128,7 @@ Never return more than one JSON_ANSWER per question and always stop after you ha
     {
         "question": "What are the main themes of all ideas",
         "question_intent": "asking_about_many_ideas",
+        "asking_about_all_neighborhoods": false,
         "summarization_type": "summarize_many_ideas",
         "neighborhood_name": null,
         "concepts": []
@@ -129,8 +138,9 @@ Never return more than one JSON_ANSWER per question and always stop after you ha
 
     JSON_ANSWER:
     {
-        "question": "What are the rules of this project",
-        "question_intent": "asking_about_the_project_rules_and_overall_organization_of_the_project",
+        "question": "Show me ideas from all neighborhoods",
+        "question_intent": "asking_about_many_ideas",
+        "asking_about_all_neighborhoods": true,
         "summarization_type": "summarize_many_ideas",
         "neighborhood_name": null,
         "concepts": [
