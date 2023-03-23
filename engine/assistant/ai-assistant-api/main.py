@@ -54,14 +54,22 @@ def get_http_basic() -> Optional[HTTPBasic]:
         return HTTPBasic()
     return do_nothing
 
-def verify_credentials(credentials: Optional[HTTPBasicCredentials] = Depends(get_http_basic())):
+def get_users_and_passwords():
+    users = USER.split(',') if USER else []
+    passwords = PASSWORD.split(',') if PASSWORD else []
+    return dict(zip(users, passwords))
+
+def verify_credentials(credentials: Optional[HTTPBasicCredentials] = Depends(http_basic)):
     if IS_PRODUCTION:
         if credentials is not None:
-            correct_username = secrets.compare_digest(credentials.username, USER)
-            correct_password = secrets.compare_digest(
-                credentials.password, PASSWORD)
+            users_and_passwords = get_users_and_passwords()
+            user_password = users_and_passwords.get(credentials.username)
+            correct_credentials = (
+                user_password is not None and
+                secrets.compare_digest(credentials.password, user_password)
+            )
 
-            if not (correct_username and correct_password):
+            if not correct_credentials:
                 raise HTTPException(
                     status_code=401,
                     detail="Incorrect username or password",

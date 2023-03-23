@@ -3,6 +3,7 @@ from chains.question_analysis import get_question_analysis
 from memory.dynamic_chat_memory import DynamicChatMemory
 from prompts.about_project_prompt import get_about_project_prompt
 from prompts.follow_up_questions_prompt import get_follow_up_questions_prompt
+from routers.communities import get_community_from_store
 from routers.posts import post_router
 from schemas import ChatResponse
 from chains.vector_db_chain_chain import get_qa_chain
@@ -29,8 +30,6 @@ from langchain.chains.prompt_selector import (
 )
 from langchain.chains import LLMChain
 from langchain.chat_models import ChatOpenAI
-
-from prompts.main_system_prompt import main_system_prompt, many_ideas_user_question_prefix
 
 from langchain.prompts.chat import (
     ChatPromptTemplate,
@@ -87,6 +86,12 @@ class ChatManager:
         self.cluster_id = cluster_id
         self.community_id = community_id
         self.language = language
+        community_results = get_community_from_store(self.community_id)
+
+        self.community = community_results["data"]["Get"]["Communities"][0]
+
+        print("GOGOGOGOGGOGO")
+        self.configuration = json.loads(self.community["assistantConfiguration"])
 
         self.reset_memory()
         self.followup_question_handler = FollowupQuestionGenCallbackHandler(
@@ -121,7 +126,7 @@ class ChatManager:
         self.last_concepts = []
         self.last_group_name = None
 
-        localized_prompt = main_system_prompt.replace("{language_to_use}",
+        localized_prompt = self.configuration["prompts"]["main"]["system"].replace("{language_to_use}",
                                                       self.get_language_to_speak())
 
         self.dynamic_chat_memory = DynamicChatMemory()
@@ -130,7 +135,7 @@ class ChatManager:
         )
 
     async def perform_question_analysis(self, question):
-        question_analysis = await get_question_analysis(question)
+        question_analysis = await get_question_analysis(question, self.configuration)
 
         print("----------------------")
         print(question_analysis)
@@ -143,8 +148,8 @@ class ChatManager:
             conceptsJSON = json.loads(question_analysis)
             question_intent = conceptsJSON['question_intent']
             concepts = conceptsJSON['concepts']
-            group_name = conceptsJSON['neighborhood_name']
-            if conceptsJSON['asking_about_all_neighborhoods']==True:
+            group_name = conceptsJSON[self.configuration["prompts"]["questionAnalysis"]["jsonKeyGroupName"]]
+            if conceptsJSON[self.configuration["prompts"]["questionAnalysis"]["jsonKeyForAskingAll"]]==True:
                 self.last_group_name = None
         except json.JSONDecodeError:
             # Handle invalid JSON input
@@ -210,7 +215,7 @@ class ChatManager:
         await self.websocket.send_json(start_resp.dict())
 
         followup_template = get_follow_up_questions_prompt(
-            question, result["answer"])
+            question, result["answer"], self.configuration)
 
         chain = LLMChain(
             llm=self.followup_question_gen_llm,

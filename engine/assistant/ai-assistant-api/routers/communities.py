@@ -54,11 +54,11 @@ async def get_community(community_id: int, language: str):
     result = get_community_from_store(community_id)
     print(language)
 
-    print(result)
-    print(result["data"]["Get"]["Communities"][0])
+    #print(result)
+    #print(result["data"]["Get"]["Communities"][0])
 #    print(result["data"]["Get"]["Communities"][0]["assistantConfiguration"])
     assistant_configuration = json.loads(result["data"]["Get"]["Communities"][0]["assistantConfiguration"])
-    print(assistant_configuration)
+    #print(assistant_configuration)
     welcome_messages = assistant_configuration["welcomeMessage"]
     text_input_labels = assistant_configuration["textInputLabel"]
     theme_main_color = assistant_configuration["theme"]["mainColor"]
