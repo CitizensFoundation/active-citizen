@@ -82,10 +82,11 @@ states = {
 
 
 class ChatManager:
-    def __init__(self, websocket, cluster_id, community_id):
+    def __init__(self, websocket, cluster_id, community_id, language):
         self.websocket = websocket
         self.cluster_id = cluster_id
         self.community_id = community_id
+        self.language = language
 
         self.reset_memory()
         self.followup_question_handler = FollowupQuestionGenCallbackHandler(
@@ -107,13 +108,25 @@ class ChatManager:
             callback_manager=followup_question_manager,
         )
 
+    def get_language_to_speak(self):
+        if self.language=="is":
+            return "Icelandic"
+        elif self.language=="es":
+            return "Estonian"
+        else:
+            return "English"
+
     def reset_memory(self):
         self.chat_history = []
         self.last_concepts = []
         self.last_group_name = None
+
+        localized_prompt = main_system_prompt.replace("{language_to_use}",
+                                                      self.get_language_to_speak())
+
         self.dynamic_chat_memory = DynamicChatMemory()
         self.dynamic_chat_memory.add_system_message(
-            SystemMessagePromptTemplate.from_template(main_system_prompt)
+            SystemMessagePromptTemplate.from_template(localized_prompt)
         )
 
     async def perform_question_analysis(self, question):

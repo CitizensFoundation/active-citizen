@@ -1,5 +1,6 @@
 """Main entrypoint for the app."""
 from routers.posts import post_router
+from routers.communities import community_router
 from schemas import ChatResponse
 from base64 import b64decode
 from langchain.vectorstores import VectorStore
@@ -38,6 +39,7 @@ vectorstore = AcWeaviate(client, "PostsIs", "shortName")
 nearText = {"concepts": ["children", "playground"], "distance": 0.25}
 
 app.include_router(post_router)
+app.include_router(community_router)
 
 http_basic = HTTPBasic()
 
@@ -98,13 +100,17 @@ async def startup_event():
 async def get(request: Request, credentials: HTTPBasicCredentials = Depends(verify_credentials)):
     return templates.TemplateResponse("index.html", {"request": request})
 
-@app.websocket("/chat/{cluster_id}/{community_id}")
-async def websocket_endpoint(websocket: WebSocket, cluster_id: str, community_id: str):
+@app.websocket("/chat/{cluster_id}/{community_id}/{language}")
+async def websocket_endpoint(
+        websocket: WebSocket,
+        cluster_id: str,
+        community_id: str,
+        language: str):
     if IS_PRODUCTION and not await websockets_auth(websocket):
         return
 
     await websocket.accept()
-    chat_manager = ChatManager(websocket, cluster_id, community_id)
+    chat_manager = ChatManager(websocket, cluster_id, community_id, language)
 
     while True:
         try:
@@ -125,7 +131,7 @@ async def websocket_endpoint(websocket: WebSocket, cluster_id: str, community_id
 if __name__ == "__main__":
     import uvicorn
 
-    if os.environ.get("(8u89u89u987yd87asy78dayd87ayd78ayd78CTION") != None:
+    if os.environ.get("PRODUCTION") != None:
         uvicorn.run(app, host="0.0.0.0", port=443,
                     debug=False, log_level="info")
     else:

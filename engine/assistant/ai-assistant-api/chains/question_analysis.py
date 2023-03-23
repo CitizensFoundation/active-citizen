@@ -2,6 +2,7 @@ import openai
 import openai_async
 import os
 
+
 async def get_question_analysis(original_question, max_tokens=1000):
     refine_question_and_concept = """
 You are a JSON creator for the Hverfið mitt participatory budgeting project and \
@@ -15,7 +16,6 @@ Please return the following fields in JSON format:
 -- "asking_about_many_ideas"
 -- "asking_about_points_for_or_against"
 -- "asking_about_pros_or_cons"
--- "asking_about_the_project_rules_and_overall_organization_of_the_project",
 - "summarization_type": Can be one of:
 -- "not_asking_for_summarization"
 -- "summarize_many_ideas"
@@ -45,7 +45,7 @@ then make sure to use "asking_about_many_ideas" for the question_intent JSON fie
 Make sure to never use "asking_about_the_project_rules_and_overall_organization_of_the_project" for "question_intent" JSON field except \
 if the question is about specifici ideas or groups of ideas.
 The "concepts" JSON array should only include entities, and never include: "idea","ideas", "points for", \
-"hugmynd","hugmyndir", \
+"hugmynd","hugmyndir", \+
 "points against", "idea number 1", neighborhood names or anything like that, just leave the "concepts" array empty instead.
 Never return any Note: or comments after the JSON_ANSWER,
 Never return more than one JSON_ANSWER per question and always stop after you have provided the answer.
@@ -156,6 +156,14 @@ Never return more than one JSON_ANSWER per question and always stop after you ha
     refine_question_and_concept = refine_question_and_concept.replace(
         "{original_question}", original_question)
 
+    messages = [
+        {
+            "role": "system",
+                    "content": "You are a very smart and capable computer system that produces highly detailed and accurate JSON_ANSWERs from questions. If you don't know the answer, leave an empty JSON_ANSWER.",
+        },
+        {"role": "user", "content": f"{refine_question_and_concept}"},
+    ]
+
     response = await openai_async.chat_complete(
         os.getenv('OPENAI_API_KEY'),
         timeout=20,
@@ -163,13 +171,7 @@ Never return more than one JSON_ANSWER per question and always stop after you ha
             "model": "gpt-3.5-turbo",
             "temperature": 0.0,
             "max_tokens": 128,
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "You are a very smart and capable computer system that produces highly detailed and accurate JSON_ANSWERs from questions. If you don't know the answer, leave an empty JSON_ANSWER.",
-                },
-                {"role": "user", "content": f"{refine_question_and_concept}"},
-            ],
+            "messages": messages,
 
         }
     )

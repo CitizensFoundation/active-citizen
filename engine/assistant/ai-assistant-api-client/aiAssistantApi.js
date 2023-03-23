@@ -18,9 +18,20 @@ const convertToString = (integer, type) => {
   }
 };
 
-const readCommunityAIConfigurationFromTestFolder = (communityId) => {
-  const assistantConfiguration = {
+const readCommunityAIConfigurationFromTestFolder = (cluster_id, communityId) => {
+  const fs = require('fs');
+  const path = require('path');
+  const filePath = path.join(__dirname, `./testConfigurations/${cluster_id}/${communityId}/configuration.json`);
 
+  if (fs.existsSync(filePath)) {
+    let configuration = fs.readFileSync(filePath, 'utf8');
+    if (configuration) {
+      return JSON.stringify(JSON.parse(configuration));
+    } else {
+      return "{}";
+    }
+  } else {
+    return "{}";
   }
 }
 
@@ -58,13 +69,15 @@ const importCommunity = (community, done) => {
       name: community.name,
       description: community.description,
       domain_id: community.Domain.id,
+      community_id: community.id,
       created_at: community.created_at,
       updated_at: community.updated_at,
       language: community.default_locale ? community.default_locale : community.Domain.default_locale,
       status: community.deleted ? 'deleted' : 'published',
-      assistantConfiguration: readCommunityAIConfigurationFromTestFolder(community.id)
+      assistantConfiguration: readCommunityAIConfigurationFromTestFolder(process.env.AC_AI_ASSISTANT_CLUSTER_ID, community.id)
     });
 
+  console.log(properties)
   const options = {
     url: process.env["AC_AI_ASSISTANT_BASE_URL"]+"communities/"+process.env.AC_AI_ASSISTANT_CLUSTER_ID+"/"+community.id,
     headers: {
@@ -73,7 +86,7 @@ const importCommunity = (community, done) => {
     json: properties
   };
 
-  request.post(options, (error) => {
+  request.put(options, (error) => {
     done(error);
   });
 };

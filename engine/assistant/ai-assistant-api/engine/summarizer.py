@@ -63,7 +63,7 @@ async def completions_with_backoff(**kwargs):
     return response.json()["choices"][0]["message"]["content"]
 
 async def summarize_text(prompt, text, custom_system_message = None, skip_icelandic = False):
-    final_is_postfix = is_prefix_postfix if not skip_icelandic else ""
+    final_is_postfix = es_prefix_postfix if not skip_icelandic else ""
     return await retry_with_exponential_backoff(
         completions_with_backoff,
         initial_delay=1,
@@ -74,7 +74,7 @@ async def summarize_text(prompt, text, custom_system_message = None, skip_icelan
             "model": "gpt-4",
             "temperature": 0.2,
             "messages": [
-                {"role": "system", "content": custom_system_message or f"{system_message}\n{final_is_postfix}"},
+                {"role": "system", "content": f"{custom_system_message}\n{final_is_postfix}" or f"{system_message}\n{final_is_postfix}"},
                 {"role": "user", "content": f"{prompt}{text}"}
             ]
         }
@@ -129,6 +129,10 @@ short_points_against_summary_prefix = """Please summarize the points against bel
 """
 
 is_prefix_postfix = """Always return Icelandic summarizations
+
+"""
+
+es_prefix_postfix = """Always return Estonian summarizations
 
 """
 

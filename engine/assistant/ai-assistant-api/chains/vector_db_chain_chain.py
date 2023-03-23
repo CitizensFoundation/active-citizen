@@ -8,7 +8,6 @@ from langchain.chains.llm import LLMChain
 from langchain.chains.question_answering import load_qa_chain
 from langchain.chat_models import ChatOpenAI
 from langchain.vectorstores.base import VectorStore
-from prompts.main_system_prompt import main_system_prompt
 
 def get_qa_chain(
     vectorstore: VectorStore, question_handler, stream_handler, tracing: bool = False
