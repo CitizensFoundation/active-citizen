@@ -9,14 +9,27 @@ import json
 community_router = APIRouter()
 client = weaviate.Client("http://localhost:8080")
 
-def get_community_from_store(community_id, attributes=[
-    "communityId", "name", "assistantConfiguration"
+def get_community_from_store(cluster_id, community_id, attributes=[
+    "communityId", "name", "assistantConfiguration", "cluster_id"
     ]):
+
     where_filter = {
-        "path": ["communityId"],
-        "operator": "Equal",
-        "valueInt": community_id,
+        "operator": "And",
+        "operands": [
+            {
+                "path": ["cluster_id"],
+                "operator": "Equal",
+                "valueInt": cluster_id
+            },
+            {
+                "path": ["communityId"],
+                "operator": "Equal",
+                "valueInt": community_id
+            }
+        ]
     }
+
+    #print(f"where_filter: {where_filter}")
 
     return (
         client.query.
@@ -32,7 +45,7 @@ async def update_community(cluster_id: int, community_id: int, community: Commun
     communityFound = False
 
     try:
-        result = get_community_from_store(community_id, attributes=["communityId"])
+        result = get_community_from_store(cluster_id, community_id, attributes=["communityId","cluster_id"])
         print(f"result: {result}")
         if result["data"]["Get"]["Communities"]:
             communityFound = True
@@ -49,14 +62,14 @@ async def update_community(cluster_id: int, community_id: int, community: Commun
     return Response(content="OK", status_code=200)
 
 
-@community_router.get("/api/v1/communities/{community_id}/{language}")
-async def get_community(community_id: int, language: str):
-    result = get_community_from_store(community_id)
+@community_router.get("/api/v1/communities/{cluster_id}/{community_id}/{language}")
+async def get_community(cluster_id: int, community_id: int, language: str):
+    result = get_community_from_store(cluster_id, community_id)
     print(language)
 
     #print(result)
     #print(result["data"]["Get"]["Communities"][0])
-#    print(result["data"]["Get"]["Communities"][0]["assistantConfiguration"])
+    #print(result["data"]["Get"]["Communities"][0]["assistantConfiguration"])
     assistant_configuration = json.loads(result["data"]["Get"]["Communities"][0]["assistantConfiguration"])
     #print(assistant_configuration)
     welcome_messages = assistant_configuration["welcomeMessage"]

@@ -9,15 +9,24 @@ post_router = APIRouter()
 client = weaviate.Client("http://localhost:8080")
 
 
-def get_post_from_store(post_id, attributes=[
+def get_post_from_store(cluster_id, post_id, attributes=[
     "name", "imageUrl", "postId", "emojiSummary", "oneWordSummary"
     ]):
     where_filter = {
-        "path": ["postId"],
-        "operator": "Equal",
-        "valueInt": post_id,
+        "operator": "And",
+        "operands": [
+            {
+                "path": ["cluster_id"],
+                "operator": "Equal",
+                "valueInt": cluster_id
+            },
+            {
+                "path": ["postId"],
+                "operator": "Equal",
+                "valueInt": post_id,
+            }
+        ]
     }
-
     return (
         client.query.
         get("PostsIs", attributes).
@@ -32,7 +41,7 @@ async def update_post(cluster_id: int, post_id: int, post: Post):
     postFound = False
 
     try:
-        result = get_post_from_store(post_id, attributes=["postId"])
+        result = get_post_from_store(cluster_id, post_id, attributes=["postId"])
         print(f"result: {result}")
         if result["data"]["Get"]["PostsIs"]:
             postFound = True
@@ -45,13 +54,15 @@ async def update_post(cluster_id: int, post_id: int, post: Post):
         post.post_id = post_id
         post.cluster_id = cluster_id
         await upsert_post_in_vector_store(post)
+    else:
+        print("Post already exists in vector store")
 
     return Response(content="OK", status_code=200)
 
 
-@post_router.get("/api/v1/posts/{post_id}")
-async def get_post(post_id: int):
-    result = get_post_from_store(post_id)
+@post_router.get("/api/v1/posts/{cluster_id}/{post_id}")
+async def get_post(cluster_id: int, post_id: int):
+    result = get_post_from_store(cluster_id, post_id)
 
     print(result)
     print(result["data"]["Get"]["PostsIs"][0])

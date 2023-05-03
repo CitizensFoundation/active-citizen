@@ -13,7 +13,7 @@ async def upsert_post_in_vector_store(post: Post):
 
     weaviate_class = "PostsIs" #if post.language == "is" or post.language=="es" else "Posts"
 
-    uuid = generate_uuid5(post.post_id, weaviate_class)
+    uuid = generate_uuid5(f"{post.cluster_id}-{post.post_id}", weaviate_class)
 
     data_properties = {
         "postId": post.post_id,
@@ -56,7 +56,7 @@ async def upsert_community_in_vector_store(community: Community):
 
     weaviate_class = "Communities"
 
-    uuid = generate_uuid5(community.community_id, weaviate_class)
+    uuid = generate_uuid5(f"{community.cluster_id}-{community.community_id}", weaviate_class)
 
     data_properties = {
         "communityId": community.community_id,

@@ -34,7 +34,7 @@ async def retry_with_exponential_backoff(
 
         # Retry on specified errors
         except Exception as e:
-            print(e)
+            print(f"Exception: {type(e).__name__}: {e}")
             # Increment retries
             num_retries += 1
 
@@ -57,18 +57,21 @@ async def retry_with_exponential_backoff(
 async def completions_with_backoff(**kwargs):
     response = await openai_async.chat_complete(
           os.getenv('OPENAI_API_KEY'),
-          timeout=45,
+          timeout=120,
           payload=kwargs)
     print (response.json())
+    print()
     return response.json()["choices"][0]["message"]["content"]
 
 async def summarize_text(prompt, text, custom_system_message = None, skip_icelandic = False):
-    final_is_postfix = es_prefix_postfix if not skip_icelandic else ""
+    final_is_postfix = en_prefix_postfix if not skip_icelandic else ""
+    print(f"Prompt length: {len(prompt)}")
+    print(f"Text length: {len(text)}")
     return await retry_with_exponential_backoff(
         completions_with_backoff,
         initial_delay=1,
         exponential_base=2,
-        max_retries=100,
+        max_retries=3,
         errors=(openai.error.RateLimitError,),
         **{
             "model": "gpt-4",
@@ -132,6 +135,10 @@ is_prefix_postfix = """Always return Icelandic summarizations
 
 """
 
+en_prefix_postfix = """Always return English summarizations
+
+"""
+
 es_prefix_postfix = """Always return Estonian summarizations
 
 """
@@ -183,34 +190,39 @@ def get_final_prefix(prefix):
         return prefix
 
 async def summarize_emoji(text):
+    print(f"\n\nSummarizing emoji")
     return await summarize_text(get_final_prefix(emoji_prompt_prefix), text, emoji_system_message, True)
 
 async def summarize_one_word(text):
+    print(f"\n\nSummarizing one word")
     return await summarize_text(get_final_prefix(one_word_prompt_prefix), text,one_word_system_message)
 
 async def summarize_short_name(text):
+    print(f"\n\nSummarizing short name")
     return await summarize_text(get_final_prefix(short_name_prompt_prefix), text)
 
 async def summarize_short_summary(text):
+    print(f"\n\nSummarizing short summary")
     return await summarize_text(get_final_prefix(short_summary_prefix), text)
 
 async def summarize_full_summary(text):
+    print(f"\n\nSummarizing full summary")
     return await summarize_text(get_final_prefix(full_summary_prefix), text)
 
-
 async def summarize_full_points_for_summary(text):
+    print(f"\n\nSummarizing full points for summary")
     return await summarize_text(get_final_prefix(full_points_for_summary_prefix), text)
 
-
 async def summarize_short_points_for_summary(text):
+    print(f"\n\nSummarizing short points for summary")
     return await summarize_text(get_final_prefix(short_points_for_summary_prefix), text)
 
-
 async def summarize_full_points_against_summary(text):
+    print(f"\n\nSummarizing full points against summary")
     return await summarize_text(get_final_prefix(full_points_against_summary_prefix), text)
 
-
 async def summarize_short_points_against_summary(text):
+    print(f"\n\nSummarizing short points against summary")
     return await summarize_text(get_final_prefix(short_points_against_summary_prefix), text)
 
 async def get_emoji_summary(post: Post):

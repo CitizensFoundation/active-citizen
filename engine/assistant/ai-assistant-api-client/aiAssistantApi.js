@@ -143,7 +143,7 @@ const getPoints = async (points, forPoints, language) => {
         }
       } else {
         if (point.content) {
-          const finalPoint = language == "en" ? await getEnglishPoint(point, "pointContent")  : pointContent;;
+          const finalPoint = language == "en" ? await getEnglishPoint(point, "pointContent")  : point.content;;
           outPoints+=`${cleanup_text(finalPoint)}\n\n`;
         }
       }

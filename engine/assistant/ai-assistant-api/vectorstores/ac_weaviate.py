@@ -12,7 +12,14 @@ from langchain.vectorstores.weaviate import Weaviate
 
 class AcWeaviate(Weaviate):
     def similarity_search_concepts(
-        self, concepts: Any, group_name: Any, cluster_id: Any, community_id: Any, k: int = 4, **kwargs: Any
+        self,
+        concepts: Any,
+        group_name: Any,
+        cluster_id: Any,
+        community_id: Any,
+        allowFilteringByGroups: bool = True,
+        k: int = 4,
+        **kwargs: Any
     ) -> List[Document]:
         """Look up similar documents in weaviate."""
         content: Dict[str, Any] = {"concepts": concepts}
@@ -36,7 +43,9 @@ class AcWeaviate(Weaviate):
             ]
         }
 
-        if group_name != None:
+        print(f"allowFilteringByGroups: {allowFilteringByGroups}")
+
+        if group_name != None and allowFilteringByGroups:
             where_filter["operands"].append({
                 "path": ["group_name"],
                 "operator": "Equal",

@@ -86,7 +86,7 @@ class ChatManager:
         self.cluster_id = cluster_id
         self.community_id = community_id
         self.language = language
-        community_results = get_community_from_store(self.community_id)
+        community_results = get_community_from_store(self.cluster_id, self.community_id)
 
         self.community = community_results["data"]["Get"]["Communities"][0]
 
@@ -277,6 +277,7 @@ class ChatManager:
                             "community_id": self.community_id,
                             "question": question,
                             "messages": current_messages,
+                            "allowFilteringByGroups": self.configuration["allowFilteringByGroups"],
                             "question_intent": question_analysis["question_intent"],
                             "concepts": question_analysis["concepts"],
                             "group_name": question_analysis["group_name"],

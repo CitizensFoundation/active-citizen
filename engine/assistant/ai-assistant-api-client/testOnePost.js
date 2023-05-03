@@ -5,8 +5,9 @@ const log = require('../../../../utils/logger');
 const updateCollection = require('./aiAssistantClient').updateCollection;
 
 if (process.env["AC_AI_ASSISTANT_KEY"] && process.env["AC_AI_ASSISTANT_BASE_URL"] ) {
-  const communityId = 6176;
+  //const communityId = 161;
   //const communityId = 4314;
+  const communityId = 6176;
 
   if (true) {
     updateCollection({
