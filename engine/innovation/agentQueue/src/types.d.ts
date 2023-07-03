@@ -5,17 +5,23 @@ interface IEngineWorkerData {
 
 interface IEngineProblemStatement {
   description: string;
-  subProblemStatements: IEngineProblemStatement[];
+  title?: string;
+  subProblems: IEngineProblemStatement[];
 }
 
 interface IEngineAffectedEntityBase {
   name: string;
 }
 
+interface  IEngineAffectedEntityAffect {
+  subProblemIndex: number;
+  reason: string;
+}
+
 interface IEngineAffectedEntity {
-  name: string;
-  currentPositiveEffects?: string[];
-  currentNegativeEffects?: string[];
+  entityName: string;
+  positiveEffects?: IEngineAffectedEntityAffect[];
+  negativeEffects?: IEngineAffectedEntityAffect[];
 }
 
 interface IEEngineIdeaAffectedEntity extends IEngineAffectedEntityBase {
@@ -45,9 +51,11 @@ interface IEEngineSearchResultData {
 }
 
 type IEngineStageTypes =
-  | "init"
-  | "search"
-  | "get-page"
+  | "create-sub-problems"
+  | "create-entities"
+  | "create-search-queries"
+  | "web-search"
+  | "web-get-pages"
   | "parse"
   | "save"
   | "done";
@@ -61,16 +69,32 @@ interface IEngineUserFeedback {
 
 interface IEngineMemoryData {
   id: string;
-  currentStage: IEngineStageTypes;
-  currentStageTimeStart: number;
-  currentUserFeedback?: IEngineUserFeedback[];
   initialTimeStart: number;
-  currentStageCost: number;
   totalCost: number;
-  nextStageAfterUserInput?: IEngineStageTypes;
+  currentStageError?: string | undefined;
+}
+
+interface IEngineInnovationStagesData {
+  timeStart?: number;
+  userFeedback?: IEngineUserFeedback[];
+  tokensIn?: number;
+  tokensOut?: number;
+  tokensInCost?: number;
+  tokensOutCost?: number;
+}
+
+interface IEngineSearchQuery {
+  subProblemIndex: number;
+  generalSearchQuery: string;
+  scientificSearchQuery: string;
+}
+
+interface IEngineInnovationMemoryData extends IEngineMemoryData {
+  currentStage: IEngineStageTypes;
+  stages: Record<IEngineStageTypes, IEngineInnovationStagesData>;
   problemStatement: IEngineProblemStatement;
   entities: IEngineAffectedEntity[];
+  searchQueries: IEngineSearchQuery[];
   solutionIdeas: IEngineSolutionIdeas[];
   currentStageData?: IEEngineSearchResultData | IEEngineSearchResultPage | undefined;
-  currentStageError?: string | undefined;
 }

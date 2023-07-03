@@ -12,6 +12,7 @@ export abstract class BaseAgent extends BaseWorker {
   }
 
   abstract initializeMemory(job: Job): Promise<void>;
+  abstract process(): Promise<void>;
 
   async setup(job: Job) {
     this.job = job;

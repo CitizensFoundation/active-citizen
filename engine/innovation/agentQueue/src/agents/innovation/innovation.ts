@@ -1,15 +1,23 @@
 import { BaseAgent } from "../baseAgent";
 import { Worker, Job } from "bullmq";
-import { InitializationProcessor } from "./processors/initalization";
+import { CreateSubProblemsProcessor } from "./processors/createSubProblems";
 
 export class AgentInnovation extends BaseAgent {
+  declare memory: IEngineInnovationMemoryData;
 
   override async initializeMemory(job: Job) {
     this.memory = {
       id: this.getMemoryIdKey(job.data.memoryId),
-      currentStage: "init",
-      currentStageTimeStart: Date.now(),
-      currentStageCost: 0,
+      currentStage: "create-sub-problems",
+      stages: {
+        "create-sub-problems": {},
+        "create-entities": {},
+        "web-search": {},
+        "web-get-pages": {},
+        "parse": {},
+        "save": {},
+        "done": {}
+      },
       initialTimeStart: Date.now(),
       totalCost: 0,
       problemStatement: job.data.initialProblemStatement,
@@ -22,45 +30,24 @@ export class AgentInnovation extends BaseAgent {
 
   async setStage(stage: IEngineStageTypes) {
     this.memory.currentStage = stage;
-    this.memory.currentStageTimeStart = Date.now();
-    this.memory.currentStageCost = 0;
+    this.memory.stages[stage].timeStart = Date.now();
+
     await this.saveMemory();
   }
 
-  async processInit() {
-    const initializationProcessor = new InitializationProcessor(
+  async processSubProblems() {
+    const subProblemsProcessor = new CreateSubProblemsProcessor(
       this.job,
       this.memory
     );
 
-    await initializationProcessor.process();
+    await subProblemsProcessor.process();
   }
 
-  async process(job: Job) {
-    if (this.memory.nextStageAfterUserInput) {
-      this.memory.currentStage = this.memory.nextStageAfterUserInput;
-      this.memory.nextStageAfterUserInput = undefined;
-    }
-
+  async process() {
     switch (this.memory.currentStage) {
-      case "init":
-        await this.processInit();
-        break;
-      case "search":
-        this.logger.info("search");
-        this.stage = "get-page";
-        break;
-      case "get-page":
-        this.logger.info("get-page");
-        this.stage = "parse";
-        break;
-      case "parse":
-        this.logger.info("parse");
-        this.stage = "save";
-        break;
-      case "save":
-        this.logger.info("save");
-        this.stage = "done";
+      case "create-sub-problems":
+        await this.processSubProblems();
         break;
     }
   }
@@ -71,7 +58,7 @@ const agent = new Worker(
   async (job: Job) => {
     const agent = new AgentInnovation();
     await agent.setup(job);
-    await agent.process(job);
+    await agent.process();
     return job.data;
   },
   { concurrency: parseInt(process.env.AGENT_INNOVATION_CONCURRENCY || "1") }
