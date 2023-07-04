@@ -216,4 +216,6 @@ interface IEngineWebPageAnalysisData {
   relevanceToProblem: string;
   tags: string[];
   entities: string[];
+  url: string;
+  subProblemIndex: number;
 }

@@ -10,6 +10,7 @@ import { ChatOpenAI } from "langchain/chat_models/openai";
 
 import weaviate, { WeaviateClient } from "weaviate-ts-client";
 import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
+import { WebPageVectorStore } from "../vectorstore/webPage.js";
 
 const Redis = require("ioredis");
 const redis = new Redis(process.env.REDIS_MEMORY_URL || undefined);
@@ -18,6 +19,8 @@ puppeteer.use(StealthPlugin());
 pdfjs.GlobalWorkerOptions.workerSrc = require("pdfjs-dist/es5/build/pdf.worker.js");
 
 export class GetWebPagesProcessor extends BaseProcessor {
+  webPageVectorStore = new WebPageVectorStore();
+
   renderRefinePrompt(
     currentWebPageAnalysis: IEngineWebPageAnalysisData,
     problemStatement: IEngineProblemStatement,
@@ -346,7 +349,9 @@ export class GetWebPagesProcessor extends BaseProcessor {
 
   async processPageText(text: string, problemIndex: number, url: string) {
     const textAnalysis = await this.getTextAnalysis(text);
-    await this.saveToVectorStore(textAnalysis, problemIndex, url);
+    textAnalysis.url = url;
+    textAnalysis.subProblemIndex = problemIndex;
+    await this.webPageVectorStore.postWebPage(textAnalysis);
   }
 
   async getPdfText(response: HTTPResponse) {
@@ -370,7 +375,6 @@ export class GetWebPagesProcessor extends BaseProcessor {
     try {
       const text = await this.getPdfText(response);
       await this.processPageText(text, problemIndex, url);
-      // You can now use pdfText here.
     } catch (e) {
       this.logger.error(e);
     }
@@ -380,7 +384,7 @@ export class GetWebPagesProcessor extends BaseProcessor {
     try {
       const html = await browserPage.content();
       const text = htmlToText(html, {
-        wordwrap: 130,
+        wordwrap: false,
       });
       await this.processPageText(text, problemIndex, url);
     } catch (e) {
