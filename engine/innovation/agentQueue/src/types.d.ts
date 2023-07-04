@@ -1,3 +1,76 @@
+
+type SerpKnowledgeGraph = {
+  title: string;
+  type: string;
+  kgmid: string;
+  knowledge_graph_search_link: string;
+  serpapi_knowledge_graph_search_link: string;
+  header_images: HeaderImage[];
+  description: string;
+  source: Source;
+};
+
+type HeaderImage = {
+  image: string;
+  source: string;
+};
+
+type Link = {
+  text: string;
+  link: string;
+};
+
+
+type SiteLink = {
+  title: string;
+  link: string;
+};
+
+type DetectedExtensions = {
+  [key: string]: number;
+};
+
+type RichSnippet = {
+  bottom: {
+      extensions: string[];
+      detected_extensions: DetectedExtensions;
+  };
+};
+
+type Source = {
+  description: string;
+  source_info_link: string;
+  security: string;
+  icon: string;
+};
+
+type AboutThisResult = {
+  source: Source;
+  keywords: string[];
+  languages: string[];
+  regions: string[];
+};
+
+type SerpOrganicResult = {
+  position: number;
+  title: string;
+  link: string;
+  date: string;
+  displayed_link: string;
+  snippet: string;
+  sitelinks: {
+      inline: SiteLink[];
+  };
+  rich_snippet: RichSnippet;
+  about_this_result: AboutThisResult;
+  about_page_link: string;
+  about_page_serpapi_link: string;
+  cached_page_link: string;
+  related_pages_link: string;
+};
+
+type SerpOrganicResults = SerpOrganicResult[];
+
 interface IEngineWorkerData {
   memoryId: string;
   initialProblemStatement: IEngineProblemStatement;
@@ -6,20 +79,22 @@ interface IEngineWorkerData {
 interface IEngineProblemStatement {
   description: string;
   title?: string;
-  subProblems: IEngineProblemStatement[];
+  allSubProblems: IEngineProblemStatement[];
+  selectedSubProblems: IEngineProblemStatement[];
 }
 
 interface IEngineAffectedEntityBase {
   name: string;
 }
 
-interface  IEngineAffectedEntityAffect {
+interface IEngineAffectedEntityAffect {
   subProblemIndex: number;
   reason: string;
 }
 
 interface IEngineAffectedEntity {
   entityName: string;
+  subProblemIndex: number;
   positiveEffects?: IEngineAffectedEntityAffect[];
   negativeEffects?: IEngineAffectedEntityAffect[];
 }
@@ -31,7 +106,7 @@ interface IEEngineIdeaAffectedEntity extends IEngineAffectedEntityBase {
   negativeScore: number;
 }
 
-interface IEngineSolutionIdeas {
+interface IEngineSolutionIdea {
   id: string;
   title: string;
   description: string;
@@ -54,6 +129,8 @@ type IEngineStageTypes =
   | "create-sub-problems"
   | "create-entities"
   | "create-search-queries"
+  | "rank-search-urls"
+  | "rank-sub-problems"
   | "web-search"
   | "web-get-pages"
   | "parse"
@@ -65,6 +142,15 @@ interface IEngineUserFeedback {
   subjectText: string;
   userFeedback?: string;
   userFeedbackRatings?: number[];
+}
+
+interface IEngineBaseAIModelConstants {
+  name: string;
+  temperature: number;
+  maxTokens: number;
+  inTokenCostUSD: number;
+  outTokenCostUSD: number;
+  verbose: boolean;
 }
 
 interface IEngineMemoryData {
@@ -89,12 +175,31 @@ interface IEngineSearchQuery {
   scientificSearchQuery: string;
 }
 
+interface IEngineSearchResults {
+  all: {
+    general: SerpOrganicResult[][];
+    scientific: SerpOrganicResult[][];
+  };
+  selectedUrlsToGet: {
+    general: string[][];
+    scientific: string[][];
+  };
+  knowledgeGraph: {
+    general: SerpKnowledgeGraph[][];
+    scientific: SerpKnowledgeGraph[][];
+  };
+}
+
 interface IEngineInnovationMemoryData extends IEngineMemoryData {
   currentStage: IEngineStageTypes;
   stages: Record<IEngineStageTypes, IEngineInnovationStagesData>;
   problemStatement: IEngineProblemStatement;
   entities: IEngineAffectedEntity[];
   searchQueries: IEngineSearchQuery[];
-  solutionIdeas: IEngineSolutionIdeas[];
-  currentStageData?: IEEngineSearchResultData | IEEngineSearchResultPage | undefined;
+  searchResults: IEngineSearchResults;
+  solutionIdeas: IEngineSolutionIdea[];
+  currentStageData?:
+    | IEEngineSearchResultData
+    | IEEngineSearchResultPage
+    | undefined;
 }

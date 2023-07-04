@@ -6,14 +6,14 @@ import { IEngineConstants } from "../../../constants.js";
 
 export class CreateEntitiesProcessor extends BaseProcessor {
   async createEntities() {
-    const chat = new ChatOpenAI({
+    this.chat = new ChatOpenAI({
       temperature: IEngineConstants.createEntitiesModel.temperature,
       maxTokens: IEngineConstants.createEntitiesModel.maxTokens,
       modelName: IEngineConstants.createEntitiesModel.name,
       verbose: IEngineConstants.createEntitiesModel.verbose,
     });
 
-    //TODO: Human review and improvements of those GPT-4 generated few-shots
+    //TODO: Human review and improvements of this partly GPT-4 generated prompt
     const messages = [
       new SystemChatMessage(
         `
@@ -44,7 +44,7 @@ export class CreateEntitiesProcessor extends BaseProcessor {
       ),
     ];
 
-    this.memory.entities = await this.callLLMAndSave(
+    this.memory.entities = await this.callLLM(
       "create-entities",
       IEngineConstants.createEntitiesModel,
       messages

@@ -15,7 +15,7 @@ export class CreateSearchQueriesProcessor extends BaseProcessor {
       verbose: IEngineConstants.createSearchQueriesModel.verbose,
     });
 
-    //TODO: Human review and improvements of those GPT-4 generated few-shots
+    //TODO: Human review and improvements of this partly GPT-4 generated prompt
     const messages = [
       new SystemChatMessage(
         `
@@ -43,16 +43,17 @@ export class CreateSearchQueriesProcessor extends BaseProcessor {
       ),
     ];
 
-    this.memory.searchQueries = await this.callLLMAndSave(
+    this.memory.searchQueries = await this.callLLM(
       "create-search-queries",
       IEngineConstants.createSearchQueriesModel,
-       messages);
+      messages
+    );
     await this.saveMemory();
   }
 
   async process() {
     super.process();
-    this.logger.info("Create Entities Processor");
+    this.logger.info("Create Search Queries Processor");
     await this.createSearchQueries();
   }
 }

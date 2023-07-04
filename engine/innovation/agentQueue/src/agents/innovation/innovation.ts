@@ -12,6 +12,9 @@ export class AgentInnovation extends BaseAgent {
       stages: {
         "create-sub-problems": {},
         "create-entities": {},
+        "create-search-queries": {},
+        "rank-search-urls": {},
+        "rank-sub-problems": {},
         "web-search": {},
         "web-get-pages": {},
         "parse": {},
@@ -22,7 +25,22 @@ export class AgentInnovation extends BaseAgent {
       totalCost: 0,
       problemStatement: job.data.initialProblemStatement,
       entities: [],
-      solutionIdeas: [],
+      searchQueries: [],
+      searchResults: {
+        all: {
+          general: [],
+          scientific: []
+        },
+        selectedUrlsToGet: {
+          general: [],
+          scientific: []
+        },
+        knowledgeGraph: {
+          general: [],
+          scientific: []
+        },
+      },
+      solutionIdeas: []
     };
 
     await this.saveMemory();

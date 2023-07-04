@@ -6,7 +6,7 @@ import { IEngineConstants } from "../../../constants.js";
 
 export class CreateSubProblemsProcessor extends BaseProcessor {
   async createSubProblems() {
-    const chat = new ChatOpenAI({
+    this.chat = new ChatOpenAI({
       temperature: IEngineConstants.createSubProblemsModel.temperature,
       maxTokens: IEngineConstants.createSubProblemsModel.maxTokens,
       modelName: IEngineConstants.createSubProblemsModel.name,
@@ -18,7 +18,7 @@ export class CreateSubProblemsProcessor extends BaseProcessor {
       new SystemChatMessage(
         `
           You are an AI assistant with expertise in analyzing problem statements and generating sub-problems.
-          Your task is to create sevent succinct sub-problems for any given problem statement and present them as a JSON array.
+          Your task is to create 21 succinct sub-problems for any given problem statement and present them as a JSON array.
           You are programmed to strictly output the sub-problems in this format and nothing else.
           Never output anything else than the JSON array.
           Your approach to this task should be systematic and detailed and you think step-by-step.
@@ -32,31 +32,31 @@ export class CreateSubProblemsProcessor extends BaseProcessor {
           [
             {
               "title": "Poor Nutritional Awareness",
-              "description": "Many people do not understand the nutritional content of the food they consume."
+              "description": "A significant part of the population may not fully understand the nutritional content of their diet. This lack of knowledge can lead to poor food choices, contributing to obesity."
             },
             {
               "title": "Limited Access to Healthy Foods",
-              "description": "There are food deserts in the city, where fresh and healthy food is not readily available."
+              "description": "Food deserts, areas where access to affordable, healthy food options is limited, may exist in the city. This restricted access can push residents towards unhealthy, processed food options."
             },
             {
               "title": "Lack of Physical Activity",
-              "description": "Sedentary lifestyles contribute to obesity rates."
+              "description": "Sedentary lifestyles, often stemming from desk-bound jobs and increasing screen time, can contribute to weight gain and obesity."
             },
             {
               "title": "Environmental Factors",
-              "description": "The city lacks safe, accessible spaces for outdoor physical activity."
+              "description": "The city might lack safe, accessible spaces for outdoor physical activities. Without such spaces, residents might find it difficult to maintain a regular exercise regimen."
             },
             {
               "title": "Socioeconomic Factors",
-              "description": "Lower income households may struggle to afford healthier food options and gym memberships."
+              "description": "Lower-income households may find it difficult to afford healthier food options or gym memberships, influencing their ability to maintain a healthy weight."
             },
             {
               "title": "Education and Outreach",
-              "description": "There may be a lack of effective health education programs in schools and communities."
+              "description": "A lack of effective health education programs in schools and communities could result in limited awareness about the importance of maintaining a healthy weight and how to do so."
             },
             {
               "title": "Policy and Legislation",
-              "description": "Current policies may not support healthy lifestyles or food choices."
+              "description": "Current government policies might not support or incentivize healthy lifestyles or food choices, contributing to an environment that facilitates obesity."
             }
           ]
 
@@ -67,31 +67,31 @@ export class CreateSubProblemsProcessor extends BaseProcessor {
           [
             {
               "title": "Habitat Destruction",
-              "description": "New developments are removing natural habitats for local species."
+              "description": "New developments, such as buildings or roads, are removing or fragmenting natural habitats, thereby reducing the living spaces and resources available for local species."
             },
             {
               "title": "Pollution",
-              "description": "Construction and human activities are leading to water, air, and soil pollution."
+              "description": "Construction and daily human activities contribute to water, air, and soil pollution. This degradation of natural resources can harm local species and disrupt ecosystems."
             },
             {
               "title": "Climate Change Impacts",
-              "description": "Rising temperatures and sea levels affect local ecosystems."
+              "description": "Global warming impacts like rising temperatures and sea levels can alter the local environment, affecting species' survival and disrupting ecological balance."
             },
             {
               "title": "Invasive Species",
-              "description": "Non-native species can out-compete local species and disrupt the ecosystem."
+              "description": "Introduction of non-native species can create competition for local species and upset the ecological balance. These invasive species can alter habitats and out-compete native species."
             },
             {
               "title": "Overexploitation",
-              "description": "Overfishing or overhunting can deplete local species."
+              "description": "Overfishing or overhunting can lead to a rapid decline in local species populations. This imbalance in the ecosystem can affect biodiversity."
             },
             {
               "title": "Lack of Awareness",
-              "description": "The community may not understand the importance of biodiversity."
+              "description": "Community members may not understand the importance of biodiversity, leading to behavior that inadvertently harms local ecosystems. This gap in awareness can hinder conservation efforts."
             },
             {
               "title": "Policy and Legislation",
-              "description": "Current regulations may not adequately protect local biodiversity."
+              "description": "Existing laws and regulations may fail to protect local biodiversity adequately. This deficiency in policy could permit harmful practices to persist, thereby affecting biodiversity."
             }
           ]
 
@@ -102,31 +102,31 @@ export class CreateSubProblemsProcessor extends BaseProcessor {
           [
             {
               "title": "Academic Challenges",
-              "description": "Many students struggle with academic subjects and do not receive adequate help."
+              "description": "Students often grapple with academic subjects, and the lack of adequate assistance exacerbates these difficulties. The lack of personalized attention or tutoring opportunities can contribute to poor performance and disinterest."
             },
             {
               "title": "Lack of Engagement",
-              "description": "School curriculum and activities may not engage students, making them less motivated to stay in school."
+              "description": "The existing curriculum and school activities might not resonate with students' interests or cater to different learning styles. This lack of engagement can demotivate students and make school seem irrelevant, increasing dropout risks."
             },
             {
               "title": "Socioeconomic Factors",
-              "description": "Students from low-income families may need to work instead of attending school."
+              "description": "SFor students from low-income families, economic pressures might force them into work to support their families instead of attending school. This economic necessity may lead to inconsistent attendance or eventual dropping out."
             },
             {
               "title": "Family Issues",
-              "description": "Unstable or unsupportive home environments can affect school attendance and performance."
+              "description": "Unstable home environments or lack of familial support can negatively affect students' school performance and attendance. Emotional stress or responsibilities at home can distract from educational commitment."
             },
             {
               "title": "School Environment",
-              "description": "Schools may lack resources or have issues with bullying or safety that discourage attendance."
+              "description": "Limited resources, safety concerns, or issues like bullying within the school can create an unwelcoming environment, discouraging regular attendance and fostering a desire to leave school."
             },
             {
               "title": "Lack of Future Orientation",
-              "description": "Students may not see the value of a high school diploma for their future career prospects."
+              "description": "If students fail to perceive the relevance of a high school diploma to their future career plans, they may not see the value in completing their education. This lack of future orientation can fuel dropout rates."
             },
             {
               "title": "Policy and Legislation",
-              "description": "Education policies may not adequately address dropout prevention and intervention."
+              "description": "Existing education policies might not effectively target dropout prevention and intervention, making it difficult to address and curb the issue at a systemic level."
             }
           ]
 
@@ -135,31 +135,31 @@ export class CreateSubProblemsProcessor extends BaseProcessor {
           [
             {
               "title": "Information Consolidation",
-              "description": "Patient data is scattered across multiple systems, making it difficult to access and update."
+              "description": "Patient data is scattered across various systems like EHRs, lab systems, etc. This dispersion hampers quick access and smooth data transfer, leading to inefficiencies and potential information loss or discrepancies."
             },
             {
               "title": "Interoperability",
-              "description": "Different systems used in the hospital may not communicate effectively with each other."
+              "description": "Different hospital systems may not communicate well, leading to isolated information and process inefficiencies. For example, an update in a patient's medication record may not reflect in their primary health record."
             },
             {
               "title": "Data Accuracy",
-              "description": "Errors may occur during the manual input of patient data."
+              "description": "Manual data input increases the risk of human error, including misspellings, transcription errors, or inconsistent data entry, potentially causing harmful consequences such as misdiagnoses."
             },
             {
               "title": "Security and Privacy",
-              "description": "Protecting patient data from breaches and ensuring compliance with regulations like HIPAA."
+              "description": "The risk of data breaches increases with digitization. Hospitals must ensure secure handling of sensitive patient information, maintain patient confidentiality, and comply with regulations like HIPAA, which presents significant challenges."
             },
             {
               "title": "Ease of Use",
-              "description": "The user interface of the existing systems may not be intuitive, leading to inefficiencies and errors."
+              "description": "Complex or counterintuitive user interfaces in patient record systems can lead to inefficiencies and errors. Staff may waste time navigating the system or input incorrect data due to confusion."
             },
             {
               "title": "Staff Training",
-              "description": "Ensuring all relevant staff are adequately trained to use the patient record management system effectively."
+              "description": "Training staff on system use is essential but can be time-consuming, costly, and require regular refreshers. Ensuring staff use the system correctly and consistently post-training is another challenge."
             },
             {
               "title": "Budget Constraints",
-              "description": "The hospital may have limited resources to invest in new systems or upgrades."
+              "description": " Mid-sized hospitals often face budget constraints. Investing in new systems involves considering the cost of the system, maintenance, updates, training, and potential cost of system failures or violations, posing a significant financial challenge."
             }
           ]`
       ),
@@ -173,7 +173,7 @@ export class CreateSubProblemsProcessor extends BaseProcessor {
       ),
     ];
 
-    this.memory.problemStatement.subProblems = await this.callLLMAndSave(
+    this.memory.problemStatement.allSubProblems = await this.callLLM(
       "create-sub-problems",
       IEngineConstants.createSubProblemsModel,
       messages
