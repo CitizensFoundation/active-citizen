@@ -23,6 +23,18 @@
     },
     {
       "dataType": [
+        "string"
+      ],
+      "moduleConfig": {
+        "text2vec-openai": {
+          "skip": false,
+          "vectorizePropertyName": true
+        }
+      },
+      "name": "type"
+    },
+    {
+      "dataType": [
         "text"
       ],
       "moduleConfig": {

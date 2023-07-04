@@ -7,7 +7,7 @@ const gpt35_16kOutTokenPrice = 0.004 / 1000;
 export class IEngineConstants {
   static createSubProblemsModel: IEngineBaseAIModelConstants = {
     name: "gpt-4",
-    temperature: 1.0,
+    temperature: 0.9,
     maxTokens: 2048,
     tokenLimit: 8192,
     inTokenCostUSD: gpt4InTokenPrice,
@@ -75,9 +75,19 @@ export class IEngineConstants {
     verbose: true,
   };
 
+  static createSeedIdeasModel: IEngineBaseAIModelConstants = {
+    name: "gpt-4",
+    temperature: 0.9,
+    maxTokens: 2048,
+    tokenLimit: 8192,
+    inTokenCostUSD: gpt4InTokenPrice,
+    outTokenCostUSD: gpt4OutTokenPrice,
+    verbose: true,
+  };
+
   static getPageTimeout = 1000 * 10;
 
-  static getPageCacheExpiration = 60 * 60 * 24 * 7 * 2;
+  static getPageCacheExpiration = 60 * 60 * 24 * 7 * 4 * 3; // 3 months
 
   static currentUserAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36";
 }

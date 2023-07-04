@@ -31,9 +31,9 @@ export class RankSubProblemsProcessor extends BasePairwiseRankingsProcessor {
         Adhere to the following guidelines:
         1. You will see the problem statement with sub problems.
         2. You will see two entities and how they are affected. One is marked as "Item 1" and the other as "Item 2".
-        2. You will analyse, compare and rank those two entities and vote on which one is more relevant and important as an affected entitiy.
-        3. You will only output the winning item as: "Item 1" or "Item 2" without an explaination.
-        4. Ensure a methodical, step-by-step approach to create the best possible search queries.        `
+        3. You will analyse, compare and rank those two entities and vote on which one is more relevant and important as an affected entitiy.
+        4. You will only output the winning item as: "Item 1" or "Item 2" without an explaination.
+        5. Ensure a methodical, step-by-step approach to create the best possible search queries.        `
       ),
       new HumanChatMessage(
         `

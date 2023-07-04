@@ -21,6 +21,7 @@ export class CreateSubProblemsProcessor extends BaseProcessor {
           Your task is to create 21 succinct sub-problems for any given problem statement and present them as a JSON array.
           You are programmed to strictly output the sub-problems in this format and nothing else.
           Never output anything else than the JSON array.
+          Never output in markdown format.
           Your approach to this task should be systematic and detailed and you think step-by-step.
 
           Examples:

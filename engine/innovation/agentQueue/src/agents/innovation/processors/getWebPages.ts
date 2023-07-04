@@ -77,6 +77,7 @@ export class GetWebPagesProcessor extends BaseProcessor {
         5. Provide a list of entities for the text.
         6. Output all paragraphs that are relevant to the problem statement
         7. If there are citations or references, output them in references seperatly not in allParagraphs.
+        8. Never output in markdown format.
         9. Output everything in JSON without an explanation
           [ { allRelevantParagraphs, possibleSolutionToProblem, relevanceToProblem, summary, tags, entities, references } ].
         10. Let's think step-by-step.
@@ -347,10 +348,16 @@ export class GetWebPagesProcessor extends BaseProcessor {
     return textAnalysis!;
   }
 
-  async processPageText(text: string, problemIndex: number, url: string) {
+  async processPageText(
+    text: string,
+    problemIndex: number,
+    url: string,
+    type: IEngineWebPageTypes
+  ) {
     const textAnalysis = await this.getTextAnalysis(text);
     textAnalysis.url = url;
     textAnalysis.subProblemIndex = problemIndex;
+    textAnalysis.type = type;
     await this.webPageVectorStore.postWebPage(textAnalysis);
   }
 
@@ -371,22 +378,32 @@ export class GetWebPagesProcessor extends BaseProcessor {
     return fullText;
   }
 
-  async processPdf(response: HTTPResponse, problemIndex: number, url: string) {
+  async processPdf(
+    response: HTTPResponse,
+    problemIndex: number,
+    url: string,
+    type: IEngineWebPageTypes
+  ) {
     try {
       const text = await this.getPdfText(response);
-      await this.processPageText(text, problemIndex, url);
+      await this.processPageText(text, problemIndex, url, type);
     } catch (e) {
       this.logger.error(e);
     }
   }
 
-  async processHtml(problemIndex: number, url: string, browserPage: Page) {
+  async processHtml(
+    problemIndex: number,
+    url: string,
+    browserPage: Page,
+    type: IEngineWebPageTypes
+  ) {
     try {
       const html = await browserPage.content();
       const text = htmlToText(html, {
         wordwrap: false,
       });
-      await this.processPageText(text, problemIndex, url);
+      await this.processPageText(text, problemIndex, url, type);
     } catch (e) {
       this.logger.error(e);
     }
@@ -417,15 +434,16 @@ export class GetWebPagesProcessor extends BaseProcessor {
   async getAndProcessPage(
     problemIndex: number,
     url: string,
-    browserPage: Page
+    browserPage: Page,
+    type: IEngineWebPageTypes
   ) {
     const response = await this.getBrowserPage(browserPage, url);
 
     if (response) {
       if (url.toLowerCase().endsWith(".pdf")) {
-        await this.processPdf(response, problemIndex, url);
+        await this.processPdf(response, problemIndex, url, type);
       } else {
-        await this.processHtml(problemIndex, url, browserPage);
+        await this.processHtml(problemIndex, url, browserPage, type);
       }
 
       return true;
@@ -435,7 +453,7 @@ export class GetWebPagesProcessor extends BaseProcessor {
     }
   }
 
-  async getAllPages(problemIndexUrls: string[][]) {
+  async getAllPages(problemIndexUrls: string[][], type: IEngineWebPageTypes) {
     puppeteer.launch({ headless: true }).then(async (browser) => {
       this.logger.debug("Launching browser");
       const browserPage = await browser.newPage();
@@ -456,7 +474,8 @@ export class GetWebPagesProcessor extends BaseProcessor {
           await this.getAndProcessPage(
             problemIndex,
             problemIndexUrls[problemIndex][i],
-            browserPage
+            browserPage,
+            type
           );
         }
       }
@@ -468,7 +487,7 @@ export class GetWebPagesProcessor extends BaseProcessor {
   }
 
   async process() {
-    this.logger.info("Search Web Processor");
+    this.logger.info("Get Web Pages Processor");
     super.process();
 
     this.chat = new ChatOpenAI({
@@ -479,10 +498,13 @@ export class GetWebPagesProcessor extends BaseProcessor {
     });
 
     await this.getAllPages(
-      this.memory.searchResults.orderedWebPagesToGet.general
+      this.memory.searchResults.orderedURLsToGet.general,
+      "general"
     );
+
     await this.getAllPages(
-      this.memory.searchResults.orderedWebPagesToGet.scientific
+      this.memory.searchResults.orderedURLsToGet.scientific,
+      "scientific"
     );
   }
 }

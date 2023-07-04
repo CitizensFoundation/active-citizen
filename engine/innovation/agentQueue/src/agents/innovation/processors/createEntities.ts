@@ -30,8 +30,9 @@ export class CreateEntitiesProcessor extends BaseProcessor {
         4. Initiate both 'name' and 'reason' with an uppercase letter.
         5. Restrict 'reason' to the effects on the entity, excluding solution suggestions. It should be a brief two to three sentence analysis of how the sub-problem influences the entity.
         6. Include Earths climate and ecology except if no reasons for them.
-        7. For each entity, review all sub-problems and provide an output in the following format: [ { name: name, negativeEffects: [{ subProblemIndex, reason }], positiveEffects: [{ subProblemIndex, reason }] } ].
-        8. Ensure a methodical, step-by-step approach to capture all affected entities.
+        7. Never output in markdown format.
+        8. For each entity, review all sub-problems and provide an output in the following format: [ { name: name, negativeEffects: [{ subProblemIndex, reason }], positiveEffects: [{ subProblemIndex, reason }] } ].
+        9. Ensure a methodical, step-by-step approach to capture all affected entities.
 
         Example:
 

@@ -108,9 +108,10 @@ interface IEEngineIdeaAffectedEntity extends IEngineAffectedEntityBase {
 
 interface IEngineSolutionIdea {
   id: string;
-  title: string;
-  description: string;
-  affectedEntities: IEEngineIdeaAffectedEntity[];
+  solutionTitle: string;
+  solutionDescription: string;
+  howCanItHelp: string;
+  affectedEntities?: IEEngineIdeaAffectedEntity[];
 }
 
 interface IEEngineSearchResultPage {
@@ -129,11 +130,12 @@ type IEngineStageTypes =
   | "create-sub-problems"
   | "create-entities"
   | "create-search-queries"
-  | "rank-search-urls"
+  | "rank-search-pages"
   | "rank-sub-problems"
   | "rank-entities"
   | "web-search"
   | "web-get-pages"
+  | "create-seed-ideas"
   | "parse"
   | "save"
   | "done";
@@ -183,9 +185,13 @@ interface IEngineSearchResults {
     general: SerpOrganicResult[][];
     scientific: SerpOrganicResult[][];
   };
-  orderedWebPagesToGet: {
+  orderedURLsToGet: {
     general: string[][];
     scientific: string[][];
+  };
+  orderedSearchPages: {
+    general: SerpOrganicResult[][];
+    scientific: SerpOrganicResult[][];
   };
   knowledgeGraph: {
     general: SerpKnowledgeGraph[][];
@@ -210,6 +216,8 @@ interface IEngineInnovationMemoryData extends IEngineMemoryData {
     | undefined;
 }
 
+type IEngineWebPageTypes = "general" | "scientific";
+
 interface IEngineWebPageAnalysisData {
   allRelevantParagraphs: string[];
   possibleSolutionsToProblem: string[];
@@ -218,4 +226,5 @@ interface IEngineWebPageAnalysisData {
   entities: string[];
   url: string;
   subProblemIndex: number;
+  type: IEngineWebPageTypes;
 }

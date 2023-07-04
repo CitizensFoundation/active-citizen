@@ -13,7 +13,7 @@ export class AgentInnovation extends BaseAgent {
         "create-sub-problems": {},
         "create-entities": {},
         "create-search-queries": {},
-        "rank-search-urls": {},
+        "rank-search-pages": {},
         "rank-sub-problems": {},
         "rank-entities": {},
         "web-search": {},
@@ -35,7 +35,7 @@ export class AgentInnovation extends BaseAgent {
           general: [],
           scientific: []
         },
-        orderedWebPagesToGet: {
+        orderedURLsToGet: {
           general: [],
           scientific: []
         },

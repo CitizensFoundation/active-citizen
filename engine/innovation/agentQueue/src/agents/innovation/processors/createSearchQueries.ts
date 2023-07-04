@@ -22,13 +22,14 @@ export class CreateSearchQueriesProcessor extends BaseProcessor {
         You are an expert trained to analyse complex problem statements and sub-problems and then generate search queries to find solutions to the main problem statement and each sub-problem.
 
         Adhere to the following guidelines:
-        1. Search queries should be concise, consistent, and succinct. They will be used to search on Google or Bing.
+        1. Search queries should be concise, consistent, short, and succinct. They will be used to search on Google or Bing.
         2. You create two types of search queries: general and scientific.
         3. Include the subProblemIndex and use 0 as an index for solution search queries for the main problem.
-        4. All search queries should be solution focused, let's find the solutions to those imporant problems.
-        5. For the main problem and all sub-problems, generate the search queries, provide an output in the following format:
+        4. All search queries should be solution focused, let's find the solutions to those important problems.
+        5. Never output in markdown format.
+        6. For the main problem and all sub-problems, generate the search queries, provide an output in the following JSON format:
           [ { subProblemIndex, generalSearchQuery, scientificSearchQuery } ].
-        6. Ensure a methodical, step-by-step approach to create the best possible search queries.        `
+        7. Ensure a methodical, step-by-step approach to create the best possible search queries.        `
       ),
       new HumanChatMessage(
         `
@@ -38,7 +39,7 @@ export class CreateSearchQueriesProcessor extends BaseProcessor {
          Sub Problems:
          ${this.renderSubProblems()}
 
-         Entities JSON Output:
+         JSON Output:
        `
       ),
     ];
