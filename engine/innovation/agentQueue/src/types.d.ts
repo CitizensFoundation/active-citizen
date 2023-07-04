@@ -156,8 +156,9 @@ interface IEngineBaseAIModelConstants {
 
 interface IEngineMemoryData {
   id: string;
-  initialTimeStart: number;
+  timeStart: number;
   totalCost: number;
+  lastSavedAt?: number;
   currentStageError?: string | undefined;
 }
 

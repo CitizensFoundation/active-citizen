@@ -8,26 +8,6 @@ import { BasePairwiseRankingsProcessor } from "./basePairwiseRanking.js";
 export class RankSubProblemsProcessor extends BasePairwiseRankingsProcessor {
   problemSubProblemIndex = 0;
 
-  getItemPosNegReasons(item: IEngineAffectedEntity) {
-    let itemDescription = "";
-
-    if (item.positiveEffects && item.positiveEffects.length > 0) {
-      itemDescription += `
-      Positive Effects:
-      ${item.positiveEffects.map((effect) => `${effect.reason}`).join("\n")}
-      `;
-    }
-
-    if (item.negativeEffects && item.negativeEffects.length > 0) {
-      itemDescription += `
-      Negative Effects:
-      ${item.negativeEffects.map((effect) => `${effect.reason}`).join("\n")}
-      `;
-    }
-
-    return itemDescription;
-  }
-
   async voteOnPromptPair(
     promptPair: number[]
   ): Promise<{ wonItemIndex: number; lostItemIndex: number }> {
@@ -38,10 +18,10 @@ export class RankSubProblemsProcessor extends BasePairwiseRankingsProcessor {
     const itemTwo = this.allItems![itemTwoIndex] as IEngineAffectedEntity;
 
     let itemOneTitle = itemOne.name;
-    let itemOneDescription = this.getItemPosNegReasons(itemOne);
+    let itemOneDescription = this.renderEntityPosNegReasons(itemOne);
 
     let itemTwoTitle = itemTwo.name;
-    let itemTwoDescription = this.getItemPosNegReasons(itemTwo);
+    let itemTwoDescription = this.renderEntityPosNegReasons(itemTwo);
 
     const messages = [
       new SystemChatMessage(

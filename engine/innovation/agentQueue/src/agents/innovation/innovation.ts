@@ -22,7 +22,7 @@ export class AgentInnovation extends BaseAgent {
         "save": {},
         "done": {}
       },
-      initialTimeStart: Date.now(),
+      timeStart: Date.now(),
       totalCost: 0,
       problemStatement: job.data.initialProblemStatement,
       entities: {

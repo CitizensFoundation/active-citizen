@@ -33,6 +33,7 @@ export abstract class BaseAgent extends BaseWorker {
   }
 
   async saveMemory() {
+    this.memory.lastSavedAt = Date.now();
     await redis.set(this.memory.id, JSON.stringify(this.memory));
   }
 }

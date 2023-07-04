@@ -58,27 +58,15 @@ export abstract class BaseProcessor extends Base {
       const subProblem =
         this.memory.problemStatement.selectedSubProblems[index - 1];
       const entitiesText = `
-        ${this.memory.entities
+        ${this.memory.entities.selected
           .map((entity) => {
             if (entity.subProblemIndex !== index - 1) {
               return "";
             } else {
-              let entityEffects = ``;
-
-              if (entity.negativeEffects && entity.negativeEffects.length > 0) {
-                entityEffects += entity.negativeEffects
-                  .map((negative) => `\n${negative.reason}\n`)
-                  .join("");
-              }
-
-              if (entity.positiveEffects && entity.positiveEffects.length > 0) {
-                entityEffects += entity.positiveEffects
-                  .map((positive) => `\n${positive.reason}\n`)
-                  .join("");
-              }
+              let entityEffects = this.renderEntityPosNegReasons(entity);
 
               if (entityEffects.length > 0) {
-                entityEffects = `\n${entity.entityName}\n${entityEffects}\n}`;
+                entityEffects = `\n${entity.name}\n${entityEffects}\n}`;
               }
 
               return entityEffects;
@@ -95,6 +83,55 @@ export abstract class BaseProcessor extends Base {
         ${entitiesText ? `Entities:\n${entitiesText}` : ""}
       `;
     }
+  }
+
+  renderEntityPosNegReasons(
+    item: IEngineAffectedEntity,
+    subProblemIndex: number | undefined = undefined
+  ) {
+    let itemDescription = "";
+
+    let positiveEffects;
+
+    if (item.positiveEffects && item.positiveEffects.length > 0) {
+      positiveEffects = item.positiveEffects.map(
+        (effect) =>
+          `${
+            !subProblemIndex || subProblemIndex === effect.subProblemIndex
+              ? effect.reason
+              : ``
+          }`
+      );
+    }
+
+    let negativeEffects;
+
+    if (item.negativeEffects && item.negativeEffects.length > 0) {
+      negativeEffects = item.negativeEffects.map(
+        (effect) =>
+          `${
+            !subProblemIndex || subProblemIndex === effect.subProblemIndex
+              ? effect.reason
+              : ``
+          }`
+      );
+    }
+
+    if (positiveEffects && positiveEffects.length > 0) {
+      itemDescription += `
+      Positive Effects:
+      ${positiveEffects.join("\n")}
+      `;
+    }
+
+    if (negativeEffects && negativeEffects.length > 0) {
+      itemDescription += `
+      Negative Effects:
+      ${negativeEffects.join("\n")}
+      `;
+    }
+
+    return itemDescription;
   }
 
   async callLLM(
