@@ -79,9 +79,9 @@ export class RankSearchUrlsProcessor extends BasePairwiseRankingsProcessor {
       this.setupPrompts(result);
       await this.performPairwiseRanking();
 
-      const itemsToDownload = this.getOrderedListOfItems().slice(0, 3);
+      const pages = this.getOrderedListOfItems();
       outUrlsForAll.push(
-        itemsToDownload.map((item) => {
+        pages.map((item) => {
           return (item as SerpOrganicResult).link;
         })
       );
@@ -101,10 +101,10 @@ export class RankSearchUrlsProcessor extends BasePairwiseRankingsProcessor {
       verbose: IEngineConstants.searchQueryRankingsModel.verbose,
     });
 
-    this.memory.searchResults.selectedUrlsToGet.scientific =
-      await this.processGeneralUrls(this.memory.searchResults.all.scientific);
+    this.memory.searchResults.orderedWebPagesToGet.general =
+      await this.processGeneralUrls(this.memory.searchResults.all.general);
 
-    this.memory.searchResults.selectedUrlsToGet.scientific =
+    this.memory.searchResults.orderedWebPagesToGet.scientific =
       await this.processGeneralUrls(this.memory.searchResults.all.scientific);
 
     await this.saveMemory();

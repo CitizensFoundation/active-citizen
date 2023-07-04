@@ -35,7 +35,7 @@ export class AgentInnovation extends BaseAgent {
           general: [],
           scientific: []
         },
-        selectedUrlsToGet: {
+        orderedWebPagesToGet: {
           general: [],
           scientific: []
         },

@@ -7,7 +7,7 @@ const redis = new Redis(process.env.REDIS_MEMORY_URL || undefined);
 export class SearchWebProcessor extends BaseProcessor {
   async serpApiSearch(
     q: string,
-    location: string = "San Francisco, California"
+    location: string = "New York, New York"
   ): Promise<BaseResponse<GoogleParameters>> {
     const redisKey = `s_web_v1:${q}`;
 
@@ -51,7 +51,7 @@ export class SearchWebProcessor extends BaseProcessor {
       );
 
       const scientificSearchData = await this.serpApiSearch(
-        query.scientificSearchQuery
+        `"arXiv" pdf ${query.scientificSearchQuery}`
       );
       this.memory.searchResults.all.scientific.push(
         scientificSearchData.organic_results as SerpOrganicResult[]

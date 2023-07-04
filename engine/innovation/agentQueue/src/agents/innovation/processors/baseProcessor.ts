@@ -141,38 +141,54 @@ export abstract class BaseProcessor extends Base {
     parseJson = true
   ) {
     try {
-      const response = await this.chat?.call(messages);
+      let retryCount = 0;
+      const maxRetries = 3;
+      let retry = true;
 
-      if (response) {
-        this.logger.debug(response);
+      while (retry && retryCount<maxRetries && this.chat) {
+        const response = await this.chat.call(messages);
 
-        const tokensIn = await this.chat!.getNumTokensFromMessages(messages);
-        const tokensOut = await this.chat!.getNumTokensFromMessages([response]);
+        if (response) {
+          this.logger.debug(response);
 
-        if (this.memory.stages[stage].tokensIn === undefined) {
-          this.memory.stages[stage].tokensIn = 0;
-          this.memory.stages[stage].tokensOut = 0;
-          this.memory.stages[stage].tokensInCost = 0;
-          this.memory.stages[stage].tokensOutCost = 0;
-        }
+          const tokensIn = await this.chat!.getNumTokensFromMessages(messages);
+          const tokensOut = await this.chat!.getNumTokensFromMessages([response]);
 
-        this.memory.stages[stage].tokensIn! += tokensIn.totalCount;
-        this.memory.stages[stage].tokensOut! += tokensOut.totalCount;
-        this.memory.stages[stage].tokensInCost! +=
-          tokensIn.totalCount * modelConstants.inTokenCostUSD;
-        this.memory.stages[stage].tokensOutCost! +=
-          tokensOut.totalCount * modelConstants.outTokenCostUSD;
+          if (this.memory.stages[stage].tokensIn === undefined) {
+            this.memory.stages[stage].tokensIn = 0;
+            this.memory.stages[stage].tokensOut = 0;
+            this.memory.stages[stage].tokensInCost = 0;
+            this.memory.stages[stage].tokensOutCost = 0;
+          }
 
-        await this.saveMemory();
+          this.memory.stages[stage].tokensIn! += tokensIn.totalCount;
+          this.memory.stages[stage].tokensOut! += tokensOut.totalCount;
+          this.memory.stages[stage].tokensInCost! +=
+            tokensIn.totalCount * modelConstants.inTokenCostUSD;
+          this.memory.stages[stage].tokensOutCost! +=
+            tokensOut.totalCount * modelConstants.outTokenCostUSD;
 
-        if (parseJson) {
-          //TODO: Look into using StructuredOutputParser
-          return JSON.parse(response.text.trim());
+          await this.saveMemory();
+
+          if (parseJson) {
+            //TODO: Look into using StructuredOutputParser
+            let parsedJson;
+            try {
+              parsedJson = JSON.parse(response.text.trim());
+            } catch (error) {
+              this.logger.error(error);
+              retryCount++;
+            }
+            retry = false;
+            return parsedJson;
+          } else {
+            retry = false;
+            return response.text.trim();
+          }
         } else {
-          return response.text.trim();
+          retry = false;
+          throw new Error("callLLM response was empty");
         }
-      } else {
-        throw new Error("callLLM response was empty");
       }
     } catch (error) {
       throw error;

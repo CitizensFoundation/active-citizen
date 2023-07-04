@@ -149,6 +149,7 @@ interface IEngineBaseAIModelConstants {
   name: string;
   temperature: number;
   maxTokens: number;
+  tokenLimit: number;
   inTokenCostUSD: number;
   outTokenCostUSD: number;
   verbose: boolean;
@@ -182,7 +183,7 @@ interface IEngineSearchResults {
     general: SerpOrganicResult[][];
     scientific: SerpOrganicResult[][];
   };
-  selectedUrlsToGet: {
+  orderedWebPagesToGet: {
     general: string[][];
     scientific: string[][];
   };
@@ -207,4 +208,12 @@ interface IEngineInnovationMemoryData extends IEngineMemoryData {
     | IEEngineSearchResultData
     | IEEngineSearchResultPage
     | undefined;
+}
+
+interface IEngineWebPageAnalysisData {
+  allRelevantParagraphs: string[];
+  possibleSolutionsToProblem: string[];
+  relevanceToProblem: string;
+  tags: string[];
+  entities: string[];
 }
