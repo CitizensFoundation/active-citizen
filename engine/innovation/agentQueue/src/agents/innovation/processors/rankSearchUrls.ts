@@ -98,7 +98,7 @@ export class RankSearchUrlsProcessor extends BasePairwiseRankingsProcessor {
       temperature: IEngineConstants.searchQueryRankingsModel.temperature,
       maxTokens: IEngineConstants.searchQueryRankingsModel.maxTokens,
       modelName: IEngineConstants.searchQueryRankingsModel.name,
-      verbose: IEngineConstants.pairwiseRankingsModel.verbose,
+      verbose: IEngineConstants.searchQueryRankingsModel.verbose,
     });
 
     this.memory.searchResults.selectedUrlsToGet.scientific =

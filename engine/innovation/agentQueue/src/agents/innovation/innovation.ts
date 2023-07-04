@@ -15,6 +15,7 @@ export class AgentInnovation extends BaseAgent {
         "create-search-queries": {},
         "rank-search-urls": {},
         "rank-sub-problems": {},
+        "rank-entities": {},
         "web-search": {},
         "web-get-pages": {},
         "parse": {},
@@ -24,7 +25,10 @@ export class AgentInnovation extends BaseAgent {
       initialTimeStart: Date.now(),
       totalCost: 0,
       problemStatement: job.data.initialProblemStatement,
-      entities: [],
+      entities: {
+        all: [],
+        selected: []
+      },
       searchQueries: [],
       searchResults: {
         all: {

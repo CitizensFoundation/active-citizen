@@ -47,6 +47,14 @@ export class IEngineConstants {
     verbose: true,
   };
 
+  static entitiesRankingsModel: IEngineBaseAIModelConstants = {
+    name: "gpt-4",
+    temperature: 0.0,
+    maxTokens: 6,
+    inTokenCostUSD: gpt4InTokenPrice,
+    outTokenCostUSD: gpt4OutTokenPrice,
+    verbose: true,
+  };
 }
 
 

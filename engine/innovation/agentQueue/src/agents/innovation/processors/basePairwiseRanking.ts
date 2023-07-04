@@ -7,6 +7,7 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
     | SerpOrganicResult[]
     | IEngineSolutionIdea[]
     | IEngineProblemStatement[]
+    | IEngineAffectedEntity[]
     | undefined;
   allItemWonVotes: Record<number, number> = {};
   allItemLostVotes: Record<number, number> = {};
@@ -16,7 +17,8 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
     allItems:
       | SerpOrganicResult[]
       | IEngineSolutionIdea[]
-      | IEngineProblemStatement[],
+      | IEngineProblemStatement[]
+      | IEngineAffectedEntity[],
     maxPrompts: number | undefined = undefined
   ) {
     this.allItems = allItems;

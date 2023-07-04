@@ -93,7 +93,7 @@ interface IEngineAffectedEntityAffect {
 }
 
 interface IEngineAffectedEntity {
-  entityName: string;
+  name: string;
   subProblemIndex: number;
   positiveEffects?: IEngineAffectedEntityAffect[];
   negativeEffects?: IEngineAffectedEntityAffect[];
@@ -131,6 +131,7 @@ type IEngineStageTypes =
   | "create-search-queries"
   | "rank-search-urls"
   | "rank-sub-problems"
+  | "rank-entities"
   | "web-search"
   | "web-get-pages"
   | "parse"
@@ -194,7 +195,10 @@ interface IEngineInnovationMemoryData extends IEngineMemoryData {
   currentStage: IEngineStageTypes;
   stages: Record<IEngineStageTypes, IEngineInnovationStagesData>;
   problemStatement: IEngineProblemStatement;
-  entities: IEngineAffectedEntity[];
+  entities: {
+    all: IEngineAffectedEntity[];
+    selected: IEngineAffectedEntity[];
+  }
   searchQueries: IEngineSearchQuery[];
   searchResults: IEngineSearchResults;
   solutionIdeas: IEngineSolutionIdea[];
