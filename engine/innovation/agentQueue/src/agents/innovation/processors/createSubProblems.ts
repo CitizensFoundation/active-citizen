@@ -169,12 +169,12 @@ export class CreateSubProblemsProcessor extends BaseProcessor {
          Problem statement:
          "${this.memory.problemStatement.description}"
 
-         Output:
+         JSON Output:
        `
       ),
     ];
 
-    this.memory.problemStatement.allSubProblems = await this.callLLM(
+    this.memory.subProblems = await this.callLLM(
       "create-sub-problems",
       IEngineConstants.createSubProblemsModel,
       messages

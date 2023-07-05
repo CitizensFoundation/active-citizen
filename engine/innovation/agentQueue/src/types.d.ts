@@ -78,9 +78,17 @@ interface IEngineWorkerData {
 
 interface IEngineProblemStatement {
   description: string;
-  title?: string;
-  allSubProblems: IEngineProblemStatement[];
-  selectedSubProblems: IEngineProblemStatement[];
+  searchQueries: IEngineSearchQueries;
+  searchResults: IEngineSearchResults;
+}
+
+interface IEngineSubProblem {
+  title: string;
+  description: string;
+  entities: IEngineAffectedEntity[];
+  searchQueries: IEngineSearchQueries;
+  searchResults: IEngineSearchResults;
+  solutionIdeas: IEngineSolutionIdea[];
 }
 
 interface IEngineAffectedEntityBase {
@@ -88,13 +96,11 @@ interface IEngineAffectedEntityBase {
 }
 
 interface IEngineAffectedEntityAffect {
-  subProblemIndex: number;
   reason: string;
 }
 
 interface IEngineAffectedEntity {
   name: string;
-  subProblemIndex: number;
   positiveEffects?: IEngineAffectedEntityAffect[];
   negativeEffects?: IEngineAffectedEntityAffect[];
 }
@@ -174,28 +180,24 @@ interface IEngineInnovationStagesData {
   tokensOutCost?: number;
 }
 
-interface IEngineSearchQuery {
-  subProblemIndex: number;
-  generalSearchQuery: string;
-  scientificSearchQuery: string;
+interface IEngineSearchQueries {
+  generalSearchQueries: string[];
+  scientificSearchQueries: string[];
+  newsSearchQueries: string[];
+  openDataSearchQueries: string[];
 }
 
 interface IEngineSearchResults {
-  all: {
-    general: SerpOrganicResult[][];
-    scientific: SerpOrganicResult[][];
-  };
-  orderedURLsToGet: {
-    general: string[][];
-    scientific: string[][];
-  };
-  orderedSearchPages: {
-    general: SerpOrganicResult[][];
-    scientific: SerpOrganicResult[][];
+  pages: {
+    general: SerpOrganicResult[];
+    scientific: SerpOrganicResult[];
+    news: SerpOrganicResult[];
+    openData: SerpOrganicResult[];
   };
   knowledgeGraph: {
-    general: SerpKnowledgeGraph[][];
-    scientific: SerpKnowledgeGraph[][];
+    general: SerpKnowledgeGraph[];
+    scientific: SerpKnowledgeGraph[];
+    news: SerpKnowledgeGraph[];
   };
 }
 
@@ -203,13 +205,7 @@ interface IEngineInnovationMemoryData extends IEngineMemoryData {
   currentStage: IEngineStageTypes;
   stages: Record<IEngineStageTypes, IEngineInnovationStagesData>;
   problemStatement: IEngineProblemStatement;
-  entities: {
-    all: IEngineAffectedEntity[];
-    selected: IEngineAffectedEntity[];
-  }
-  searchQueries: IEngineSearchQuery[];
-  searchResults: IEngineSearchResults;
-  solutionIdeas: IEngineSolutionIdea[];
+  subProblems: IEngineSubProblem[];
   currentStageData?:
     | IEEngineSearchResultData
     | IEEngineSearchResultPage
@@ -225,6 +221,5 @@ interface IEngineWebPageAnalysisData {
   tags: string[];
   entities: string[];
   url: string;
-  subProblemIndex: number;
   type: IEngineWebPageTypes;
 }

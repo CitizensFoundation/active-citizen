@@ -14,8 +14,8 @@ export class RankSubProblemsProcessor extends BasePairwiseRankingsProcessor {
     const itemOneIndex = promptPair[0];
     const itemTwoIndex = promptPair[1];
 
-    const itemOne = this.allItems![itemOneIndex] as IEngineProblemStatement;
-    const itemTwo = this.allItems![itemTwoIndex] as IEngineProblemStatement;
+    const itemOne = this.allItems![itemOneIndex] as IEngineSubProblem;
+    const itemTwo = this.allItems![itemTwoIndex] as IEngineSubProblem;
 
     let itemOneTitle = itemOne.title;
     let itemOneDescription = itemOne.description;
@@ -74,10 +74,10 @@ export class RankSubProblemsProcessor extends BasePairwiseRankingsProcessor {
       verbose: IEngineConstants.subProblemsRankingsModel.verbose,
     });
 
-    this.setupPrompts(this.memory.problemStatement.allSubProblems);
+    this.setupPrompts(this.memory.subProblems);
     await this.performPairwiseRanking();
 
-    this.memory.problemStatement.selectedSubProblems = this.getOrderedListOfItems().slice(0, 7) as IEngineProblemStatement[];
+    this.memory.subProblems = this.getOrderedListOfItems().slice(0, 7) as IEngineSubProblem[];
 
     await this.saveMemory();
   }
