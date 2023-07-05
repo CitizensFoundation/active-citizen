@@ -14,7 +14,7 @@ export class AgentInnovation extends BaseAgent {
         "create-entities": {},
         "create-search-queries": {},
         "create-seed-ideas": {},
-        "rank-search-pages": {},
+        "rank-search-results": {},
         "rank-sub-problems": {},
         "rank-search-queries": {},
         "rank-entities": {},
@@ -29,10 +29,10 @@ export class AgentInnovation extends BaseAgent {
       problemStatement: {
         description: job.data.problemStatement,
         searchQueries: {
-          generalSearchQueries: [],
-          scientificSearchQueries: [],
-          newsSearchQueries: [],
-          openDataSearchQueries: [],
+          general: [],
+          scientific: [],
+          news: [],
+          openData: [],
         },
         searchResults: {
           pages: {

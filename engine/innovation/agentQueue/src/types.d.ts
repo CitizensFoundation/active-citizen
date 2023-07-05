@@ -143,7 +143,7 @@ type IEngineStageTypes =
   | "create-sub-problems"
   | "create-entities"
   | "create-search-queries"
-  | "rank-search-pages"
+  | "rank-search-results"
   | "rank-search-queries"
   | "rank-sub-problems"
   | "rank-entities"
@@ -189,10 +189,10 @@ interface IEngineInnovationStagesData {
 }
 
 interface IEngineSearchQueries {
-  generalSearchQueries: string[];
-  scientificSearchQueries: string[];
-  newsSearchQueries: string[];
-  openDataSearchQueries: string[];
+  general: string[];
+  scientific: string[];
+  news: string[];
+  openData: string[];
 }
 
 interface IEngineSearchResults {
@@ -222,7 +222,7 @@ interface IEngineInnovationMemoryData extends IEngineMemoryData {
 }
 
 type IEngineWebPageTypes = "general" | "scientific" | "openData" | "news";
-type IEngineWebPageTargets = "subProblem" | "entity";
+type IEngineWebPageTargets = "problemStatement" | "subProblem" | "entity";
 
 interface IEngineWebPageAnalysisData {
   allRelevantParagraphs: string[];

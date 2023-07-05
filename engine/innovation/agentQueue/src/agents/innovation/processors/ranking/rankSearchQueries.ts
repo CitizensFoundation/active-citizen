@@ -11,6 +11,32 @@ export class RankSearchQueriesProcessor extends BasePairwiseRankingsProcessor {
   searchQueryType!: IEngineWebPageTypes;
   searchQueryTarget!: IEngineWebPageTargets;
 
+  renderProblemDetail() {
+    let detail = ``;
+
+    if (this.searchQueryTarget === "problemStatement") {
+      detail = `
+        ${this.renderProblemStatement()}
+      `;
+    } else if (this.searchQueryTarget === "subProblem") {
+      detail = `
+        ${this.renderPromblemsWithIndexAndEntities(this.subProblemIndex)}
+      `;
+    } else if (this.searchQueryTarget === "entity") {
+      detail = `
+        ${this.renderProblemStatement()}
+
+        ${this.renderSubProblem(this.currentSubProblemIndex!)}
+
+        Entity:
+        ${this.currentEntity!.name}
+        ${this.renderEntityPosNegReasons(this.currentEntity!)}
+      `;
+    }
+
+    return detail;
+  }
+
   async voteOnPromptPair(
     promptPair: number[]
   ): Promise<IEnginePairWiseVoteResults> {
@@ -35,31 +61,18 @@ export class RankSearchQueriesProcessor extends BasePairwiseRankingsProcessor {
       new HumanChatMessage(
         `
         Search query type: ${this.searchQueryType}
-        ${
-          this.searchQueryTarget === "subProblem"
-            ? `
-          ${this.renderPromblemsWithIndexAndEntities(this.subProblemIndex)}
-        `
-            : `
-          ${this.renderProblemStatement()}
 
-          ${this.renderSubProblem(this.currentSubProblemIndex!)}
+        ${this.renderProblemDetail()}
 
-          Entity:
-          ${this.currentEntity!.name}
-          ${this.renderEntityPosNegReasons(this.currentEntity!)}
-        `
-        }
+        Search queries to vote on:
 
-         Search queries to vote on:
+        Search Query One:
+        ${itemOne}
 
-         Search Query One:
-         ${itemOne}
+        Search Query Two:
+        ${itemTwo}
 
-         Search Query Two:
-         ${itemTwo}
-
-         The winning search query is:
+        The winning search query is:
        `
       ),
     ];
@@ -80,41 +93,17 @@ export class RankSearchQueriesProcessor extends BasePairwiseRankingsProcessor {
       Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems);
       s++
     ) {
-      let queriesToRank;
-      if (searchQueryType === "general") {
-        queriesToRank =
-          this.memory.subProblems[s].searchQueries.generalSearchQueries;
-      } else if (searchQueryType === "scientific") {
-        queriesToRank =
-          this.memory.subProblems[s].searchQueries.scientificSearchQueries;
-      } else if (searchQueryType === "openData") {
-        queriesToRank =
-          this.memory.subProblems[s].searchQueries.openDataSearchQueries;
-      } else if (searchQueryType === "news") {
-        queriesToRank =
-          this.memory.subProblems[s].searchQueries.newsSearchQueries;
-      } else {
-        throw new Error(`Unknown search query type: ${searchQueryType}`);
-      }
+      let queriesToRank =
+        this.memory.subProblems[s].searchQueries[searchQueryType];
 
       this.subProblemIndex = s;
       this.searchQueryTarget = "subProblem";
+
       this.setupRankingPrompts(queriesToRank);
       await this.performPairwiseRanking();
 
-      if (searchQueryType === "general") {
-        this.memory.subProblems[s].searchQueries.generalSearchQueries =
-          this.getOrderedListOfItems() as string[];
-      } else if (searchQueryType === "scientific") {
-        this.memory.subProblems[s].searchQueries.scientificSearchQueries =
-          this.getOrderedListOfItems() as string[];
-      } else if (searchQueryType === "openData") {
-        this.memory.subProblems[s].searchQueries.openDataSearchQueries =
-          this.getOrderedListOfItems() as string[];
-      } else if (searchQueryType === "news") {
-        this.memory.subProblems[s].searchQueries.newsSearchQueries =
-          this.getOrderedListOfItems() as string[];
-      }
+      this.memory.subProblems[s].searchQueries[searchQueryType] =
+        this.getOrderedListOfItems() as string[];
 
       this.searchQueryTarget = "entity";
       await this.processEntities(s, searchQueryType);
@@ -136,52 +125,18 @@ export class RankSearchQueriesProcessor extends BasePairwiseRankingsProcessor {
       );
       e++
     ) {
-      let queriesToRank;
       this.currentEntity = this.memory.subProblems[subProblemIndex].entities[e];
-      if (searchQueryType === "general") {
-        queriesToRank =
-          this.memory.subProblems[subProblemIndex].entities[e].searchQueries!
-            .generalSearchQueries;
-      } else if (searchQueryType === "scientific") {
-        queriesToRank =
-          this.memory.subProblems[subProblemIndex].entities[e].searchQueries!
-            .scientificSearchQueries;
-      } else if (searchQueryType === "openData") {
-        queriesToRank =
-          this.memory.subProblems[subProblemIndex].entities[e].searchQueries!
-            .openDataSearchQueries;
-      } else if (searchQueryType === "news") {
-        queriesToRank =
-          this.memory.subProblems[subProblemIndex].entities[e].searchQueries!
-            .newsSearchQueries;
-      } else {
-        throw new Error(`Unknown search query type: ${searchQueryType}`);
-      }
+      let queriesToRank =
+        this.memory.subProblems[subProblemIndex].entities[e].searchQueries![
+          searchQueryType
+        ];
 
       this.setupRankingPrompts(queriesToRank);
       await this.performPairwiseRanking();
 
-      if (searchQueryType === "general") {
-        this.memory.subProblems[subProblemIndex].entities[
-          e
-        ].searchQueries!.generalSearchQueries =
-          this.getOrderedListOfItems() as string[];
-      } else if (searchQueryType === "scientific") {
-        this.memory.subProblems[subProblemIndex].entities[
-          e
-        ].searchQueries!.scientificSearchQueries =
-          this.getOrderedListOfItems() as string[];
-      } else if (searchQueryType === "openData") {
-        queriesToRank = this.memory.subProblems[subProblemIndex].entities[
-          e
-        ].searchQueries!.openDataSearchQueries =
-          this.getOrderedListOfItems() as string[];
-      } else if (searchQueryType === "news") {
-        queriesToRank = this.memory.subProblems[subProblemIndex].entities[
-          e
-        ].searchQueries!.newsSearchQueries =
-          this.getOrderedListOfItems() as string[];
-      }
+      this.memory.subProblems[subProblemIndex].entities[e].searchQueries![
+        searchQueryType
+      ] = this.getOrderedListOfItems() as string[];
     }
   }
 
@@ -196,14 +151,25 @@ export class RankSearchQueriesProcessor extends BasePairwiseRankingsProcessor {
       verbose: IEngineConstants.searchQueryRankingsModel.verbose,
     });
 
-    for (const searchQueryType in [
+    for (const searchQueryType of [
       "general",
       "scientific",
       "openData",
       "news",
-    ] as IEngineWebPageTypes[]) {
-      this.searchQueryType = searchQueryType as IEngineWebPageTypes;
-      this.processSubProblems(searchQueryType as IEngineWebPageTypes);
+    ] as const) {
+      let queriesToRank =
+        this.memory.problemStatement.searchQueries![searchQueryType];
+
+      this.searchQueryTarget = "problemStatement";
+
+      this.setupRankingPrompts(queriesToRank);
+      await this.performPairwiseRanking();
+
+      this.memory.problemStatement.searchQueries[searchQueryType] =
+        this.getOrderedListOfItems() as string[];
+
+      this.searchQueryType = searchQueryType;
+      this.processSubProblems(searchQueryType);
     }
 
     await this.saveMemory();

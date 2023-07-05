@@ -18,7 +18,7 @@ export class CreateSearchQueriesProcessor extends BaseProcessor {
       7. All search queries should be solution focused, let's find the solutions for those entities.
       8. Never output in markdown format.
       9. Provide an output in the following JSON format:
-        { generalSearchQueries: [ queries ], scientificSearchQueries: [ queries ], openDataSearchQueries: [ queries ], newsSearchQueries: [ queries ] }.
+        { general: [ queries ], scientific: [ queries ], openData: [ queries ], news: [ queries ] }.
       10. Ensure a methodical, step-by-step approach to create the best possible search queries.
     `;
   }

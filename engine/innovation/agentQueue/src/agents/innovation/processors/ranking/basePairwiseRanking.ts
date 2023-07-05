@@ -13,7 +13,7 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
     | undefined;
   allItemWonVotes: Record<number, number> = {};
   allItemLostVotes: Record<number, number> = {};
-  maxNumberOfPrompts: number = 100;
+  maxNumberOfPrompts: number = 250;
 
   setupRankingPrompts(
     allItems:

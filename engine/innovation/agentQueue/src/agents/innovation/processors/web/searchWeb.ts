@@ -68,38 +68,9 @@ export class SearchWebProcessor extends BaseProcessor {
       Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems);
       s++
     ) {
-      let queriesToSearch;
-      if (searchQueryType === "general") {
-        queriesToSearch = this.memory.subProblems[
-          s
-        ].searchQueries.generalSearchQueries.slice(
-          0,
-          IEngineConstants.maxTopQueriesToSearchPerType
-        );
-      } else if (searchQueryType === "scientific") {
-        queriesToSearch = this.memory.subProblems[
-          s
-        ].searchQueries.scientificSearchQueries.slice(
-          0,
-          IEngineConstants.maxTopQueriesToSearchPerType
-        );
-      } else if (searchQueryType === "openData") {
-        queriesToSearch = this.memory.subProblems[
-          s
-        ].searchQueries.openDataSearchQueries.slice(
-          0,
-          IEngineConstants.maxTopQueriesToSearchPerType
-        );
-      } else if (searchQueryType === "news") {
-        queriesToSearch = this.memory.subProblems[
-          s
-        ].searchQueries.newsSearchQueries.slice(
-          0,
-          IEngineConstants.maxTopQueriesToSearchPerType
-        );
-      } else {
-        throw new Error(`Unknown search query type: ${searchQueryType}`);
-      }
+      let queriesToSearch = this.memory.subProblems[s].searchQueries[
+        searchQueryType
+      ].slice(0, IEngineConstants.maxTopQueriesToSearchPerType);
 
       let searchResults: SerpOrganicResults = [];
       let knowledgeGraphResults: SerpKnowledgeGraph[] = [];
@@ -117,24 +88,10 @@ export class SearchWebProcessor extends BaseProcessor {
         ];
       }
 
-      if (searchQueryType === "general") {
-        this.memory.subProblems[s].searchResults.pages.general = searchResults;
-        this.memory.subProblems[s].searchResults.knowledgeGraph.general =
-          knowledgeGraphResults;
-      } else if (searchQueryType === "scientific") {
-        this.memory.subProblems[s].searchResults.pages.scientific =
-          searchResults;
-        this.memory.subProblems[s].searchResults.knowledgeGraph.scientific =
-          knowledgeGraphResults;
-      } else if (searchQueryType === "openData") {
-        this.memory.subProblems[s].searchResults.pages.openData = searchResults;
-        this.memory.subProblems[s].searchResults.knowledgeGraph.openData =
-          knowledgeGraphResults;
-      } else if (searchQueryType === "news") {
-        this.memory.subProblems[s].searchResults.pages.news = searchResults;
-        this.memory.subProblems[s].searchResults.knowledgeGraph.news =
-          knowledgeGraphResults;
-      }
+      this.memory.subProblems[s].searchResults.pages[searchQueryType] =
+        searchResults;
+      this.memory.subProblems[s].searchResults.knowledgeGraph[searchQueryType] =
+        knowledgeGraphResults;
 
       await this.processEntities(s, searchQueryType);
 
@@ -155,38 +112,12 @@ export class SearchWebProcessor extends BaseProcessor {
       );
       e++
     ) {
-      let queriesToSearch;
-      if (searchQueryType === "general") {
-        queriesToSearch = this.memory.subProblems[subProblemIndex].entities[
-          e
-        ].searchQueries!.generalSearchQueries.slice(
-          0,
-          IEngineConstants.maxTopQueriesToSearchPerType
-        );
-      } else if (searchQueryType === "scientific") {
-        queriesToSearch = this.memory.subProblems[subProblemIndex].entities[
-          e
-        ].searchQueries!.scientificSearchQueries.slice(
-          0,
-          IEngineConstants.maxTopQueriesToSearchPerType
-        );
-      } else if (searchQueryType === "openData") {
-        queriesToSearch = this.memory.subProblems[subProblemIndex].entities[
-          e
-        ].searchQueries!.openDataSearchQueries.slice(
-          0,
-          IEngineConstants.maxTopQueriesToSearchPerType
-        );
-      } else if (searchQueryType === "news") {
-        queriesToSearch = this.memory.subProblems[subProblemIndex].entities[
-          e
-        ].searchQueries!.newsSearchQueries.slice(
-          0,
-          IEngineConstants.maxTopQueriesToSearchPerType
-        );
-      } else {
-        throw new Error(`Unknown search query type: ${searchQueryType}`);
-      }
+      let queriesToSearch = this.memory.subProblems[subProblemIndex].entities[
+        e
+      ].searchQueries![searchQueryType].slice(
+        0,
+        IEngineConstants.maxTopQueriesToSearchPerType
+      );
 
       let searchResults: SerpOrganicResults = [];
       let knowledgeGraphResults: SerpKnowledgeGraph[] = [];
@@ -204,38 +135,13 @@ export class SearchWebProcessor extends BaseProcessor {
         ];
       }
 
-      if (searchQueryType === "general") {
-        this.memory.subProblems[subProblemIndex].entities[
-          e
-        ].searchResults!.pages.general = searchResults;
+      this.memory.subProblems[subProblemIndex].entities[e].searchResults!.pages[
+        searchQueryType
+      ] = searchResults;
 
-        this.memory.subProblems[subProblemIndex].entities[
-          e
-        ].searchResults!.knowledgeGraph.general = knowledgeGraphResults;
-      } else if (searchQueryType === "scientific") {
-        this.memory.subProblems[subProblemIndex].entities[
-          e
-        ].searchResults!.pages.scientific = searchResults;
-
-        this.memory.subProblems[subProblemIndex].entities[
-          e
-        ].searchResults!.knowledgeGraph.scientific = knowledgeGraphResults;
-      } else if (searchQueryType === "openData") {
-        this.memory.subProblems[subProblemIndex].entities[
-          e
-        ].searchResults!.pages.openData = searchResults;
-
-        this.memory.subProblems[subProblemIndex].entities[
-          e
-        ].searchResults!.knowledgeGraph.openData = knowledgeGraphResults;
-      } else if (searchQueryType === "news") {
-        this.memory.subProblems[subProblemIndex].entities[
-          e
-        ].searchResults!.pages.news = searchResults;
-        this.memory.subProblems[subProblemIndex].entities[
-          e
-        ].searchResults!.knowledgeGraph.news = knowledgeGraphResults;
-      }
+      this.memory.subProblems[subProblemIndex].entities[
+        e
+      ].searchResults!.knowledgeGraph[searchQueryType] = knowledgeGraphResults;
     }
   }
 
