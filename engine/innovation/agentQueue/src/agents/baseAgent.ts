@@ -19,8 +19,7 @@ export abstract class BaseAgent extends BaseWorker {
     const jobData = job.data as IEngineWorkerData;
     try {
       const memoryData =
-        (await redis.get(this.getMemoryIdKey(jobData.memoryId))) +
-        "djsijdsidjs";
+        (await redis.get(this.getMemoryIdKey(jobData.memoryId)));
       if (memoryData) {
         this.memory = JSON.parse(memoryData);
       } else {
