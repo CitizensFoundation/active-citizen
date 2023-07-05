@@ -102,6 +102,7 @@ export class SearchWebProcessor extends BaseProcessor {
       }
 
       let searchResults: SerpOrganicResults = [];
+      let knowledgeGraphResults: SerpKnowledgeGraph[] = [];
 
       for (const query of queriesToSearch) {
         const generalSearchData = await this.serpApiSearch(query);
@@ -109,17 +110,30 @@ export class SearchWebProcessor extends BaseProcessor {
           ...searchResults,
           ...(generalSearchData.organic_results as SerpOrganicResults),
         ];
+
+        knowledgeGraphResults = [
+          ...knowledgeGraphResults,
+          ...(generalSearchData.knowledge_graph as SerpKnowledgeGraph[]),
+        ];
       }
 
       if (searchQueryType === "general") {
         this.memory.subProblems[s].searchResults.pages.general = searchResults;
+        this.memory.subProblems[s].searchResults.knowledgeGraph.general =
+          knowledgeGraphResults;
       } else if (searchQueryType === "scientific") {
         this.memory.subProblems[s].searchResults.pages.scientific =
           searchResults;
+        this.memory.subProblems[s].searchResults.knowledgeGraph.scientific =
+          knowledgeGraphResults;
       } else if (searchQueryType === "openData") {
         this.memory.subProblems[s].searchResults.pages.openData = searchResults;
+        this.memory.subProblems[s].searchResults.knowledgeGraph.openData =
+          knowledgeGraphResults;
       } else if (searchQueryType === "news") {
         this.memory.subProblems[s].searchResults.pages.news = searchResults;
+        this.memory.subProblems[s].searchResults.knowledgeGraph.news =
+          knowledgeGraphResults;
       }
 
       await this.processEntities(s, searchQueryType);
@@ -175,6 +189,7 @@ export class SearchWebProcessor extends BaseProcessor {
       }
 
       let searchResults: SerpOrganicResults = [];
+      let knowledgeGraphResults: SerpKnowledgeGraph[] = [];
 
       for (const query of queriesToSearch) {
         const generalSearchData = await this.serpApiSearch(query);
@@ -182,24 +197,44 @@ export class SearchWebProcessor extends BaseProcessor {
           ...searchResults,
           ...(generalSearchData.organic_results as SerpOrganicResults),
         ];
+
+        knowledgeGraphResults = [
+          ...knowledgeGraphResults,
+          ...(generalSearchData.knowledge_graph as SerpKnowledgeGraph[]),
+        ];
       }
 
       if (searchQueryType === "general") {
         this.memory.subProblems[subProblemIndex].entities[
           e
         ].searchResults!.pages.general = searchResults;
+
+        this.memory.subProblems[subProblemIndex].entities[
+          e
+        ].searchResults!.knowledgeGraph.general = knowledgeGraphResults;
       } else if (searchQueryType === "scientific") {
         this.memory.subProblems[subProblemIndex].entities[
           e
         ].searchResults!.pages.scientific = searchResults;
+
+        this.memory.subProblems[subProblemIndex].entities[
+          e
+        ].searchResults!.knowledgeGraph.scientific = knowledgeGraphResults;
       } else if (searchQueryType === "openData") {
         this.memory.subProblems[subProblemIndex].entities[
           e
         ].searchResults!.pages.openData = searchResults;
+
+        this.memory.subProblems[subProblemIndex].entities[
+          e
+        ].searchResults!.knowledgeGraph.openData = knowledgeGraphResults;
       } else if (searchQueryType === "news") {
         this.memory.subProblems[subProblemIndex].entities[
           e
         ].searchResults!.pages.news = searchResults;
+        this.memory.subProblems[subProblemIndex].entities[
+          e
+        ].searchResults!.knowledgeGraph.news = knowledgeGraphResults;
       }
     }
   }

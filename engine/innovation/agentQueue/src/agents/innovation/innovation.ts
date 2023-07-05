@@ -13,8 +13,10 @@ export class AgentInnovation extends BaseAgent {
         "create-sub-problems": {},
         "create-entities": {},
         "create-search-queries": {},
+        "create-seed-ideas": {},
         "rank-search-pages": {},
         "rank-sub-problems": {},
+        "rank-search-queries": {},
         "rank-entities": {},
         "web-search": {},
         "web-get-pages": {},
@@ -24,29 +26,32 @@ export class AgentInnovation extends BaseAgent {
       },
       timeStart: Date.now(),
       totalCost: 0,
-      problemStatement: job.data.initialProblemStatement,
-      entities: {
-        all: [],
-        selected: []
+      problemStatement: {
+        description: job.data.problemStatement,
+        searchQueries: {
+          generalSearchQueries: [],
+          scientificSearchQueries: [],
+          newsSearchQueries: [],
+          openDataSearchQueries: [],
+        },
+        searchResults: {
+          pages: {
+            general: [],
+            scientific: [],
+            news: [],
+            openData: []
+          },
+          knowledgeGraph: {
+            general: [],
+            scientific: [],
+            news: [],
+            openData: [],
+          }
+        },
       },
-      searchQueries: [],
-      searchResults: {
-        all: {
-          general: [],
-          scientific: []
-        },
-        orderedURLsToGet: {
-          general: [],
-          scientific: []
-        },
-        knowledgeGraph: {
-          general: [],
-          scientific: []
-        },
-      },
-      solutionIdeas: []
-    };
-
+      subProblems: [],
+      currentStageData: undefined
+    } as IEngineInnovationMemoryData;
     await this.saveMemory();
   }
 

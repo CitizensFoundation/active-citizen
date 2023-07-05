@@ -144,6 +144,7 @@ type IEngineStageTypes =
   | "create-entities"
   | "create-search-queries"
   | "rank-search-pages"
+  | "rank-search-queries"
   | "rank-sub-problems"
   | "rank-entities"
   | "web-search"

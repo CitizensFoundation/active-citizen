@@ -34,6 +34,7 @@ export class RankSearchQueriesProcessor extends BasePairwiseRankingsProcessor {
       ),
       new HumanChatMessage(
         `
+        Search query type: ${this.searchQueryType}
         ${
           this.searchQueryTarget === "subProblem"
             ? `
@@ -64,7 +65,7 @@ export class RankSearchQueriesProcessor extends BasePairwiseRankingsProcessor {
     ];
 
     return await this.getResultsFromLLM(
-      "rank-search-pages",
+      "rank-search-queries",
       IEngineConstants.searchQueryRankingsModel,
       messages,
       itemOneIndex,
