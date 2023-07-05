@@ -61,6 +61,26 @@ export class SearchWebProcessor extends BaseProcessor {
     }
   }
 
+  async getQueryResults(queriesToSearch: string[]) {
+    let searchResults: SerpOrganicResults = [];
+    let knowledgeGraphResults: SerpKnowledgeGraph[] = [];
+
+    for (const query of queriesToSearch) {
+      const generalSearchData = await this.serpApiSearch(query);
+      searchResults = [
+        ...searchResults,
+        ...(generalSearchData.organic_results as SerpOrganicResults),
+      ];
+
+      knowledgeGraphResults = [
+        ...knowledgeGraphResults,
+        ...(generalSearchData.knowledge_graph as SerpKnowledgeGraph[]),
+      ];
+    }
+
+    return { searchResults, knowledgeGraphResults };
+  }
+
   async processSubProblems(searchQueryType: IEngineWebPageTypes) {
     for (
       let s = 0;
@@ -72,26 +92,12 @@ export class SearchWebProcessor extends BaseProcessor {
         searchQueryType
       ].slice(0, IEngineConstants.maxTopQueriesToSearchPerType);
 
-      let searchResults: SerpOrganicResults = [];
-      let knowledgeGraphResults: SerpKnowledgeGraph[] = [];
-
-      for (const query of queriesToSearch) {
-        const generalSearchData = await this.serpApiSearch(query);
-        searchResults = [
-          ...searchResults,
-          ...(generalSearchData.organic_results as SerpOrganicResults),
-        ];
-
-        knowledgeGraphResults = [
-          ...knowledgeGraphResults,
-          ...(generalSearchData.knowledge_graph as SerpKnowledgeGraph[]),
-        ];
-      }
+      const results = await this.getQueryResults(queriesToSearch);
 
       this.memory.subProblems[s].searchResults.pages[searchQueryType] =
-        searchResults;
+        results.searchResults;
       this.memory.subProblems[s].searchResults.knowledgeGraph[searchQueryType] =
-        knowledgeGraphResults;
+        results.knowledgeGraphResults;
 
       await this.processEntities(s, searchQueryType);
 
@@ -119,43 +125,44 @@ export class SearchWebProcessor extends BaseProcessor {
         IEngineConstants.maxTopQueriesToSearchPerType
       );
 
-      let searchResults: SerpOrganicResults = [];
-      let knowledgeGraphResults: SerpKnowledgeGraph[] = [];
-
-      for (const query of queriesToSearch) {
-        const generalSearchData = await this.serpApiSearch(query);
-        searchResults = [
-          ...searchResults,
-          ...(generalSearchData.organic_results as SerpOrganicResults),
-        ];
-
-        knowledgeGraphResults = [
-          ...knowledgeGraphResults,
-          ...(generalSearchData.knowledge_graph as SerpKnowledgeGraph[]),
-        ];
-      }
+      const results = await this.getQueryResults(queriesToSearch);
 
       this.memory.subProblems[subProblemIndex].entities[e].searchResults!.pages[
         searchQueryType
-      ] = searchResults;
+      ] = results.searchResults;
 
       this.memory.subProblems[subProblemIndex].entities[
         e
-      ].searchResults!.knowledgeGraph[searchQueryType] = knowledgeGraphResults;
+      ].searchResults!.knowledgeGraph[searchQueryType] =
+        results.knowledgeGraphResults;
     }
+  }
+
+  async processProblemStatement(searchQueryType: IEngineWebPageTypes) {
+    let queriesToSearch = this.memory.problemStatement.searchQueries![searchQueryType].slice(
+      0,
+      IEngineConstants.maxTopQueriesToSearchPerType
+    );
+
+    const results = await this.getQueryResults(queriesToSearch);
+
+    this.memory.problemStatement.searchResults!.pages[searchQueryType] = results.searchResults;
+    this.memory.problemStatement.searchResults!.knowledgeGraph[searchQueryType] = results.knowledgeGraphResults;
   }
 
   async process() {
     this.logger.info("Search Web Processor");
     super.process();
 
-    for (const searchQueryType in [
+    for (const searchQueryType of [
       "general",
       "scientific",
       "openData",
       "news",
-    ] as IEngineWebPageTypes[]) {
-      this.processSubProblems(searchQueryType as IEngineWebPageTypes);
+    ] as const) {
+
+      await this.processProblemStatement(searchQueryType);
+      await this.processSubProblems(searchQueryType as IEngineWebPageTypes);
     }
 
     await this.saveMemory();
