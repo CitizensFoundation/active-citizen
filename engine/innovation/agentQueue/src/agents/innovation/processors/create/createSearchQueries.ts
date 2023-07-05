@@ -112,7 +112,7 @@ export class CreateSearchQueriesProcessor extends BaseProcessor {
         e <
         Math.min(
           this.memory.subProblems[s].entities.length,
-          IEngineConstants.maxEntitiesToSearch
+          IEngineConstants.maxTopEntitiesToSearch
         );
         e++
       ) {

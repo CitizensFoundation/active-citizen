@@ -74,28 +74,28 @@ export class SearchWebProcessor extends BaseProcessor {
           s
         ].searchQueries.generalSearchQueries.slice(
           0,
-          IEngineConstants.maxQueriesToSearchPerType
+          IEngineConstants.maxTopQueriesToSearchPerType
         );
       } else if (searchQueryType === "scientific") {
         queriesToSearch = this.memory.subProblems[
           s
         ].searchQueries.scientificSearchQueries.slice(
           0,
-          IEngineConstants.maxQueriesToSearchPerType
+          IEngineConstants.maxTopQueriesToSearchPerType
         );
       } else if (searchQueryType === "openData") {
         queriesToSearch = this.memory.subProblems[
           s
         ].searchQueries.openDataSearchQueries.slice(
           0,
-          IEngineConstants.maxQueriesToSearchPerType
+          IEngineConstants.maxTopQueriesToSearchPerType
         );
       } else if (searchQueryType === "news") {
         queriesToSearch = this.memory.subProblems[
           s
         ].searchQueries.newsSearchQueries.slice(
           0,
-          IEngineConstants.maxQueriesToSearchPerType
+          IEngineConstants.maxTopQueriesToSearchPerType
         );
       } else {
         throw new Error(`Unknown search query type: ${searchQueryType}`);
@@ -137,7 +137,7 @@ export class SearchWebProcessor extends BaseProcessor {
       e <
       Math.min(
         this.memory.subProblems[subProblemIndex].entities.length,
-        IEngineConstants.maxEntitiesToSearch
+        IEngineConstants.maxTopEntitiesToSearch
       );
       e++
     ) {
@@ -147,28 +147,28 @@ export class SearchWebProcessor extends BaseProcessor {
           e
         ].searchQueries!.generalSearchQueries.slice(
           0,
-          IEngineConstants.maxQueriesToSearchPerType
+          IEngineConstants.maxTopQueriesToSearchPerType
         );
       } else if (searchQueryType === "scientific") {
         queriesToSearch = this.memory.subProblems[subProblemIndex].entities[
           e
         ].searchQueries!.scientificSearchQueries.slice(
           0,
-          IEngineConstants.maxQueriesToSearchPerType
+          IEngineConstants.maxTopQueriesToSearchPerType
         );
       } else if (searchQueryType === "openData") {
         queriesToSearch = this.memory.subProblems[subProblemIndex].entities[
           e
         ].searchQueries!.openDataSearchQueries.slice(
           0,
-          IEngineConstants.maxQueriesToSearchPerType
+          IEngineConstants.maxTopQueriesToSearchPerType
         );
       } else if (searchQueryType === "news") {
         queriesToSearch = this.memory.subProblems[subProblemIndex].entities[
           e
         ].searchQueries!.newsSearchQueries.slice(
           0,
-          IEngineConstants.maxQueriesToSearchPerType
+          IEngineConstants.maxTopQueriesToSearchPerType
         );
       } else {
         throw new Error(`Unknown search query type: ${searchQueryType}`);

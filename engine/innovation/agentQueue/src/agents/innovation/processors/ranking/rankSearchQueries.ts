@@ -131,7 +131,7 @@ export class RankSearchQueriesProcessor extends BasePairwiseRankingsProcessor {
       e <
       Math.min(
         this.memory.subProblems[subProblemIndex].entities.length,
-        IEngineConstants.maxEntitiesToSearch
+        IEngineConstants.maxTopEntitiesToSearch
       );
       e++
     ) {

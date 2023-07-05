@@ -97,9 +97,9 @@ export class IEngineConstants {
 
   static rankingLLMmaxRetryCount = 3;
 
-  static maxEntitiesToSearch = 3;
+  static maxTopEntitiesToSearch = 3;
 
-  static maxQueriesToSearchPerType = 2;
+  static maxTopQueriesToSearchPerType = 2;
 
   static mainSearchRetryCount = 3;
 
