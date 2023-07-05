@@ -11,6 +11,7 @@ export abstract class BaseProcessor extends Base {
   memory!: IEngineInnovationMemoryData;
   job!: Job;
   chat: ChatOpenAI | undefined;
+  currentSubProblemIndex: number | undefined;
 
   constructor(job: Job, memory: IEngineInnovationMemoryData) {
     super();
@@ -30,31 +31,31 @@ export abstract class BaseProcessor extends Base {
   }
 
   renderSubProblem(subProblemIndex: number) {
-    const subProblem = this.memory.subProblems[
-      subProblemIndex
-    ];
+    const subProblem = this.memory.subProblems[subProblemIndex];
     return `
-      ${subProblem.title}\n
-      ${subProblem.description}\n
+      Sub Problem:
+
+      ${subProblem.title}
+      ${subProblem.description}
       `;
   }
 
   renderSubProblems() {
     return `
-    ${this.memory.subProblems.map(
-      (subProblem, index) => {
+      Sub Problems:
+      ${this.memory.subProblems.map((subProblem, index) => {
         return `
-      ${index + 1}. ${subProblem.title}\n
-      ${subProblem.description}\n
-      `;
-      }
-    )}`;
+        ${index + 1}. ${subProblem.title}\n
+        ${subProblem.description}\n
+        `;
+      })}
+   `;
   }
 
   renderProblemStatement() {
     return `
-      Problem Statement:\n
-      ${this.memory.problemStatement.description}\n
+      Problem Statement:
+      ${this.memory.problemStatement.description}
       `;
   }
 
@@ -65,8 +66,7 @@ export abstract class BaseProcessor extends Base {
       ${this.memory.problemStatement.description}\n
       `;
     } else {
-      const subProblem =
-        this.memory.subProblems[index - 1];
+      const subProblem = this.memory.subProblems[index - 1];
       const entitiesText = `
         ${subProblem.entities
           .map((entity) => {
@@ -76,7 +76,8 @@ export abstract class BaseProcessor extends Base {
               entityEffects = `\n${entity.name}\n${entityEffects}\n}`;
             }
 
-            return entityEffects;          })
+            return entityEffects;
+          })
           .join("")}`;
       return `
         Problem Statement:\n
@@ -91,52 +92,25 @@ export abstract class BaseProcessor extends Base {
   }
 
   renderEntityPosNegReasons(
-    item: IEngineAffectedEntity,
-    subProblemIndex: number | undefined = undefined
+    item: IEngineAffectedEntity
   ) {
-    let itemDescription = "";
-
-    let positiveEffects;
+    let itemEffects = "";
 
     if (item.positiveEffects && item.positiveEffects.length > 0) {
-      positiveEffects = item.positiveEffects.map(
-        (effect) =>
-          `${
-            !subProblemIndex || subProblemIndex === effect.subProblemIndex
-              ? effect.reason
-              : ``
-          }`
-      );
+      itemEffects += `
+      Positive Effects:
+      ${item.positiveEffects.join("\n")}
+      `;
     }
-
-    let negativeEffects;
 
     if (item.negativeEffects && item.negativeEffects.length > 0) {
-      negativeEffects = item.negativeEffects.map(
-        (effect) =>
-          `${
-            !subProblemIndex || subProblemIndex === effect.subProblemIndex
-              ? effect.reason
-              : ``
-          }`
-      );
-    }
-
-    if (positiveEffects && positiveEffects.length > 0) {
-      itemDescription += `
-      Positive Effects:
-      ${positiveEffects.join("\n")}
-      `;
-    }
-
-    if (negativeEffects && negativeEffects.length > 0) {
-      itemDescription += `
+      itemEffects += `
       Negative Effects:
-      ${negativeEffects.join("\n")}
+      ${item.negativeEffects.join("\n")}
       `;
     }
 
-    return itemDescription;
+    return itemEffects;
   }
 
   async callLLM(
@@ -147,17 +121,19 @@ export abstract class BaseProcessor extends Base {
   ) {
     try {
       let retryCount = 0;
-      const maxRetries = 3;
+      const maxRetries = IEngineConstants.mainLLMmaxRetryCount;
       let retry = true;
 
-      while (retry && retryCount<maxRetries && this.chat) {
+      while (retry && retryCount < maxRetries && this.chat) {
         const response = await this.chat.call(messages);
 
         if (response) {
           this.logger.debug(response);
 
           const tokensIn = await this.chat!.getNumTokensFromMessages(messages);
-          const tokensOut = await this.chat!.getNumTokensFromMessages([response]);
+          const tokensOut = await this.chat!.getNumTokensFromMessages([
+            response,
+          ]);
 
           if (this.memory.stages[stage].tokensIn === undefined) {
             this.memory.stages[stage].tokensIn = 0;

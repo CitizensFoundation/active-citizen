@@ -5,16 +5,7 @@ import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
 import { IEngineConstants } from "../../../constants.js";
 
 export class CreateEntitiesProcessor extends BaseProcessor {
-  currentSubProblemIndex = 0;
-
   async createEntities() {
-    this.chat = new ChatOpenAI({
-      temperature: IEngineConstants.createEntitiesModel.temperature,
-      maxTokens: IEngineConstants.createEntitiesModel.maxTokens,
-      modelName: IEngineConstants.createEntitiesModel.name,
-      verbose: IEngineConstants.createEntitiesModel.verbose,
-    });
-
     //TODO: Human review and improvements of this partly GPT-4 generated prompt
     const messages = [
       new SystemChatMessage(
@@ -76,16 +67,16 @@ export class CreateEntitiesProcessor extends BaseProcessor {
       ),
       new HumanChatMessage(
         `
-         Problem statement:
-         ${this.memory.problemStatement.description}
+         ${this.renderProblemStatement()}
 
-         Sub Problems:
-         ${this.renderSubProblem(this.currentSubProblemIndex)}
+         ${this.renderSubProblem(this.currentSubProblemIndex!)}
 
          Entities JSON Output:
        `
       ),
     ];
+
+    this.currentSubProblemIndex = 0;
 
     for (
       let s = 0;
@@ -100,13 +91,21 @@ export class CreateEntitiesProcessor extends BaseProcessor {
       )) as IEngineAffectedEntity[];
       await this.saveMemory();
 
-      this.currentSubProblemIndex++;
+      this.currentSubProblemIndex!++;
     }
   }
 
   async process() {
-    super.process();
     this.logger.info("Create Entities Processor");
+    super.process();
+
+    this.chat = new ChatOpenAI({
+      temperature: IEngineConstants.createEntitiesModel.temperature,
+      maxTokens: IEngineConstants.createEntitiesModel.maxTokens,
+      modelName: IEngineConstants.createEntitiesModel.name,
+      verbose: IEngineConstants.createEntitiesModel.verbose,
+    });
+
     await this.createEntities();
   }
 }

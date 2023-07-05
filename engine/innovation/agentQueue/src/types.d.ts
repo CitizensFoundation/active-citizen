@@ -71,6 +71,11 @@ type SerpOrganicResult = {
 
 type SerpOrganicResults = SerpOrganicResult[];
 
+interface IEnginePairWiseVoteResults {
+  wonItemIndex: number | undefined;
+  lostItemIndex: number | undefined
+}
+
 interface IEngineWorkerData {
   memoryId: string;
   initialProblemStatement: IEngineProblemStatement;
@@ -103,9 +108,11 @@ interface IEngineAffectedEntity {
   name: string;
   positiveEffects?: IEngineAffectedEntityAffect[];
   negativeEffects?: IEngineAffectedEntityAffect[];
+  searchQueries?: IEngineSearchQueries;
+  searchResults?: IEngineSearchResults;
 }
 
-interface IEEngineIdeaAffectedEntity extends IEngineAffectedEntityBase {
+interface IEngineIdeaAffectedEntity extends IEngineAffectedEntityBase {
   positiveEffects?: string[];
   negativeEffects?: string[];
   positiveScore: number;
@@ -117,7 +124,7 @@ interface IEngineSolutionIdea {
   solutionTitle: string;
   solutionDescription: string;
   howCanItHelp: string;
-  affectedEntities?: IEEngineIdeaAffectedEntity[];
+  affectedEntities?: IEngineIdeaAffectedEntity[];
 }
 
 interface IEEngineSearchResultPage {
@@ -198,6 +205,7 @@ interface IEngineSearchResults {
     general: SerpKnowledgeGraph[];
     scientific: SerpKnowledgeGraph[];
     news: SerpKnowledgeGraph[];
+    openData: SerpKnowledgeGraph[];
   };
 }
 

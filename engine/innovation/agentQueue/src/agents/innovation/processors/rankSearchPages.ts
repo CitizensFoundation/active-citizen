@@ -10,7 +10,7 @@ export class RankSearchPagesProcessor extends BasePairwiseRankingsProcessor {
 
   async voteOnPromptPair(
     promptPair: number[]
-  ): Promise<{ wonItemIndex: number; lostItemIndex: number }> {
+  ): Promise<IEnginePairWiseVoteResults> {
     const itemOneIndex = promptPair[0];
     const itemTwoIndex = promptPair[1];
 

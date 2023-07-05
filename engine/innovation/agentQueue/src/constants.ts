@@ -38,7 +38,7 @@ export class IEngineConstants {
   static searchQueryRankingsModel: IEngineBaseAIModelConstants = {
     name: "gpt-4",
     temperature: 0.0,
-    maxTokens: 6,
+    maxTokens: 2,
     tokenLimit: 8192,
     inTokenCostUSD: gpt4InTokenPrice,
     outTokenCostUSD: gpt4OutTokenPrice,
@@ -48,7 +48,7 @@ export class IEngineConstants {
   static subProblemsRankingsModel: IEngineBaseAIModelConstants = {
     name: "gpt-4",
     temperature: 0.0,
-    maxTokens: 6,
+    maxTokens: 2,
     tokenLimit: 8192,
     inTokenCostUSD: gpt4InTokenPrice,
     outTokenCostUSD: gpt4OutTokenPrice,
@@ -58,7 +58,7 @@ export class IEngineConstants {
   static entitiesRankingsModel: IEngineBaseAIModelConstants = {
     name: "gpt-4",
     temperature: 0.0,
-    maxTokens: 6,
+    maxTokens: 2,
     tokenLimit: 8192,
     inTokenCostUSD: gpt4InTokenPrice,
     outTokenCostUSD: gpt4OutTokenPrice,
@@ -92,6 +92,12 @@ export class IEngineConstants {
   static maxSubProblems = 7;
 
   static maxNumberGeneratedOfEntities = 7;
+
+  static mainLLMmaxRetryCount = 3;
+
+  static rankingLLMmaxRetryCount = 3;
+
+  static maxEntitiesToSearch = 3;
 
   static currentUserAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36";
 }

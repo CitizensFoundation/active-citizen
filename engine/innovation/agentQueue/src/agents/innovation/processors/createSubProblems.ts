@@ -6,13 +6,6 @@ import { IEngineConstants } from "../../../constants.js";
 
 export class CreateSubProblemsProcessor extends BaseProcessor {
   async createSubProblems() {
-    this.chat = new ChatOpenAI({
-      temperature: IEngineConstants.createSubProblemsModel.temperature,
-      maxTokens: IEngineConstants.createSubProblemsModel.maxTokens,
-      modelName: IEngineConstants.createSubProblemsModel.name,
-      verbose: IEngineConstants.createSubProblemsModel.verbose,
-    });
-
     //TODO: Human review and improvements of those GPT-4 generated few-shots
     const messages = [
       new SystemChatMessage(
@@ -184,8 +177,15 @@ export class CreateSubProblemsProcessor extends BaseProcessor {
   }
 
   async process() {
-    super.process();
     this.logger.info("Sub Problems Processor");
+    super.process();
+    this.chat = new ChatOpenAI({
+      temperature: IEngineConstants.createSubProblemsModel.temperature,
+      maxTokens: IEngineConstants.createSubProblemsModel.maxTokens,
+      modelName: IEngineConstants.createSubProblemsModel.name,
+      verbose: IEngineConstants.createSubProblemsModel.verbose,
+    });
+
     await this.createSubProblems();
   }
 }

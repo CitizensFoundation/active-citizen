@@ -10,7 +10,7 @@ export class RankSubProblemsProcessor extends BasePairwiseRankingsProcessor {
 
   async voteOnPromptPair(
     promptPair: number[]
-  ): Promise<{ wonItemIndex: number; lostItemIndex: number }> {
+  ): Promise<IEnginePairWiseVoteResults> {
     const itemOneIndex = promptPair[0];
     const itemTwoIndex = promptPair[1];
 
@@ -29,26 +29,27 @@ export class RankSubProblemsProcessor extends BasePairwiseRankingsProcessor {
         You are an expert trained to analyse complex problem statements and sub-problems to rank the sub problems.
 
         Adhere to the following guidelines:
-        1. You will see the problem statement with two sub problems to compare. One is marked as "Item 1" and the other as "Item 2".
+        1. You will see the problem statement with two sub problems to compare. One is marked as "Sub Problem One" and the other as "Sub Problem Two".
         2. You will analyse, compare and rank those two sub problems and vote on which one is more relevant and important as sub problem of the main problem statement.
-        3. You will only output the winning item as: "Item 1" or "Item 2" without an explaination.
-        4. Ensure a methodical, step-by-step approach to create the best possible search queries.        `
+        3. You will only output the winning item as: "One" or "Two" without an explanation.
+        4. Ensure a methodical, step-by-step approach.
+        `
       ),
       new HumanChatMessage(
         `
          ${this.renderProblemStatement()}
 
-         Items to vote on:
+         Sub Problems to vote on:
 
-         Item 1:
+         Sub Problem One:
          ${itemOneTitle}
          ${itemOneDescription}
 
-         Item 2:
+         Sub Problem Two:
          ${itemTwoTitle}
          ${itemTwoDescription}
 
-         The winning item is:
+         The winning sub problem is:
        `
       ),
     ];

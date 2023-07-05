@@ -5,9 +5,76 @@ import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
 import { IEngineConstants } from "../../../constants.js";
 
 export class CreateSearchQueriesProcessor extends BaseProcessor {
+  renderCommonPromptSection() {
+    return `
+      3. Use your knowledge and experience to create the best possible search queries.
+      4. Search queries should be concise, consistent, short, and succinct. They will be used to search on Google or Bing.
+      5. You create four types of search queries:
+      5.1 General
+      5.2. Scientific
+      5.3. OpenData
+      5.4. News
+      6. Create 10 search queries for each type.
+      7. All search queries should be solution focused, let's find the solutions for those entities.
+      8. Never output in markdown format.
+      9. Provide an output in the following JSON format:
+        { generalSearchQueries: [ queries ], scientificSearchQueries: [ queries ], openDataSearchQueries: [ queries ], newsSearchQueries: [ queries ] }.
+      10. Ensure a methodical, step-by-step approach to create the best possible search queries.
+    `;
+  }
 
-  //TODO: Look into also creating search queries for the entities
-  async createSearchQueries() {
+  async renderProblemPrompt(problem: string) {
+    return [
+      new SystemChatMessage(
+        `
+        You are an expert trained to analyse complex problem statements and create search queries to find solutions to those problems.
+
+        Adhere to the following guidelines:
+        1. You generate high quality search queries based on the problem statement.
+        2. Always focus your search queries on problem.
+        ${this.renderCommonPromptSection()}    `
+      ),
+      new HumanChatMessage(
+        `
+         Problem Statement:
+         ${problem}
+
+         JSON Output:
+       `
+      ),
+    ];
+  }
+
+  async renderEntityPrompt(problem: string, entity: IEngineAffectedEntity) {
+    return [
+      new SystemChatMessage(
+        `
+        You are an expert trained to analyse complex problem statements for affected entities and create search queries to find solutions for the affected entity.
+
+        Adhere to the following guidelines:
+        1. You generate high quality search queries based on the affected entity.
+        2. Always focus your search queries on the Affected Entity not the problem statement.
+        ${this.renderCommonPromptSection()}       `
+      ),
+      new HumanChatMessage(
+        `
+         Problem Statement:
+         ${problem}
+
+         Affected Entity:
+         ${entity.name}
+         ${this.renderEntityPosNegReasons(entity)}
+
+         JSON Output:
+       `
+      ),
+    ];
+  }
+
+  async process() {
+    this.logger.info("Create Search Queries Processor");
+    super.process();
+
     this.chat = new ChatOpenAI({
       temperature: IEngineConstants.createSearchQueriesModel.temperature,
       maxTokens: IEngineConstants.createSearchQueriesModel.maxTokens,
@@ -15,46 +82,50 @@ export class CreateSearchQueriesProcessor extends BaseProcessor {
       verbose: IEngineConstants.createSearchQueriesModel.verbose,
     });
 
-    //TODO: Human review and improvements of this partly GPT-4 generated prompt
-    const messages = [
-      new SystemChatMessage(
-        `
-        You are an expert trained to analyse complex problem statements and sub-problems and then generate search queries to find solutions to the main problem statement and each sub-problem.
-
-        Adhere to the following guidelines:
-        1. Search queries should be concise, consistent, short, and succinct. They will be used to search on Google or Bing.
-        2. You create two types of search queries: general and scientific.
-        3. Include the subProblemIndex and use 0 as an index for solution search queries for the main problem.
-        4. All search queries should be solution focused, let's find the solutions to those important problems.
-        5. Never output in markdown format.
-        6. For the main problem and all sub-problems, generate the search queries, provide an output in the following JSON format:
-          [ { subProblemIndex, generalSearchQuery, scientificSearchQuery } ].
-        7. Ensure a methodical, step-by-step approach to create the best possible search queries.        `
-      ),
-      new HumanChatMessage(
-        `
-         Problem statement:
-         ${this.memory.problemStatement.description}
-
-         Sub Problems:
-         ${this.renderSubProblems()}
-
-         JSON Output:
-       `
-      ),
-    ];
-
-    this.memory.searchQueries = await this.callLLM(
+    this.memory.problemStatement.searchQueries = await this.callLLM(
       "create-search-queries",
       IEngineConstants.createSearchQueriesModel,
-      messages
+      await this.renderProblemPrompt(this.memory.problemStatement.description)
     );
     await this.saveMemory();
-  }
 
-  async process() {
-    super.process();
-    this.logger.info("Create Search Queries Processor");
-    await this.createSearchQueries();
+    for (
+      let s = 0;
+      s <
+      Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems);
+      s++
+    ) {
+      const promblemText = `
+        ${this.memory.subProblems[s].title}
+        ${this.memory.subProblems[s].description}
+      `;
+
+      this.memory.subProblems[s].searchQueries = await this.callLLM(
+        "create-search-queries",
+        IEngineConstants.createSearchQueriesModel,
+        await this.renderProblemPrompt(promblemText)
+      );
+      await this.saveMemory();
+
+      for (
+        let e = 0;
+        e <
+        Math.min(
+          this.memory.subProblems[s].entities.length,
+          IEngineConstants.maxEntitiesToSearch
+        );
+        e++
+      ) {
+        this.memory.subProblems[s].entities[e] = await this.callLLM(
+          "create-search-queries",
+          IEngineConstants.createSearchQueriesModel,
+          await this.renderEntityPrompt(
+            promblemText,
+            this.memory.subProblems[s].entities[e]
+          )
+        );
+        await this.saveMemory();
+      }
+    }
   }
 }

@@ -10,7 +10,7 @@ export class RankSubProblemsProcessor extends BasePairwiseRankingsProcessor {
 
   async voteOnPromptPair(
     promptPair: number[]
-  ): Promise<{ wonItemIndex: number; lostItemIndex: number }> {
+  ): Promise<IEnginePairWiseVoteResults> {
     const itemOneIndex = promptPair[0];
     const itemTwoIndex = promptPair[1];
 
@@ -18,10 +18,10 @@ export class RankSubProblemsProcessor extends BasePairwiseRankingsProcessor {
     const itemTwo = this.allItems![itemTwoIndex] as IEngineAffectedEntity;
 
     let itemOneTitle = itemOne.name;
-    let itemOneDescription = this.renderEntityPosNegReasons(itemOne);
+    let itemOneEffects = this.renderEntityPosNegReasons(itemOne);
 
     let itemTwoTitle = itemTwo.name;
-    let itemTwoDescription = this.renderEntityPosNegReasons(itemTwo);
+    let itemTwoEffects = this.renderEntityPosNegReasons(itemTwo);
 
     const messages = [
       new SystemChatMessage(
@@ -29,29 +29,30 @@ export class RankSubProblemsProcessor extends BasePairwiseRankingsProcessor {
         You are an expert trained to analyse complex problem statements and sub-problems to rank affected entities.
 
         Adhere to the following guidelines:
-        1. You will see the problem statement with sub problems.
-        2. You will see two entities and how they are affected. One is marked as "Item 1" and the other as "Item 2".
-        3. You will analyse, compare and rank those two entities and vote on which one is more relevant and important as an affected entitiy.
-        4. You will only output the winning item as: "Item 1" or "Item 2" without an explaination.
-        5. Ensure a methodical, step-by-step approach to create the best possible search queries.        `
+        1. You will see a problem statement with a sub problem.
+        2. You will see two entities and how they are affected. One is marked as "Entity One" and the other as "Entity Two".
+        3. You will analyse, compare and rank those two entities and vote on which one is more relevant and important as an affected entity.
+        4. Use negative or positive effects as a consideration in your ranking, if available.
+        5. You will only output the winning item as: "One" or "Two" without an explanation.
+        6. Ensure a methodical, step-by-step approach.        `
       ),
       new HumanChatMessage(
         `
          ${this.renderProblemStatement()}
 
-         ${this.renderSubProblems()}
+         ${this.renderSubProblem(this.currentSubProblemIndex!)}
 
-         Items to vote on:
+         Entities to vote on:
 
-         Item 1:
+         Entity One:
          ${itemOneTitle}
-         ${itemOneDescription}
+         ${itemOneEffects}
 
-         Item 2:
+         Entity Two:
          ${itemTwoTitle}
-         ${itemTwoDescription}
+         ${itemTwoEffects}
 
-         The winning item is:
+         The winning entity is:
        `
       ),
     ];
@@ -76,25 +77,33 @@ export class RankSubProblemsProcessor extends BasePairwiseRankingsProcessor {
       verbose: IEngineConstants.entitiesRankingsModel.verbose,
     });
 
-    const filteredEntities = this.memory.entities.all.filter((entity) => {
-      return (
-        (entity.positiveEffects && entity.positiveEffects.length > 0) ||
-        (entity.negativeEffects && entity.negativeEffects.length > 0)
-      );
-    });
+    this.currentSubProblemIndex = 0;
 
-    if (filteredEntities.length <= 7) {
-      this.memory.entities.selected = filteredEntities;
-    } else {
+    for (
+      let s = 0;
+      s <
+      Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems);
+      s++
+    ) {
+
+      const filteredEntities = this.memory.subProblems[s].entities.filter(
+        (entity) => {
+          return (
+            (entity.positiveEffects && entity.positiveEffects.length > 0) ||
+            (entity.negativeEffects && entity.negativeEffects.length > 0)
+          );
+        }
+      );
+
       this.setupPrompts(filteredEntities);
       await this.performPairwiseRanking();
 
-      this.memory.entities.selected = this.getOrderedListOfItems().slice(
-        0,
-        7
-      ) as IEngineAffectedEntity[];
+      this.memory.subProblems[s].entities =
+        this.getOrderedListOfItems() as IEngineAffectedEntity[];
 
       await this.saveMemory();
+
+      this.currentSubProblemIndex!++;
     }
   }
 }

@@ -1,5 +1,6 @@
 import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
 import { BaseProcessor } from "./baseProcessor.js";
+import { IEngineConstants } from "../../../constants.js";
 
 export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
   prompts: number[][] = [];
@@ -38,7 +39,7 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
 
   abstract voteOnPromptPair(
     promptPair: number[]
-  ): Promise<{ wonItemIndex: number; lostItemIndex: number }>;
+  ): Promise<IEnginePairWiseVoteResults>;
 
   async getResultsFromLLM(
     stageName: IEngineStageTypes,
@@ -47,26 +48,43 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
     itemOneIndex: number,
     itemTwoIndex: number
   ) {
-    const winningItemText = await this.callLLM(
-      stageName,
-      modelConstant,
-      messages,
-      false
-    );
-
     let wonItemIndex;
     let lostItemIndex;
 
-    if (!winningItemText) {
-      throw new Error("No winning item text");
-    } else if (winningItemText.trim() == "Item 1") {
-      wonItemIndex = itemOneIndex;
-      lostItemIndex = itemTwoIndex;
-    } else if (winningItemText.trim() == "Item 2") {
-      wonItemIndex = itemTwoIndex;
-      lostItemIndex = itemOneIndex;
-    } else {
-      throw new Error("Invalid winning item text");
+    const maxRetryCount = IEngineConstants.rankingLLMmaxRetryCount;
+    let retry = true;
+    let retryCount = 0;
+
+    while (retry && retryCount < maxRetryCount) {
+      try {
+        const winningItemText = await this.callLLM(
+          stageName,
+          modelConstant,
+          messages,
+          false
+        );
+
+        if (!winningItemText) {
+          throw new Error("No winning item text");
+        } else if (winningItemText.trim() == "One") {
+          wonItemIndex = itemOneIndex;
+          lostItemIndex = itemTwoIndex;
+        } else if (winningItemText.trim() == "Two") {
+          wonItemIndex = itemTwoIndex;
+          lostItemIndex = itemOneIndex;
+        } else {
+          throw new Error("Invalid winning item text");
+        }
+
+        retry = false;
+      } catch (error) {
+        this.logger.error(error);
+        if (retryCount < maxRetryCount) {
+          retryCount++;
+        } else {
+          throw error;
+        }
+      }
     }
 
     return {
@@ -81,15 +99,20 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
       const { wonItemIndex, lostItemIndex } = await this.voteOnPromptPair(
         promptPair
       );
-      if (this.allItemWonVotes[wonItemIndex] === undefined) {
-        this.allItemWonVotes[wonItemIndex] = 0;
-      }
-      this.allItemWonVotes[wonItemIndex] += 1;
 
-      if (this.allItemLostVotes[lostItemIndex] === undefined) {
-        this.allItemLostVotes[lostItemIndex] = 0;
+      if (wonItemIndex && lostItemIndex) {
+        if (this.allItemWonVotes[wonItemIndex] === undefined) {
+          this.allItemWonVotes[wonItemIndex] = 0;
+        }
+        this.allItemWonVotes[wonItemIndex] += 1;
+
+        if (this.allItemLostVotes[lostItemIndex] === undefined) {
+          this.allItemLostVotes[lostItemIndex] = 0;
+        }
+        this.allItemLostVotes[lostItemIndex] += 1;
+      } else {
+        throw new Error("Invalid won or lost item index");
       }
-      this.allItemLostVotes[lostItemIndex] += 1;
     }
   }
 
