@@ -20,6 +20,8 @@ pdfjs.GlobalWorkerOptions.workerSrc = require("pdfjs-dist/es5/build/pdf.worker.j
 
 export class GetWebPagesProcessor extends BaseProcessor {
   webPageVectorStore = new WebPageVectorStore();
+  searchResultTarget!: IEngineWebPageTargets;
+  currentEntity: IEngineAffectedEntity | undefined;
 
   renderRefinePrompt(
     currentWebPageAnalysis: IEngineWebPageAnalysisData,
@@ -350,13 +352,13 @@ export class GetWebPagesProcessor extends BaseProcessor {
 
   async processPageText(
     text: string,
-    problemIndex: number,
+    subProblemIndex: number | undefined,
     url: string,
     type: IEngineWebPageTypes
   ) {
     const textAnalysis = await this.getTextAnalysis(text);
     textAnalysis.url = url;
-    textAnalysis.subProblemIndex = problemIndex;
+    textAnalysis.subProblemIndex = subProblemIndex;
     textAnalysis.type = type;
     await this.webPageVectorStore.postWebPage(textAnalysis);
   }
@@ -379,21 +381,21 @@ export class GetWebPagesProcessor extends BaseProcessor {
   }
 
   async processPdf(
+    subProblemIndex: number | undefined,
     response: HTTPResponse,
-    problemIndex: number,
     url: string,
     type: IEngineWebPageTypes
   ) {
     try {
       const text = await this.getPdfText(response);
-      await this.processPageText(text, problemIndex, url, type);
+      await this.processPageText(text, subProblemIndex, url, type);
     } catch (e) {
       this.logger.error(e);
     }
   }
 
   async processHtml(
-    problemIndex: number,
+    subProblemIndex: number | undefined,
     url: string,
     browserPage: Page,
     type: IEngineWebPageTypes
@@ -403,7 +405,7 @@ export class GetWebPagesProcessor extends BaseProcessor {
       const text = htmlToText(html, {
         wordwrap: false,
       });
-      await this.processPageText(text, problemIndex, url, type);
+      await this.processPageText(text, subProblemIndex, url, type);
     } catch (e) {
       this.logger.error(e);
     }
@@ -432,7 +434,7 @@ export class GetWebPagesProcessor extends BaseProcessor {
   }
 
   async getAndProcessPage(
-    problemIndex: number,
+    subProblemIndex: number | undefined,
     url: string,
     browserPage: Page,
     type: IEngineWebPageTypes
@@ -441,43 +443,124 @@ export class GetWebPagesProcessor extends BaseProcessor {
 
     if (response) {
       if (url.toLowerCase().endsWith(".pdf")) {
-        await this.processPdf(response, problemIndex, url, type);
+        await this.processPdf(subProblemIndex, response, url, type);
       } else {
-        await this.processHtml(problemIndex, url, browserPage, type);
+        await this.processHtml(subProblemIndex, url, browserPage, type);
       }
 
       return true;
     } else {
-      this.logger.warn(`No response for url ${url} ${problemIndex}`);
+      this.logger.warn(`No response for url ${url}`);
       return false;
     }
   }
 
-  async getAllPages(problemIndexUrls: string[][], type: IEngineWebPageTypes) {
+
+  async processSubProblems(searchQueryType: IEngineWebPageTypes, browserPage: Page) {
+    for (
+      let s = 0;
+      s <
+      Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems);
+      s++
+    ) {
+      let pagesToSearch = this.memory.subProblems[s].searchResults!.pages[searchQueryType].slice(
+        0,
+        IEngineConstants.maxTopPagesToGetPerType
+      );
+
+      this.searchResultTarget = "subProblem";
+
+      const urlsToGet = pagesToSearch.map((p) => p.link);
+
+      for (let i = 0; i < urlsToGet.length; i++) {
+        await this.getAndProcessPage(
+          s,
+          urlsToGet[i],
+          browserPage,
+          searchQueryType
+        );
+      }
+
+
+      await this.processEntities(s, searchQueryType, browserPage);
+
+      await this.saveMemory();
+    }
+  }
+
+  async processEntities(
+    subProblemIndex: number,
+    searchQueryType: IEngineWebPageTypes,
+    browserPage: Page
+  ) {
+    for (
+      let e = 0;
+      e <
+      Math.min(
+        this.memory.subProblems[subProblemIndex].entities.length,
+        IEngineConstants.maxTopEntitiesToSearch
+      );
+      e++
+    ) {
+      let pagesToSearch = this.memory.subProblems[subProblemIndex].entities[e].searchResults!.pages[searchQueryType].slice(
+        0,
+        IEngineConstants.maxTopPagesToGetPerType
+      );
+
+      this.searchResultTarget = "entity";
+
+      this.currentEntity = this.memory.subProblems[subProblemIndex].entities[e];
+
+      const urlsToGet = pagesToSearch.map((p) => p.link);
+
+      for (let i = 0; i < urlsToGet.length; i++) {
+        await this.getAndProcessPage(
+          subProblemIndex,
+          urlsToGet[i],
+          browserPage,
+          searchQueryType
+        );
+      }
+
+      this.currentEntity = undefined;
+    }
+  }
+
+  async processProblemStatement(searchQueryType: IEngineWebPageTypes, browserPage: Page) {
+    let pagesToSearch = this.memory.problemStatement.searchResults!.pages[searchQueryType].slice(
+      0,
+      IEngineConstants.maxTopPagesToGetPerType
+    );
+
+    this.searchResultTarget = "problemStatement";
+
+    const urlsToGet = pagesToSearch.map((p) => p.link);
+
+    for (let i = 0; i < urlsToGet.length; i++) {
+      await this.getAndProcessPage(
+        undefined,
+        urlsToGet[i],
+        browserPage,
+        searchQueryType
+      );
+    }
+  }
+
+  async getAllPages() {
     puppeteer.launch({ headless: true }).then(async (browser) => {
       this.logger.debug("Launching browser");
       const browserPage = await browser.newPage();
       await browserPage.setUserAgent(IEngineConstants.currentUserAgent);
 
-      for (
-        let problemIndex = 0;
-        problemIndex < problemIndexUrls.length;
-        problemIndex++
-      ) {
-        if (problemIndexUrls[problemIndex].length === 0) {
-          this.logger.warn(
-            `No urls to process for problem index ${problemIndex}`
-          );
-        }
+      for (const searchQueryType of [
+        "general",
+        "scientific",
+        "openData",
+        "news",
+      ] as const) {
 
-        for (let i = 0; i < problemIndexUrls[problemIndex].length; i++) {
-          await this.getAndProcessPage(
-            problemIndex,
-            problemIndexUrls[problemIndex][i],
-            browserPage,
-            type
-          );
-        }
+        await this.processProblemStatement(searchQueryType, browserPage);
+        await this.processSubProblems(searchQueryType as IEngineWebPageTypes);
       }
 
       await this.saveMemory();
@@ -497,14 +580,12 @@ export class GetWebPagesProcessor extends BaseProcessor {
       verbose: IEngineConstants.getPageAnalysisModel.verbose,
     });
 
-    await this.getAllPages(
-      this.memory.searchResults.orderedURLsToGet.general,
-      "general"
-    );
 
-    await this.getAllPages(
-      this.memory.searchResults.orderedURLsToGet.scientific,
-      "scientific"
-    );
+
+
+    await this.getAllPages();
+
+    await this.saveMemory();
+
   }
 }

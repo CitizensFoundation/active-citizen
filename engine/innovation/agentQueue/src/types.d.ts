@@ -232,4 +232,5 @@ interface IEngineWebPageAnalysisData {
   entities: string[];
   url: string;
   type: IEngineWebPageTypes;
+  subProblemIndex?: number;
 }
