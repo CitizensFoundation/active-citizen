@@ -560,7 +560,7 @@ export class GetWebPagesProcessor extends BaseProcessor {
       ] as const) {
 
         await this.processProblemStatement(searchQueryType, browserPage);
-        await this.processSubProblems(searchQueryType as IEngineWebPageTypes);
+        await this.processSubProblems(searchQueryType as IEngineWebPageTypes, browserPage);
       }
 
       await this.saveMemory();
