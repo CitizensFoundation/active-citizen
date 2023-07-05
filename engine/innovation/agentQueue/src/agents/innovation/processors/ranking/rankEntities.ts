@@ -95,7 +95,7 @@ export class RankSubProblemsProcessor extends BasePairwiseRankingsProcessor {
         }
       );
 
-      this.setupPrompts(filteredEntities);
+      this.setupRankingPrompts(filteredEntities);
       await this.performPairwiseRanking();
 
       this.memory.subProblems[s].entities =

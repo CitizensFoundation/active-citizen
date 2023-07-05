@@ -1,6 +1,7 @@
 import { BaseProcessor } from "../baseProcessor.js";
 import type { BaseResponse, GoogleParameters } from "serpapi";
 import { getJson } from "serpapi";
+import { IEngineConstants } from "../../../../constants.js";
 const Redis = require("ioredis");
 const redis = new Redis(process.env.REDIS_MEMORY_URL || undefined);
 
@@ -19,6 +20,10 @@ export class SearchWebProcessor extends BaseProcessor {
       this.logger.debug(`Using cached search data for ${q}`);
       return searchData;
     } else {
+      let retry = true;
+      const maxRetries = IEngineConstants.mainSearchRetryCount;
+      let retryCount = 0;
+
       const params = {
         q,
         location,
@@ -27,46 +32,191 @@ export class SearchWebProcessor extends BaseProcessor {
         api_key: process.env.SERP_API_KEY,
       } satisfies GoogleParameters;
 
-      const response = await getJson("google", params);
-      this.logger.debug(response);
-      await redis.set(redisKey, JSON.stringify(searchData));
-      return response;
+      let response;
+
+      while (retry && retryCount < maxRetries) {
+        try {
+          response = await getJson("google", params);
+          retry = false;
+        } catch (e) {
+          this.logger.error(e);
+          if (retryCount < maxRetries) {
+            retry = false;
+            throw e;
+          } else {
+            await new Promise((resolve) => setTimeout(resolve, 3000));
+            retryCount++;
+          }
+        }
+      }
+
+      if (response) {
+        this.logger.debug(response);
+        await redis.set(redisKey, JSON.stringify(searchData));
+
+        return response;
+      } else {
+        throw new Error(`Failed to get search data for ${q}`);
+      }
     }
   }
 
-  async searchAllQueries() {
-    if (this.memory.searchQueries.length === 0) {
-      throw Error("No search queries to process");
+  async processSubProblems(searchQueryType: IEngineWebPageTypes) {
+    for (
+      let s = 0;
+      s <
+      Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems);
+      s++
+    ) {
+      let queriesToSearch;
+      if (searchQueryType === "general") {
+        queriesToSearch = this.memory.subProblems[
+          s
+        ].searchQueries.generalSearchQueries.slice(
+          0,
+          IEngineConstants.maxQueriesToSearchPerType
+        );
+      } else if (searchQueryType === "scientific") {
+        queriesToSearch = this.memory.subProblems[
+          s
+        ].searchQueries.scientificSearchQueries.slice(
+          0,
+          IEngineConstants.maxQueriesToSearchPerType
+        );
+      } else if (searchQueryType === "openData") {
+        queriesToSearch = this.memory.subProblems[
+          s
+        ].searchQueries.openDataSearchQueries.slice(
+          0,
+          IEngineConstants.maxQueriesToSearchPerType
+        );
+      } else if (searchQueryType === "news") {
+        queriesToSearch = this.memory.subProblems[
+          s
+        ].searchQueries.newsSearchQueries.slice(
+          0,
+          IEngineConstants.maxQueriesToSearchPerType
+        );
+      } else {
+        throw new Error(`Unknown search query type: ${searchQueryType}`);
+      }
+
+      let searchResults: SerpOrganicResults = [];
+
+      for (const query of queriesToSearch) {
+        const generalSearchData = await this.serpApiSearch(query);
+        searchResults = [
+          ...searchResults,
+          ...(generalSearchData.organic_results as SerpOrganicResults),
+        ];
+      }
+
+      if (searchQueryType === "general") {
+        this.memory.subProblems[s].searchResults.pages.general = searchResults;
+      } else if (searchQueryType === "scientific") {
+        this.memory.subProblems[s].searchResults.pages.scientific =
+          searchResults;
+      } else if (searchQueryType === "openData") {
+        this.memory.subProblems[s].searchResults.pages.openData = searchResults;
+      } else if (searchQueryType === "news") {
+        this.memory.subProblems[s].searchResults.pages.news = searchResults;
+      }
+
+      await this.processEntities(s, searchQueryType);
+
+      await this.saveMemory();
     }
+  }
 
-    for (const query of this.memory.searchQueries) {
-      const generalSearchData = await this.serpApiSearch(
-        query.generalSearchQuery
+  async processEntities(
+    subProblemIndex: number,
+    searchQueryType: IEngineWebPageTypes
+  ) {
+    for (
+      let e = 0;
+      e <
+      Math.min(
+        this.memory.subProblems[subProblemIndex].entities.length,
+        IEngineConstants.maxEntitiesToSearch
       );
-      this.memory.searchResults.all.general.push(
-        generalSearchData.organic_results as SerpOrganicResult[]
-      );
-      this.memory.searchResults.knowledgeGraph.general.push(
-        generalSearchData.knowledge_graph as SerpKnowledgeGraph[]
-      );
+      e++
+    ) {
+      let queriesToSearch;
+      if (searchQueryType === "general") {
+        queriesToSearch = this.memory.subProblems[subProblemIndex].entities[
+          e
+        ].searchQueries!.generalSearchQueries.slice(
+          0,
+          IEngineConstants.maxQueriesToSearchPerType
+        );
+      } else if (searchQueryType === "scientific") {
+        queriesToSearch = this.memory.subProblems[subProblemIndex].entities[
+          e
+        ].searchQueries!.scientificSearchQueries.slice(
+          0,
+          IEngineConstants.maxQueriesToSearchPerType
+        );
+      } else if (searchQueryType === "openData") {
+        queriesToSearch = this.memory.subProblems[subProblemIndex].entities[
+          e
+        ].searchQueries!.openDataSearchQueries.slice(
+          0,
+          IEngineConstants.maxQueriesToSearchPerType
+        );
+      } else if (searchQueryType === "news") {
+        queriesToSearch = this.memory.subProblems[subProblemIndex].entities[
+          e
+        ].searchQueries!.newsSearchQueries.slice(
+          0,
+          IEngineConstants.maxQueriesToSearchPerType
+        );
+      } else {
+        throw new Error(`Unknown search query type: ${searchQueryType}`);
+      }
 
-      const scientificSearchData = await this.serpApiSearch(
-        `"arXiv" pdf ${query.scientificSearchQuery}`
-      );
-      this.memory.searchResults.all.scientific.push(
-        scientificSearchData.organic_results as SerpOrganicResult[]
-      );
-      this.memory.searchResults.knowledgeGraph.scientific.push(
-        scientificSearchData.knowledge_graph as SerpKnowledgeGraph[]
-      );
+      let searchResults: SerpOrganicResults = [];
+
+      for (const query of queriesToSearch) {
+        const generalSearchData = await this.serpApiSearch(query);
+        searchResults = [
+          ...searchResults,
+          ...(generalSearchData.organic_results as SerpOrganicResults),
+        ];
+      }
+
+      if (searchQueryType === "general") {
+        this.memory.subProblems[subProblemIndex].entities[
+          e
+        ].searchResults!.pages.general = searchResults;
+      } else if (searchQueryType === "scientific") {
+        this.memory.subProblems[subProblemIndex].entities[
+          e
+        ].searchResults!.pages.scientific = searchResults;
+      } else if (searchQueryType === "openData") {
+        this.memory.subProblems[subProblemIndex].entities[
+          e
+        ].searchResults!.pages.openData = searchResults;
+      } else if (searchQueryType === "news") {
+        this.memory.subProblems[subProblemIndex].entities[
+          e
+        ].searchResults!.pages.news = searchResults;
+      }
     }
-
-    await this.saveMemory();
   }
 
   async process() {
-    super.process();
     this.logger.info("Search Web Processor");
-    await this.searchAllQueries();
+    super.process();
+
+    for (const searchQueryType in [
+      "general",
+      "scientific",
+      "openData",
+      "news",
+    ] as IEngineWebPageTypes[]) {
+      this.processSubProblems(searchQueryType as IEngineWebPageTypes);
+    }
+
+    await this.saveMemory();
   }
 }

@@ -77,7 +77,7 @@ export class RankSearchPagesProcessor extends BasePairwiseRankingsProcessor {
     const outPagesForAll: SerpOrganicResult[][] = [];
 
     for (const result of results) {
-      this.setupPrompts(result);
+      this.setupRankingPrompts(result);
       await this.performPairwiseRanking();
 
       const pages = this.getOrderedListOfItems();

@@ -15,11 +15,12 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
   allItemLostVotes: Record<number, number> = {};
   maxNumberOfPrompts: number = 100;
 
-  setupPrompts(
+  setupRankingPrompts(
     allItems:
       | SerpOrganicResult[]
       | IEngineSolutionIdea[]
       | IEngineProblemStatement[]
+      | string[]
       | IEngineAffectedEntity[],
     maxPrompts: number | undefined = undefined
   ) {

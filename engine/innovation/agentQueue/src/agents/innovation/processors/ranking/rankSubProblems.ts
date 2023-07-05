@@ -74,7 +74,7 @@ export class RankSubProblemsProcessor extends BasePairwiseRankingsProcessor {
       verbose: IEngineConstants.subProblemsRankingsModel.verbose,
     });
 
-    this.setupPrompts(this.memory.subProblems);
+    this.setupRankingPrompts(this.memory.subProblems);
     await this.performPairwiseRanking();
 
     this.logger.debug(`Sub problems before ranking: ${JSON.stringify(this.memory.subProblems)}`);
