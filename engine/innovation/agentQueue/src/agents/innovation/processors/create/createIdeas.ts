@@ -9,6 +9,8 @@ export class CreateIdeasProcessor extends BaseProcessor {
     subProblemIndex: number,
     generalTextContext: string,
     scientificTextContext: string,
+    openDataTextContext: string,
+    newsTextContext: string,
     alreadyCreatedSolutions: string | undefined = undefined
   ) {
     this.chat = new ChatOpenAI({
@@ -48,6 +50,12 @@ export class CreateIdeasProcessor extends BaseProcessor {
         Possible scientific context for ideas:
         ${scientificTextContext}
 
+        Possible open data context for ideas:
+        ${openDataTextContext}
+
+        Possible news context for ideas:
+        ${newsTextContext}
+
         ${
           alreadyCreatedSolutions
             ? `
@@ -76,26 +84,37 @@ export class CreateIdeasProcessor extends BaseProcessor {
       return query.subProblemIndex == subProblemArrayIndex + 1;
     });
 
-    const generalSubSearchQueryText = subSearchQuery ? subSearchQuery.generalSearchQuery : undefined;
-    const scientificSubSearchQueryText = subSearchQuery ? subSearchQuery.scientificSearchQuery : undefined;
+    const generalSubSearchQueryText = subSearchQuery
+      ? subSearchQuery.generalSearchQuery
+      : undefined;
+    const scientificSubSearchQueryText = subSearchQuery
+      ? subSearchQuery.scientificSearchQuery
+      : undefined;
 
     const problemSearchQuery = this.memory.searchQueries.find((query) => {
       return query.subProblemIndex == 0;
     });
 
-    const generalProblemSearchQueryText = problemSearchQuery ? problemSearchQuery.generalSearchQuery : undefined;
-    const scientificProblemSearchQueryText = problemSearchQuery ? problemSearchQuery.scientificSearchQuery : undefined;
+    const generalProblemSearchQueryText = problemSearchQuery
+      ? problemSearchQuery.generalSearchQuery
+      : undefined;
+    const scientificProblemSearchQueryText = problemSearchQuery
+      ? problemSearchQuery.scientificSearchQuery
+      : undefined;
 
     const otherSubProblemIndexes = [];
 
-    for (let i=0;i<this.memory.problemStatement.selectedSubProblems.length;i++) {
+    for (
+      let i = 0;
+      i < this.memory.problemStatement.selectedSubProblems.length;
+      i++
+    ) {
       if (i != subProblemArrayIndex) {
-        otherSubProblemIndexes.push(i+1);
+        otherSubProblemIndexes.push(i + 1);
       }
     }
 
     // TODO: Add 10% chance of other sub-problem search query
-
 
     let selectedScientificQueryText;
 
@@ -116,20 +135,18 @@ export class CreateIdeasProcessor extends BaseProcessor {
 
   async getTextContext(subProblemArrayIndex: number) {
     const problemStatment = this.memory.problemStatement.description;
-    const subProblem = this.memory.problemStatement.selectedSubProblems[subProblemArrayIndex].description;
+    const subProblem =
+      this.memory.problemStatement.selectedSubProblems[subProblemArrayIndex]
+        .description;
 
-
-
-
+    return {}
   }
-
-
 
   async createAllIdeas() {
     for (
       let subProblemArrayIndex = 0;
       subProblemArrayIndex <
-      this.memory.problemStatement.selectedSubProblems.length;
+      Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems);
       subProblemArrayIndex++
     ) {
       let ideas: IEngineSolutionIdea[] = [];
@@ -143,12 +160,19 @@ export class CreateIdeasProcessor extends BaseProcessor {
             .join("\n");
         }
 
-        const { generalTextContext, scientificTextContext } = await this.getTextContext(subProblemArrayIndex);
+        const {
+          generalTextContext,
+          scientificTextContext,
+          openDataTextContext,
+          newsTextContext,
+        } = await this.getTextContext(subProblemArrayIndex);
 
         const newIdeas = await this.createIdeas(
           i,
           generalTextContext,
           scientificTextContext,
+          openDataTextContext,
+          newsTextContext,
           alreadyCreatedSolutions
         );
         ideas = ideas.concat(newIdeas);

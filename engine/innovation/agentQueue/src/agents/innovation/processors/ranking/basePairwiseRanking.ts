@@ -122,16 +122,14 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
     const orderedItems = this.allItems!.map((item, index) => {
       return {
         item,
-        wonVotes: this.allItemWonVotes[index] || 0,
-        lostVotes: this.allItemLostVotes[index] || 0,
+        netVotes: (this.allItemWonVotes[index] || 0) - (this.allItemLostVotes[index] || 0),
       };
     });
 
     orderedItems.sort((a, b) => {
-      return b.wonVotes - a.wonVotes;
+      return b.netVotes - a.netVotes;
     });
 
-    // Get just the items not the won and lost votes
     const items = [];
     for (let i = 0; i < orderedItems.length; i++) {
       items.push(orderedItems[i].item);
@@ -139,6 +137,7 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
 
     return items;
   }
+
 
   async process() {
     super.process();

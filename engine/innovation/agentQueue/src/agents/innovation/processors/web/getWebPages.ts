@@ -455,18 +455,19 @@ export class GetWebPagesProcessor extends BaseProcessor {
     }
   }
 
-
-  async processSubProblems(searchQueryType: IEngineWebPageTypes, browserPage: Page) {
+  async processSubProblems(
+    searchQueryType: IEngineWebPageTypes,
+    browserPage: Page
+  ) {
     for (
       let s = 0;
       s <
       Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems);
       s++
     ) {
-      let pagesToSearch = this.memory.subProblems[s].searchResults!.pages[searchQueryType].slice(
-        0,
-        IEngineConstants.maxTopPagesToGetPerType
-      );
+      let pagesToSearch = this.memory.subProblems[s].searchResults!.pages[
+        searchQueryType
+      ].slice(0, IEngineConstants.maxTopPagesToGetPerType);
 
       this.searchResultTarget = "subProblem";
 
@@ -480,7 +481,6 @@ export class GetWebPagesProcessor extends BaseProcessor {
           searchQueryType
         );
       }
-
 
       await this.processEntities(s, searchQueryType, browserPage);
 
@@ -502,7 +502,9 @@ export class GetWebPagesProcessor extends BaseProcessor {
       );
       e++
     ) {
-      let pagesToSearch = this.memory.subProblems[subProblemIndex].entities[e].searchResults!.pages[searchQueryType].slice(
+      let pagesToSearch = this.memory.subProblems[subProblemIndex].entities[
+        e
+      ].searchResults!.pages[searchQueryType].slice(
         0,
         IEngineConstants.maxTopPagesToGetPerType
       );
@@ -526,11 +528,13 @@ export class GetWebPagesProcessor extends BaseProcessor {
     }
   }
 
-  async processProblemStatement(searchQueryType: IEngineWebPageTypes, browserPage: Page) {
-    let pagesToSearch = this.memory.problemStatement.searchResults!.pages[searchQueryType].slice(
-      0,
-      IEngineConstants.maxTopPagesToGetPerType
-    );
+  async processProblemStatement(
+    searchQueryType: IEngineWebPageTypes,
+    browserPage: Page
+  ) {
+    let pagesToSearch = this.memory.problemStatement.searchResults!.pages[
+      searchQueryType
+    ].slice(0, IEngineConstants.maxTopPagesToGetPerType);
 
     this.searchResultTarget = "problemStatement";
 
@@ -558,9 +562,11 @@ export class GetWebPagesProcessor extends BaseProcessor {
         "openData",
         "news",
       ] as const) {
-
         await this.processProblemStatement(searchQueryType, browserPage);
-        await this.processSubProblems(searchQueryType as IEngineWebPageTypes, browserPage);
+        await this.processSubProblems(
+          searchQueryType as IEngineWebPageTypes,
+          browserPage
+        );
       }
 
       await this.saveMemory();
@@ -580,12 +586,8 @@ export class GetWebPagesProcessor extends BaseProcessor {
       verbose: IEngineConstants.getPageAnalysisModel.verbose,
     });
 
-
-
-
     await this.getAllPages();
 
     await this.saveMemory();
-
   }
 }
