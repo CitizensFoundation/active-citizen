@@ -17,7 +17,7 @@ export class IEngineConstants {
 
   static createEntitiesModel: IEngineBaseAIModelConstants = {
     name: "gpt-4",
-    temperature: 0.7,
+    temperature: 0.9,
     maxTokens: 2048,
     tokenLimit: 8192,
     inTokenCostUSD: gpt4InTokenPrice,
@@ -27,7 +27,7 @@ export class IEngineConstants {
 
   static createSearchQueriesModel: IEngineBaseAIModelConstants = {
     name: "gpt-4",
-    temperature: 0.7,
+    temperature: 0.9,
     maxTokens: 1024,
     tokenLimit: 8192,
     inTokenCostUSD: gpt4InTokenPrice,
@@ -87,7 +87,11 @@ export class IEngineConstants {
 
   static getPageTimeout = 1000 * 10;
 
-  static getPageCacheExpiration = 60 * 60 * 24 * 7 * 4 * 3; // 3 months
+  static getPageCacheExpiration = 60 * 60 * 24 * 7 * 4 * 6; // 6 months
+
+  static maxSubProblems = 7;
+
+  static maxNumberGeneratedOfEntities = 7;
 
   static currentUserAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36";
 }

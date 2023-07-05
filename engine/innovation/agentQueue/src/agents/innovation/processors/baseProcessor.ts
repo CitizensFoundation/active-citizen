@@ -29,9 +29,19 @@ export abstract class BaseProcessor extends Base {
     await redis.set(this.memory.id, JSON.stringify(this.memory));
   }
 
+  renderSubProblem(subProblemIndex: number) {
+    const subProblem = this.memory.subProblems[
+      subProblemIndex
+    ];
+    return `
+      ${subProblem.title}\n
+      ${subProblem.description}\n
+      `;
+  }
+
   renderSubProblems() {
     return `
-    ${this.memory.problemStatement.selectedSubProblems.map(
+    ${this.memory.subProblems.map(
       (subProblem, index) => {
         return `
       ${index + 1}. ${subProblem.title}\n
@@ -56,22 +66,17 @@ export abstract class BaseProcessor extends Base {
       `;
     } else {
       const subProblem =
-        this.memory.problemStatement.selectedSubProblems[index - 1];
+        this.memory.subProblems[index - 1];
       const entitiesText = `
-        ${this.memory.entities.selected
+        ${subProblem.entities
           .map((entity) => {
-            if (entity.subProblemIndex !== index - 1) {
-              return "";
-            } else {
-              let entityEffects = this.renderEntityPosNegReasons(entity);
+            let entityEffects = this.renderEntityPosNegReasons(entity);
 
-              if (entityEffects.length > 0) {
-                entityEffects = `\n${entity.name}\n${entityEffects}\n}`;
-              }
-
-              return entityEffects;
+            if (entityEffects.length > 0) {
+              entityEffects = `\n${entity.name}\n${entityEffects}\n}`;
             }
-          })
+
+            return entityEffects;          })
           .join("")}`;
       return `
         Problem Statement:\n
