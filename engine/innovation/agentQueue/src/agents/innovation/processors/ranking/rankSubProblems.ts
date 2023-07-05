@@ -1,12 +1,11 @@
-import { BaseProcessor } from "./baseProcessor.js";
 import { ChatOpenAI } from "langchain/chat_models/openai";
 import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
 
-import { IEngineConstants } from "../../../constants.js";
+import { IEngineConstants } from "../../../../constants.js";
 import { BasePairwiseRankingsProcessor } from "./basePairwiseRanking.js";
 
 export class RankSubProblemsProcessor extends BasePairwiseRankingsProcessor {
-  problemSubProblemIndex = 0;
+  subProblemIndex = 0;
 
   async voteOnPromptPair(
     promptPair: number[]

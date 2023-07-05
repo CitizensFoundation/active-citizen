@@ -1,4 +1,4 @@
-import { BaseProcessor } from "./baseProcessor.js";
+import { BaseProcessor } from "../baseProcessor.js";
 import type { BaseResponse, GoogleParameters } from "serpapi";
 import { getJson } from "serpapi";
 const Redis = require("ioredis");

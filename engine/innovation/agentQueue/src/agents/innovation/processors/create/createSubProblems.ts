@@ -1,8 +1,8 @@
-import { BaseProcessor } from "./baseProcessor.js";
+import { BaseProcessor } from "../baseProcessor.js";
 import { ChatOpenAI } from "langchain/chat_models/openai";
 import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
 
-import { IEngineConstants } from "../../../constants.js";
+import { IEngineConstants } from "../../../../constants.js";
 
 export class CreateSubProblemsProcessor extends BaseProcessor {
   async createSubProblems() {

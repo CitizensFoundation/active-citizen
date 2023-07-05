@@ -1,8 +1,8 @@
-import { BaseProcessor } from "./baseProcessor.js";
+import { BaseProcessor } from "../baseProcessor.js";
 import { ChatOpenAI } from "langchain/chat_models/openai";
 import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
 
-import { IEngineConstants } from "../../../constants.js";
+import { IEngineConstants } from "../../../../constants.js";
 
 export class CreateSearchQueriesProcessor extends BaseProcessor {
   renderCommonPromptSection() {
@@ -31,7 +31,7 @@ export class CreateSearchQueriesProcessor extends BaseProcessor {
 
         Adhere to the following guidelines:
         1. You generate high quality search queries based on the problem statement.
-        2. Always focus your search queries on problem.
+        2. Always focus your search queries on the problem statement.
         ${this.renderCommonPromptSection()}    `
       ),
       new HumanChatMessage(

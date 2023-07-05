@@ -220,7 +220,8 @@ interface IEngineInnovationMemoryData extends IEngineMemoryData {
     | undefined;
 }
 
-type IEngineWebPageTypes = "general" | "scientific";
+type IEngineWebPageTypes = "general" | "scientific" | "openData" | "news";
+type IEngineWebPageTargets = "subProblem" | "entity";
 
 interface IEngineWebPageAnalysisData {
   allRelevantParagraphs: string[];

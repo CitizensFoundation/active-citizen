@@ -1,12 +1,14 @@
-import { BaseProcessor } from "./baseProcessor.js";
 import { ChatOpenAI } from "langchain/chat_models/openai";
 import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
 
-import { IEngineConstants } from "../../../constants.js";
+import { IEngineConstants } from "../../../../constants.js";
 import { BasePairwiseRankingsProcessor } from "./basePairwiseRanking.js";
 
-export class RankSearchPagesProcessor extends BasePairwiseRankingsProcessor {
-  problemSubProblemIndex = 0;
+export class RankSearchQueriesProcessor extends BasePairwiseRankingsProcessor {
+  subProblemIndex = 0;
+  currentEntity!: IEngineAffectedEntity;
+  searchQueryType!: IEngineWebPageTypes;
+  searchQueryTarget!: IEngineWebPageTargets;
 
   async voteOnPromptPair(
     promptPair: number[]
@@ -14,44 +16,48 @@ export class RankSearchPagesProcessor extends BasePairwiseRankingsProcessor {
     const itemOneIndex = promptPair[0];
     const itemTwoIndex = promptPair[1];
 
-    const itemOne = this.allItems![itemOneIndex] as SerpOrganicResult;
-    const itemTwo = this.allItems![itemTwoIndex] as SerpOrganicResult;
-
-    let itemOneTitle = itemOne.title;
-    let itemOneDescription = itemOne.snippet;
-
-    let itemTwoTitle = itemTwo.title;
-    let itemTwoDescription = itemTwo.snippet;
+    const itemOne = this.allItems![itemOneIndex] as string;
+    const itemTwo = this.allItems![itemTwoIndex] as string;
 
     const messages = [
       new SystemChatMessage(
         `
-        You are an expert trained to analyse complex problem statements and sub-problems to rank web links to search to find solutions for those problems.
+        You are an expert trained to analyse complex problem statements and sub problems to rank search queries to search for solutions for those problems.
 
         Adhere to the following guidelines:
         1. You will see the problem statement or problem statement with one sub-problem possibly with entities and how the problems affect them in negative or positive ways.
-        2. Then you will see two web links with a title and description. One is marked as "Item 1" and the other as "Item 2".
-        3. You will analyse, compare and rank those two web link items and vote on which one is more relevant as a solution to the problem statement, sub-problem and entities.
-        4. You will only output the winning item as: "Item 1" or "Item 2" without an explaination.
-        5. Ensure a methodical, step-by-step approach to create the best possible search queries.        `
+        2. Then you will see two web links with a title and description. One is marked as "Search Query One" and the other as "Search Query Two".
+        3. You will analyse, compare and rank those two search queries and vote on which one is more relevant as a solution to the problem statement, sub-problem and entities.
+        4. You will only output the winning item as: "One" or "Two" without an explaination.
+        5. Ensure a methodical, step-by-step approach.        `
       ),
       new HumanChatMessage(
         `
-         ${this.renderPromblemsWithIndexAndEntities(
-           this.problemSubProblemIndex
-         )}
+        ${
+          this.searchQueryTarget === "subProblem"
+            ? `
+          ${this.renderPromblemsWithIndexAndEntities(this.subProblemIndex)}
+        `
+            : `
+          ${this.renderProblemStatement()}
 
-         Items to vote on:
+          ${this.renderSubProblem(this.currentSubProblemIndex!)}
 
-         Item 1:
-         ${itemOneTitle}
-         ${itemOneDescription}
+          Entity:
+          ${this.currentEntity!.name}
+          ${this.renderEntityPosNegReasons(this.currentEntity!)}
+        `
+        }
 
-         Item 2:
-         ${itemTwoTitle}
-         ${itemTwoDescription}
+         Search queries to vote on:
 
-         The winning item is:
+         Search Query One:
+         ${itemOne}
+
+         Search Query Two:
+         ${itemTwo}
+
+         The winning search query is:
        `
       ),
     ];
@@ -87,7 +93,7 @@ export class RankSearchPagesProcessor extends BasePairwiseRankingsProcessor {
           return (item as SerpOrganicResult).link;
         })
       );
-      this.problemSubProblemIndex++;
+      this.subProblemIndex++;
       outPagesForAll.push(pages as SerpOrganicResult[]);
     }
 
@@ -97,6 +103,7 @@ export class RankSearchPagesProcessor extends BasePairwiseRankingsProcessor {
   async process() {
     this.logger.info("Rank Search Queries Processor");
     super.process();
+
     this.chat = new ChatOpenAI({
       temperature: IEngineConstants.searchQueryRankingsModel.temperature,
       maxTokens: IEngineConstants.searchQueryRankingsModel.maxTokens,
@@ -104,12 +111,26 @@ export class RankSearchPagesProcessor extends BasePairwiseRankingsProcessor {
       verbose: IEngineConstants.searchQueryRankingsModel.verbose,
     });
 
-    let { outUrlsForAll, outPagesForAll } = await this.processGeneralUrls(this.memory.searchResults.all.general);
+
+    for (const searchQueryTarget in ["subProblem", "entity"] as IEngineWebPageTargets[]) {
+      for (const searchQueryType in ["general", "scientific","openData", "news"] as IEngineWebPageTypes[]) {
+        this.searchQueryTarget = searchQueryTarget as IEngineWebPageTargets;
+        this.searchQueryType = searchQueryType as IEngineWebPageTypes;
+
+        this.logger.info(`Ranking ${searchQueryTarget} ${searchQueryType} search queries`);
+      }
+    }
+
+    let { outUrlsForAll, outPagesForAll } = await this.processGeneralUrls(
+      this.memory.searchResults.all.general
+    );
 
     this.memory.searchResults.orderedURLsToGet.general = outUrlsForAll;
     this.memory.searchResults.orderedSearchPages.general = outPagesForAll;
 
-    ({ outUrlsForAll, outPagesForAll } = await this.processGeneralUrls(this.memory.searchResults.all.scientific));
+    ({ outUrlsForAll, outPagesForAll } = await this.processGeneralUrls(
+      this.memory.searchResults.all.scientific
+    ));
 
     this.memory.searchResults.orderedURLsToGet.scientific = outUrlsForAll;
     this.memory.searchResults.orderedSearchPages.scientific = outPagesForAll;
