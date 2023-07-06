@@ -13,14 +13,8 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
     const itemOneIndex = promptPair[0];
     const itemTwoIndex = promptPair[1];
 
-    const itemOne = this.allItems![itemOneIndex] as IEngineSolution;
-    const itemTwo = this.allItems![itemTwoIndex] as IEngineSolution;
-
-    let itemOneTitle = itemOne.title;
-    let itemOneDescription = itemOne.description;
-
-    let itemTwoTitle = itemTwo.title;
-    let itemTwoDescription = itemTwo.description;
+    const solutionOne = this.allItems![itemOneIndex] as IEngineSolution;
+    const solutionTwo = this.allItems![itemTwoIndex] as IEngineSolution;
 
     const messages = [
       new SystemChatMessage(
@@ -41,12 +35,38 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
          Solutions to vote on:
 
          Solution One:
-         ${itemOneTitle}
-         ${itemOneDescription}
+         ----------------------------------------
+         ${solutionOne.title}
+         ${solutionOne.description}
+
+         How can Solution One help:
+         ${solutionOne.howCanSolutionHelp}
+
+         Main obstacle to Solution One adoption:
+         ${solutionOne.mainObstacleToSolutionAdoption}
+
+         Here are the main pros for Solution One:
+         ${this.getTopPros(solutionOne.pros!.slice(0, IEngineConstants.maxProsConsUsed))}
+
+         Here are the main cons for Solution One:
+         ${this.getTopCons(solutionOne)}
 
          Solution Two:
-         ${itemTwoTitle}
-         ${itemTwoDescription}
+         ----------------------------------------
+         ${solutionTwo.title}
+         ${solutionTwo.description}
+
+         How can Solution Two help:
+         ${solutionTwo.howCanSolutionHelp}
+
+         Main obstacle to Solution Two adoption:
+         ${solutionTwo.mainObstacleToSolutionAdoption}
+
+         Here are the main pros for Solution Two:
+         ${this.getTopPros(solutionTwo)}
+
+         Here are the main cons for Solution Two:
+         ${this.getTopCons(solutionTwo)}
 
          The winning solution is:
        `

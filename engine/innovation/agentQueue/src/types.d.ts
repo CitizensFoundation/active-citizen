@@ -128,7 +128,10 @@ interface IEngineSolution {
   title: string;
   description: string;
   howCanSolutionHelp: string;
+  mainObstacleToSolutionAdoption: string;
   affectedEntities?: IEngineSolutionAffectedEntity[];
+  pros?: string[];
+  cons?: string[];
 }
 
 interface IEEngineSearchResultPage {
