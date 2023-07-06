@@ -29,7 +29,7 @@ export class WebPageVectorStore extends Base {
     groupId: number | undefined,
     subProblemIndex: number | undefined,
     searchType: IEngineWebPageTypes | undefined
-  ) {
+  ): Promise<IEngineWebPageGraphQlResults> {
     //TODO: Fix any here
     const where: any[] = [];
 

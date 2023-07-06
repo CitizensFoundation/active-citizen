@@ -6,7 +6,7 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
   prompts: number[][] = [];
   allItems:
     | SerpOrganicResult[]
-    | IEngineSolutionIdea[]
+    | IEngineSolution[]
     | IEngineProblemStatement[]
     | IEngineAffectedEntity[]
     | string[]
@@ -18,7 +18,7 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
   setupRankingPrompts(
     allItems:
       | SerpOrganicResult[]
-      | IEngineSolutionIdea[]
+      | IEngineSolution[]
       | IEngineProblemStatement[]
       | string[]
       | IEngineAffectedEntity[],

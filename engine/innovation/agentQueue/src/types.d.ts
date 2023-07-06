@@ -95,7 +95,9 @@ interface IEngineSubProblem {
   entities: IEngineAffectedEntity[];
   searchQueries: IEngineSearchQueries;
   searchResults: IEngineSearchResults;
-  solutionIdeas: IEngineSolutionIdea[];
+  solutions: {
+    seed: IEngineSolution[];
+  }
 }
 
 interface IEngineAffectedEntityBase {
@@ -121,11 +123,11 @@ interface IEngineIdeaAffectedEntity extends IEngineAffectedEntityBase {
   negativeScore: number;
 }
 
-interface IEngineSolutionIdea {
+interface IEngineSolution {
   id: string;
-  solutionTitle: string;
-  solutionDescription: string;
-  howCanItHelp: string;
+  title: string;
+  description: string;
+  howCanSolutionHelp: string;
   affectedEntities?: IEngineIdeaAffectedEntity[];
 }
 
@@ -149,6 +151,7 @@ type IEngineStageTypes =
   | "rank-search-queries"
   | "rank-sub-problems"
   | "rank-entities"
+  | "rank-ideas"
   | "web-search"
   | "web-get-pages"
   | "create-seed-ideas"
@@ -166,7 +169,7 @@ interface IEngineUserFeedback {
 interface IEngineBaseAIModelConstants {
   name: string;
   temperature: number;
-  maxTokens: number;
+  maxOutputTokens: number;
   tokenLimit: number;
   inTokenCostUSD: number;
   outTokenCostUSD: number;

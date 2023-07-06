@@ -8,7 +8,7 @@ export class IEngineConstants {
   static createSubProblemsModel: IEngineBaseAIModelConstants = {
     name: "gpt-4",
     temperature: 0.9,
-    maxTokens: 2048,
+    maxOutputTokens: 2048,
     tokenLimit: 8192,
     inTokenCostUSD: gpt4InTokenPrice,
     outTokenCostUSD: gpt4OutTokenPrice,
@@ -18,7 +18,7 @@ export class IEngineConstants {
   static createEntitiesModel: IEngineBaseAIModelConstants = {
     name: "gpt-4",
     temperature: 0.9,
-    maxTokens: 2048,
+    maxOutputTokens: 2048,
     tokenLimit: 8192,
     inTokenCostUSD: gpt4InTokenPrice,
     outTokenCostUSD: gpt4OutTokenPrice,
@@ -28,7 +28,7 @@ export class IEngineConstants {
   static createSearchQueriesModel: IEngineBaseAIModelConstants = {
     name: "gpt-4",
     temperature: 0.9,
-    maxTokens: 1024,
+    maxOutputTokens: 1024,
     tokenLimit: 8192,
     inTokenCostUSD: gpt4InTokenPrice,
     outTokenCostUSD: gpt4OutTokenPrice,
@@ -38,7 +38,7 @@ export class IEngineConstants {
   static searchQueryRankingsModel: IEngineBaseAIModelConstants = {
     name: "gpt-4",
     temperature: 0.0,
-    maxTokens: 2,
+    maxOutputTokens: 2,
     tokenLimit: 8192,
     inTokenCostUSD: gpt4InTokenPrice,
     outTokenCostUSD: gpt4OutTokenPrice,
@@ -48,7 +48,7 @@ export class IEngineConstants {
   static searchResultsRankingsModel: IEngineBaseAIModelConstants = {
     name: "gpt-4",
     temperature: 0.0,
-    maxTokens: 2,
+    maxOutputTokens: 2,
     tokenLimit: 8192,
     inTokenCostUSD: gpt4InTokenPrice,
     outTokenCostUSD: gpt4OutTokenPrice,
@@ -58,7 +58,7 @@ export class IEngineConstants {
   static subProblemsRankingsModel: IEngineBaseAIModelConstants = {
     name: "gpt-4",
     temperature: 0.0,
-    maxTokens: 2,
+    maxOutputTokens: 2,
     tokenLimit: 8192,
     inTokenCostUSD: gpt4InTokenPrice,
     outTokenCostUSD: gpt4OutTokenPrice,
@@ -68,7 +68,17 @@ export class IEngineConstants {
   static entitiesRankingsModel: IEngineBaseAIModelConstants = {
     name: "gpt-4",
     temperature: 0.0,
-    maxTokens: 2,
+    maxOutputTokens: 2,
+    tokenLimit: 8192,
+    inTokenCostUSD: gpt4InTokenPrice,
+    outTokenCostUSD: gpt4OutTokenPrice,
+    verbose: true,
+  };
+
+  static ideasRankingsModel: IEngineBaseAIModelConstants = {
+    name: "gpt-4",
+    temperature: 0.0,
+    maxOutputTokens: 2,
     tokenLimit: 8192,
     inTokenCostUSD: gpt4InTokenPrice,
     outTokenCostUSD: gpt4OutTokenPrice,
@@ -78,17 +88,17 @@ export class IEngineConstants {
   static getPageAnalysisModel: IEngineBaseAIModelConstants = {
     name: "gpt-3.5-turbo-16k",
     temperature: 0.0,
-    maxTokens: 2048,
+    maxOutputTokens: 2048,
     tokenLimit: 16385,
     inTokenCostUSD: gpt35_16kInTokenPrice,
     outTokenCostUSD: gpt35_16kOutTokenPrice,
     verbose: true,
   };
 
-  static createSeedIdeasModel: IEngineBaseAIModelConstants = {
+  static createSeedSolutionsModel: IEngineBaseAIModelConstants = {
     name: "gpt-4",
     temperature: 0.9,
-    maxTokens: 2048,
+    maxOutputTokens: 1200,
     tokenLimit: 8192,
     inTokenCostUSD: gpt4InTokenPrice,
     outTokenCostUSD: gpt4OutTokenPrice,
@@ -115,23 +125,26 @@ export class IEngineConstants {
 
   static maxTopPagesToGetPerType = 3;
 
-  static maxTopSearchQueriesForIdeaCreation = 3;
+  static maxTopSearchQueriesForSolutionCreation = 3;
+
+  static numberOfSearchTypes = 4;
 
   static chances = {
-    useMainProblemSearchQueriesNewIdeas: 0.2,
-    useOtherSubProblemSearchQueriesNewIdeas: 0.1,
-    notUsingFirstSearchQueryForNewIdeas: 0.5,
+    useMainProblemSearchQueriesNewSolutions: 0.2,
+    useOtherSubProblemSearchQueriesNewSolutions: 0.1,
+    notUsingFirstSearchQueryForNewSolutions: 0.5,
+    useMainProblemVectorSearchNewSolutions: 0.1
   }
 
   static limits = {
-    webPageVectorResultsForNewIdeas: 10
+    webPageVectorResultsForNewSolutions: 10
   }
 
   static enable = {
     refine: {
       createSubProblems: true,
       createEntities: true,
-      createIdeas: true
+      createSolutions: true
     }
   }
 

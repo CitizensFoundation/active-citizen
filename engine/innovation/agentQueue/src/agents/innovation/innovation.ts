@@ -23,6 +23,7 @@ export class AgentInnovation extends BaseAgent {
         "rank-sub-problems": {},
         "rank-search-queries": {},
         "rank-entities": {},
+        "rank-ideas": {},
         "web-search": {},
         "web-get-pages": {},
         "parse": {},

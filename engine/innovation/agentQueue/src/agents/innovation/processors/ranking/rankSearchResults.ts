@@ -149,7 +149,7 @@ export class RankSearchResultsProcessor extends BasePairwiseRankingsProcessor {
 
     this.chat = new ChatOpenAI({
       temperature: IEngineConstants.searchResultsRankingsModel.temperature,
-      maxTokens: IEngineConstants.searchQueryRankingsModel.maxTokens,
+      maxTokens: IEngineConstants.searchQueryRankingsModel.maxOutputTokens,
       modelName: IEngineConstants.searchQueryRankingsModel.name,
       verbose: IEngineConstants.searchQueryRankingsModel.verbose,
     });

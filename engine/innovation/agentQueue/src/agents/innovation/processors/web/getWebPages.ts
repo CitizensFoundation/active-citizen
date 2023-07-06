@@ -270,7 +270,7 @@ export class GetWebPagesProcessor extends BaseProcessor {
     const totalTokenCount =
       promptTokenCount.totalCount +
       textTokenCount.totalCount +
-      IEngineConstants.getPageAnalysisModel.maxTokens;
+      IEngineConstants.getPageAnalysisModel.maxOutputTokens;
 
     return { totalTokenCount, promptTokenCount };
   }
@@ -589,7 +589,7 @@ export class GetWebPagesProcessor extends BaseProcessor {
 
     this.chat = new ChatOpenAI({
       temperature: IEngineConstants.getPageAnalysisModel.temperature,
-      maxTokens: IEngineConstants.getPageAnalysisModel.maxTokens,
+      maxTokens: IEngineConstants.getPageAnalysisModel.maxOutputTokens,
       modelName: IEngineConstants.getPageAnalysisModel.name,
       verbose: IEngineConstants.getPageAnalysisModel.verbose,
     });

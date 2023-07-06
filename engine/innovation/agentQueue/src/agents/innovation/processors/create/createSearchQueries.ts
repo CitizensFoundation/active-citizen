@@ -80,7 +80,7 @@ export class CreateSearchQueriesProcessor extends BaseProcessor {
 
     this.chat = new ChatOpenAI({
       temperature: IEngineConstants.createSearchQueriesModel.temperature,
-      maxTokens: IEngineConstants.createSearchQueriesModel.maxTokens,
+      maxTokens: IEngineConstants.createSearchQueriesModel.maxOutputTokens,
       modelName: IEngineConstants.createSearchQueriesModel.name,
       verbose: IEngineConstants.createSearchQueriesModel.verbose,
     });

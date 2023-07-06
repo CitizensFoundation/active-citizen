@@ -235,7 +235,7 @@ export class CreateSubProblemsProcessor extends BaseProcessor {
     super.process();
     this.chat = new ChatOpenAI({
       temperature: IEngineConstants.createSubProblemsModel.temperature,
-      maxTokens: IEngineConstants.createSubProblemsModel.maxTokens,
+      maxTokens: IEngineConstants.createSubProblemsModel.maxOutputTokens,
       modelName: IEngineConstants.createSubProblemsModel.name,
       verbose: IEngineConstants.createSubProblemsModel.verbose,
     });

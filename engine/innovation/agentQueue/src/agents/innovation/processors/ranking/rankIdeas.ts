@@ -4,7 +4,7 @@ import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
 import { IEngineConstants } from "../../../../constants.js";
 import { BasePairwiseRankingsProcessor } from "./basePairwiseRanking.js";
 
-export class RankSubProblemsProcessor extends BasePairwiseRankingsProcessor {
+export class RankIdeasProcessor extends BasePairwiseRankingsProcessor {
   subProblemIndex = 0;
 
   async voteOnPromptPair(
@@ -13,8 +13,8 @@ export class RankSubProblemsProcessor extends BasePairwiseRankingsProcessor {
     const itemOneIndex = promptPair[0];
     const itemTwoIndex = promptPair[1];
 
-    const itemOne = this.allItems![itemOneIndex] as IEngineSubProblem;
-    const itemTwo = this.allItems![itemTwoIndex] as IEngineSubProblem;
+    const itemOne = this.allItems![itemOneIndex] as IEngineSolution;
+    const itemTwo = this.allItems![itemTwoIndex] as IEngineSolution;
 
     let itemOneTitle = itemOne.title;
     let itemOneDescription = itemOne.description;
@@ -25,11 +25,11 @@ export class RankSubProblemsProcessor extends BasePairwiseRankingsProcessor {
     const messages = [
       new SystemChatMessage(
         `
-        You are an expert trained to analyse complex problem statements and sub-problems to rank the sub problems.
+        You are an expert trained to analyse complex problem statements and sub-problems solutions to those problems.
 
         Adhere to the following guidelines:
-        1. You will see the problem statement with two sub problems to compare. One is marked as "Sub Problem One" and the other as "Sub Problem Two".
-        2. You will analyse, compare and rank those two sub problems and vote on which one is more relevant and important as sub problem of the main problem statement.
+        1. You will see the problem statement with two solutions to compare. One is marked as "Solution One" and the other as "Solution Two".
+        2. You will analyse, compare and rank those two solutions and vote on which one is more relevant and important as sub problem of the main problem statement.
         3. You will only output the winning item as: "One" or "Two" without an explanation.
         4. Ensure a methodical, step-by-step approach.
         `
@@ -38,24 +38,24 @@ export class RankSubProblemsProcessor extends BasePairwiseRankingsProcessor {
         `
          ${this.renderProblemStatement()}
 
-         Sub Problems to vote on:
+         Solutions to vote on:
 
-         Sub Problem One:
+         Solution One:
          ${itemOneTitle}
          ${itemOneDescription}
 
-         Sub Problem Two:
+         Solution Two:
          ${itemTwoTitle}
          ${itemTwoDescription}
 
-         The winning sub problem is:
+         The winning solution is:
        `
       ),
     ];
 
     return await this.getResultsFromLLM(
-      "rank-sub-problems",
-      IEngineConstants.subProblemsRankingsModel,
+      "rank-ideas",
+      IEngineConstants.ideasRankingsModel,
       messages,
       itemOneIndex,
       itemTwoIndex
