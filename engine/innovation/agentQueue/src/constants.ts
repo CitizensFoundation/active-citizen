@@ -129,7 +129,9 @@ export class IEngineConstants {
 
   static enable = {
     refine: {
-      createSubProblems: true
+      createSubProblems: true,
+      createEntities: true,
+      createIdeas: true
     }
   }
 
