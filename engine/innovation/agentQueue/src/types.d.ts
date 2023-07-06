@@ -77,8 +77,10 @@ interface IEnginePairWiseVoteResults {
 }
 
 interface IEngineWorkerData {
-  memoryId: string;
-  initialProblemStatement: IEngineProblemStatement;
+  groupId: number;
+  communityId: number;
+  domainId: number;
+  initialProblemStatement: string;
 }
 
 interface IEngineProblemStatement {
@@ -172,9 +174,12 @@ interface IEngineBaseAIModelConstants {
 }
 
 interface IEngineMemoryData {
-  id: string;
+  redisKey: string;
   timeStart: number;
   totalCost: number;
+  groupId: number;
+  communityId: number;
+  domainId: number;
   lastSavedAt?: number;
   currentStageError?: string | undefined;
 }
@@ -237,7 +242,22 @@ interface IEngineWebPageAnalysisData {
   relevanceToProblem: string;
   tags: string[];
   entities: string[];
+  summary: string;
   url: string;
-  type: IEngineWebPageTypes;
+  searchType: IEngineWebPageTypes;
   subProblemIndex?: number;
+  groupId: number;
+  communityId: number;
+  domainId: number;
+  _additional: {
+    distance: number;
+  };
+}
+
+interface IEngineWebPageGraphQlResults {
+  data: {
+    Get: {
+      WebPage: IEngineWebPageAnalysisData;
+    }
+  }
 }

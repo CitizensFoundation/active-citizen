@@ -6,6 +6,7 @@ import { IEngineConstants } from "../../../../constants.js";
 
 export class CreateEntitiesProcessor extends BaseProcessor {
   async createEntities() {
+    //TODO: Add a review and refine stage here as well
     //TODO: Human review and improvements of this partly GPT-4 generated prompt
     const messages = [
       new SystemChatMessage(

@@ -3,9 +3,10 @@ import { ChatOpenAI } from "langchain/chat_models/openai";
 import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
 
 import { IEngineConstants } from "../../../../constants.js";
-import { text } from "stream/consumers";
 
 export class CreateIdeasProcessor extends BaseProcessor {
+  //TODO: Add a review and refine stage here as well
+
   async createIdeas(
     subProblemIndex: number,
     generalTextContext: string,
@@ -34,11 +35,12 @@ export class CreateIdeasProcessor extends BaseProcessor {
         4. Solution descriptions should be at most five sentences long.
         5. Do not created the same solutions if listed under Already created solutions
         6. If entities are mentioned, they should be the ones affected by the solutions.
-        7. If Text Context is available use that to inform your ideas for solutions.
-        8. Never output in markdown format.
-        9. For the main problem and all sub-problems, generate the search queries, provide an output in the following JSON format:
+        7. Use context given to inform and inspire your ideas for solutions.
+        8. Never refer to the context given as the user won't see it.
+        9. Never output in markdown format.
+        10. For the main problem and all sub-problems, generate the search queries, provide an output in the following JSON format:
           [ { solutionTitle, solutionDescription, howCanItHelp } ].
-        10. Ensure a methodical, step-by-step approach to create the best possible search queries.
+        11. Ensure a methodical, step-by-step approach to create the best possible ideas.
         `
       ),
       new HumanChatMessage(
@@ -108,10 +110,13 @@ export class CreateIdeasProcessor extends BaseProcessor {
     subProblemIndex: number | undefined
   ) {
     return {
-      general: searchQueries.general[this.randomSearchQueryIndex(subProblemIndex)],
-      scientific: searchQueries.scientific[this.randomSearchQueryIndex(subProblemIndex)],
-      openData: searchQueries.openData[this.randomSearchQueryIndex(subProblemIndex)],
-      news: searchQueries.news[this.randomSearchQueryIndex(subProblemIndex)]
+      general:
+        searchQueries.general[this.randomSearchQueryIndex(subProblemIndex)],
+      scientific:
+        searchQueries.scientific[this.randomSearchQueryIndex(subProblemIndex)],
+      openData:
+        searchQueries.openData[this.randomSearchQueryIndex(subProblemIndex)],
+      news: searchQueries.news[this.randomSearchQueryIndex(subProblemIndex)],
     };
   }
 
@@ -170,28 +175,28 @@ export class CreateIdeasProcessor extends BaseProcessor {
     );
 
     //TODO: Refactor the types to be an array ["scientific", "general", ...]
-    let selectedScientificQuery = this.getRandomSearchQueryForType(
+    let scientific = this.getRandomSearchQueryForType(
       "scientific",
       problemStatementQueries,
       subProblemQueries,
       otherSubProblemQueries
     );
 
-    let selectedGeneralQuery = this.getRandomSearchQueryForType(
+    let general = this.getRandomSearchQueryForType(
       "general",
       problemStatementQueries,
       subProblemQueries,
       otherSubProblemQueries
     );
 
-    let selectedOpenDataQuery = this.getRandomSearchQueryForType(
+    let openData = this.getRandomSearchQueryForType(
       "openData",
       problemStatementQueries,
       subProblemQueries,
       otherSubProblemQueries
     );
 
-    let selectedNewsQuery = this.getRandomSearchQueryForType(
+    let news = this.getRandomSearchQueryForType(
       "news",
       problemStatementQueries,
       subProblemQueries,
@@ -199,10 +204,10 @@ export class CreateIdeasProcessor extends BaseProcessor {
     );
 
     return {
-      selectedScientificQuery,
-      selectedGeneralQuery,
-      selectedOpenDataQuery,
-      selectedNewsQuery,
+      scientific,
+      general,
+      openData,
+      news,
     };
   }
 
@@ -210,16 +215,35 @@ export class CreateIdeasProcessor extends BaseProcessor {
     const selectedSearchQueries = this.getSearchQueries(subProblemIndex);
 
     return {
-      general: await this.getSearchQueryTextContext(selectedSearchQueries.selectedGeneralQuery, "general"),
-      scientific: await this.getSearchQueryTextContext(selectedSearchQueries.selectedScientificQuery, "scientific"),
-      openData: await this.getSearchQueryTextContext(selectedSearchQueries.selectedOpenDataQuery, "openData"),
-      news: await this.getSearchQueryTextContext(selectedSearchQueries.selectedNewsQuery, "news"),
+      general: await this.getSearchQueryTextContext(
+        selectedSearchQueries["general"],
+        "general"
+      ),
+      scientific: await this.getSearchQueryTextContext(
+        selectedSearchQueries["scientific"],
+        "scientific"
+      ),
+      openData: await this.getSearchQueryTextContext(
+        selectedSearchQueries["openData"],
+        "openData"
+      ),
+      news: await this.getSearchQueryTextContext(
+        selectedSearchQueries["news"],
+        "news"
+      ),
     };
   }
 
-  async getSearchQueryTextContext(searchQuery: string, type: IEngineWebPageTypes) {
+  async getSearchQueryTextContext(
+    searchQuery: string,
+    type: IEngineWebPageTypes
+  ) {
+
+
     const searchResults = await this.webSearch(searchQuery, type);
     return searchResults.pages.map((page) => page.description).join("\n");
+
+
   }
 
   async createAllIdeas() {
@@ -259,8 +283,8 @@ export class CreateIdeasProcessor extends BaseProcessor {
   }
 
   async process() {
-    super.process();
     this.logger.info("Create Seed Ideas Processor");
+    super.process();
     await this.createAllIdeas();
   }
 }

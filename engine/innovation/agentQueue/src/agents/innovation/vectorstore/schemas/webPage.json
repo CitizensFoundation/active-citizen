@@ -11,6 +11,18 @@
   "properties": [
     {
       "dataType": [
+        "string"
+      ],
+      "moduleConfig": {
+        "text2vec-openai": {
+          "skip": true,
+          "vectorizePropertyName": false
+        }
+      },
+      "name": "searchType"
+    },
+    {
+      "dataType": [
         "text"
       ],
       "moduleConfig": {
@@ -20,18 +32,6 @@
         }
       },
       "name": "summary"
-    },
-    {
-      "dataType": [
-        "string"
-      ],
-      "moduleConfig": {
-        "text2vec-openai": {
-          "skip": false,
-          "vectorizePropertyName": true
-        }
-      },
-      "name": "type"
     },
     {
       "dataType": [
@@ -47,7 +47,7 @@
     },
     {
       "dataType": [
-        "text"
+        "text[]"
       ],
       "moduleConfig": {
         "text2vec-openai": {
@@ -55,7 +55,7 @@
           "vectorizePropertyName": true
         }
       },
-      "name": "possibleSolutionToProblem"
+      "name": "possibleSolutionsToProblem"
     },
     {
       "dataType": [

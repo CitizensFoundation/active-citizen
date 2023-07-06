@@ -359,7 +359,11 @@ export class GetWebPagesProcessor extends BaseProcessor {
     const textAnalysis = await this.getTextAnalysis(text);
     textAnalysis.url = url;
     textAnalysis.subProblemIndex = subProblemIndex;
-    textAnalysis.type = type;
+    textAnalysis.searchType = type;
+    textAnalysis.groupId = this.memory.groupId;
+    textAnalysis.communityId = this.memory.communityId;
+    textAnalysis.domainId = this.memory.domainId;
+
     await this.webPageVectorStore.postWebPage(textAnalysis);
   }
 

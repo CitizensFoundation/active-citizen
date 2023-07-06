@@ -1,13 +1,18 @@
 import { BaseAgent } from "../baseAgent";
 import { Worker, Job } from "bullmq";
-import { CreateSubProblemsProcessor } from "./processors/createSubProblems";
+import { CreateSubProblemsProcessor } from "./processors/create/createSubProblems";
 
 export class AgentInnovation extends BaseAgent {
   declare memory: IEngineInnovationMemoryData;
 
   override async initializeMemory(job: Job) {
+    const jobData = job.data as IEngineWorkerData;
+
     this.memory = {
-      id: this.getMemoryIdKey(job.data.memoryId),
+      redisKey: this.getRedisKey(jobData.groupId),
+      groupId: jobData.groupId,
+      communityId: jobData.communityId,
+      domainId: jobData.domainId,
       currentStage: "create-sub-problems",
       stages: {
         "create-sub-problems": {},
@@ -27,7 +32,7 @@ export class AgentInnovation extends BaseAgent {
       timeStart: Date.now(),
       totalCost: 0,
       problemStatement: {
-        description: job.data.problemStatement,
+        description: jobData.initialProblemStatement,
         searchQueries: {
           general: [],
           scientific: [],

@@ -1,6 +1,6 @@
 import { Job } from "bullmq";
 import { Base } from "../../../base";
-import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
+import { AIChatMessage, BaseChatMessage, HumanChatMessage, SystemChatMessage } from "langchain/schema";
 import { ChatOpenAI } from "langchain/chat_models/openai";
 import { IEngineConstants } from "../../../constants";
 
@@ -116,7 +116,7 @@ export abstract class BaseProcessor extends Base {
   async callLLM(
     stage: IEngineStageTypes,
     modelConstants: IEngineBaseAIModelConstants,
-    messages: (SystemChatMessage | HumanChatMessage)[],
+    messages: BaseChatMessage[],
     parseJson = true
   ) {
     try {

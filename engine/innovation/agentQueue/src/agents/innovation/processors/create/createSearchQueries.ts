@@ -4,8 +4,11 @@ import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
 
 import { IEngineConstants } from "../../../../constants.js";
 
+
 export class CreateSearchQueriesProcessor extends BaseProcessor {
-  renderCommonPromptSection() {
+    //TODO: Add a review and refine stage here as well
+
+    renderCommonPromptSection() {
     return `
       3. Use your knowledge and experience to create the best possible search queries.
       4. Search queries should be concise, consistent, short, and succinct. They will be used to search on Google or Bing.

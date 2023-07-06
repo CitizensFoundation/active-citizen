@@ -7,8 +7,8 @@ export abstract class BaseAgent extends BaseWorker {
   memory!: IEngineMemoryData;
   job!: Job;
 
-  getMemoryIdKey(memoryId: string) {
-    return `st_mem:${memoryId}:id`;
+  getRedisKey(groupId: number) {
+    return `st_mem:${groupId}:id`;
   }
 
   abstract initializeMemory(job: Job): Promise<void>;
@@ -19,7 +19,7 @@ export abstract class BaseAgent extends BaseWorker {
     const jobData = job.data as IEngineWorkerData;
     try {
       const memoryData =
-        (await redis.get(this.getMemoryIdKey(jobData.memoryId)));
+        (await redis.get(this.getRedisKey(jobData.groupId)));
       if (memoryData) {
         this.memory = JSON.parse(memoryData);
       } else {
@@ -33,6 +33,6 @@ export abstract class BaseAgent extends BaseWorker {
 
   async saveMemory() {
     this.memory.lastSavedAt = Date.now();
-    await redis.set(this.memory.id, JSON.stringify(this.memory));
+    await redis.set(this.memory.redisKey, JSON.stringify(this.memory));
   }
 }
