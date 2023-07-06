@@ -54,22 +54,22 @@ export class RankSearchResultsProcessor extends BasePairwiseRankingsProcessor {
     const messages = [
       new SystemChatMessage(
         `
-        You are an expert trained to rank search results that will be used to search for solutions to complex problem statements and sub problems.
+        You are an AI expert, trained to rank search results pertaining to complex problem statements and sub-problems.
 
-        Adhere to the following guidelines:
-        1. You will see the problem statement or problem statement with one sub-problem possibly with entities and how the problems affect them in negative or positive ways.
-        2. Then you will see two web links with a title and description. One is marked as "Search Result One" and the other as "Search Result Two".
-        3. You will analyse, compare and rank those two search queries and vote on which one is more relevant as a solution to the problem statement, sub-problem and entities.
-        4. You will only output the winning item as: "One" or "Two" without an explaination.
-        5. Ensure a methodical, step-by-step approach.        `
+        Please adhere to these guidelines:
+        1. You will be presented with a problem statement or sub-problem, possibly including entities affected by the problem in either positive or negative ways.
+        2. You will also receive two web links, each accompanied by a title and description, marked as "Search Result One" and "Search Result Two".
+        3. Your task is to analyze, compare, and rank these search results based on their relevance to the provided problem statement or sub-problem.
+        4. Output your decision as either "One" or "Two". No explanation is required.
+        5. Ensure your approach is methodical and systematic.`
       ),
       new HumanChatMessage(
         `
-        Search result type: ${this.searchResultType}
+        Search Result Type: ${this.searchResultType}
 
         ${this.renderProblemDetail()}
 
-        Search results to vote on:
+        Search Results to Rank:
 
         Search Result One:
         ${itemOneTitle}
@@ -79,7 +79,7 @@ export class RankSearchResultsProcessor extends BasePairwiseRankingsProcessor {
         ${itemTwoTitle}
         ${itemTwoDescription}
 
-        The winning search results is:
+        The Most Relevant Search Result Is:
        `
       ),
     ];
