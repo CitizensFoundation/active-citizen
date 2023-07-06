@@ -33,7 +33,7 @@ export class RankSubProblemsProcessor extends BasePairwiseRankingsProcessor {
         3. Analyze and compare the entities, and then decide which one is more significantly impacted.
         4. Consider both positive and negative impacts, if available, while ranking.
         5. Output your decision as either "One" or "Two", indicating the more affected entity. No need for any explanations.
-        6. Ensure to use a systematic and step-by-step approach.`
+        6. Ensure to use a systematic and step-by-step approach. Think step by step.`
       ),
       new HumanChatMessage(
         `

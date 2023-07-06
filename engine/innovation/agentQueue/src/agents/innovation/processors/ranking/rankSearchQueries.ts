@@ -56,7 +56,7 @@ export class RankSearchQueriesProcessor extends BasePairwiseRankingsProcessor {
         2. You will also see two web search queries, each marked as "Search Query One" and "Search Query Two".
         3. Your task is to analyze, compare, and rank these search queries based on their relevance to the given problemm sub-problem and affected entities.
         4. Output your decision as either "One" or "Two". No explanation is required.
-        5. Ensure a systematic and methodical approach to this task.`
+        5. Ensure a systematic and methodical approach to this task. Think step by step.`
       ),
       new HumanChatMessage(
         `

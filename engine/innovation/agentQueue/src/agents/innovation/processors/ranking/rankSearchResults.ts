@@ -61,7 +61,7 @@ export class RankSearchResultsProcessor extends BasePairwiseRankingsProcessor {
         2. You will also receive two web links, each accompanied by a title and description, marked as "Search Result One" and "Search Result Two".
         3. Your task is to analyze, compare, and rank these search results based on their relevance to the provided problem statement or sub-problem.
         4. Output your decision as either "One" or "Two". No explanation is required.
-        5. Ensure your approach is methodical and systematic.`
+        5. Ensure your approach is methodical and systematic. Think step by step.`
       ),
       new HumanChatMessage(
         `

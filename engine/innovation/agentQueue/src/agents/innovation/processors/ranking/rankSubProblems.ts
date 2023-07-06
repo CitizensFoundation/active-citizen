@@ -25,31 +25,32 @@ export class RankSubProblemsProcessor extends BasePairwiseRankingsProcessor {
     const messages = [
       new SystemChatMessage(
         `
-        You are an expert trained to analyse complex problem statements and sub-problems to rank the sub problems.
+        You are an AI expert trained to analyse complex problem statements and associated sub-problems to determine their relevance.
 
-        Adhere to the following guidelines:
-        1. You will see the problem statement with two sub problems to compare. One is marked as "Sub Problem One" and the other as "Sub Problem Two".
-        2. You will analyse, compare and rank those two sub problems and vote on which one is more relevant and important as sub problem of the main problem statement.
-        3. You will only output the winning item as: "One" or "Two" without an explanation.
-        4. Ensure a methodical, step-by-step approach.
+        Please follow these guidelines:
+        1. You will be presented with a problem statement and two associated sub-problems. These will be marked as "Sub Problem One" and "Sub Problem Two".
+        2. Analyse, compare, and rank these two sub-problems in relation to the main problem statement to determine which is more relevant and important.
+        3. Output your decision as either "One" or "Two". An explanation is not required.
+        4. Ensure you take a methodical and step-by-step approach.
         `
       ),
       new HumanChatMessage(
         `
-         ${this.renderProblemStatement()}
+        Problem Statement:
+        ${this.renderProblemStatement()}
 
-         Sub Problems to vote on:
+        Sub-Problems for Consideration:
 
-         Sub Problem One:
-         ${itemOneTitle}
-         ${itemOneDescription}
+        Sub Problem One:
+        Title: ${itemOneTitle}
+        Description: ${itemOneDescription}
 
-         Sub Problem Two:
-         ${itemTwoTitle}
-         ${itemTwoDescription}
+        Sub Problem Two:
+        Title: ${itemTwoTitle}
+        Description: ${itemTwoDescription}
 
-         The winning sub problem is:
-       `
+        The Most Relevant Sub-Problem Is:
+        `
       ),
     ];
 

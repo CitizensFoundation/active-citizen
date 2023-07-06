@@ -19,69 +19,53 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
     const messages = [
       new SystemChatMessage(
         `
-        You are an expert trained to analyse solutions to complex problem statements and sub-problems.
+        As an AI expert, your role involves analyzing solutions to complex problem statements and sub-problems.
 
-        Adhere to the following guidelines:
-        1. You will see the problem statement with two solutions to compare. One is marked as "Solution One" and the other as "Solution Two".
-        2. You will analyse, compare and rank those two solutions and vote on which one is more relevant and important as sub problem of the main problem statement.
-        3. You will only output the winning item as: "One" or "Two" without an explanation.
-        4. Ensure a methodical, step-by-step approach.
+        Please adhere to the following guidelines:
+        1. You will be presented with a problem statement and two corresponding solutions. These will be labelled "Solution One" and "Solution Two".
+        2. Analyze, compare, and rank these solutions based on their relevance and importance to the problem statement.
+        3. Consider the pros and cons of each solution while ranking.
+        4. Consider the entities affected by the problem statement and sub-problem, if available, while ranking.
+        5. Output your decision as either "One" or "Two". No explanation is necessary.
+        6. Ensure your approach is methodical and systematic. Think step by step.
         `
       ),
       new HumanChatMessage(
         `
-         ${this.renderPromblemsWithIndexAndEntities(this.subProblemIndex)}
+        ${this.renderPromblemsWithIndexAndEntities(this.subProblemIndex)}
 
-         Solutions to vote on
+        Solutions for Consideration:
 
-         Solution One:
-         ----------------------------------------
-         ${solutionOne.title}
-         ${solutionOne.description}
+        Solution One:
+        ----------------------------------------
+        Title: ${solutionOne.title}
+        Description: ${solutionOne.description}
 
-         How can Solution One help:
-         ${solutionOne.howCanSolutionHelp}
+        How Solution One Can Help: ${solutionOne.howCanSolutionHelp}
+        Main Obstacles to Solution One Adoption: ${solutionOne.mainObstacleToSolutionAdoption}
 
-         Main obstacle to Solution One adoption:
-         ${solutionOne.mainObstacleToSolutionAdoption}
+        Pros of Solution One:
+        ${solutionOne.pros!.slice(0, IEngineConstants.maxProsConsUsedForRanking)}
 
-         Here are the main pros for Solution One:
-         ${solutionOne.pros!.slice(
-           0,
-           IEngineConstants.maxProsConsUsedForRanking
-         )}
+        Cons of Solution One:
+        ${solutionOne.cons!.slice(0, IEngineConstants.maxProsConsUsedForRanking)}
 
-         Here are the main cons for Solution One:
-         ${solutionOne.cons!.slice(
-           0,
-           IEngineConstants.maxProsConsUsedForRanking
-         )}
+        Solution Two:
+        ----------------------------------------
+        Title: ${solutionTwo.title}
+        Description: ${solutionTwo.description}
 
-         Solution Two:
-         ----------------------------------------
-         ${solutionTwo.title}
-         ${solutionTwo.description}
+        How Solution Two Can Help: ${solutionTwo.howCanSolutionHelp}
+        Main Obstacles to Solution Two Adoption: ${solutionTwo.mainObstacleToSolutionAdoption}
 
-         How can Solution Two help:
-         ${solutionTwo.howCanSolutionHelp}
+        Pros of Solution Two:
+        ${solutionTwo.pros!.slice(0, IEngineConstants.maxProsConsUsedForRanking)}
 
-         Main obstacle to Solution Two adoption:
-         ${solutionTwo.mainObstacleToSolutionAdoption}
+        Cons of Solution Two:
+        ${solutionTwo.cons!.slice(0, IEngineConstants.maxProsConsUsedForRanking)}
 
-         Here are the main pros for Solution Two:
-         ${solutionTwo.pros!.slice(
-           0,
-           IEngineConstants.maxProsConsUsedForRanking
-         )}
-
-         Here are the main cons for Solution Two:
-         ${solutionTwo.cons!.slice(
-           0,
-           IEngineConstants.maxProsConsUsedForRanking
-         )}
-
-         The winning solution is:
-       `
+        The Most Effective Solution Is:
+        `
       ),
     ];
 
