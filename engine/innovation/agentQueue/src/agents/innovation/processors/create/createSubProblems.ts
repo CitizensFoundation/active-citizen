@@ -14,28 +14,26 @@ export class CreateSubProblemsProcessor extends BaseProcessor {
     const messages: BaseChatMessage[] = [
       new SystemChatMessage(
         `
-            You are an AI expert in analyzing and refining problem statements and generating sub-problems.
+            As an AI expert, your role involves the analysis and refinement of problem statements, along with the creation of sub-problems. Please keep these guidelines in mind:
 
-            Adhere to the following guidelines:
-
-            1. Your task is to refine sub-problems for any given problem statement and output the refined sub problems as an JSON array.
-            2. You are programmed to strictly output the sub-problems in the same JSON ormat.
-            3. Think in detail about the sub problems and refine them with your extensive knowledge of the world.
-            4. Add more detail on the impðact of those sub-problems if needed in order to explain the sub problem better.
-            5. Never add any solutions just stick to explaining the problems.
-            6. Never add any tasks or actions just explain the problems.
-            7. Never output in markdown format.
-            8. Your approach to this task should be systematic and detailed and you think step-by-step.`
+            1. Refine the given sub-problems and present them as a JSON array.
+            2. Maintain the JSON output format strictly for the sub-problems.
+            3. Use your extensive knowledge to enrich the details about the sub-problems.
+            4. Elaborate on the impact of these sub-problems, if necessary, to provide better context.
+            5. Refrain from providing solutions; your focus should be on explicating the problems.
+            6. Avoid suggesting tasks or actions; your task is to explain the problems.
+            7. Do not provide output in markdown format.
+            8. Adopt a systematic and detailed approach for this task and proceed in a step-by-step manner.`
       ),
       new HumanChatMessage(
         `
-           Problem statement:
+           Problem Statement:
            "${this.memory.problemStatement.description}"
 
-           Previous Sub Problems JSON Output To Review and Refine:
+           Review and Refine the Following Sub-Problems (in JSON format):
            ${JSON.stringify(results, null, 2)}
 
-           New Refined JSON Output:
+           Refined Sub-Problems (in JSON format):
          `
       ),
     ];
@@ -48,16 +46,15 @@ export class CreateSubProblemsProcessor extends BaseProcessor {
     const messages: BaseChatMessage[] = [
       new SystemChatMessage(
         `
-            You are an AI expert in analyzing problem statements and generating sub-problems.
-            Adhere to the following guidelines:
+            As an AI expert, you are tasked with the analysis of problem statements and generation of sub-problems. Please adhere to the following guidelines:
 
-            1. Your task is to create 21 succinct sub-problems for any given problem statement and present them as a JSON array.
-            2. You are programmed to strictly output the sub-problems in this format and nothing else.
-            3. Never output anything else than the JSON array.
-            4. Never output in markdown format.
-            5. Your approach to this task should be systematic and detailed and you think step-by-step.
+            1. Create 21 clear and concise sub-problems for any given problem statement and present them as a JSON array.
+            2. Ensure to strictly adhere to the JSON format for outputting the sub-problems.
+            3. The output should exclusively consist of the JSON array.
+            4. Refrain from providing output in markdown format.
+            5. Approach this task in a systematic and detailed manner, proceeding step-by-step.
 
-            Examples:
+            Below are some examples for your reference:
 
             Problem Statement:
             "Increasing obesity rates in a mid-sized urban population"
@@ -195,14 +192,15 @@ export class CreateSubProblemsProcessor extends BaseProcessor {
                 "title": "Budget Constraints",
                 "description": " Mid-sized hospitals often face budget constraints. Investing in new systems involves considering the cost of the system, maintenance, updates, training, and potential cost of system failures or violations, posing a significant financial challenge."
               }
-            ]`
+            ]
+            `
       ),
       new HumanChatMessage(
         `
-           Problem statement:
+           Problem Statement:
            "${this.memory.problemStatement.description}"
 
-           JSON Output:
+           Sub-Problems (in JSON format):
          `
       ),
     ];

@@ -26,15 +26,14 @@ export class RankSubProblemsProcessor extends BasePairwiseRankingsProcessor {
     const messages = [
       new SystemChatMessage(
         `
-        You are an expert trained to analyse complex problem statements and sub-problems to rank affected entities.
+        You are an AI expert specializing in analyzing complex problem statements, sub-problems, and ranking affected entities. Please adhere to the following guidelines:
 
-        Adhere to the following guidelines:
-        1. You will see a problem statement with a sub problem.
-        2. You will see two entities and how they are affected. One is marked as "Entity One" and the other as "Entity Two".
-        3. You will analyse, compare and rank those two entities and vote on which one is more relevant and important as an affected entity.
-        4. Use negative or positive effects as a consideration in your ranking, if available.
-        5. You will only output the winning item as: "One" or "Two" without an explanation.
-        6. Ensure a methodical, step-by-step approach.        `
+        1. You will be provided with a problem statement followed by a sub-problem.
+        2. Two entities affected by the sub-problem will be given, labelled as "Entity One" and "Entity Two".
+        3. Analyze and compare the entities, and then decide which one is more significantly impacted.
+        4. Consider both positive and negative impacts, if available, while ranking.
+        5. Output your decision as either "One" or "Two", indicating the more affected entity. No need for any explanations.
+        6. Ensure to use a systematic and step-by-step approach.`
       ),
       new HumanChatMessage(
         `
@@ -42,7 +41,7 @@ export class RankSubProblemsProcessor extends BasePairwiseRankingsProcessor {
 
          ${this.renderSubProblem(this.currentSubProblemIndex!)}
 
-         Entities to vote on:
+         Entities for Ranking:
 
          Entity One:
          ${itemOneTitle}
@@ -52,10 +51,11 @@ export class RankSubProblemsProcessor extends BasePairwiseRankingsProcessor {
          ${itemTwoTitle}
          ${itemTwoEffects}
 
-         The winning entity is:
+         The More Affected Entity Is:
        `
       ),
     ];
+
 
     return await this.getResultsFromLLM(
       "rank-entities",
