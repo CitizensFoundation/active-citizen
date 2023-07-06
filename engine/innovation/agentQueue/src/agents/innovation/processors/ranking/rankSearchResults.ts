@@ -54,7 +54,7 @@ export class RankSearchResultsProcessor extends BasePairwiseRankingsProcessor {
     const messages = [
       new SystemChatMessage(
         `
-        You are an expert trained to analyse complex problem statements and sub problems to rank search results to search for solutions for those problems.
+        You are an expert trained to rank search results that will be used to search for solutions to complex problem statements and sub problems.
 
         Adhere to the following guidelines:
         1. You will see the problem statement or problem statement with one sub-problem possibly with entities and how the problems affect them in negative or positive ways.

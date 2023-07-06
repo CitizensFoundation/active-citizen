@@ -64,7 +64,7 @@ export class WebPageVectorStore extends Base {
         .get()
         .withClassName("WebPage")
         .withNearText({ concepts: [query] })
-        .withLimit(IEngineConstants.limits.webPageVectorResultsForNewIdeas)
+        .withLimit(IEngineConstants.limits.webPageVectorResultsForNewSolutions)
         .withWhere({
           operator: "And",
           operands: where,

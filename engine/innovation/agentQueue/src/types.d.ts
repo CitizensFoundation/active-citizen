@@ -116,7 +116,7 @@ interface IEngineAffectedEntity {
   searchResults?: IEngineSearchResults;
 }
 
-interface IEngineIdeaAffectedEntity extends IEngineAffectedEntityBase {
+interface IEngineSolutionAffectedEntity extends IEngineAffectedEntityBase {
   positiveEffects?: string[];
   negativeEffects?: string[];
   positiveScore: number;
@@ -128,7 +128,7 @@ interface IEngineSolution {
   title: string;
   description: string;
   howCanSolutionHelp: string;
-  affectedEntities?: IEngineIdeaAffectedEntity[];
+  affectedEntities?: IEngineSolutionAffectedEntity[];
 }
 
 interface IEEngineSearchResultPage {
@@ -151,10 +151,10 @@ type IEngineStageTypes =
   | "rank-search-queries"
   | "rank-sub-problems"
   | "rank-entities"
-  | "rank-ideas"
+  | "rank-solutions"
   | "web-search"
   | "web-get-pages"
-  | "create-seed-ideas"
+  | "create-seed-solutions"
   | "parse"
   | "save"
   | "done";

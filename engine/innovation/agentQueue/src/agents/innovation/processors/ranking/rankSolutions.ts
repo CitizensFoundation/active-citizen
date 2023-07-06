@@ -4,7 +4,7 @@ import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
 import { IEngineConstants } from "../../../../constants.js";
 import { BasePairwiseRankingsProcessor } from "./basePairwiseRanking.js";
 
-export class RankIdeasProcessor extends BasePairwiseRankingsProcessor {
+export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
   subProblemIndex = 0;
 
   async voteOnPromptPair(
@@ -25,7 +25,7 @@ export class RankIdeasProcessor extends BasePairwiseRankingsProcessor {
     const messages = [
       new SystemChatMessage(
         `
-        You are an expert trained to analyse complex problem statements and sub-problems solutions to those problems.
+        You are an expert trained to analyse solutions to complex problem statements and sub-problems.
 
         Adhere to the following guidelines:
         1. You will see the problem statement with two solutions to compare. One is marked as "Solution One" and the other as "Solution Two".
@@ -54,8 +54,8 @@ export class RankIdeasProcessor extends BasePairwiseRankingsProcessor {
     ];
 
     return await this.getResultsFromLLM(
-      "rank-ideas",
-      IEngineConstants.ideasRankingsModel,
+      "rank-solutions",
+      IEngineConstants.solutionsRankingsModel,
       messages,
       itemOneIndex,
       itemTwoIndex
