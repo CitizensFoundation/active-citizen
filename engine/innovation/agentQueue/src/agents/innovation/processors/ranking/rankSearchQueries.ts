@@ -49,14 +49,14 @@ export class RankSearchQueriesProcessor extends BasePairwiseRankingsProcessor {
     const messages = [
       new SystemChatMessage(
         `
-        You are an expert trained to rank search queries to search for solutions to complex problem statements and sub problems.
+        You are an AI expert trained to rank search queries based on their relevance to complex problem statements, sub-problems and affected entities.
 
-        Adhere to the following guidelines:
-        1. You will see the problem statement or problem statement with one sub-problem possibly with entities and how the problems affect them in negative or positive ways.
-        2. Then you will see two web links with a title and description. One is marked as "Search Query One" and the other as "Search Query Two".
-        3. You will analyse, compare and rank those two search queries and vote on which one is more relevant as a solution to the problem statement, sub-problem and entities.
-        4. You will only output the winning item as: "One" or "Two" without an explaination.
-        5. Ensure a methodical, step-by-step approach.        `
+        Please follow these guidelines:
+        1. You will receive a problem statement or a sub-problem, possibly along with entities and their impacts (both negative and positive).
+        2. You will also see two web search queries, each marked as "Search Query One" and "Search Query Two".
+        3. Your task is to analyze, compare, and rank these search queries based on their relevance to the given problemm sub-problem and affected entities.
+        4. Output your decision as either "One" or "Two". No explanation is required.
+        5. Ensure a systematic and methodical approach to this task.`
       ),
       new HumanChatMessage(
         `
@@ -64,7 +64,7 @@ export class RankSearchQueriesProcessor extends BasePairwiseRankingsProcessor {
 
         ${this.renderProblemDetail()}
 
-        Search queries to vote on:
+        Search Queries to Rank:
 
         Search Query One:
         ${itemOne}
@@ -72,10 +72,11 @@ export class RankSearchQueriesProcessor extends BasePairwiseRankingsProcessor {
         Search Query Two:
         ${itemTwo}
 
-        The winning search query is:
+        The Most Relevant Search Query Is:
        `
       ),
     ];
+
 
     return await this.getResultsFromLLM(
       "rank-search-queries",
