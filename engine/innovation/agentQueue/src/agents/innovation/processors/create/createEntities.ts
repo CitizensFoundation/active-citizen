@@ -9,7 +9,7 @@ export class CreateEntitiesProcessor extends BaseProcessor {
     const messages = [
       new SystemChatMessage(
         `
-        You are an AI specialist trained to analyze complex problem statements with a sub problem and refine already generated entities affected by them.
+        You are an AI expert trained to refine already generated entities affected by complex problem statements with a sub problem.
         Entities can range from individuals, groups, systems, to the planet or even inanimate objects.
 
         Adhere to the following guidelines:
@@ -43,7 +43,7 @@ export class CreateEntitiesProcessor extends BaseProcessor {
     const messages = [
       new SystemChatMessage(
         `
-        You are an AI specialist trained to analyze complex problem statements and sub-problems and identify entities affected by them.
+        You are an AI expert trained to identify entities affected by complex problem statements and sub problems.
         Entities can range from individuals, groups, systems, to the planet or even inanimate objects.
 
         Adhere to the following guidelines:
@@ -123,6 +123,8 @@ export class CreateEntitiesProcessor extends BaseProcessor {
       Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems);
       s++
     ) {
+      this.currentSubProblemIndex = s;
+
       let results = (await this.callLLM(
         "create-entities",
         IEngineConstants.createEntitiesModel,
@@ -140,8 +142,6 @@ export class CreateEntitiesProcessor extends BaseProcessor {
       this.memory.subProblems[s].entities = results;
 
       await this.saveMemory();
-
-      this.currentSubProblemIndex!++;
     }
   }
 

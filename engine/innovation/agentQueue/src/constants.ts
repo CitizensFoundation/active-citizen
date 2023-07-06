@@ -127,6 +127,10 @@ export class IEngineConstants {
 
   static maxTopSearchQueriesForSolutionCreation = 3;
 
+  static maxProsConsUsedForRanking = 3;
+
+  static maxNumberGeneratedProsConsForSolution = 21;
+
   static numberOfSearchTypes = 4;
 
   static chances = {

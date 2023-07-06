@@ -30,9 +30,9 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
       ),
       new HumanChatMessage(
         `
-         ${this.renderProblemStatement()}
+         ${this.renderPromblemsWithIndexAndEntities(this.subProblemIndex)}
 
-         Solutions to vote on:
+         Solutions to vote on
 
          Solution One:
          ----------------------------------------
@@ -46,10 +46,16 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
          ${solutionOne.mainObstacleToSolutionAdoption}
 
          Here are the main pros for Solution One:
-         ${this.getTopPros(solutionOne.pros!.slice(0, IEngineConstants.maxProsConsUsed))}
+         ${solutionOne.pros!.slice(
+           0,
+           IEngineConstants.maxProsConsUsedForRanking
+         )}
 
          Here are the main cons for Solution One:
-         ${this.getTopCons(solutionOne)}
+         ${solutionOne.cons!.slice(
+           0,
+           IEngineConstants.maxProsConsUsedForRanking
+         )}
 
          Solution Two:
          ----------------------------------------
@@ -63,10 +69,16 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
          ${solutionTwo.mainObstacleToSolutionAdoption}
 
          Here are the main pros for Solution Two:
-         ${this.getTopPros(solutionTwo)}
+         ${solutionTwo.pros!.slice(
+           0,
+           IEngineConstants.maxProsConsUsedForRanking
+         )}
 
          Here are the main cons for Solution Two:
-         ${this.getTopCons(solutionTwo)}
+         ${solutionTwo.cons!.slice(
+           0,
+           IEngineConstants.maxProsConsUsedForRanking
+         )}
 
          The winning solution is:
        `
@@ -82,9 +94,8 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
     );
   }
 
-
- async process() {
-    this.logger.info("Rank Sub Problems Processor");
+  async process() {
+    this.logger.info("Rank Solutions Processor");
     super.process();
 
     this.chat = new ChatOpenAI({
@@ -94,13 +105,29 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
       verbose: IEngineConstants.subProblemsRankingsModel.verbose,
     });
 
-    this.setupRankingPrompts(this.memory.subProblems);
-    await this.performPairwiseRanking();
+    for (
+      let s = 0;
+      s <
+      Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems);
+      s++
+    ) {
 
-    this.logger.debug(`Sub problems before ranking: ${JSON.stringify(this.memory.subProblems)}`);
-    this.memory.subProblems = this.getOrderedListOfItems() as IEngineSubProblem[];
-    this.logger.debug(`Sub problems after ranking: ${JSON.stringify(this.memory.subProblems)}`);
+      this.subProblemIndex = s;
 
-    await this.saveMemory();
+      this.setupRankingPrompts(this.memory.subProblems[s].solutions!.seed);
+      await this.performPairwiseRanking();
+
+      this.logger.debug(
+        `Solutions before ranking: ${JSON.stringify(this.memory.subProblems[s].solutions!.seed)}`
+      );
+      this.memory.subProblems[s].solutions!.seed =
+        this.getOrderedListOfItems() as IEngineSolution[];
+      this.logger.debug(
+        `Solutions after ranking: ${JSON.stringify(this.memory.subProblems[s].solutions!.seed)}`
+      );
+
+      await this.saveMemory();
+
+    }
   }
 }

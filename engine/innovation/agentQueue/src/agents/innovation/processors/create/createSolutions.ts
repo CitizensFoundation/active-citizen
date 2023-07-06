@@ -246,7 +246,9 @@ export class CreateSolutionsProcessor extends BaseProcessor {
 
     let selectedQuery: string;
 
-    if (random < IEngineConstants.chances.useMainProblemSearchQueriesNewSolutions) {
+    if (
+      random < IEngineConstants.chances.useMainProblemSearchQueriesNewSolutions
+    ) {
       selectedQuery = problemStatementQueries[type];
     } else if (
       random <
@@ -394,7 +396,9 @@ export class CreateSolutionsProcessor extends BaseProcessor {
 
     const random = Math.random();
 
-    if (random < IEngineConstants.chances.useMainProblemVectorSearchNewSolutions) {
+    if (
+      random < IEngineConstants.chances.useMainProblemVectorSearchNewSolutions
+    ) {
       rawSearchResults = await this.webPageVectorStore.searchWebPages(
         searchQuery,
         this.memory.groupId,
@@ -435,7 +439,8 @@ export class CreateSolutionsProcessor extends BaseProcessor {
     const currentTokens = tokenCountData.totalCount;
     const tokensLeft =
       IEngineConstants.createSeedSolutionsModel.tokenLimit -
-      (currentTokens + IEngineConstants.createSeedSolutionsModel.maxOutputTokens);
+      (currentTokens +
+        IEngineConstants.createSeedSolutionsModel.maxOutputTokens);
     const tokensLeftForType = Math.floor(
       tokensLeft / IEngineConstants.numberOfSearchTypes
     );
