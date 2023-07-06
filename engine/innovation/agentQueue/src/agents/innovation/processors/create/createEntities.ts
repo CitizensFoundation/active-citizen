@@ -9,18 +9,17 @@ export class CreateEntitiesProcessor extends BaseProcessor {
     const messages = [
       new SystemChatMessage(
         `
-        You are an AI expert trained to refine already generated entities affected by complex problem statements with a sub problem.
-        Entities can range from individuals, groups, systems, to the planet or even inanimate objects.
+        As an AI expert, you're tasked with refining entities affected by complex problem statements and subproblems. Entities can include individuals, groups, systems, the planet, or even inanimate objects.
 
-        Adhere to the following guidelines:
+        Please follow these guidelines:
 
-        1. Your task is to refine entities and the negative and positive effects in relation to the problem statement and sub problem.
-        2. Ensure entity names are short, concise, consistent, and succinct.
-        3. Restrict positive and negative effects to the effects on the entity, excluding solution suggestions. It should be a brief two to four sentence analysis of how the sub problem affects the entity.
-        4. Never output in markdown format.
-        5. Expand on the reasons for the negative and positive effects if needed to make it more clear.
-        6. Do the entities include the most important negative and positive effects? If not add those.
-        7. Think step by step.
+        1. Refine entities and their positive and negative effects in relation to the problem statement and subproblem.
+        2. Ensure entity names are concise and consistent.
+        3. Limit the description of positive and negative effects to how the subproblem affects the entity, without suggesting solutions. This should be a brief three to four sentence analysis.
+        4. Use plain text only. Avoid markdown formatting.
+        5. Elaborate on the reasons behind the negative and positive effects to enhance clarity.
+        6. If important negative and positive effects are missing from the entities, please add them.
+        7. Maintain a methodical, step-by-step approach.
         `
       ),
       new HumanChatMessage(
@@ -29,7 +28,7 @@ export class CreateEntitiesProcessor extends BaseProcessor {
 
          ${this.renderSubProblem(this.currentSubProblemIndex!)}
 
-         Previous Entities JSON Output To Review and Refine:
+         Previous Entities JSON Output for Review and Refinement:
          ${JSON.stringify(results, null, 2)}
 
          New Refined Entities JSON Output:
@@ -43,21 +42,20 @@ export class CreateEntitiesProcessor extends BaseProcessor {
     const messages = [
       new SystemChatMessage(
         `
-        You are an AI expert trained to identify entities affected by complex problem statements and sub problems.
-        Entities can range from individuals, groups, systems, to the planet or even inanimate objects.
+        As an AI expert, your task is to identify entities affected by complex problem statements and subproblems. Entities can range from individuals, groups, systems, to the planet, or even inanimate objects.
 
-        Adhere to the following guidelines:
+        Please adhere to the following guidelines:
 
-        1. Always generate and output up to ${IEngineConstants.maxNumberGeneratedOfEntities} entities that are affected.
-        2. Output all entities impacted by the main problem and its sub-problem.
-        3. Output all direct negative effects, and positive effects, if any, but do not include any solutions or suggestions for solutions. You can output more than one effect in the array.
-        4. Ensure entity names are short, concise, consistent, and succinct.
-        5. Avoid coupling two entities with 'and'
-        6. Restrict positive and negative effects to the effects on the entity, excluding solution suggestions. It should be a brief one to three sentence analysis of how the sub-problem influences the entity.
-        7. Include Earths climate and ecology, separately, except if no reasons for them.
-        8. Never output in markdown format.
-        9. Review the problem statement and sub-problem and provide an output in the following format: [ { name: name, negativeEffects: [ reason ], positiveEffects: [ reason ] } ].
-        10. Ensure a methodical, step-by-step approach to capture all affected entities.
+        1. Generate and output up to ${IEngineConstants.maxNumberGeneratedOfEntities} affected entities.
+        2. Identify all entities impacted by the main problem and its subproblems.
+        3. Highlight all direct negative effects, and any positive effects, without suggesting solutions. Multiple effects may be listed in the array.
+        4. Use short, concise, and consistent names for entities.
+        5. Avoid combining two entities with 'and'.
+        6. Limit positive and negative effects to a brief three to four sentence analysis of how the subproblem affects the entity, excluding solution suggestions.
+        7. Include Earth's climate and ecology as separate entities, unless irrelevant.
+        8. Use JSON output only. Avoid markdown formatting.
+        9. After reviewing the problem statement and subproblem, output in this format: [ { name: name, negativeEffects: [ reason ], positiveEffects: [ reason ] } ].
+        10. Follow a methodical, step-by-step approach to identify all affected entities.
 
         Example:
 
@@ -111,6 +109,7 @@ export class CreateEntitiesProcessor extends BaseProcessor {
 
     return messages;
   }
+
 
   async createEntities() {
     //TODO: Human review and improvements of this partly GPT-4 generated prompt
