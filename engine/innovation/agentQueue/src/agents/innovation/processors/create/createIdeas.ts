@@ -3,6 +3,7 @@ import { ChatOpenAI } from "langchain/chat_models/openai";
 import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
 
 import { IEngineConstants } from "../../../../constants.js";
+import { text } from "stream/consumers";
 
 export class CreateIdeasProcessor extends BaseProcessor {
   async createIdeas(
@@ -79,78 +80,158 @@ export class CreateIdeasProcessor extends BaseProcessor {
     return ideas;
   }
 
-  getSearchQueries(subProblemArrayIndex: number) {
-    const subSearchQuery = this.memory.searchQueries.find((query) => {
-      return query.subProblemIndex == subProblemArrayIndex + 1;
-    });
+  randomSearchQueryIndex(subProblemIndex: number | undefined) {
+    const randomIndex = Math.min(
+      Math.floor(
+        Math.random() *
+          (IEngineConstants.maxTopSearchQueriesForIdeaCreation + 1)
+      ),
+      subProblemIndex
+        ? this.memory.subProblems[subProblemIndex].searchQueries.general
+            .length - 1
+        : 2
+    );
 
-    const generalSubSearchQueryText = subSearchQuery
-      ? subSearchQuery.generalSearchQuery
-      : undefined;
-    const scientificSubSearchQueryText = subSearchQuery
-      ? subSearchQuery.scientificSearchQuery
-      : undefined;
-
-    const problemSearchQuery = this.memory.searchQueries.find((query) => {
-      return query.subProblemIndex == 0;
-    });
-
-    const generalProblemSearchQueryText = problemSearchQuery
-      ? problemSearchQuery.generalSearchQuery
-      : undefined;
-    const scientificProblemSearchQueryText = problemSearchQuery
-      ? problemSearchQuery.scientificSearchQuery
-      : undefined;
-
-    const otherSubProblemIndexes = [];
-
-    for (
-      let i = 0;
-      i < this.memory.problemStatement.selectedSubProblems.length;
-      i++
+    // 50% chance of not using the first search query
+    if (
+      Math.random() <
+      IEngineConstants.chances.notUsingFirstSearchQueryForNewIdeas
     ) {
-      if (i != subProblemArrayIndex) {
-        otherSubProblemIndexes.push(i + 1);
-      }
-    }
-
-    // TODO: Add 10% chance of other sub-problem search query
-
-    let selectedScientificQueryText;
-
-    if (Math.random() < 0.3 && scientificProblemSearchQueryText) {
-      selectedScientificQueryText = scientificProblemSearchQueryText;
+      return randomIndex;
     } else {
-      selectedScientificQueryText = scientificSubSearchQueryText;
-    }
-
-    let selectedGeneralQueryText;
-
-    if (Math.random() < 0.3 && generalProblemSearchQueryText) {
-      selectedGeneralQueryText = generalProblemSearchQueryText;
-    } else {
-      selectedGeneralQueryText = generalSubSearchQueryText;
+      return 0;
     }
   }
 
-  async getTextContext(subProblemArrayIndex: number) {
-    const problemStatment = this.memory.problemStatement.description;
-    const subProblem =
-      this.memory.problemStatement.selectedSubProblems[subProblemArrayIndex]
-        .description;
+  getAllTypeQueries(
+    searchQueries: IEngineSearchQueries,
+    subProblemIndex: number | undefined
+  ) {
+    return {
+      general: searchQueries.general[this.randomSearchQueryIndex(subProblemIndex)],
+      scientific: searchQueries.scientific[this.randomSearchQueryIndex(subProblemIndex)],
+      openData: searchQueries.openData[this.randomSearchQueryIndex(subProblemIndex)],
+      news: searchQueries.news[this.randomSearchQueryIndex(subProblemIndex)]
+    };
+  }
 
-    return {}
+  getRandomSearchQueryForType(
+    type: IEngineWebPageTypes,
+    problemStatementQueries: IEngineSearchQuery,
+    subProblemQueries: IEngineSearchQuery,
+    otherSubProblemQueries: IEngineSearchQuery
+  ) {
+    let random = Math.random();
+
+    let selectedQuery: string;
+
+    if (random < IEngineConstants.chances.useMainProblemSearchQueriesNewIdeas) {
+      selectedQuery = problemStatementQueries[type];
+    } else if (
+      random <
+      IEngineConstants.chances.useOtherSubProblemSearchQueriesNewIdeas +
+        IEngineConstants.chances.useMainProblemSearchQueriesNewIdeas
+    ) {
+      selectedQuery = otherSubProblemQueries[type];
+    } else {
+      selectedQuery = subProblemQueries[type];
+    }
+
+    return selectedQuery;
+  }
+
+  getSearchQueries(subProblemIndex: number) {
+    const otherSubProblemIndexes = [];
+
+    for (let i = 0; i < this.memory.subProblems.length; i++) {
+      if (i != subProblemIndex) {
+        otherSubProblemIndexes.push(i);
+      }
+    }
+
+    const randomSubProblemIndex =
+      otherSubProblemIndexes[
+        Math.floor(Math.random() * otherSubProblemIndexes.length)
+      ];
+
+    const problemStatementQueries = this.getAllTypeQueries(
+      this.memory.problemStatement.searchQueries,
+      undefined
+    );
+
+    const subProblemQueries = this.getAllTypeQueries(
+      this.memory.subProblems[subProblemIndex].searchQueries,
+      subProblemIndex
+    );
+
+    const otherSubProblemQueries = this.getAllTypeQueries(
+      this.memory.subProblems[randomSubProblemIndex].searchQueries,
+      randomSubProblemIndex
+    );
+
+    //TODO: Refactor the types to be an array ["scientific", "general", ...]
+    let selectedScientificQuery = this.getRandomSearchQueryForType(
+      "scientific",
+      problemStatementQueries,
+      subProblemQueries,
+      otherSubProblemQueries
+    );
+
+    let selectedGeneralQuery = this.getRandomSearchQueryForType(
+      "general",
+      problemStatementQueries,
+      subProblemQueries,
+      otherSubProblemQueries
+    );
+
+    let selectedOpenDataQuery = this.getRandomSearchQueryForType(
+      "openData",
+      problemStatementQueries,
+      subProblemQueries,
+      otherSubProblemQueries
+    );
+
+    let selectedNewsQuery = this.getRandomSearchQueryForType(
+      "news",
+      problemStatementQueries,
+      subProblemQueries,
+      otherSubProblemQueries
+    );
+
+    return {
+      selectedScientificQuery,
+      selectedGeneralQuery,
+      selectedOpenDataQuery,
+      selectedNewsQuery,
+    };
+  }
+
+  async getTextContext(subProblemIndex: number) {
+    const selectedSearchQueries = this.getSearchQueries(subProblemIndex);
+
+    return {
+      general: await this.getSearchQueryTextContext(selectedSearchQueries.selectedGeneralQuery, "general"),
+      scientific: await this.getSearchQueryTextContext(selectedSearchQueries.selectedScientificQuery, "scientific"),
+      openData: await this.getSearchQueryTextContext(selectedSearchQueries.selectedOpenDataQuery, "openData"),
+      news: await this.getSearchQueryTextContext(selectedSearchQueries.selectedNewsQuery, "news"),
+    };
+  }
+
+  async getSearchQueryTextContext(searchQuery: string, type: IEngineWebPageTypes) {
+    const searchResults = await this.webSearch(searchQuery, type);
+    return searchResults.pages.map((page) => page.description).join("\n");
   }
 
   async createAllIdeas() {
     for (
-      let subProblemArrayIndex = 0;
-      subProblemArrayIndex <
+      let subProblemIndex = 0;
+      subProblemIndex <
       Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems);
-      subProblemArrayIndex++
+      subProblemIndex++
     ) {
       let ideas: IEngineSolutionIdea[] = [];
 
+      // Create 28 ideas 7*4
       for (let i = 0; i < 4; i++) {
         let alreadyCreatedSolutions;
 
@@ -160,23 +241,20 @@ export class CreateIdeasProcessor extends BaseProcessor {
             .join("\n");
         }
 
-        const {
-          generalTextContext,
-          scientificTextContext,
-          openDataTextContext,
-          newsTextContext,
-        } = await this.getTextContext(subProblemArrayIndex);
+        const textContexts = await this.getTextContext(subProblemIndex);
 
         const newIdeas = await this.createIdeas(
           i,
-          generalTextContext,
-          scientificTextContext,
-          openDataTextContext,
-          newsTextContext,
+          textContexts.general,
+          textContexts.scientific,
+          textContexts.openData,
+          textContexts.news,
           alreadyCreatedSolutions
         );
         ideas = ideas.concat(newIdeas);
       }
+
+      await this.saveMemory();
     }
   }
 

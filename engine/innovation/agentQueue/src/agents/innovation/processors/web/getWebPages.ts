@@ -363,6 +363,10 @@ export class GetWebPagesProcessor extends BaseProcessor {
     await this.webPageVectorStore.postWebPage(textAnalysis);
   }
 
+
+  //TODO: Use arxiv API as seperate datasource, use other for non arxiv papers
+  // https://github.com/hwchase17/langchain/blob/master/langchain/document_loaders/arxiv.py
+  // https://info.arxiv.org/help/api/basics.html
   async getPdfText(response: HTTPResponse) {
     const pdfBuffer = await response.buffer();
     const loadingTask = pdfjs.getDocument({ data: pdfBuffer });

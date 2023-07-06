@@ -195,6 +195,13 @@ interface IEngineSearchQueries {
   openData: string[];
 }
 
+interface IEngineSearchQuery {
+  general: string;
+  scientific: string;
+  news: string;
+  openData: string;
+}
+
 interface IEngineSearchResults {
   pages: {
     general: SerpOrganicResult[];

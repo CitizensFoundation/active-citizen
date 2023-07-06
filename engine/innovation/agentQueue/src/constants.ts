@@ -115,6 +115,16 @@ export class IEngineConstants {
 
   static maxTopPagesToGetPerType = 3;
 
+  static maxTopSearchQueriesForIdeaCreation = 3;
+
+  static chances = {
+    useMainProblemSearchQueriesNewIdeas: 0.2,
+    useOtherSubProblemSearchQueriesNewIdeas: 0.1,
+    notUsingFirstSearchQueryForNewIdeas: 0.5,
+  }
+
+  static  = 0.5;
+
   static currentUserAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36";
 }
 
