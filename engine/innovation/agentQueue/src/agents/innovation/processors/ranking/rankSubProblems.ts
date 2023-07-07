@@ -36,7 +36,6 @@ export class RankSubProblemsProcessor extends BasePairwiseRankingsProcessor {
       ),
       new HumanChatMessage(
         `
-        Problem Statement:
         ${this.renderProblemStatement()}
 
         Sub-Problems for Consideration:

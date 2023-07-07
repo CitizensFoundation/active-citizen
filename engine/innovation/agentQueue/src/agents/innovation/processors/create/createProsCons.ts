@@ -9,15 +9,15 @@ export class CreateProsConsProcessor extends BaseProcessor {
     const messages = [
       new SystemChatMessage(
         `
-        You are an AI expert trained to refine ${prosOrCons} for solutions to a problem, its subproblems, and affected entities.
+        As an AI expert, your role is to refine the ${prosOrCons} associated with solutions to a problem, its sub-problems, and any affected entities.
 
-        Adhere to the following guidelines:
+        Please adhere to these guidelines:
 
-        1. Your task is to refine ${prosOrCons} for solutions to a problem, its subproblems, and affected entities.
-        2. The ${prosOrCons} should be concise, consistent, detailed, and succinct.
-        3. Consider the problem statement, subproblem, and affected entities, and refine the ${prosOrCons} to be more relevant.
-        4. Do not output in markdown format. Instead, use plain text.
-        5. Think step by step.
+        1. Refine ${prosOrCons} to make them concise, consistent, detailed, and succinct.
+        2. Consider the context provided by the problem statement, sub-problems, and affected entities.
+        3. Ensure the refined ${prosOrCons} are relevant and directly applicable.
+        4. Output should be in plain text, not markdown format.
+        5. Maintain a step-by-step approach in your thinking.
         `
       ),
       new HumanChatMessage(
@@ -26,37 +26,39 @@ export class CreateProsConsProcessor extends BaseProcessor {
 
          ${this.renderSubProblem(this.currentSubProblemIndex!)}
 
-         Previous ${prosOrCons} JSON Output To Review and Refine:
+         Review and Refine the Previous JSON Output of ${prosOrCons}:
          ${JSON.stringify(results, null, 2)}
 
-         New Refined ${prosOrCons} JSON Output:
+         New Refined JSON Output of ${prosOrCons}:
        `
       ),
     ];
     return messages;
   }
 
+
   async renderCreatePrompt(prosOrCons: string) {
     const messages = [
       new SystemChatMessage(
         `
-        You are an AI expert trained to create innovative and practical ${prosOrCons} for solutions to a problem, its subproblems, and affected entities.
+        As an AI expert, your role is to generate creative and practical ${prosOrCons} for solutions to a problem, its sub-problems, and any affected entities.
 
-        Adhere to the following guidelines:
+        Please adhere to these guidelines:
 
-        1. Always generate and output up to ${IEngineConstants.maxNumberGeneratedProsConsForSolution} ${prosOrCons} for solutions to a problem, its subproblems, and affected entities.
-        2. The ${prosOrCons} should be concise, consistent, detailed, and succinct.
-        3. Consider the problem statement, subproblem, and entities, and make sure the ${prosOrCons} for the solution is relevant.
-        4. Do not output in markdown format. Instead, output in plain text.
-        5. Always output the ${prosOrCons} as an array of strings in JSON format: ['${prosOrCons}1', '${prosOrCons}2', ...].
-        6. Think step by step.
+        1. Generate and output up to ${IEngineConstants.maxNumberGeneratedProsConsForSolution} ${prosOrCons}.
+        2. Ensure that each of the ${prosOrCons} is concise, consistent, detailed, and succinct.
+        3. Consider the context provided by the problem statement, sub-problems, and affected entities.
+        4. Make sure each ${prosOrCons} is directly applicable to the solution.
+        5. Output should be in plain text, not markdown format.
+        6. Format the ${prosOrCons} as an array of strings in JSON format: ['${prosOrCons}1', '${prosOrCons}2', ...].
+        7. Approach this task with step-by-step reasoning.
         `
       ),
       new HumanChatMessage(
         `
-         ${this.renderProblemsWithIndexAndEntities(this.currentSubProblemIndex!)}
+         ${this.renderPromblemsWithIndexAndEntities(this.currentSubProblemIndex!)}
 
-         ${prosOrCons} JSON Output:
+         JSON Output of ${prosOrCons}:
        `
       ),
     ];
