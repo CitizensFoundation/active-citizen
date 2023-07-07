@@ -166,7 +166,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
     openDataTextContext: string,
     newsTextContext: string,
     alreadyCreatedSolutions: string | undefined = undefined
-  ) {
+  ): Promise<IEngineSolution[]> {
     let results = await this.callLLM(
       "create-seed-solutions",
       IEngineConstants.createSeedSolutionsModel,

@@ -128,7 +128,6 @@ interface IEngineSolution {
   id: string;
   title: string;
   description: string;
-  fitness?: number;
   eloScore?: number;
   howCanSolutionHelp: string;
   mainObstacleToSolutionAdoption: string;

@@ -6,7 +6,7 @@ import { IEngineConstants } from "../../../../constants.js";
 import { CreateSolutionsProcessor } from "../create/createSolutions.js";
 
 //TODO: Pentalty for similar ideas in the ranking somehow
-
+//TODO: Track the evolution of the population with a log of parents and mutations, family tree
 export class CreatePopulationProcessor extends CreateSolutionsProcessor {
   async renderRecombinationPrompt(
     parentA: IEngineSolution,
@@ -157,12 +157,11 @@ export class CreatePopulationProcessor extends CreateSolutionsProcessor {
     }
 
     if (
-      this.memory.subProblems[subProblemIndex].solutions.populations.length >
-      0
+      this.memory.subProblems[subProblemIndex].solutions.populations.length > 0
     ) {
       return this.memory.subProblems[subProblemIndex].solutions.populations[
-        this.memory.subProblems[subProblemIndex].solutions.populations
-          .length - 1
+        this.memory.subProblems[subProblemIndex].solutions.populations.length -
+          1
       ];
     } else {
       return this.memory.subProblems[subProblemIndex].solutions.seed;
@@ -191,6 +190,7 @@ export class CreatePopulationProcessor extends CreateSolutionsProcessor {
         newPopulation.push(previousPopulation[i]);
       }
 
+      // Mutation
       let mutationCount = Math.floor(
         (POPULATION_SIZE - newPopulation.length) *
           IEngineConstants.evolution.mutationRate
@@ -204,6 +204,7 @@ export class CreatePopulationProcessor extends CreateSolutionsProcessor {
         newPopulation.push(mutant);
       }
 
+      // Crossover
       let crossoverCount = Math.floor(
         (POPULATION_SIZE - newPopulation.length) *
           IEngineConstants.evolution.crossoverPercent
@@ -224,6 +225,27 @@ export class CreatePopulationProcessor extends CreateSolutionsProcessor {
 
         newPopulation.push(offspring);
       }
+
+      // Immigration
+      let immigrationCount = Math.floor(
+        (POPULATION_SIZE - newPopulation.length) *
+          IEngineConstants.evolution.randomImmigrationPercent
+      );
+
+      if (newPopulation.length + immigrationCount > POPULATION_SIZE) {
+        immigrationCount = POPULATION_SIZE - newPopulation.length;
+      }
+
+      let newSolutions: IEngineSolution[] = [];
+
+      while (newSolutions.length < immigrationCount) {
+        newSolutions = [
+          ...newSolutions,
+          ...(await this.getNewSolutions(immigrationCount)),
+        ];
+      }
+
+      newPopulation.push(...newSolutions);
 
       this.memory.subProblems[subProblemIndex].solutions.populations.push(
         newPopulation
