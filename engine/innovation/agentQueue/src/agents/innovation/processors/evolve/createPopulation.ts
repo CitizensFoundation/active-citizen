@@ -82,9 +82,16 @@ export class CreatePopulationProcessor extends BaseProcessor {
     parentA: IEngineSolution,
     parentB: IEngineSolution
   ) {
+    this.chat = new ChatOpenAI({
+      temperature: IEngineConstants.evolutionRecombineModel.temperature,
+      maxTokens: IEngineConstants.evolutionRecombineModel.maxOutputTokens,
+      modelName: IEngineConstants.evolutionRecombineModel.name,
+      verbose: IEngineConstants.evolutionRecombineModel.verbose,
+    });
+
     return (await this.callLLM(
-      "evolve-mutate-population",
-      IEngineConstants.evolutionMutateModel,
+      "evolve-recombine-population",
+      IEngineConstants.evolutionRecombineModel,
       await this.renderRecombinationPrompt(parentA, parentB)
     )) as IEngineSolution;
   }
@@ -95,6 +102,13 @@ export class CreatePopulationProcessor extends BaseProcessor {
   }
 
   async performMutation(individual: IEngineSolution) {
+    this.chat = new ChatOpenAI({
+      temperature: IEngineConstants.evolutionMutateModel.temperature,
+      maxTokens: IEngineConstants.evolutionMutateModel.maxOutputTokens,
+      modelName: IEngineConstants.evolutionMutateModel.name,
+      verbose: IEngineConstants.evolutionMutateModel.verbose,
+    });
+
     return (await this.callLLM(
       "evolve-mutate-population",
       IEngineConstants.evolutionMutateModel,
@@ -200,13 +214,6 @@ export class CreatePopulationProcessor extends BaseProcessor {
   async process() {
     this.logger.info("Create ProsCons Processor");
     super.process();
-
-    this.chat = new ChatOpenAI({
-      temperature: IEngineConstants.createProsConsModel.temperature,
-      maxTokens: IEngineConstants.createProsConsModel.maxOutputTokens,
-      modelName: IEngineConstants.createProsConsModel.name,
-      verbose: IEngineConstants.createProsConsModel.verbose,
-    });
 
     await this.createPopulation();
   }
