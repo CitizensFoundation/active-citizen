@@ -101,16 +101,32 @@ export class CreateProsConsProcessor extends BaseProcessor {
     ) {
       this.currentSubProblemIndex = subProblemIndex;
 
+      let solutions;
+
+      if (
+        this.memory.subProblems[subProblemIndex].solutions.populations &&
+        this.memory.subProblems[subProblemIndex].solutions.populations.length >
+          0 &&
+        this.memory.subProblems[subProblemIndex].solutions.populations[0]
+          .length > 0
+      ) {
+        solutions =
+          this.memory.subProblems[subProblemIndex].solutions.populations[
+            this.memory.subProblems[subProblemIndex].solutions.populations
+              .length - 1
+          ];
+      } else {
+        solutions = this.memory.subProblems[subProblemIndex].solutions.seed;
+      }
+
       for (
         let solutionIndex = 0;
-        solutionIndex <
-        this.memory.subProblems[subProblemIndex].solutions.seed.length;
+        solutionIndex < solutions.length;
         solutionIndex++
       ) {
         this.currentSolutionIndex = solutionIndex;
 
         for (const prosOrCons of ["pros", "cons"] as const) {
-
           let results = (await this.callLLM(
             "create-pros-cons",
             IEngineConstants.createProsConsModel,
@@ -125,9 +141,24 @@ export class CreateProsConsProcessor extends BaseProcessor {
             )) as string[];
           }
 
-          this.memory.subProblems[subProblemIndex].solutions.seed[
-            solutionIndex
-          ][prosOrCons] = results;
+          if (
+            this.memory.subProblems[subProblemIndex].solutions.populations &&
+            this.memory.subProblems[subProblemIndex].solutions.populations
+              .length > 0 &&
+            this.memory.subProblems[subProblemIndex].solutions.populations[0]
+              .length > 0
+          ) {
+            solutions = this.memory.subProblems[
+              subProblemIndex
+            ].solutions.populations[
+              this.memory.subProblems[subProblemIndex].solutions.populations
+                .length - 1
+            ][solutionIndex][prosOrCons] = results;
+          } else {
+            this.memory.subProblems[subProblemIndex].solutions.seed[
+              solutionIndex
+            ][prosOrCons] = results;
+          }
 
           await this.saveMemory();
         }

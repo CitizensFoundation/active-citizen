@@ -100,10 +100,27 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
     ) {
       this.subProblemIndex = subProblemIndex;
 
+      let solutions;
+
+      if (
+        this.memory.subProblems[subProblemIndex].solutions.populations &&
+        this.memory.subProblems[subProblemIndex].solutions.populations.length >
+          0 &&
+        this.memory.subProblems[subProblemIndex].solutions.populations[0]
+          .length > 0
+      ) {
+        solutions =
+          this.memory.subProblems[subProblemIndex].solutions.populations[
+            this.memory.subProblems[subProblemIndex].solutions.populations
+              .length - 1
+          ];
+      } else {
+        solutions = this.memory.subProblems[subProblemIndex].solutions.seed;
+      }
+
       for (
         let solutionIndex = 0;
-        solutionIndex <
-        this.memory.subProblems[subProblemIndex].solutions.seed.length;
+        solutionIndex < solutions.length;
         solutionIndex++
       ) {
         this.currentSolutionIndex = solutionIndex;
@@ -111,30 +128,40 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
         for (const prosOrCons of ["pros", "cons"] as const) {
           this.currentProsOrCons = prosOrCons;
 
-          this.setupRankingPrompts(
-            this.memory.subProblems[subProblemIndex].solutions!.seed[
-              solutionIndex
-            ][prosOrCons]!
-          );
+          this.setupRankingPrompts(solutions[solutionIndex][prosOrCons]!);
           await this.performPairwiseRanking();
 
           this.logger.debug(
             `${prosOrCons} before ranking: ${JSON.stringify(
-              this.memory.subProblems[subProblemIndex].solutions!.seed[
-                solutionIndex
-              ][prosOrCons]
+              solutions[solutionIndex][prosOrCons]
             )}`
           );
-          this.memory.subProblems[subProblemIndex].solutions!.seed[solutionIndex][
-            prosOrCons
-          ] = this.getOrderedListOfItems() as string[];
-          this.logger.debug(
-            `${prosOrCons} after ranking: ${JSON.stringify(
-              this.memory.subProblems[subProblemIndex].solutions!.seed[
-                solutionIndex
-              ][prosOrCons]
-            )}`
-          );
+
+          if (
+            this.memory.subProblems[subProblemIndex].solutions.populations &&
+            this.memory.subProblems[subProblemIndex].solutions.populations
+              .length > 0 &&
+            this.memory.subProblems[subProblemIndex].solutions.populations[0]
+              .length > 0
+          ) {
+            this.memory.subProblems[subProblemIndex].solutions.populations[
+              this.memory.subProblems[subProblemIndex].solutions.populations
+                .length - 1
+            ][solutionIndex][prosOrCons] =
+              this.getOrderedListOfItems() as string[];
+          } else {
+            this.memory.subProblems[subProblemIndex].solutions.seed[
+              solutionIndex
+            ][prosOrCons] = this.getOrderedListOfItems() as string[];
+            this.logger.debug(
+              `${prosOrCons} after ranking: ${JSON.stringify(
+                this.memory.subProblems[subProblemIndex].solutions.seed[
+                  solutionIndex
+                ][prosOrCons]
+              )}`
+            );
+          }
+
 
           await this.saveMemory();
         }

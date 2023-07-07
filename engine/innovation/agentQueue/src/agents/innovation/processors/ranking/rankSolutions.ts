@@ -42,13 +42,21 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
         Description: ${solutionOne.description}
 
         How Solution One Can Help: ${solutionOne.howCanSolutionHelp}
-        Main Obstacles to Solution One Adoption: ${solutionOne.mainObstacleToSolutionAdoption}
+        Main Obstacles to Solution One Adoption: ${
+          solutionOne.mainObstacleToSolutionAdoption
+        }
 
         Pros of Solution One:
-        ${solutionOne.pros!.slice(0, IEngineConstants.maxProsConsUsedForRanking)}
+        ${solutionOne.pros!.slice(
+          0,
+          IEngineConstants.maxProsConsUsedForRanking
+        )}
 
         Cons of Solution One:
-        ${solutionOne.cons!.slice(0, IEngineConstants.maxProsConsUsedForRanking)}
+        ${solutionOne.cons!.slice(
+          0,
+          IEngineConstants.maxProsConsUsedForRanking
+        )}
 
         Solution Two:
         ----------------------------------------
@@ -56,13 +64,21 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
         Description: ${solutionTwo.description}
 
         How Solution Two Can Help: ${solutionTwo.howCanSolutionHelp}
-        Main Obstacles to Solution Two Adoption: ${solutionTwo.mainObstacleToSolutionAdoption}
+        Main Obstacles to Solution Two Adoption: ${
+          solutionTwo.mainObstacleToSolutionAdoption
+        }
 
         Pros of Solution Two:
-        ${solutionTwo.pros!.slice(0, IEngineConstants.maxProsConsUsedForRanking)}
+        ${solutionTwo.pros!.slice(
+          0,
+          IEngineConstants.maxProsConsUsedForRanking
+        )}
 
         Cons of Solution Two:
-        ${solutionTwo.cons!.slice(0, IEngineConstants.maxProsConsUsedForRanking)}
+        ${solutionTwo.cons!.slice(
+          0,
+          IEngineConstants.maxProsConsUsedForRanking
+        )}
 
         The Most Effective Solution Is:
         `
@@ -95,23 +111,56 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
       Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems);
       s++
     ) {
-
       this.subProblemIndex = s;
 
-      this.setupRankingPrompts(this.memory.subProblems[s].solutions!.seed);
-      await this.performPairwiseRanking();
+      if (
+        this.memory.subProblems[s].solutions.populations &&
+        this.memory.subProblems[s].solutions.populations.length > 0 &&
+        this.memory.subProblems[s].solutions.populations[0].length > 0
+      ) {
+        this.setupRankingPrompts(
+          this.memory.subProblems[s].solutions.populations[
+            this.memory.subProblems[s].solutions.populations.length - 1
+          ]
+        );
+        await this.performPairwiseRanking();
 
-      this.logger.debug(
-        `Solutions before ranking: ${JSON.stringify(this.memory.subProblems[s].solutions!.seed)}`
-      );
-      this.memory.subProblems[s].solutions!.seed =
-        this.getOrderedListOfItems() as IEngineSolution[];
-      this.logger.debug(
-        `Solutions after ranking: ${JSON.stringify(this.memory.subProblems[s].solutions!.seed)}`
-      );
+        this.logger.debug(
+          `Population Solutions before ranking: ${JSON.stringify(
+            this.memory.subProblems[s].solutions.populations[
+              this.memory.subProblems[s].solutions.populations.length - 1
+            ]
+          )}`
+        );
+        this.memory.subProblems[s].solutions.populations[
+          this.memory.subProblems[s].solutions.populations.length - 1
+        ] = this.getOrderedListOfItems() as IEngineSolution[];
+        this.logger.debug(
+          `Popuplation Solutions after ranking: ${JSON.stringify(
+            this.memory.subProblems[s].solutions.populations[
+              this.memory.subProblems[s].solutions.populations.length - 1
+            ]
+          )}`
+        );
+      } else {
+        this.setupRankingPrompts(this.memory.subProblems[s].solutions!.seed);
+        await this.performPairwiseRanking();
+
+        this.logger.debug(
+          `Seed Solutions before ranking: ${JSON.stringify(
+            this.memory.subProblems[s].solutions!.seed
+          )}`
+        );
+        this.memory.subProblems[s].solutions!.seed =
+          this.getOrderedListOfItems() as IEngineSolution[];
+        this.logger.debug(
+          `Seed Solutions after ranking: ${JSON.stringify(
+            this.memory.subProblems[s].solutions!.seed
+          )}`
+        );
+      }
 
       await this.saveMemory();
-
     }
   }
 }

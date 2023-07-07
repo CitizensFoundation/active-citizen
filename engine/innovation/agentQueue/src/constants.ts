@@ -197,10 +197,13 @@ export class IEngineConstants {
   static evolution = {
     populationSize: 50,
     useEliteForSeedPercent: 0.3,
+
+    // Population split
     keepElitePercent: 0.1,
     randomImmigrationPercent: 0.1,
-    mutationOffspringPercent: 0.2,
+    mutationOffspringPercent: 0.3,
     crossoverPercent: 0.5,
+
     mutationRate: 0.1,
     mutationPromptChangesRate: 'medium' as mutationRates,
     selectParentTournamentSize: 7
