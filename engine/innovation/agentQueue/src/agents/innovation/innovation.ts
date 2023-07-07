@@ -16,22 +16,38 @@ export class AgentInnovation extends BaseAgent {
       currentStage: "create-sub-problems",
       stages: {
         "create-sub-problems": {},
+
         "rank-sub-problems": {},
+
         "create-entities": {},
+
         "rank-entities": {},
+
         "create-search-queries": {},
+
         "rank-search-queries": {},
-        "create-seed-solutions": {},
-        "create-pros-cons": {},
-        "rank-pros-cons": {},
-        "rank-solutions": {},
-        "evolve-create-population": {},
-        "evolve-mutate-population": {},
-        "evolve-recombine-population": {},
-        "evolve-rank-population": {},
+
         "web-search": {},
+
         "rank-search-results": {},
+
         "web-get-pages": {},
+
+        "create-seed-solutions": {},
+
+        "create-pros-cons": {},
+
+        "rank-pros-cons": {},
+
+        "rank-solutions": {},
+
+        "evolve-create-population": {},
+
+        "evolve-mutate-population": {},
+
+        "evolve-recombine-population": {},
+
+        "evolve-rank-population": {},
         "parse": {},
         "save": {},
         "done": {}
