@@ -148,7 +148,7 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
     }
   }
 
-  getOrderedListOfItems() {
+  getOrderedListOfItems(returnEloRatings: boolean = false) {
     const orderedItems = this.allItems!.map((item, index) => {
       return {
         item,
@@ -165,7 +165,11 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
       items.push(orderedItems[i].item);
     }
 
-    return items;
+    if (returnEloRatings) {
+      return orderedItems;
+    } else {
+      return items;
+    }
   }
 
   async process() {
