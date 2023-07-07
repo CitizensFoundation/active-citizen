@@ -10,7 +10,10 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
   currentProsOrCons: "pros" | "cons" | undefined;
 
   renderCurrentSolution() {
-    const solution = this.memory.subProblems[this.currentSubProblemIndex!].solutions.seed[this.currentSolutionIndex!];
+    const solution =
+      this.memory.subProblems[this.currentSubProblemIndex!].solutions.seed[
+        this.currentSolutionIndex!
+      ];
 
     return `
       Solution:
@@ -35,12 +38,18 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
     const messages = [
       new SystemChatMessage(
         `
-        As an AI expert, your role involves analyzing ${this.currentProsOrCons} associated with solutions to complex problem statements and sub-problems.
+        As an AI expert, your role involves analyzing ${
+          this.currentProsOrCons
+        } associated with solutions to complex problem statements and sub-problems.
 
         Please adhere to the following guidelines:
 
-        1. You will be presented with a problem statement, a solution, and two ${this.currentProsOrCons}. These will be labeled as "${this.currentProsOrCons!.toUpperCase()} One" and "${this.currentProsOrCons!.toUpperCase()} Two".
-        2. Analyze, compare, and rank these ${this.currentProsOrCons} based on their relevance and importance to the solution and problem statement.
+        1. You will be presented with a problem statement, a solution, and two ${
+          this.currentProsOrCons
+        }. These will be labeled as "${this.currentProsOrCons!.toUpperCase()} One" and "${this.currentProsOrCons!.toUpperCase()} Two".
+        2. Analyze, compare, and rank these ${
+          this.currentProsOrCons
+        } based on their relevance and importance to the solution and problem statement.
         3. Consider the entities affected by the solution, if available, while ranking.
         4. Output your decision as either "One" or "Two". No explanation is necessary.
         5. Ensure your approach is methodical and systematic. Engage in step-by-step thinking.
@@ -63,7 +72,6 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
       ),
     ];
 
-
     return await this.getResultsFromLLM(
       "rank-pros-cons",
       IEngineConstants.prosConsRankingsModel,
@@ -84,28 +92,24 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
       verbose: IEngineConstants.prosConsRankingsModel.verbose,
     });
 
-    for (const prosOrCons of ["pros", "cons"] as const) {
-
-      this.currentProsOrCons = prosOrCons;
+    for (
+      let subProblemIndex = 0;
+      subProblemIndex <
+      Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems);
+      subProblemIndex++
+    ) {
+      this.subProblemIndex = subProblemIndex;
 
       for (
-        let subProblemIndex = 0;
-        subProblemIndex <
-        Math.min(
-          this.memory.subProblems.length,
-          IEngineConstants.maxSubProblems
-        );
-        subProblemIndex++
+        let solutionIndex = 0;
+        solutionIndex <
+        this.memory.subProblems[subProblemIndex].solutions.seed.length;
+        solutionIndex++
       ) {
-        this.subProblemIndex = subProblemIndex;
+        this.currentSolutionIndex = solutionIndex;
 
-        for (
-          let solutionIndex = 0;
-          solutionIndex <
-          this.memory.subProblems[subProblemIndex].solutions.seed.length;
-          solutionIndex++
-        ) {
-          this.currentSolutionIndex = solutionIndex;
+        for (const prosOrCons of ["pros", "cons"] as const) {
+          this.currentProsOrCons = prosOrCons;
 
           this.setupRankingPrompts(
             this.memory.subProblems[subProblemIndex].solutions!.seed[
@@ -121,7 +125,7 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
               ][prosOrCons]
             )}`
           );
-          this.memory.subProblems[s].solutions!.seed[solutionIndex][
+          this.memory.subProblems[subProblemIndex].solutions!.seed[solutionIndex][
             prosOrCons
           ] = this.getOrderedListOfItems() as string[];
           this.logger.debug(

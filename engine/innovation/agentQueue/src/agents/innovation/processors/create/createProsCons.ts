@@ -8,7 +8,10 @@ export class CreateProsConsProcessor extends BaseProcessor {
   currentSolutionIndex = 0;
 
   renderCurrentSolution() {
-    const solution = this.memory.subProblems[this.currentSubProblemIndex!].solutions.seed[this.currentSolutionIndex!];
+    const solution =
+      this.memory.subProblems[this.currentSubProblemIndex!].solutions.seed[
+        this.currentSolutionIndex!
+      ];
 
     return `
       Solution:
@@ -40,7 +43,9 @@ export class CreateProsConsProcessor extends BaseProcessor {
       ),
       new HumanChatMessage(
         `
-        ${this.renderPromblemsWithIndexAndEntities(this.currentSubProblemIndex!)}
+        ${this.renderPromblemsWithIndexAndEntities(
+          this.currentSubProblemIndex!
+        )}
 
         ${this.renderCurrentSolution()}
 
@@ -73,7 +78,9 @@ export class CreateProsConsProcessor extends BaseProcessor {
       ),
       new HumanChatMessage(
         `
-         ${this.renderPromblemsWithIndexAndEntities(this.currentSubProblemIndex!)}
+         ${this.renderPromblemsWithIndexAndEntities(
+           this.currentSubProblemIndex!
+         )}
 
          ${this.renderCurrentSolution()}
 
@@ -85,27 +92,24 @@ export class CreateProsConsProcessor extends BaseProcessor {
     return messages;
   }
 
-
   async createProsCons() {
-    for (const prosOrCons of ["pros", "cons"] as const) {
-      for (
-        let subProblemIndex = 0;
-        subProblemIndex <
-        Math.min(
-          this.memory.subProblems.length,
-          IEngineConstants.maxSubProblems
-        );
-        subProblemIndex++
-      ) {
-        this.currentSubProblemIndex = subProblemIndex;
+    for (
+      let subProblemIndex = 0;
+      subProblemIndex <
+      Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems);
+      subProblemIndex++
+    ) {
+      this.currentSubProblemIndex = subProblemIndex;
 
-        for (
-          let solutionIndex = 0;
-          solutionIndex <
-          this.memory.subProblems[subProblemIndex].solutions.seed.length;
-          solutionIndex++
-        ) {
-          this.currentSolutionIndex = solutionIndex;
+      for (
+        let solutionIndex = 0;
+        solutionIndex <
+        this.memory.subProblems[subProblemIndex].solutions.seed.length;
+        solutionIndex++
+      ) {
+        this.currentSolutionIndex = solutionIndex;
+
+        for (const prosOrCons of ["pros", "cons"] as const) {
 
           let results = (await this.callLLM(
             "create-pros-cons",
