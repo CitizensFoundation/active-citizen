@@ -1,12 +1,12 @@
 import { BaseProcessor } from "../baseProcessor.js";
 import { getJson } from "serpapi";
 import { IEngineConstants } from "../../../../constants.js";
-const Redis = require("ioredis");
-const redis = new Redis(process.env.REDIS_MEMORY_URL || undefined);
+import ioredis from "ioredis";
+const redis = new ioredis.default(process.env.REDIS_MEMORY_URL || "redis://localhost:6379");
 export class SearchWebProcessor extends BaseProcessor {
     async serpApiSearch(q, location = "New York, New York") {
         const redisKey = `s_web_v1:${q}`;
-        const searchData = await redis.get(redisKey);
+        const searchData = (await redis.get(redisKey));
         if (searchData) {
             this.logger.debug(`Using cached search data for ${q}`);
             return searchData;
@@ -92,7 +92,8 @@ export class SearchWebProcessor extends BaseProcessor {
     async processProblemStatement(searchQueryType) {
         let queriesToSearch = this.memory.problemStatement.searchQueries[searchQueryType].slice(0, IEngineConstants.maxTopQueriesToSearchPerType);
         const results = await this.getQueryResults(queriesToSearch);
-        this.memory.problemStatement.searchResults.pages[searchQueryType] = results.searchResults;
+        this.memory.problemStatement.searchResults.pages[searchQueryType] =
+            results.searchResults;
         this.memory.problemStatement.searchResults.knowledgeGraph[searchQueryType] = results.knowledgeGraphResults;
     }
     async process() {

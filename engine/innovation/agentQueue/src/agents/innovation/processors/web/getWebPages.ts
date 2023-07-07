@@ -8,18 +8,23 @@ import { BaseProcessor } from "../baseProcessor.js";
 
 import weaviate, { WeaviateClient } from "weaviate-ts-client";
 
-const { HumanChatMessage, SystemChatMessage } = require("langchain/schema");
-const { ChatOpenAI } = require("langchain/chat_models/openai");
-const { RecursiveCharacterTextSplitter } = require("langchain/text_splitter");
+import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
+
+import { ChatOpenAI } from "langchain/chat_models/openai";
+import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 
 import { WebPageVectorStore } from "../../vectorstore/webPage.js";
 
-const Redis = require("ioredis");
-const redis = new Redis(process.env.REDIS_MEMORY_URL || undefined);
+import ioredis from "ioredis";
+
+const redis = new ioredis.default(
+  process.env.REDIS_MEMORY_URL || "redis://localhost:6379"
+);
 
 //@ts-ignore
 puppeteer.use(StealthPlugin());
-pdfjs.GlobalWorkerOptions.workerSrc = require("pdfjs-dist/es5/build/pdf.worker.js");
+//@ts-ignore
+//pdfjs.GlobalWorkerOptions.workerSrc = require("pdfjs-dist/build/pdf.worker.js");
 
 export class GetWebPagesProcessor extends BaseProcessor {
   webPageVectorStore = new WebPageVectorStore();
@@ -243,8 +248,6 @@ export class GetWebPagesProcessor extends BaseProcessor {
     ];
   }
 
-
-
   async getTokenCount(text: string) {
     const emptyMessages = this.renderInitialMessages(
       this.memory.problemStatement,
@@ -361,7 +364,6 @@ export class GetWebPagesProcessor extends BaseProcessor {
     await this.webPageVectorStore.postWebPage(textAnalysis);
   }
 
-
   //TODO: Use arxiv API as seperate datasource, use other for non arxiv papers
   // https://github.com/hwchase17/langchain/blob/master/langchain/document_loaders/arxiv.py
   // https://info.arxiv.org/help/api/basics.html
@@ -426,7 +428,7 @@ export class GetWebPagesProcessor extends BaseProcessor {
       });
       await redis.set(
         redisKey,
-        response,
+        response!.toString(),
         "EX",
         IEngineConstants.getPageCacheExpiration
       );
@@ -445,7 +447,12 @@ export class GetWebPagesProcessor extends BaseProcessor {
 
     if (response) {
       if (url.toLowerCase().endsWith(".pdf")) {
-        await this.processPdf(subProblemIndex, response, url, type);
+        await this.processPdf(
+          subProblemIndex,
+          response as HTTPResponse,
+          url,
+          type
+        );
       } else {
         await this.processHtml(subProblemIndex, url, browserPage, type);
       }

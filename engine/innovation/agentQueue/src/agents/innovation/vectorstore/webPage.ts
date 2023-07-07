@@ -1,9 +1,10 @@
-const { default: weaviate } = require('weaviate-ts-client');
+import weaviate from 'weaviate-ts-client';
 import { WeaviateClient } from "weaviate-ts-client";
 import { Base } from "../../../base.js";
 import { IEngineConstants } from "../../../constants.js";
 
 export class WebPageVectorStore extends Base {
+  //@ts-ignore
   static client: WeaviateClient = weaviate.client({
     scheme: process.env.WEAVIATE_HTTP_SCHEME || "http",
     host: process.env.WEAVIATE_HOST || "localhost:8085",

@@ -12,9 +12,9 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
     | string[]
     | undefined;
   INITIAL_ELO_RATING: number = 1000;
-  K_FACTOR_INITIAL: number = 60;  // Initial K-factor
-  K_FACTOR_MIN: number = 10;  // Minimum K-factor
-  NUM_COMPARISONS_FOR_MIN_K: number = 20;  // Number of comparisons for K to reach its minimum
+  K_FACTOR_INITIAL: number = 60; // Initial K-factor
+  K_FACTOR_MIN: number = 10; // Minimum K-factor
+  NUM_COMPARISONS_FOR_MIN_K: number = 20; // Number of comparisons for K to reach its minimum
   maxNumberOfPrompts: number = 750;
 
   numComparisons: Record<number, number> = {};
@@ -40,8 +40,8 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
       }
       this.eloRatings[i] = this.INITIAL_ELO_RATING;
 
-      this.numComparisons[i] = 0;  // Initialize number of comparisons
-      this.KFactors[i] = this.K_FACTOR_INITIAL;  // Initialize K-factor
+      this.numComparisons[i] = 0; // Initialize number of comparisons
+      this.KFactors[i] = this.K_FACTOR_INITIAL; // Initialize K-factor
     }
 
     while (this.prompts.length > this.maxNumberOfPrompts) {
@@ -61,6 +61,7 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
     itemOneIndex: number,
     itemTwoIndex: number
   ) {
+    this.logger.info("Getting results from LLM");
     let wonItemIndex;
     let lostItemIndex;
 
@@ -112,21 +113,29 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
     if (numComparisons >= this.NUM_COMPARISONS_FOR_MIN_K) {
       return this.K_FACTOR_MIN;
     } else {
-      return this.K_FACTOR_INITIAL - (this.K_FACTOR_INITIAL - this.K_FACTOR_MIN) * numComparisons / this.NUM_COMPARISONS_FOR_MIN_K;
+      return (
+        this.K_FACTOR_INITIAL -
+        ((this.K_FACTOR_INITIAL - this.K_FACTOR_MIN) * numComparisons) /
+          this.NUM_COMPARISONS_FOR_MIN_K
+      );
     }
   }
 
   async performPairwiseRanking() {
+    this.logger.info("Performing pairwise ranking");
     for (let p = 0; p < this.prompts.length; p++) {
       const promptPair = this.prompts[p];
-      const { wonItemIndex, lostItemIndex } = await this.voteOnPromptPair(promptPair);
+      const { wonItemIndex, lostItemIndex } = await this.voteOnPromptPair(
+        promptPair
+      );
 
       if (wonItemIndex !== undefined && lostItemIndex !== undefined) {
         // Update Elo ratings
         const winnerRating = this.eloRatings[wonItemIndex];
         const loserRating = this.eloRatings[lostItemIndex];
 
-        const expectedWin = 1.0 / (1 + Math.pow(10, (loserRating - winnerRating) / 400));
+        const expectedWin =
+          1.0 / (1 + Math.pow(10, (loserRating - winnerRating) / 400));
 
         const winnerK = this.KFactors[wonItemIndex];
         const loserK = this.KFactors[lostItemIndex];
@@ -141,8 +150,12 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
         this.numComparisons[wonItemIndex] += 1;
         this.numComparisons[lostItemIndex] += 1;
 
-        this.KFactors[wonItemIndex] = this.getUpdatedKFactor(this.numComparisons[wonItemIndex]);
-        this.KFactors[lostItemIndex] = this.getUpdatedKFactor(this.numComparisons[lostItemIndex]);
+        this.KFactors[wonItemIndex] = this.getUpdatedKFactor(
+          this.numComparisons[wonItemIndex]
+        );
+        this.KFactors[lostItemIndex] = this.getUpdatedKFactor(
+          this.numComparisons[lostItemIndex]
+        );
       } else {
         throw new Error("Invalid won or lost item index");
       }
@@ -150,10 +163,23 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
   }
 
   getOrderedListOfItems(returnEloRatings: boolean = false) {
-    const orderedItems = this.allItems!.map((item, index) => {
+    this.logger.info("Getting ordered list of items");
+    let allItems = this.allItems;
+    if (returnEloRatings) {
+      for (let i = 0; i < allItems!.length; i++) {
+        (
+          allItems![i] as
+            | IEngineSolution
+            | IEngineAffectedEntity
+            | IEngineSubProblem
+        ).eloScore = this.eloRatings[i];
+      }
+    }
+
+    const orderedItems = allItems!.map((item, index) => {
       return {
         item,
-        rating: this.eloRatings[index]
+        rating: this.eloRatings[index],
       };
     });
 
@@ -166,11 +192,7 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
       items.push(orderedItems[i].item);
     }
 
-    if (returnEloRatings) {
-      return orderedItems;
-    } else {
-      return items;
-    }
+    return items;
   }
 
   async process() {

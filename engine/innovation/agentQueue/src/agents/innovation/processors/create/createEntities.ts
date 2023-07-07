@@ -19,7 +19,8 @@ export class CreateEntitiesProcessor extends BaseProcessor {
         4. Use JSON output only. Avoid markdown formatting.
         5. Elaborate on the reasons behind the negative and positive effects to enhance clarity.
         6. If important negative and positive effects are missing from the entities, please add them.
-        7. Maintain a methodical, step-by-step approach.
+        7. Always output in exactly this format: [ { name: name, negativeEffects: [ reason ], positiveEffects: [ reason ] } ].
+        8. Maintain a methodical, step-by-step approach.
         `
       ),
       new HumanChatMessage(

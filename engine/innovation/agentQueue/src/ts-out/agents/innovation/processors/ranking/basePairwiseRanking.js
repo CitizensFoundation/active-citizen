@@ -29,6 +29,7 @@ export class BasePairwiseRankingsProcessor extends BaseProcessor {
         }
     }
     async getResultsFromLLM(stageName, modelConstant, messages, itemOneIndex, itemTwoIndex) {
+        this.logger.info("Getting results from LLM");
         let wonItemIndex;
         let lostItemIndex;
         const maxRetryCount = IEngineConstants.rankingLLMmaxRetryCount;
@@ -75,10 +76,13 @@ export class BasePairwiseRankingsProcessor extends BaseProcessor {
             return this.K_FACTOR_MIN;
         }
         else {
-            return this.K_FACTOR_INITIAL - (this.K_FACTOR_INITIAL - this.K_FACTOR_MIN) * numComparisons / this.NUM_COMPARISONS_FOR_MIN_K;
+            return (this.K_FACTOR_INITIAL -
+                ((this.K_FACTOR_INITIAL - this.K_FACTOR_MIN) * numComparisons) /
+                    this.NUM_COMPARISONS_FOR_MIN_K);
         }
     }
     async performPairwiseRanking() {
+        this.logger.info("Performing pairwise ranking");
         for (let p = 0; p < this.prompts.length; p++) {
             const promptPair = this.prompts[p];
             const { wonItemIndex, lostItemIndex } = await this.voteOnPromptPair(promptPair);
@@ -105,10 +109,17 @@ export class BasePairwiseRankingsProcessor extends BaseProcessor {
         }
     }
     getOrderedListOfItems(returnEloRatings = false) {
-        const orderedItems = this.allItems.map((item, index) => {
+        this.logger.info("Getting ordered list of items");
+        let allItems = this.allItems;
+        if (returnEloRatings) {
+            for (let i = 0; i < allItems.length; i++) {
+                allItems[i].eloScore = this.eloRatings[i];
+            }
+        }
+        const orderedItems = allItems.map((item, index) => {
             return {
                 item,
-                rating: this.eloRatings[index]
+                rating: this.eloRatings[index],
             };
         });
         orderedItems.sort((a, b) => {
@@ -118,12 +129,7 @@ export class BasePairwiseRankingsProcessor extends BaseProcessor {
         for (let i = 0; i < orderedItems.length; i++) {
             items.push(orderedItems[i].item);
         }
-        if (returnEloRatings) {
-            return orderedItems;
-        }
-        else {
-            return items;
-        }
+        return items;
     }
     async process() {
         super.process();

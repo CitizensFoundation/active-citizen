@@ -103,6 +103,7 @@ interface IEngineSubProblem {
   entities: IEngineAffectedEntity[];
   searchQueries: IEngineSearchQueries;
   searchResults: IEngineSearchResults;
+  eloScore?: number;
   solutions: {
     seed: IEngineSolution[];
     populations: IEngineSolution[][];
@@ -121,6 +122,7 @@ interface IEngineAffectedEntity {
   name: string;
   positiveEffects?: IEngineAffectedEntityAffect[];
   negativeEffects?: IEngineAffectedEntityAffect[];
+  eloScore?: number;
   searchQueries?: IEngineSearchQueries;
   searchResults?: IEngineSearchResults;
 }

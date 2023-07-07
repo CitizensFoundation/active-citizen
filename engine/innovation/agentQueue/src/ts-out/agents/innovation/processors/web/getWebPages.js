@@ -4,15 +4,16 @@ import { IEngineConstants } from "../../../../constants.js";
 import * as pdfjs from "pdfjs-dist/build/pdf.js";
 import { htmlToText } from "html-to-text";
 import { BaseProcessor } from "../baseProcessor.js";
-const { HumanChatMessage, SystemChatMessage } = require("langchain/schema");
-const { ChatOpenAI } = require("langchain/chat_models/openai");
-const { RecursiveCharacterTextSplitter } = require("langchain/text_splitter");
+import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
+import { ChatOpenAI } from "langchain/chat_models/openai";
+import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { WebPageVectorStore } from "../../vectorstore/webPage.js";
-const Redis = require("ioredis");
-const redis = new Redis(process.env.REDIS_MEMORY_URL || undefined);
+import ioredis from "ioredis";
+const redis = new ioredis.default(process.env.REDIS_MEMORY_URL || "redis://localhost:6379");
 //@ts-ignore
 puppeteer.use(StealthPlugin());
-pdfjs.GlobalWorkerOptions.workerSrc = require("pdfjs-dist/es5/build/pdf.worker.js");
+//@ts-ignore
+//pdfjs.GlobalWorkerOptions.workerSrc = require("pdfjs-dist/build/pdf.worker.js");
 export class GetWebPagesProcessor extends BaseProcessor {
     webPageVectorStore = new WebPageVectorStore();
     searchResultTarget;
@@ -324,7 +325,7 @@ export class GetWebPagesProcessor extends BaseProcessor {
             response = await browserPage.goto(url, {
                 timeout: IEngineConstants.getPageTimeout,
             });
-            await redis.set(redisKey, response, "EX", IEngineConstants.getPageCacheExpiration);
+            await redis.set(redisKey, response.toString(), "EX", IEngineConstants.getPageCacheExpiration);
         }
         return response;
     }

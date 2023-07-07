@@ -1,6 +1,6 @@
 import { BaseWorker } from "../workers/baseWorker.js";
-const Redis = require("ioredis");
-const redis = new Redis(process.env.REDIS_MEMORY_URL || undefined);
+import ioredis from "ioredis";
+const redis = new ioredis.default(process.env.REDIS_MEMORY_URL || "redis://localhost:6379");
 export class BaseAgent extends BaseWorker {
     memory;
     job;

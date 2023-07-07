@@ -5,7 +5,7 @@ import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
 import { IEngineConstants } from "../../../../constants.js";
 import { BasePairwiseRankingsProcessor } from "./basePairwiseRanking.js";
 
-export class RankSubProblemsProcessor extends BasePairwiseRankingsProcessor {
+export class RankEntitiesProcessor extends BasePairwiseRankingsProcessor {
   subProblemIndex = 0;
 
   async voteOnPromptPair(
@@ -99,7 +99,7 @@ export class RankSubProblemsProcessor extends BasePairwiseRankingsProcessor {
       await this.performPairwiseRanking();
 
       this.memory.subProblems[s].entities =
-        this.getOrderedListOfItems() as IEngineAffectedEntity[];
+        this.getOrderedListOfItems(true) as IEngineAffectedEntity[];
 
       await this.saveMemory();
 

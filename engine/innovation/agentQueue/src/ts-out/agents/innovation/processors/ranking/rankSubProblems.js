@@ -53,7 +53,7 @@ export class RankSubProblemsProcessor extends BasePairwiseRankingsProcessor {
         this.setupRankingPrompts(this.memory.subProblems);
         await this.performPairwiseRanking();
         this.logger.debug(`Sub problems before ranking: ${JSON.stringify(this.memory.subProblems)}`);
-        this.memory.subProblems = this.getOrderedListOfItems();
+        this.memory.subProblems = this.getOrderedListOfItems(true);
         this.logger.debug(`Sub problems after ranking: ${JSON.stringify(this.memory.subProblems)}`);
         await this.saveMemory();
     }

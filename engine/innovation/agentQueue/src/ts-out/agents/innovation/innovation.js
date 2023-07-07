@@ -1,6 +1,18 @@
 import { BaseAgent } from "../baseAgent.js";
 import { Worker } from "bullmq";
 import { CreateSubProblemsProcessor } from "./processors/create/createSubProblems.js";
+import { CreateEntitiesProcessor } from "./processors/create/createEntities.js";
+import { CreateProsConsProcessor } from "./processors/create/createProsCons.js";
+import { CreateSearchQueriesProcessor } from "./processors/create/createSearchQueries.js";
+import { CreateSolutionsProcessor } from "./processors/create/createSolutions.js";
+import { RankEntitiesProcessor } from "./processors/ranking/rankEntities.js";
+import { RankProsConsProcessor } from "./processors/ranking/rankProsCons.js";
+import { RankSearchQueriesProcessor } from "./processors/ranking/rankSearchQueries.js";
+import { RankSearchResultsProcessor } from "./processors/ranking/rankSearchResults.js";
+import { RankSolutionsProcessor } from "./processors/ranking/rankSolutions.js";
+import { RankSubProblemsProcessor } from "./processors/ranking/rankSubProblems.js";
+import { GetWebPagesProcessor } from "./processors/web/getWebPages.js";
+import { SearchWebProcessor } from "./processors/web/searchWeb.js";
 export class AgentInnovation extends BaseAgent {
     async initializeMemory(job) {
         const jobData = job.data;
@@ -76,10 +88,61 @@ export class AgentInnovation extends BaseAgent {
             case "create-sub-problems":
                 await this.processSubProblems();
                 break;
+            case "create-entities":
+                const createEntitiesProcessor = new CreateEntitiesProcessor(this.job, this.memory);
+                await createEntitiesProcessor.process();
+                break;
+            case "create-pros-cons":
+                const createProsConsProcessor = new CreateProsConsProcessor(this.job, this.memory);
+                await createProsConsProcessor.process();
+                break;
+            case "create-search-queries":
+                const createSearchQueriesProcessor = new CreateSearchQueriesProcessor(this.job, this.memory);
+                await createSearchQueriesProcessor.process();
+                break;
+            case "create-seed-solutions":
+                const createSolutionsProcessor = new CreateSolutionsProcessor(this.job, this.memory);
+                await createSolutionsProcessor.process();
+                break;
+            case "rank-entities":
+                const rankEntitiesProcessor = new RankEntitiesProcessor(this.job, this.memory);
+                await rankEntitiesProcessor.process();
+                break;
+            case "rank-pros-cons":
+                const rankProsConsProcessor = new RankProsConsProcessor(this.job, this.memory);
+                await rankProsConsProcessor.process();
+                break;
+            case "rank-search-queries":
+                const rankSearchQueriesProcessor = new RankSearchQueriesProcessor(this.job, this.memory);
+                await rankSearchQueriesProcessor.process();
+                break;
+            case "rank-search-results":
+                const rankSearchResultsProcessor = new RankSearchResultsProcessor(this.job, this.memory);
+                await rankSearchResultsProcessor.process();
+                break;
+            case "rank-solutions":
+                const rankSolutionsProcessor = new RankSolutionsProcessor(this.job, this.memory);
+                await rankSolutionsProcessor.process();
+                break;
+            case "rank-sub-problems":
+                const rankSubProblemsProcessor = new RankSubProblemsProcessor(this.job, this.memory);
+                await rankSubProblemsProcessor.process();
+                break;
+            case "web-get-pages":
+                const getWebPagesProcessor = new GetWebPagesProcessor(this.job, this.memory);
+                await getWebPagesProcessor.process();
+                break;
+            case "web-search":
+                const searchWebProcessor = new SearchWebProcessor(this.job, this.memory);
+                await searchWebProcessor.process();
+                break;
+            default:
+                console.log('No stage matched');
         }
     }
 }
 const agent = new Worker("agent-innovation", async (job) => {
+    console.log(`Processing job ${job.id}`);
     const agent = new AgentInnovation();
     await agent.setup(job);
     await agent.process();

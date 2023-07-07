@@ -2,7 +2,7 @@ import { ChatOpenAI } from "langchain/chat_models/openai";
 import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
 import { IEngineConstants } from "../../../../constants.js";
 import { BasePairwiseRankingsProcessor } from "./basePairwiseRanking.js";
-export class RankSubProblemsProcessor extends BasePairwiseRankingsProcessor {
+export class RankEntitiesProcessor extends BasePairwiseRankingsProcessor {
     subProblemIndex = 0;
     async voteOnPromptPair(promptPair) {
         const itemOneIndex = promptPair[0];
@@ -62,7 +62,7 @@ export class RankSubProblemsProcessor extends BasePairwiseRankingsProcessor {
             this.setupRankingPrompts(filteredEntities);
             await this.performPairwiseRanking();
             this.memory.subProblems[s].entities =
-                this.getOrderedListOfItems();
+                this.getOrderedListOfItems(true);
             await this.saveMemory();
             this.currentSubProblemIndex++;
         }

@@ -8,10 +8,10 @@ import {
 } from "langchain/schema";
 import { ChatOpenAI } from "langchain/chat_models/openai";
 import { IEngineConstants } from "../../../constants.js";
-import { parse } from "path";
 
-const Redis = require("ioredis");
-const redis = new Redis(process.env.REDIS_MEMORY_URL || undefined);
+import ioredis from "ioredis";
+
+const redis = new ioredis.default(process.env.REDIS_MEMORY_URL || "redis://localhost:6379");
 
 export abstract class BaseProcessor extends Base {
   memory!: IEngineInnovationMemoryData;

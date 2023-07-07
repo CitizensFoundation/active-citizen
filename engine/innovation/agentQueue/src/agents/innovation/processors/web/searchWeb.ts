@@ -2,8 +2,11 @@ import { BaseProcessor } from "../baseProcessor.js";
 import type { BaseResponse, GoogleParameters } from "serpapi";
 import { getJson } from "serpapi";
 import { IEngineConstants } from "../../../../constants.js";
-const Redis = require("ioredis");
-const redis = new Redis(process.env.REDIS_MEMORY_URL || undefined);
+import ioredis from "ioredis";
+
+const redis = new ioredis.default(
+  process.env.REDIS_MEMORY_URL || "redis://localhost:6379"
+);
 
 export class SearchWebProcessor extends BaseProcessor {
   async serpApiSearch(
@@ -12,9 +15,9 @@ export class SearchWebProcessor extends BaseProcessor {
   ): Promise<BaseResponse<GoogleParameters>> {
     const redisKey = `s_web_v1:${q}`;
 
-    const searchData: BaseResponse<GoogleParameters> = await redis.get(
+    const searchData: BaseResponse<GoogleParameters> = (await redis.get(
       redisKey
-    );
+    )) as unknown as BaseResponse<GoogleParameters>;
 
     if (searchData) {
       this.logger.debug(`Using cached search data for ${q}`);
@@ -139,15 +142,17 @@ export class SearchWebProcessor extends BaseProcessor {
   }
 
   async processProblemStatement(searchQueryType: IEngineWebPageTypes) {
-    let queriesToSearch = this.memory.problemStatement.searchQueries![searchQueryType].slice(
-      0,
-      IEngineConstants.maxTopQueriesToSearchPerType
-    );
+    let queriesToSearch = this.memory.problemStatement.searchQueries![
+      searchQueryType
+    ].slice(0, IEngineConstants.maxTopQueriesToSearchPerType);
 
     const results = await this.getQueryResults(queriesToSearch);
 
-    this.memory.problemStatement.searchResults!.pages[searchQueryType] = results.searchResults;
-    this.memory.problemStatement.searchResults!.knowledgeGraph[searchQueryType] = results.knowledgeGraphResults;
+    this.memory.problemStatement.searchResults!.pages[searchQueryType] =
+      results.searchResults;
+    this.memory.problemStatement.searchResults!.knowledgeGraph[
+      searchQueryType
+    ] = results.knowledgeGraphResults;
   }
 
   async process() {
@@ -160,7 +165,6 @@ export class SearchWebProcessor extends BaseProcessor {
       "openData",
       "news",
     ] as const) {
-
       await this.processProblemStatement(searchQueryType);
       await this.processSubProblems(searchQueryType as IEngineWebPageTypes);
     }

@@ -77,7 +77,7 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
                 this.setupRankingPrompts(this.memory.subProblems[s].solutions.populations[this.memory.subProblems[s].solutions.populations.length - 1]);
                 await this.performPairwiseRanking();
                 this.logger.debug(`Population Solutions before ranking: ${JSON.stringify(this.memory.subProblems[s].solutions.populations[this.memory.subProblems[s].solutions.populations.length - 1])}`);
-                this.memory.subProblems[s].solutions.populations[this.memory.subProblems[s].solutions.populations.length - 1] = this.getOrderedListOfItems();
+                this.memory.subProblems[s].solutions.populations[this.memory.subProblems[s].solutions.populations.length - 1] = this.getOrderedListOfItems(true);
                 this.logger.debug(`Popuplation Solutions after ranking: ${JSON.stringify(this.memory.subProblems[s].solutions.populations[this.memory.subProblems[s].solutions.populations.length - 1])}`);
             }
             else {
@@ -85,7 +85,7 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
                 await this.performPairwiseRanking();
                 this.logger.debug(`Seed Solutions before ranking: ${JSON.stringify(this.memory.subProblems[s].solutions.seed)}`);
                 this.memory.subProblems[s].solutions.seed =
-                    this.getOrderedListOfItems();
+                    this.getOrderedListOfItems(true);
                 this.logger.debug(`Seed Solutions after ranking: ${JSON.stringify(this.memory.subProblems[s].solutions.seed)}`);
             }
             await this.saveMemory();

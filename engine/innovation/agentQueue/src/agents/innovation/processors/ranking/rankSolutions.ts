@@ -134,7 +134,7 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
         );
         this.memory.subProblems[s].solutions.populations[
           this.memory.subProblems[s].solutions.populations.length - 1
-        ] = this.getOrderedListOfItems() as IEngineSolution[];
+        ] = this.getOrderedListOfItems(true) as IEngineSolution[];
         this.logger.debug(
           `Popuplation Solutions after ranking: ${JSON.stringify(
             this.memory.subProblems[s].solutions.populations[
@@ -152,7 +152,7 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
           )}`
         );
         this.memory.subProblems[s].solutions!.seed =
-          this.getOrderedListOfItems() as IEngineSolution[];
+          this.getOrderedListOfItems(true) as IEngineSolution[];
         this.logger.debug(
           `Seed Solutions after ranking: ${JSON.stringify(
             this.memory.subProblems[s].solutions!.seed
