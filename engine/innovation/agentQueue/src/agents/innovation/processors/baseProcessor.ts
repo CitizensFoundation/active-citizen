@@ -1,8 +1,13 @@
 import { Job } from "bullmq";
-import { Base } from "../../../base";
-import { AIChatMessage, BaseChatMessage, HumanChatMessage, SystemChatMessage } from "langchain/schema";
+import { Base } from "../../../base.js";
+import {
+  AIChatMessage,
+  BaseChatMessage,
+  HumanChatMessage,
+  SystemChatMessage,
+} from "langchain/schema";
 import { ChatOpenAI } from "langchain/chat_models/openai";
-import { IEngineConstants } from "../../../constants";
+import { IEngineConstants } from "../../../constants.js";
 import { parse } from "path";
 
 const Redis = require("ioredis");
@@ -28,7 +33,7 @@ export abstract class BaseProcessor extends Base {
   }
 
   async saveMemory() {
-    await redis.set(this.memory.id, JSON.stringify(this.memory));
+    await redis.set(this.memory.redisKey, JSON.stringify(this.memory));
   }
 
   renderSubProblem(subProblemIndex: number) {
@@ -92,9 +97,7 @@ export abstract class BaseProcessor extends Base {
     }
   }
 
-  renderEntityPosNegReasons(
-    item: IEngineAffectedEntity
-  ) {
+  renderEntityPosNegReasons(item: IEngineAffectedEntity) {
     let itemEffects = "";
 
     if (item.positiveEffects && item.positiveEffects.length > 0) {

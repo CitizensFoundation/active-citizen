@@ -1,11 +1,8 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.CreateProsConsProcessor = void 0;
-const baseProcessor_js_1 = require("../baseProcessor.js");
-const openai_1 = require("langchain/chat_models/openai");
-const schema_1 = require("langchain/schema");
-const constants_js_1 = require("../../../../constants.js");
-class CreateProsConsProcessor extends baseProcessor_js_1.BaseProcessor {
+import { BaseProcessor } from "../baseProcessor.js";
+import { ChatOpenAI } from "langchain/chat_models/openai";
+import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
+import { IEngineConstants } from "../../../../constants.js";
+export class CreateProsConsProcessor extends BaseProcessor {
     currentSolutionIndex = 0;
     renderCurrentSolution() {
         const solution = this.memory.subProblems[this.currentSubProblemIndex].solutions.seed[this.currentSolutionIndex];
@@ -21,7 +18,7 @@ class CreateProsConsProcessor extends baseProcessor_js_1.BaseProcessor {
     }
     async renderRefinePrompt(prosOrCons, results) {
         const messages = [
-            new schema_1.SystemChatMessage(`
+            new SystemChatMessage(`
         As an AI expert, it's your responsibility to refine the given ${prosOrCons} pertaining to solutions, sub-problems, and affected entities.
 
         Keep these guidelines in mind:
@@ -34,7 +31,7 @@ class CreateProsConsProcessor extends baseProcessor_js_1.BaseProcessor {
         6. The ${prosOrCons} should be formatted as an array of strings in JSON format: [ ${prosOrCons} ].
         7. Follow a step-by-step approach in your thought process.
         `),
-            new schema_1.HumanChatMessage(`
+            new HumanChatMessage(`
         ${this.renderPromblemsWithIndexAndEntities(this.currentSubProblemIndex)}
 
         ${this.renderCurrentSolution()}
@@ -49,12 +46,12 @@ class CreateProsConsProcessor extends baseProcessor_js_1.BaseProcessor {
     }
     async renderCreatePrompt(prosOrCons) {
         const messages = [
-            new schema_1.SystemChatMessage(`
+            new SystemChatMessage(`
         As an AI expert, your task is to creatively generate practical ${prosOrCons} for the provided solutions, their associated sub-problems, and any affected entities.
 
         Follow these guidelines:
 
-        1. Generate and output up to ${constants_js_1.IEngineConstants.maxNumberGeneratedProsConsForSolution} ${prosOrCons}.
+        1. Generate and output up to ${IEngineConstants.maxNumberGeneratedProsConsForSolution} ${prosOrCons}.
         2. Ensure that each ${prosOrCons} is concise, consistent, detailed, and succinct.
         3. The ${prosOrCons} must be in line with the context given by the problem statement, sub-problems, and affected entities.
         4. Each ${prosOrCons} should be directly applicable to the solution.
@@ -62,7 +59,7 @@ class CreateProsConsProcessor extends baseProcessor_js_1.BaseProcessor {
         6. The ${prosOrCons} should be formatted as an array of strings in JSON format: [ ${prosOrCons} ].
         7. Maintain a step-by-step approach in your reasoning.
         `),
-            new schema_1.HumanChatMessage(`
+            new HumanChatMessage(`
          ${this.renderPromblemsWithIndexAndEntities(this.currentSubProblemIndex)}
 
          ${this.renderCurrentSolution()}
@@ -74,7 +71,7 @@ class CreateProsConsProcessor extends baseProcessor_js_1.BaseProcessor {
     }
     async createProsCons() {
         for (let subProblemIndex = 0; subProblemIndex <
-            Math.min(this.memory.subProblems.length, constants_js_1.IEngineConstants.maxSubProblems); subProblemIndex++) {
+            Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems); subProblemIndex++) {
             this.currentSubProblemIndex = subProblemIndex;
             let solutions;
             if (this.memory.subProblems[subProblemIndex].solutions.populations &&
@@ -92,9 +89,9 @@ class CreateProsConsProcessor extends baseProcessor_js_1.BaseProcessor {
             for (let solutionIndex = 0; solutionIndex < solutions.length; solutionIndex++) {
                 this.currentSolutionIndex = solutionIndex;
                 for (const prosOrCons of ["pros", "cons"]) {
-                    let results = (await this.callLLM("create-pros-cons", constants_js_1.IEngineConstants.createProsConsModel, await this.renderCreatePrompt(prosOrCons)));
-                    if (constants_js_1.IEngineConstants.enable.refine.createProsCons) {
-                        results = (await this.callLLM("create-pros-cons", constants_js_1.IEngineConstants.createProsConsModel, await this.renderRefinePrompt(prosOrCons, results)));
+                    let results = (await this.callLLM("create-pros-cons", IEngineConstants.createProsConsModel, await this.renderCreatePrompt(prosOrCons)));
+                    if (IEngineConstants.enable.refine.createProsCons) {
+                        results = (await this.callLLM("create-pros-cons", IEngineConstants.createProsConsModel, await this.renderRefinePrompt(prosOrCons, results)));
                     }
                     if (this.memory.subProblems[subProblemIndex].solutions.populations &&
                         this.memory.subProblems[subProblemIndex].solutions.populations
@@ -115,13 +112,12 @@ class CreateProsConsProcessor extends baseProcessor_js_1.BaseProcessor {
     async process() {
         this.logger.info("Create ProsCons Processor");
         super.process();
-        this.chat = new openai_1.ChatOpenAI({
-            temperature: constants_js_1.IEngineConstants.createProsConsModel.temperature,
-            maxTokens: constants_js_1.IEngineConstants.createProsConsModel.maxOutputTokens,
-            modelName: constants_js_1.IEngineConstants.createProsConsModel.name,
-            verbose: constants_js_1.IEngineConstants.createProsConsModel.verbose,
+        this.chat = new ChatOpenAI({
+            temperature: IEngineConstants.createProsConsModel.temperature,
+            maxTokens: IEngineConstants.createProsConsModel.maxOutputTokens,
+            modelName: IEngineConstants.createProsConsModel.name,
+            verbose: IEngineConstants.createProsConsModel.verbose,
         });
         await this.createProsCons();
     }
 }
-exports.CreateProsConsProcessor = CreateProsConsProcessor;

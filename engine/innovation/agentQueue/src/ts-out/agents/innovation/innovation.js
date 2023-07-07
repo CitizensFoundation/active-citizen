@@ -1,10 +1,7 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.AgentInnovation = void 0;
-const baseAgent_1 = require("../baseAgent");
-const bullmq_1 = require("bullmq");
-const createSubProblems_1 = require("./processors/create/createSubProblems");
-class AgentInnovation extends baseAgent_1.BaseAgent {
+import { BaseAgent } from "../baseAgent.js";
+import { Worker } from "bullmq";
+import { CreateSubProblemsProcessor } from "./processors/create/createSubProblems.js";
+export class AgentInnovation extends BaseAgent {
     async initializeMemory(job) {
         const jobData = job.data;
         this.memory = {
@@ -71,7 +68,7 @@ class AgentInnovation extends baseAgent_1.BaseAgent {
         await this.saveMemory();
     }
     async processSubProblems() {
-        const subProblemsProcessor = new createSubProblems_1.CreateSubProblemsProcessor(this.job, this.memory);
+        const subProblemsProcessor = new CreateSubProblemsProcessor(this.job, this.memory);
         await subProblemsProcessor.process();
     }
     async process() {
@@ -82,8 +79,7 @@ class AgentInnovation extends baseAgent_1.BaseAgent {
         }
     }
 }
-exports.AgentInnovation = AgentInnovation;
-const agent = new bullmq_1.Worker("agent-innovation", async (job) => {
+const agent = new Worker("agent-innovation", async (job) => {
     const agent = new AgentInnovation();
     await agent.setup(job);
     await agent.process();

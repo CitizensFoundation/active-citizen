@@ -1,11 +1,8 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.CreateSearchQueriesProcessor = void 0;
-const baseProcessor_js_1 = require("../baseProcessor.js");
-const openai_1 = require("langchain/chat_models/openai");
-const schema_1 = require("langchain/schema");
-const constants_js_1 = require("../../../../constants.js");
-class CreateSearchQueriesProcessor extends baseProcessor_js_1.BaseProcessor {
+import { BaseProcessor } from "../baseProcessor.js";
+import { ChatOpenAI } from "langchain/chat_models/openai";
+import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
+import { IEngineConstants } from "../../../../constants.js";
+export class CreateSearchQueriesProcessor extends BaseProcessor {
     //TODO: Maybe add a review and refine stage here as well
     renderCommonPromptSection() {
         return `
@@ -26,14 +23,14 @@ class CreateSearchQueriesProcessor extends baseProcessor_js_1.BaseProcessor {
     }
     async renderProblemPrompt(problem) {
         return [
-            new schema_1.SystemChatMessage(`
+            new SystemChatMessage(`
         You are an expert trained to analyse complex problem statements and create search queries to find solutions to those problems.
 
         Adhere to the following guidelines:
         1. You generate high quality search queries based on the problem statement.
         2. Always focus your search queries on the problem statement.
         ${this.renderCommonPromptSection()}    `),
-            new schema_1.HumanChatMessage(`
+            new HumanChatMessage(`
          Problem Statement:
          ${problem}
 
@@ -43,14 +40,14 @@ class CreateSearchQueriesProcessor extends baseProcessor_js_1.BaseProcessor {
     }
     async renderEntityPrompt(problem, entity) {
         return [
-            new schema_1.SystemChatMessage(`
+            new SystemChatMessage(`
         You are an expert trained to analyse complex problem statements for affected entities and create search queries to find solutions for the affected entity.
 
         Adhere to the following guidelines:
         1. You generate high quality search queries based on the affected entity.
         2. Always focus your search queries on the Affected Entity not the problem statement.
         ${this.renderCommonPromptSection()}       `),
-            new schema_1.HumanChatMessage(`
+            new HumanChatMessage(`
          Problem Statement:
          ${problem}
 
@@ -65,28 +62,27 @@ class CreateSearchQueriesProcessor extends baseProcessor_js_1.BaseProcessor {
     async process() {
         this.logger.info("Create Search Queries Processor");
         super.process();
-        this.chat = new openai_1.ChatOpenAI({
-            temperature: constants_js_1.IEngineConstants.createSearchQueriesModel.temperature,
-            maxTokens: constants_js_1.IEngineConstants.createSearchQueriesModel.maxOutputTokens,
-            modelName: constants_js_1.IEngineConstants.createSearchQueriesModel.name,
-            verbose: constants_js_1.IEngineConstants.createSearchQueriesModel.verbose,
+        this.chat = new ChatOpenAI({
+            temperature: IEngineConstants.createSearchQueriesModel.temperature,
+            maxTokens: IEngineConstants.createSearchQueriesModel.maxOutputTokens,
+            modelName: IEngineConstants.createSearchQueriesModel.name,
+            verbose: IEngineConstants.createSearchQueriesModel.verbose,
         });
-        this.memory.problemStatement.searchQueries = await this.callLLM("create-search-queries", constants_js_1.IEngineConstants.createSearchQueriesModel, await this.renderProblemPrompt(this.memory.problemStatement.description));
+        this.memory.problemStatement.searchQueries = await this.callLLM("create-search-queries", IEngineConstants.createSearchQueriesModel, await this.renderProblemPrompt(this.memory.problemStatement.description));
         await this.saveMemory();
         for (let s = 0; s <
-            Math.min(this.memory.subProblems.length, constants_js_1.IEngineConstants.maxSubProblems); s++) {
+            Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems); s++) {
             const promblemText = `
         ${this.memory.subProblems[s].title}
         ${this.memory.subProblems[s].description}
       `;
-            this.memory.subProblems[s].searchQueries = await this.callLLM("create-search-queries", constants_js_1.IEngineConstants.createSearchQueriesModel, await this.renderProblemPrompt(promblemText));
+            this.memory.subProblems[s].searchQueries = await this.callLLM("create-search-queries", IEngineConstants.createSearchQueriesModel, await this.renderProblemPrompt(promblemText));
             await this.saveMemory();
             for (let e = 0; e <
-                Math.min(this.memory.subProblems[s].entities.length, constants_js_1.IEngineConstants.maxTopEntitiesToSearch); e++) {
-                this.memory.subProblems[s].entities[e] = await this.callLLM("create-search-queries", constants_js_1.IEngineConstants.createSearchQueriesModel, await this.renderEntityPrompt(promblemText, this.memory.subProblems[s].entities[e]));
+                Math.min(this.memory.subProblems[s].entities.length, IEngineConstants.maxTopEntitiesToSearch); e++) {
+                this.memory.subProblems[s].entities[e] = await this.callLLM("create-search-queries", IEngineConstants.createSearchQueriesModel, await this.renderEntityPrompt(promblemText, this.memory.subProblems[s].entities[e]));
                 await this.saveMemory();
             }
         }
     }
 }
-exports.CreateSearchQueriesProcessor = CreateSearchQueriesProcessor;

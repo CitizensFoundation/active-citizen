@@ -1,53 +1,25 @@
-"use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.GetWebPagesProcessor = void 0;
-const puppeteer_extra_1 = __importDefault(require("puppeteer-extra"));
-const puppeteer_extra_plugin_stealth_1 = __importDefault(require("puppeteer-extra-plugin-stealth"));
-const constants_js_1 = require("../../../../constants.js");
-const pdfjs = __importStar(require("pdfjs-dist/es5/build/pdf.js"));
-const html_to_text_1 = require("html-to-text");
-const text_splitter_1 = require("langchain/text_splitter");
-const baseProcessor_js_1 = require("../baseProcessor.js");
-const openai_1 = require("langchain/chat_models/openai");
-const schema_1 = require("langchain/schema");
-const webPage_js_1 = require("../../vectorstore/webPage.js");
+import puppeteer from "puppeteer-extra";
+import StealthPlugin from "puppeteer-extra-plugin-stealth";
+import { IEngineConstants } from "../../../../constants.js";
+import * as pdfjs from "pdfjs-dist/build/pdf.js";
+import { htmlToText } from "html-to-text";
+import { BaseProcessor } from "../baseProcessor.js";
+const { HumanChatMessage, SystemChatMessage } = require("langchain/schema");
+const { ChatOpenAI } = require("langchain/chat_models/openai");
+const { RecursiveCharacterTextSplitter } = require("langchain/text_splitter");
+import { WebPageVectorStore } from "../../vectorstore/webPage.js";
 const Redis = require("ioredis");
 const redis = new Redis(process.env.REDIS_MEMORY_URL || undefined);
-puppeteer_extra_1.default.use((0, puppeteer_extra_plugin_stealth_1.default)());
+//@ts-ignore
+puppeteer.use(StealthPlugin());
 pdfjs.GlobalWorkerOptions.workerSrc = require("pdfjs-dist/es5/build/pdf.worker.js");
-class GetWebPagesProcessor extends baseProcessor_js_1.BaseProcessor {
-    webPageVectorStore = new webPage_js_1.WebPageVectorStore();
+export class GetWebPagesProcessor extends BaseProcessor {
+    webPageVectorStore = new WebPageVectorStore();
     searchResultTarget;
     currentEntity;
     renderRefinePrompt(currentWebPageAnalysis, problemStatement, text) {
         return [
-            new schema_1.SystemChatMessage(`As an expert trained to analyze complex text in relation to a given problem statement, adhere to the following guidelines:
+            new SystemChatMessage(`As an expert trained to analyze complex text in relation to a given problem statement, adhere to the following guidelines:
 
         1. Refine the Current Analysis JSON with new information from the New Text Context.
         2. Analyze the relation of this text to the problem statement and output a Refined Analysis JSON.
@@ -59,7 +31,7 @@ class GetWebPagesProcessor extends baseProcessor_js_1.BaseProcessor {
         8. If there are citations or references, list them separately under 'references', not in 'allParagraphs'.
         9. Output everything in JSON format without further explanation.
         10. Tackle the task step-by-step.`),
-            new schema_1.HumanChatMessage(`
+            new HumanChatMessage(`
         Problem Statement:
         ${problemStatement.description}
 
@@ -74,7 +46,7 @@ class GetWebPagesProcessor extends baseProcessor_js_1.BaseProcessor {
     }
     renderInitialMessages(problemStatement, text) {
         return [
-            new schema_1.SystemChatMessage(`As an expert trained to analyze complex text in relation to a given problem statement, adhere to the following guidelines:
+            new SystemChatMessage(`As an expert trained to analyze complex text in relation to a given problem statement, adhere to the following guidelines:
 
         1. Analyze how the text is related to the problem statement.
         2. Suggest potential solutions to the problem statement.
@@ -235,7 +207,7 @@ class GetWebPagesProcessor extends baseProcessor_js_1.BaseProcessor {
           ]
         }
         `),
-            new schema_1.HumanChatMessage(`
+            new HumanChatMessage(`
         Problem Statement:
         ${problemStatement.description}
 
@@ -248,31 +220,31 @@ class GetWebPagesProcessor extends baseProcessor_js_1.BaseProcessor {
     async getTokenCount(text) {
         const emptyMessages = this.renderInitialMessages(this.memory.problemStatement, "");
         const promptTokenCount = await this.chat.getNumTokensFromMessages(emptyMessages);
-        const textForTokenCount = new schema_1.HumanChatMessage(text);
+        const textForTokenCount = new HumanChatMessage(text);
         const textTokenCount = await this.chat.getNumTokensFromMessages([
             textForTokenCount,
         ]);
         const totalTokenCount = promptTokenCount.totalCount +
             textTokenCount.totalCount +
-            constants_js_1.IEngineConstants.getPageAnalysisModel.maxOutputTokens;
+            IEngineConstants.getPageAnalysisModel.maxOutputTokens;
         return { totalTokenCount, promptTokenCount };
     }
     async getInitialAnalysis(text) {
         const messages = this.renderInitialMessages(this.memory.problemStatement, text);
-        const analysis = (await this.callLLM("web-get-pages", constants_js_1.IEngineConstants.getPageAnalysisModel, messages));
+        const analysis = (await this.callLLM("web-get-pages", IEngineConstants.getPageAnalysisModel, messages));
         return analysis;
     }
     async getRefinedAnalysis(currentAnalysis, text) {
         const messages = this.renderRefinePrompt(currentAnalysis, this.memory.problemStatement, text);
-        const analysis = (await this.callLLM("web-get-pages", constants_js_1.IEngineConstants.getPageAnalysisModel, messages));
+        const analysis = (await this.callLLM("web-get-pages", IEngineConstants.getPageAnalysisModel, messages));
         return analysis;
     }
     async getTextAnalysis(text) {
         const { totalTokenCount, promptTokenCount } = await this.getTokenCount(text);
         let textAnalysis;
-        if (constants_js_1.IEngineConstants.getPageAnalysisModel.tokenLimit < totalTokenCount) {
-            const splitter = new text_splitter_1.RecursiveCharacterTextSplitter({
-                chunkSize: constants_js_1.IEngineConstants.getPageAnalysisModel.tokenLimit -
+        if (IEngineConstants.getPageAnalysisModel.tokenLimit < totalTokenCount) {
+            const splitter = new RecursiveCharacterTextSplitter({
+                chunkSize: IEngineConstants.getPageAnalysisModel.tokenLimit -
                     promptTokenCount.totalCount -
                     128,
                 chunkOverlap: 100,
@@ -332,7 +304,7 @@ class GetWebPagesProcessor extends baseProcessor_js_1.BaseProcessor {
     async processHtml(subProblemIndex, url, browserPage, type) {
         try {
             const html = await browserPage.content();
-            const text = (0, html_to_text_1.htmlToText)(html, {
+            const text = htmlToText(html, {
                 wordwrap: false,
             });
             await this.processPageText(text, subProblemIndex, url, type);
@@ -350,9 +322,9 @@ class GetWebPagesProcessor extends baseProcessor_js_1.BaseProcessor {
         }
         else {
             response = await browserPage.goto(url, {
-                timeout: constants_js_1.IEngineConstants.getPageTimeout,
+                timeout: IEngineConstants.getPageTimeout,
             });
-            await redis.set(redisKey, response, "EX", constants_js_1.IEngineConstants.getPageCacheExpiration);
+            await redis.set(redisKey, response, "EX", IEngineConstants.getPageCacheExpiration);
         }
         return response;
     }
@@ -374,8 +346,8 @@ class GetWebPagesProcessor extends baseProcessor_js_1.BaseProcessor {
     }
     async processSubProblems(searchQueryType, browserPage) {
         for (let s = 0; s <
-            Math.min(this.memory.subProblems.length, constants_js_1.IEngineConstants.maxSubProblems); s++) {
-            let pagesToSearch = this.memory.subProblems[s].searchResults.pages[searchQueryType].slice(0, constants_js_1.IEngineConstants.maxTopPagesToGetPerType);
+            Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems); s++) {
+            let pagesToSearch = this.memory.subProblems[s].searchResults.pages[searchQueryType].slice(0, IEngineConstants.maxTopPagesToGetPerType);
             this.searchResultTarget = "subProblem";
             const urlsToGet = pagesToSearch.map((p) => p.link);
             for (let i = 0; i < urlsToGet.length; i++) {
@@ -387,8 +359,8 @@ class GetWebPagesProcessor extends baseProcessor_js_1.BaseProcessor {
     }
     async processEntities(subProblemIndex, searchQueryType, browserPage) {
         for (let e = 0; e <
-            Math.min(this.memory.subProblems[subProblemIndex].entities.length, constants_js_1.IEngineConstants.maxTopEntitiesToSearch); e++) {
-            let pagesToSearch = this.memory.subProblems[subProblemIndex].entities[e].searchResults.pages[searchQueryType].slice(0, constants_js_1.IEngineConstants.maxTopPagesToGetPerType);
+            Math.min(this.memory.subProblems[subProblemIndex].entities.length, IEngineConstants.maxTopEntitiesToSearch); e++) {
+            let pagesToSearch = this.memory.subProblems[subProblemIndex].entities[e].searchResults.pages[searchQueryType].slice(0, IEngineConstants.maxTopPagesToGetPerType);
             this.searchResultTarget = "entity";
             this.currentEntity = this.memory.subProblems[subProblemIndex].entities[e];
             const urlsToGet = pagesToSearch.map((p) => p.link);
@@ -399,7 +371,7 @@ class GetWebPagesProcessor extends baseProcessor_js_1.BaseProcessor {
         }
     }
     async processProblemStatement(searchQueryType, browserPage) {
-        let pagesToSearch = this.memory.problemStatement.searchResults.pages[searchQueryType].slice(0, constants_js_1.IEngineConstants.maxTopPagesToGetPerType);
+        let pagesToSearch = this.memory.problemStatement.searchResults.pages[searchQueryType].slice(0, IEngineConstants.maxTopPagesToGetPerType);
         this.searchResultTarget = "problemStatement";
         const urlsToGet = pagesToSearch.map((p) => p.link);
         for (let i = 0; i < urlsToGet.length; i++) {
@@ -407,10 +379,10 @@ class GetWebPagesProcessor extends baseProcessor_js_1.BaseProcessor {
         }
     }
     async getAllPages() {
-        puppeteer_extra_1.default.launch({ headless: true }).then(async (browser) => {
+        puppeteer.launch({ headless: true }).then(async (browser) => {
             this.logger.debug("Launching browser");
             const browserPage = await browser.newPage();
-            await browserPage.setUserAgent(constants_js_1.IEngineConstants.currentUserAgent);
+            await browserPage.setUserAgent(IEngineConstants.currentUserAgent);
             for (const searchQueryType of [
                 "general",
                 "scientific",
@@ -427,14 +399,13 @@ class GetWebPagesProcessor extends baseProcessor_js_1.BaseProcessor {
     async process() {
         this.logger.info("Get Web Pages Processor");
         super.process();
-        this.chat = new openai_1.ChatOpenAI({
-            temperature: constants_js_1.IEngineConstants.getPageAnalysisModel.temperature,
-            maxTokens: constants_js_1.IEngineConstants.getPageAnalysisModel.maxOutputTokens,
-            modelName: constants_js_1.IEngineConstants.getPageAnalysisModel.name,
-            verbose: constants_js_1.IEngineConstants.getPageAnalysisModel.verbose,
+        this.chat = new ChatOpenAI({
+            temperature: IEngineConstants.getPageAnalysisModel.temperature,
+            maxTokens: IEngineConstants.getPageAnalysisModel.maxOutputTokens,
+            modelName: IEngineConstants.getPageAnalysisModel.name,
+            verbose: IEngineConstants.getPageAnalysisModel.verbose,
         });
         await this.getAllPages();
         await this.saveMemory();
     }
 }
-exports.GetWebPagesProcessor = GetWebPagesProcessor;

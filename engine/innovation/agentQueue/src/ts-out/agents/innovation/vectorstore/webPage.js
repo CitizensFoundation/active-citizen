@@ -1,14 +1,8 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.WebPageVectorStore = void 0;
-const weaviate_ts_client_1 = __importDefault(require("weaviate-ts-client"));
-const base_1 = require("../../../base");
-const constants_1 = require("../../../constants");
-class WebPageVectorStore extends base_1.Base {
-    static client = weaviate_ts_client_1.default.client({
+const { default: weaviate } = require('weaviate-ts-client');
+import { Base } from "../../../base.js";
+import { IEngineConstants } from "../../../constants.js";
+export class WebPageVectorStore extends Base {
+    static client = weaviate.client({
         scheme: process.env.WEAVIATE_HTTP_SCHEME || "http",
         host: process.env.WEAVIATE_HOST || "localhost:8085",
     });
@@ -57,7 +51,7 @@ class WebPageVectorStore extends base_1.Base {
                 .get()
                 .withClassName("WebPage")
                 .withNearText({ concepts: [query] })
-                .withLimit(constants_1.IEngineConstants.limits.webPageVectorResultsForNewSolutions)
+                .withLimit(IEngineConstants.limits.webPageVectorResultsForNewSolutions)
                 .withWhere({
                 operator: "And",
                 operands: where,
@@ -73,4 +67,3 @@ class WebPageVectorStore extends base_1.Base {
         return results;
     }
 }
-exports.WebPageVectorStore = WebPageVectorStore;

@@ -1,4 +1,12 @@
-
+declare module 'pdfjs-dist/build/pdf.js'
+declare module 'puppeteer-extra' {
+  import puppeteer from 'puppeteer';
+  const puppeteerExtra: typeof puppeteer & {
+    use: (plugin: any) => void;
+    launch: typeof puppeteer.launch;
+  };
+  export = puppeteerExtra;
+}
 type SerpKnowledgeGraph = {
   title: string;
   type: string;

@@ -1,14 +1,11 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.CreateSubProblemsProcessor = void 0;
-const baseProcessor_js_1 = require("../baseProcessor.js");
-const openai_1 = require("langchain/chat_models/openai");
-const schema_1 = require("langchain/schema");
-const constants_js_1 = require("../../../../constants.js");
-class CreateSubProblemsProcessor extends baseProcessor_js_1.BaseProcessor {
+import { BaseProcessor } from "../baseProcessor.js";
+import { ChatOpenAI } from "langchain/chat_models/openai";
+import { HumanChatMessage, SystemChatMessage, } from "langchain/schema";
+import { IEngineConstants } from "../../../../constants.js";
+export class CreateSubProblemsProcessor extends BaseProcessor {
     async renderRefinePrompt(results) {
         const messages = [
-            new schema_1.SystemChatMessage(`
+            new SystemChatMessage(`
             As an AI expert, your role involves the analysis and refinement of problem statements, along with the creation of sub-problems. Please keep these guidelines in mind:
 
             1. Refine the given sub-problems and present them as a JSON array.
@@ -19,7 +16,7 @@ class CreateSubProblemsProcessor extends baseProcessor_js_1.BaseProcessor {
             6. Avoid suggesting tasks or actions; your task is to explain the problems.
             7. Do not provide output in markdown format.
             8. Adopt a systematic and detailed approach for this task and proceed in a step-by-step manner.`),
-            new schema_1.HumanChatMessage(`
+            new HumanChatMessage(`
            Problem Statement:
            "${this.memory.problemStatement.description}"
 
@@ -34,7 +31,7 @@ class CreateSubProblemsProcessor extends baseProcessor_js_1.BaseProcessor {
     async renderCreatePrompt() {
         //TODO: Human review and improvements of those GPT-4 generated few-shots
         const messages = [
-            new schema_1.SystemChatMessage(`
+            new SystemChatMessage(`
             As an AI expert, you are tasked with the analysis of problem statements and generation of sub-problems. Please adhere to the following guidelines:
 
             1. Create 21 clear and concise sub-problems for any given problem statement and present them as a JSON array.
@@ -183,7 +180,7 @@ class CreateSubProblemsProcessor extends baseProcessor_js_1.BaseProcessor {
               }
             ]
             `),
-            new schema_1.HumanChatMessage(`
+            new HumanChatMessage(`
            Problem Statement:
            "${this.memory.problemStatement.description}"
 
@@ -193,9 +190,9 @@ class CreateSubProblemsProcessor extends baseProcessor_js_1.BaseProcessor {
         return messages;
     }
     async createSubProblems() {
-        let results = (await this.callLLM("create-sub-problems", constants_js_1.IEngineConstants.createSubProblemsModel, await this.renderCreatePrompt()));
-        if (constants_js_1.IEngineConstants.enable.refine.createSubProblems) {
-            results = await this.callLLM("create-sub-problems", constants_js_1.IEngineConstants.createSubProblemsModel, await this.renderRefinePrompt(results));
+        let results = (await this.callLLM("create-sub-problems", IEngineConstants.createSubProblemsModel, await this.renderCreatePrompt()));
+        if (IEngineConstants.enable.refine.createSubProblems) {
+            results = await this.callLLM("create-sub-problems", IEngineConstants.createSubProblemsModel, await this.renderRefinePrompt(results));
         }
         this.memory.subProblems = results;
         await this.saveMemory();
@@ -203,13 +200,12 @@ class CreateSubProblemsProcessor extends baseProcessor_js_1.BaseProcessor {
     async process() {
         this.logger.info("Sub Problems Processor");
         super.process();
-        this.chat = new openai_1.ChatOpenAI({
-            temperature: constants_js_1.IEngineConstants.createSubProblemsModel.temperature,
-            maxTokens: constants_js_1.IEngineConstants.createSubProblemsModel.maxOutputTokens,
-            modelName: constants_js_1.IEngineConstants.createSubProblemsModel.name,
-            verbose: constants_js_1.IEngineConstants.createSubProblemsModel.verbose,
+        this.chat = new ChatOpenAI({
+            temperature: IEngineConstants.createSubProblemsModel.temperature,
+            maxTokens: IEngineConstants.createSubProblemsModel.maxOutputTokens,
+            modelName: IEngineConstants.createSubProblemsModel.name,
+            verbose: IEngineConstants.createSubProblemsModel.verbose,
         });
         await this.createSubProblems();
     }
 }
-exports.CreateSubProblemsProcessor = CreateSubProblemsProcessor;

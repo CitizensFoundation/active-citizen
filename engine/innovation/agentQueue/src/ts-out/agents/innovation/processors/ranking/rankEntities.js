@@ -1,11 +1,8 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.RankSubProblemsProcessor = void 0;
-const openai_1 = require("langchain/chat_models/openai");
-const schema_1 = require("langchain/schema");
-const constants_js_1 = require("../../../../constants.js");
-const basePairwiseRanking_js_1 = require("./basePairwiseRanking.js");
-class RankSubProblemsProcessor extends basePairwiseRanking_js_1.BasePairwiseRankingsProcessor {
+import { ChatOpenAI } from "langchain/chat_models/openai";
+import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
+import { IEngineConstants } from "../../../../constants.js";
+import { BasePairwiseRankingsProcessor } from "./basePairwiseRanking.js";
+export class RankSubProblemsProcessor extends BasePairwiseRankingsProcessor {
     subProblemIndex = 0;
     async voteOnPromptPair(promptPair) {
         const itemOneIndex = promptPair[0];
@@ -17,7 +14,7 @@ class RankSubProblemsProcessor extends basePairwiseRanking_js_1.BasePairwiseRank
         let itemTwoTitle = itemTwo.name;
         let itemTwoEffects = this.renderEntityPosNegReasons(itemTwo);
         const messages = [
-            new schema_1.SystemChatMessage(`
+            new SystemChatMessage(`
         You are an AI expert specializing in analyzing complex problem statements, sub-problems, and ranking affected entities. Please adhere to the following guidelines:
 
         1. You will be provided with a problem statement followed by a sub-problem.
@@ -26,7 +23,7 @@ class RankSubProblemsProcessor extends basePairwiseRanking_js_1.BasePairwiseRank
         4. Consider both positive and negative impacts, if available, while ranking.
         5. Output your decision as either "One" or "Two", indicating the more affected entity. No need for any explanations.
         6. Ensure to use a systematic and step-by-step approach. Think step by step.`),
-            new schema_1.HumanChatMessage(`
+            new HumanChatMessage(`
          ${this.renderProblemStatement()}
 
          ${this.renderSubProblem(this.currentSubProblemIndex)}
@@ -44,20 +41,20 @@ class RankSubProblemsProcessor extends basePairwiseRanking_js_1.BasePairwiseRank
          The More Affected Entity Is:
        `),
         ];
-        return await this.getResultsFromLLM("rank-entities", constants_js_1.IEngineConstants.entitiesRankingsModel, messages, itemOneIndex, itemTwoIndex);
+        return await this.getResultsFromLLM("rank-entities", IEngineConstants.entitiesRankingsModel, messages, itemOneIndex, itemTwoIndex);
     }
     async process() {
         this.logger.info("Rank Entities Processor");
         super.process();
-        this.chat = new openai_1.ChatOpenAI({
-            temperature: constants_js_1.IEngineConstants.entitiesRankingsModel.temperature,
-            maxTokens: constants_js_1.IEngineConstants.entitiesRankingsModel.maxOutputTokens,
-            modelName: constants_js_1.IEngineConstants.entitiesRankingsModel.name,
-            verbose: constants_js_1.IEngineConstants.entitiesRankingsModel.verbose,
+        this.chat = new ChatOpenAI({
+            temperature: IEngineConstants.entitiesRankingsModel.temperature,
+            maxTokens: IEngineConstants.entitiesRankingsModel.maxOutputTokens,
+            modelName: IEngineConstants.entitiesRankingsModel.name,
+            verbose: IEngineConstants.entitiesRankingsModel.verbose,
         });
         this.currentSubProblemIndex = 0;
         for (let s = 0; s <
-            Math.min(this.memory.subProblems.length, constants_js_1.IEngineConstants.maxSubProblems); s++) {
+            Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems); s++) {
             const filteredEntities = this.memory.subProblems[s].entities.filter((entity) => {
                 return ((entity.positiveEffects && entity.positiveEffects.length > 0) ||
                     (entity.negativeEffects && entity.negativeEffects.length > 0));
@@ -71,4 +68,3 @@ class RankSubProblemsProcessor extends basePairwiseRanking_js_1.BasePairwiseRank
         }
     }
 }
-exports.RankSubProblemsProcessor = RankSubProblemsProcessor;

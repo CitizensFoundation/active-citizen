@@ -1,5 +1,5 @@
 import { Worker, Job } from "bullmq";
-import { BaseWorker } from "../baseWorker";
+import { BaseWorker } from "../baseWorker.js";
 
 class WorkerWebSearch extends BaseWorker {
   async process(job: Job) {}

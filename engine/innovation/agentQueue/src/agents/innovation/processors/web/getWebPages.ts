@@ -2,19 +2,22 @@ import { HTTPResponse, Page } from "puppeteer";
 import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import { IEngineConstants } from "../../../../constants.js";
-import * as pdfjs from "pdfjs-dist/es5/build/pdf.js";
+import * as pdfjs from "pdfjs-dist/build/pdf.js";
 import { htmlToText } from "html-to-text";
-import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { BaseProcessor } from "../baseProcessor.js";
-import { ChatOpenAI } from "langchain/chat_models/openai";
 
 import weaviate, { WeaviateClient } from "weaviate-ts-client";
-import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
+
+const { HumanChatMessage, SystemChatMessage } = require("langchain/schema");
+const { ChatOpenAI } = require("langchain/chat_models/openai");
+const { RecursiveCharacterTextSplitter } = require("langchain/text_splitter");
+
 import { WebPageVectorStore } from "../../vectorstore/webPage.js";
 
 const Redis = require("ioredis");
 const redis = new Redis(process.env.REDIS_MEMORY_URL || undefined);
 
+//@ts-ignore
 puppeteer.use(StealthPlugin());
 pdfjs.GlobalWorkerOptions.workerSrc = require("pdfjs-dist/es5/build/pdf.worker.js");
 

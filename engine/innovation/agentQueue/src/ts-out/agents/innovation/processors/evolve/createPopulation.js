@@ -1,16 +1,13 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.CreatePopulationProcessor = void 0;
-const openai_1 = require("langchain/chat_models/openai");
-const schema_1 = require("langchain/schema");
-const constants_js_1 = require("../../../../constants.js");
-const createSolutions_js_1 = require("../create/createSolutions.js");
+import { ChatOpenAI } from "langchain/chat_models/openai";
+import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
+import { IEngineConstants } from "../../../../constants.js";
+import { CreateSolutionsProcessor } from "../create/createSolutions.js";
 //TODO: Pentalty for similar ideas in the ranking somehow
 //TODO: Track the evolution of the population with a log of parents and mutations, family tree
-class CreatePopulationProcessor extends createSolutions_js_1.CreateSolutionsProcessor {
+export class CreatePopulationProcessor extends CreateSolutionsProcessor {
     async renderRecombinationPrompt(parentA, parentB) {
         return [
-            new schema_1.SystemChatMessage(`
+            new SystemChatMessage(`
         As an AI genetic algorithm expert, your task is to recombine the attributes of two parent solutions (Parent A and Parent B) to create a new offspring solution.
 
         Please recombine these solutions considering the following guidelines:
@@ -18,7 +15,7 @@ class CreatePopulationProcessor extends createSolutions_js_1.CreateSolutionsProc
         2. The recombination should be logical and meaningful.
         3. The offspring should be a viable solution to the problem.
         `),
-            new schema_1.HumanChatMessage(`
+            new HumanChatMessage(`
         ${this.renderPromblemsWithIndexAndEntities(this.currentSubProblemIndex)}
 
         Parent A:
@@ -33,16 +30,16 @@ class CreatePopulationProcessor extends createSolutions_js_1.CreateSolutionsProc
     }
     async renderMutatePrompt(individual) {
         return [
-            new schema_1.SystemChatMessage(`
+            new SystemChatMessage(`
         As an AI genetic algorithm expert, your task is to mutate the solution below.
 
         Please consider the following guidelines:
-        1. Mutate the solution with a ${constants_js_1.IEngineConstants.evolution.mutationPromptChangesRate} rate of changes.
+        1. Mutate the solution with a ${IEngineConstants.evolution.mutationPromptChangesRate} rate of changes.
         2. The mutation should introduce new attributes or alter existing ones.
         3. The mutation should be logical and meaningful.
         4. The mutated individual should still be a viable solution to the problem.
       `),
-            new schema_1.HumanChatMessage(`
+            new HumanChatMessage(`
         ${this.renderPromblemsWithIndexAndEntities(this.currentSubProblemIndex)}
 
         Solution to mutate:
@@ -53,26 +50,26 @@ class CreatePopulationProcessor extends createSolutions_js_1.CreateSolutionsProc
         ];
     }
     async performRecombination(parentA, parentB) {
-        this.chat = new openai_1.ChatOpenAI({
-            temperature: constants_js_1.IEngineConstants.evolutionRecombineModel.temperature,
-            maxTokens: constants_js_1.IEngineConstants.evolutionRecombineModel.maxOutputTokens,
-            modelName: constants_js_1.IEngineConstants.evolutionRecombineModel.name,
-            verbose: constants_js_1.IEngineConstants.evolutionRecombineModel.verbose,
+        this.chat = new ChatOpenAI({
+            temperature: IEngineConstants.evolutionRecombineModel.temperature,
+            maxTokens: IEngineConstants.evolutionRecombineModel.maxOutputTokens,
+            modelName: IEngineConstants.evolutionRecombineModel.name,
+            verbose: IEngineConstants.evolutionRecombineModel.verbose,
         });
-        return (await this.callLLM("evolve-recombine-population", constants_js_1.IEngineConstants.evolutionRecombineModel, await this.renderRecombinationPrompt(parentA, parentB)));
+        return (await this.callLLM("evolve-recombine-population", IEngineConstants.evolutionRecombineModel, await this.renderRecombinationPrompt(parentA, parentB)));
     }
     async recombine(parentA, parentB) {
         const offspring = await this.performRecombination(parentA, parentB);
         return offspring;
     }
     async performMutation(individual) {
-        this.chat = new openai_1.ChatOpenAI({
-            temperature: constants_js_1.IEngineConstants.evolutionMutateModel.temperature,
-            maxTokens: constants_js_1.IEngineConstants.evolutionMutateModel.maxOutputTokens,
-            modelName: constants_js_1.IEngineConstants.evolutionMutateModel.name,
-            verbose: constants_js_1.IEngineConstants.evolutionMutateModel.verbose,
+        this.chat = new ChatOpenAI({
+            temperature: IEngineConstants.evolutionMutateModel.temperature,
+            maxTokens: IEngineConstants.evolutionMutateModel.maxOutputTokens,
+            modelName: IEngineConstants.evolutionMutateModel.name,
+            verbose: IEngineConstants.evolutionMutateModel.verbose,
         });
-        return (await this.callLLM("evolve-mutate-population", constants_js_1.IEngineConstants.evolutionMutateModel, await this.renderMutatePrompt(individual)));
+        return (await this.callLLM("evolve-mutate-population", IEngineConstants.evolutionMutateModel, await this.renderMutatePrompt(individual)));
     }
     async mutate(individual) {
         const mutant = await this.performMutation(individual);
@@ -87,7 +84,7 @@ class CreatePopulationProcessor extends createSolutions_js_1.CreateSolutionsProc
         return newSolutions;
     }
     selectParent(population) {
-        const tournamentSize = constants_js_1.IEngineConstants.evolution.selectParentTournamentSize;
+        const tournamentSize = IEngineConstants.evolution.selectParentTournamentSize;
         let tournament = [];
         for (let i = 0; i < tournamentSize; i++) {
             const randomIndex = Math.floor(Math.random() * population.length);
@@ -110,18 +107,18 @@ class CreatePopulationProcessor extends createSolutions_js_1.CreateSolutionsProc
     }
     async createPopulation() {
         for (let subProblemIndex = 0; subProblemIndex <
-            Math.min(this.memory.subProblems.length, constants_js_1.IEngineConstants.maxSubProblems); subProblemIndex++) {
+            Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems); subProblemIndex++) {
             this.currentSubProblemIndex = subProblemIndex;
             let previousPopulation = this.getPreviousPopulation(subProblemIndex);
-            const POPULATION_SIZE = constants_js_1.IEngineConstants.evolution.populationSize;
+            const POPULATION_SIZE = IEngineConstants.evolution.populationSize;
             const newPopulation = [];
-            const eliteCount = Math.floor(previousPopulation.length * constants_js_1.IEngineConstants.evolution.keepElitePercent);
+            const eliteCount = Math.floor(previousPopulation.length * IEngineConstants.evolution.keepElitePercent);
             for (let i = 0; i < eliteCount; i++) {
                 newPopulation.push(previousPopulation[i]);
             }
             // Mutation
             let mutationCount = Math.floor((POPULATION_SIZE - newPopulation.length) *
-                constants_js_1.IEngineConstants.evolution.mutationRate);
+                IEngineConstants.evolution.mutationRate);
             if (newPopulation.length + mutationCount > POPULATION_SIZE) {
                 mutationCount = POPULATION_SIZE - newPopulation.length;
             }
@@ -132,7 +129,7 @@ class CreatePopulationProcessor extends createSolutions_js_1.CreateSolutionsProc
             }
             // Crossover
             let crossoverCount = Math.floor((POPULATION_SIZE - newPopulation.length) *
-                constants_js_1.IEngineConstants.evolution.crossoverPercent);
+                IEngineConstants.evolution.crossoverPercent);
             if (newPopulation.length + crossoverCount > POPULATION_SIZE) {
                 crossoverCount = POPULATION_SIZE - newPopulation.length;
             }
@@ -140,14 +137,14 @@ class CreatePopulationProcessor extends createSolutions_js_1.CreateSolutionsProc
                 const parentA = this.selectParent(previousPopulation);
                 const parentB = this.selectParent(previousPopulation);
                 let offspring = await this.recombine(parentA, parentB);
-                if (Math.random() < constants_js_1.IEngineConstants.evolution.mutationOffspringPercent) {
+                if (Math.random() < IEngineConstants.evolution.mutationOffspringPercent) {
                     offspring = await this.mutate(offspring);
                 }
                 newPopulation.push(offspring);
             }
             // Immigration
             let immigrationCount = Math.floor((POPULATION_SIZE - newPopulation.length) *
-                constants_js_1.IEngineConstants.evolution.randomImmigrationPercent);
+                IEngineConstants.evolution.randomImmigrationPercent);
             if (newPopulation.length + immigrationCount > POPULATION_SIZE) {
                 immigrationCount = POPULATION_SIZE - newPopulation.length;
             }
@@ -168,4 +165,3 @@ class CreatePopulationProcessor extends createSolutions_js_1.CreateSolutionsProc
         await this.createPopulation();
     }
 }
-exports.CreatePopulationProcessor = CreatePopulationProcessor;

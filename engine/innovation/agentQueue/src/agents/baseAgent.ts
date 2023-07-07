@@ -1,5 +1,5 @@
 import { Job } from "bullmq";
-import { BaseWorker } from "../workers/baseWorker";
+import { BaseWorker } from "../workers/baseWorker.js";
 const Redis = require("ioredis");
 const redis = new Redis(process.env.REDIS_MEMORY_URL || undefined);
 

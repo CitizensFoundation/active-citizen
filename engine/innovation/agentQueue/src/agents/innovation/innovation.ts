@@ -1,6 +1,6 @@
-import { BaseAgent } from "../baseAgent";
+import { BaseAgent } from "../baseAgent.js";
 import { Worker, Job } from "bullmq";
-import { CreateSubProblemsProcessor } from "./processors/create/createSubProblems";
+import { CreateSubProblemsProcessor } from "./processors/create/createSubProblems.js";
 
 export class AgentInnovation extends BaseAgent {
   declare memory: IEngineInnovationMemoryData;

@@ -1,11 +1,8 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.BaseProcessor = void 0;
-const base_1 = require("../../../base");
-const constants_1 = require("../../../constants");
+import { Base } from "../../../base.js";
+import { IEngineConstants } from "../../../constants.js";
 const Redis = require("ioredis");
 const redis = new Redis(process.env.REDIS_MEMORY_URL || undefined);
-class BaseProcessor extends base_1.Base {
+export class BaseProcessor extends Base {
     memory;
     job;
     chat;
@@ -22,7 +19,7 @@ class BaseProcessor extends base_1.Base {
         }
     }
     async saveMemory() {
-        await redis.set(this.memory.id, JSON.stringify(this.memory));
+        await redis.set(this.memory.redisKey, JSON.stringify(this.memory));
     }
     renderSubProblem(subProblemIndex) {
         const subProblem = this.memory.subProblems[subProblemIndex];
@@ -99,7 +96,7 @@ class BaseProcessor extends base_1.Base {
     async callLLM(stage, modelConstants, messages, parseJson = true) {
         try {
             let retryCount = 0;
-            const maxRetries = constants_1.IEngineConstants.mainLLMmaxRetryCount;
+            const maxRetries = IEngineConstants.mainLLMmaxRetryCount;
             let retry = true;
             while (retry && retryCount < maxRetries && this.chat) {
                 const response = await this.chat.call(messages);
@@ -154,4 +151,3 @@ class BaseProcessor extends base_1.Base {
         }
     }
 }
-exports.BaseProcessor = BaseProcessor;

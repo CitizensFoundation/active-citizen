@@ -1,11 +1,8 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.RankSubProblemsProcessor = void 0;
-const openai_1 = require("langchain/chat_models/openai");
-const schema_1 = require("langchain/schema");
-const constants_js_1 = require("../../../../constants.js");
-const basePairwiseRanking_js_1 = require("./basePairwiseRanking.js");
-class RankSubProblemsProcessor extends basePairwiseRanking_js_1.BasePairwiseRankingsProcessor {
+import { ChatOpenAI } from "langchain/chat_models/openai";
+import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
+import { IEngineConstants } from "../../../../constants.js";
+import { BasePairwiseRankingsProcessor } from "./basePairwiseRanking.js";
+export class RankSubProblemsProcessor extends BasePairwiseRankingsProcessor {
     subProblemIndex = 0;
     async voteOnPromptPair(promptPair) {
         const itemOneIndex = promptPair[0];
@@ -17,7 +14,7 @@ class RankSubProblemsProcessor extends basePairwiseRanking_js_1.BasePairwiseRank
         let itemTwoTitle = itemTwo.title;
         let itemTwoDescription = itemTwo.description;
         const messages = [
-            new schema_1.SystemChatMessage(`
+            new SystemChatMessage(`
         You are an AI expert trained to analyse complex problem statements and associated sub-problems to determine their relevance.
 
         Please follow these guidelines:
@@ -26,7 +23,7 @@ class RankSubProblemsProcessor extends basePairwiseRanking_js_1.BasePairwiseRank
         3. Output your decision as either "One" or "Two". An explanation is not required.
         4. Ensure you take a methodical and step-by-step approach.
         `),
-            new schema_1.HumanChatMessage(`
+            new HumanChatMessage(`
         ${this.renderProblemStatement()}
 
         Sub-Problems for Consideration:
@@ -42,16 +39,16 @@ class RankSubProblemsProcessor extends basePairwiseRanking_js_1.BasePairwiseRank
         The Most Relevant Sub-Problem Is:
         `),
         ];
-        return await this.getResultsFromLLM("rank-sub-problems", constants_js_1.IEngineConstants.subProblemsRankingsModel, messages, itemOneIndex, itemTwoIndex);
+        return await this.getResultsFromLLM("rank-sub-problems", IEngineConstants.subProblemsRankingsModel, messages, itemOneIndex, itemTwoIndex);
     }
     async process() {
         this.logger.info("Rank Sub Problems Processor");
         super.process();
-        this.chat = new openai_1.ChatOpenAI({
-            temperature: constants_js_1.IEngineConstants.subProblemsRankingsModel.temperature,
-            maxTokens: constants_js_1.IEngineConstants.subProblemsRankingsModel.maxOutputTokens,
-            modelName: constants_js_1.IEngineConstants.subProblemsRankingsModel.name,
-            verbose: constants_js_1.IEngineConstants.subProblemsRankingsModel.verbose,
+        this.chat = new ChatOpenAI({
+            temperature: IEngineConstants.subProblemsRankingsModel.temperature,
+            maxTokens: IEngineConstants.subProblemsRankingsModel.maxOutputTokens,
+            modelName: IEngineConstants.subProblemsRankingsModel.name,
+            verbose: IEngineConstants.subProblemsRankingsModel.verbose,
         });
         this.setupRankingPrompts(this.memory.subProblems);
         await this.performPairwiseRanking();
@@ -61,4 +58,3 @@ class RankSubProblemsProcessor extends basePairwiseRanking_js_1.BasePairwiseRank
         await this.saveMemory();
     }
 }
-exports.RankSubProblemsProcessor = RankSubProblemsProcessor;

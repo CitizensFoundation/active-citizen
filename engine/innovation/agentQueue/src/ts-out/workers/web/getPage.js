@@ -1,11 +1,9 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const bullmq_1 = require("bullmq");
-const baseWorker_1 = require("../baseWorker");
-class WorkerWebGetPage extends baseWorker_1.BaseWorker {
+import { Worker } from "bullmq";
+import { BaseWorker } from "../baseWorker.js";
+class WorkerWebGetPage extends BaseWorker {
     async process(job) { }
 }
-const worker = new bullmq_1.Worker("worker-web-get-page", async (job) => {
+const worker = new Worker("worker-web-get-page", async (job) => {
     const getPage = new WorkerWebGetPage();
     await getPage.process(job);
     return job.data;

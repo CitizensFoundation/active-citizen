@@ -1,14 +1,11 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.CreateEntitiesProcessor = void 0;
-const baseProcessor_js_1 = require("../baseProcessor.js");
-const openai_1 = require("langchain/chat_models/openai");
-const schema_1 = require("langchain/schema");
-const constants_js_1 = require("../../../../constants.js");
-class CreateEntitiesProcessor extends baseProcessor_js_1.BaseProcessor {
+import { BaseProcessor } from "../baseProcessor.js";
+import { ChatOpenAI } from "langchain/chat_models/openai";
+import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
+import { IEngineConstants } from "../../../../constants.js";
+export class CreateEntitiesProcessor extends BaseProcessor {
     async renderRefinePrompt(results) {
         const messages = [
-            new schema_1.SystemChatMessage(`
+            new SystemChatMessage(`
         As an AI expert, you're tasked with refining entities affected by complex problem statements and subproblems. Entities can include individuals, groups, systems, the planet, or even inanimate objects.
 
         Please follow these guidelines:
@@ -21,7 +18,7 @@ class CreateEntitiesProcessor extends baseProcessor_js_1.BaseProcessor {
         6. If important negative and positive effects are missing from the entities, please add them.
         7. Maintain a methodical, step-by-step approach.
         `),
-            new schema_1.HumanChatMessage(`
+            new HumanChatMessage(`
          ${this.renderProblemStatement()}
 
          ${this.renderSubProblem(this.currentSubProblemIndex)}
@@ -36,12 +33,12 @@ class CreateEntitiesProcessor extends baseProcessor_js_1.BaseProcessor {
     }
     async renderCreatePrompt() {
         const messages = [
-            new schema_1.SystemChatMessage(`
+            new SystemChatMessage(`
         As an AI expert, your task is to identify entities affected by complex problem statements and subproblems. Entities can range from individuals, groups, systems, to the planet, or even inanimate objects.
 
         Please adhere to the following guidelines:
 
-        1. Generate and output up to ${constants_js_1.IEngineConstants.maxNumberGeneratedOfEntities} affected entities.
+        1. Generate and output up to ${IEngineConstants.maxNumberGeneratedOfEntities} affected entities.
         2. Identify all entities impacted by the main problem and its subproblems.
         3. Highlight all direct negative effects, and any positive effects, without suggesting solutions. Multiple effects may be listed in the array.
         4. Use short, concise, and consistent names for entities.
@@ -90,7 +87,7 @@ class CreateEntitiesProcessor extends baseProcessor_js_1.BaseProcessor {
             }
         ]
         `),
-            new schema_1.HumanChatMessage(`
+            new HumanChatMessage(`
          ${this.renderProblemStatement()}
 
          ${this.renderSubProblem(this.currentSubProblemIndex)}
@@ -104,11 +101,11 @@ class CreateEntitiesProcessor extends baseProcessor_js_1.BaseProcessor {
         //TODO: Human review and improvements of this partly GPT-4 generated prompt
         this.currentSubProblemIndex = 0;
         for (let s = 0; s <
-            Math.min(this.memory.subProblems.length, constants_js_1.IEngineConstants.maxSubProblems); s++) {
+            Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems); s++) {
             this.currentSubProblemIndex = s;
-            let results = (await this.callLLM("create-entities", constants_js_1.IEngineConstants.createEntitiesModel, await this.renderCreatePrompt()));
-            if (constants_js_1.IEngineConstants.enable.refine.createEntities) {
-                results = (await this.callLLM("create-entities", constants_js_1.IEngineConstants.createEntitiesModel, await this.renderRefinePrompt(results)));
+            let results = (await this.callLLM("create-entities", IEngineConstants.createEntitiesModel, await this.renderCreatePrompt()));
+            if (IEngineConstants.enable.refine.createEntities) {
+                results = (await this.callLLM("create-entities", IEngineConstants.createEntitiesModel, await this.renderRefinePrompt(results)));
             }
             this.memory.subProblems[s].entities = results;
             await this.saveMemory();
@@ -117,13 +114,12 @@ class CreateEntitiesProcessor extends baseProcessor_js_1.BaseProcessor {
     async process() {
         this.logger.info("Create Entities Processor");
         super.process();
-        this.chat = new openai_1.ChatOpenAI({
-            temperature: constants_js_1.IEngineConstants.createEntitiesModel.temperature,
-            maxTokens: constants_js_1.IEngineConstants.createEntitiesModel.maxOutputTokens,
-            modelName: constants_js_1.IEngineConstants.createEntitiesModel.name,
-            verbose: constants_js_1.IEngineConstants.createEntitiesModel.verbose,
+        this.chat = new ChatOpenAI({
+            temperature: IEngineConstants.createEntitiesModel.temperature,
+            maxTokens: IEngineConstants.createEntitiesModel.maxOutputTokens,
+            modelName: IEngineConstants.createEntitiesModel.name,
+            verbose: IEngineConstants.createEntitiesModel.verbose,
         });
         await this.createEntities();
     }
 }
-exports.CreateEntitiesProcessor = CreateEntitiesProcessor;

@@ -1,18 +1,15 @@
-const pino = require('pino');
+import winston from 'winston';
 
-import './workers/web/search.js';
-import './workers/web/getPage.js';
-import './agents/innovation/innovation.js'
-
-export const logger = pino({
-  name: 'innovation-engine',
-  level: process.env.QUEUE_LOG_LEVEL || 'debug'
+const logger = winston.createLogger({
+  level: process.env.WORKER_LOG_LEVEL || 'debug'
 });
 
 process.on("uncaughtException", function (err) {
-  logger.error(err, "Uncaught exception");
+  logger.error(err);
 });
 
 process.on("unhandledRejection", (reason, promise) => {
-  logger.error({ promise, reason }, "Unhandled Rejection at: Promise");
+  logger.error("Unhandled Rejection at: Promise");
 });
+
+export { logger };

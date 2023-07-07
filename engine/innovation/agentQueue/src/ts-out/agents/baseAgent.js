@@ -1,10 +1,7 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.BaseAgent = void 0;
-const baseWorker_1 = require("../workers/baseWorker");
+import { BaseWorker } from "../workers/baseWorker.js";
 const Redis = require("ioredis");
 const redis = new Redis(process.env.REDIS_MEMORY_URL || undefined);
-class BaseAgent extends baseWorker_1.BaseWorker {
+export class BaseAgent extends BaseWorker {
     memory;
     job;
     getRedisKey(groupId) {
@@ -32,4 +29,3 @@ class BaseAgent extends baseWorker_1.BaseWorker {
         await redis.set(this.memory.redisKey, JSON.stringify(this.memory));
     }
 }
-exports.BaseAgent = BaseAgent;

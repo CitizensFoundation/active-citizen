@@ -1,16 +1,13 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.CreateSolutionsProcessor = void 0;
-const baseProcessor_js_1 = require("../baseProcessor.js");
-const openai_1 = require("langchain/chat_models/openai");
-const schema_1 = require("langchain/schema");
-const constants_js_1 = require("../../../../constants.js");
-const webPage_js_1 = require("../../vectorstore/webPage.js");
-class CreateSolutionsProcessor extends baseProcessor_js_1.BaseProcessor {
-    webPageVectorStore = new webPage_js_1.WebPageVectorStore();
+import { BaseProcessor } from "../baseProcessor.js";
+import { ChatOpenAI } from "langchain/chat_models/openai";
+import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
+import { IEngineConstants } from "../../../../constants.js";
+import { WebPageVectorStore } from "../../vectorstore/webPage.js";
+export class CreateSolutionsProcessor extends BaseProcessor {
+    webPageVectorStore = new WebPageVectorStore();
     async renderRefinePrompt(results, generalTextContext, scientificTextContext, openDataTextContext, newsTextContext, subProblemIndex, alreadyCreatedSolutions = undefined) {
         const messages = [
-            new schema_1.SystemChatMessage(`
+            new SystemChatMessage(`
         As an expert, your task is to refine the innovative solutions proposed for complex problems and associated sub-problems.
 
         Please follow these guidelines:
@@ -25,7 +22,7 @@ class CreateSolutionsProcessor extends baseProcessor_js_1.BaseProcessor {
         9. For each problem and sub-problem, produce the solutions in the following JSON format: [ { title, description, howCanSolutionHelp, mainObstacleToSolutionAdoption } ].
         10. Apply a methodical, step-by-step approach to deliver optimal solutions.
         `),
-            new schema_1.HumanChatMessage(`
+            new HumanChatMessage(`
         ${this.renderPromblemsWithIndexAndEntities(subProblemIndex)}
 
         ${alreadyCreatedSolutions
@@ -44,7 +41,7 @@ class CreateSolutionsProcessor extends baseProcessor_js_1.BaseProcessor {
         return messages;
     }
     renderCreateSystemMessage() {
-        return new schema_1.SystemChatMessage(`
+        return new SystemChatMessage(`
       As an expert, you are tasked with crafting innovative solutions for complex problems and associated sub-problems, considering the affected entities.
 
       Adhere to the following guidelines:
@@ -64,7 +61,7 @@ class CreateSolutionsProcessor extends baseProcessor_js_1.BaseProcessor {
     renderCreateForTestTokens(subProblemIndex, alreadyCreatedSolutions = undefined) {
         const messages = [
             this.renderCreateSystemMessage(),
-            new schema_1.HumanChatMessage(`
+            new HumanChatMessage(`
             ${this.renderPromblemsWithIndexAndEntities(subProblemIndex)}
 
             Possible general context for solutions:
@@ -90,7 +87,7 @@ class CreateSolutionsProcessor extends baseProcessor_js_1.BaseProcessor {
     async renderCreatePrompt(generalTextContext, scientificTextContext, openDataTextContext, newsTextContext, subProblemIndex, alreadyCreatedSolutions = undefined) {
         const messages = [
             this.renderCreateSystemMessage(),
-            new schema_1.HumanChatMessage(`
+            new HumanChatMessage(`
         ${this.renderPromblemsWithIndexAndEntities(subProblemIndex)}
 
         Contexts for potential solutions:
@@ -119,20 +116,20 @@ class CreateSolutionsProcessor extends baseProcessor_js_1.BaseProcessor {
         return messages;
     }
     async createSolutions(subProblemIndex, generalTextContext, scientificTextContext, openDataTextContext, newsTextContext, alreadyCreatedSolutions = undefined) {
-        let results = await this.callLLM("create-seed-solutions", constants_js_1.IEngineConstants.createSeedSolutionsModel, await this.renderCreatePrompt(generalTextContext, scientificTextContext, openDataTextContext, newsTextContext, subProblemIndex, alreadyCreatedSolutions));
-        if (constants_js_1.IEngineConstants.enable.refine.createSolutions) {
-            results = await this.callLLM("create-seed-solutions", constants_js_1.IEngineConstants.createSeedSolutionsModel, await this.renderRefinePrompt(results, generalTextContext, scientificTextContext, openDataTextContext, newsTextContext, subProblemIndex, alreadyCreatedSolutions));
+        let results = await this.callLLM("create-seed-solutions", IEngineConstants.createSeedSolutionsModel, await this.renderCreatePrompt(generalTextContext, scientificTextContext, openDataTextContext, newsTextContext, subProblemIndex, alreadyCreatedSolutions));
+        if (IEngineConstants.enable.refine.createSolutions) {
+            results = await this.callLLM("create-seed-solutions", IEngineConstants.createSeedSolutionsModel, await this.renderRefinePrompt(results, generalTextContext, scientificTextContext, openDataTextContext, newsTextContext, subProblemIndex, alreadyCreatedSolutions));
         }
         return results;
     }
     randomSearchQueryIndex(subProblemIndex) {
         const randomIndex = Math.min(Math.floor(Math.random() *
-            (constants_js_1.IEngineConstants.maxTopSearchQueriesForSolutionCreation + 1)), subProblemIndex
+            (IEngineConstants.maxTopSearchQueriesForSolutionCreation + 1)), subProblemIndex
             ? this.memory.subProblems[subProblemIndex].searchQueries.general
                 .length - 1
             : 2);
         if (Math.random() <
-            constants_js_1.IEngineConstants.chances.notUsingFirstSearchQueryForNewSolutions) {
+            IEngineConstants.chances.notUsingFirstSearchQueryForNewSolutions) {
             return randomIndex;
         }
         else {
@@ -150,12 +147,12 @@ class CreateSolutionsProcessor extends baseProcessor_js_1.BaseProcessor {
     getRandomSearchQueryForType(type, problemStatementQueries, subProblemQueries, otherSubProblemQueries) {
         let random = Math.random();
         let selectedQuery;
-        if (random < constants_js_1.IEngineConstants.chances.useMainProblemSearchQueriesNewSolutions) {
+        if (random < IEngineConstants.chances.useMainProblemSearchQueriesNewSolutions) {
             selectedQuery = problemStatementQueries[type];
         }
         else if (random <
-            constants_js_1.IEngineConstants.chances.useOtherSubProblemSearchQueriesNewSolutions +
-                constants_js_1.IEngineConstants.chances.useMainProblemSearchQueriesNewSolutions) {
+            IEngineConstants.chances.useOtherSubProblemSearchQueriesNewSolutions +
+                IEngineConstants.chances.useMainProblemSearchQueriesNewSolutions) {
             selectedQuery = otherSubProblemQueries[type];
         }
         else {
@@ -197,7 +194,7 @@ class CreateSolutionsProcessor extends baseProcessor_js_1.BaseProcessor {
     }
     async countTokensForString(text) {
         const tokenCountData = await this.chat.getNumTokensFromMessages([
-            new schema_1.HumanChatMessage(text),
+            new HumanChatMessage(text),
         ]);
         return tokenCountData.totalCount;
     }
@@ -218,7 +215,7 @@ class CreateSolutionsProcessor extends baseProcessor_js_1.BaseProcessor {
     async searchForType(subProblemIndex, type, searchQuery, tokensLeftForType) {
         let rawSearchResults;
         const random = Math.random();
-        if (random < constants_js_1.IEngineConstants.chances.useMainProblemVectorSearchNewSolutions) {
+        if (random < IEngineConstants.chances.useMainProblemVectorSearchNewSolutions) {
             rawSearchResults = await this.webPageVectorStore.searchWebPages(searchQuery, this.memory.groupId, undefined, type);
         }
         else {
@@ -235,16 +232,16 @@ class CreateSolutionsProcessor extends baseProcessor_js_1.BaseProcessor {
     async getSearchQueryTextContext(subProblemIndex, searchQuery, type, alreadyCreatedSolutions = undefined) {
         const tokenCountData = await this.chat.getNumTokensFromMessages(this.renderCreateForTestTokens(subProblemIndex, alreadyCreatedSolutions));
         const currentTokens = tokenCountData.totalCount;
-        const tokensLeft = constants_js_1.IEngineConstants.createSeedSolutionsModel.tokenLimit -
+        const tokensLeft = IEngineConstants.createSeedSolutionsModel.tokenLimit -
             (currentTokens +
-                constants_js_1.IEngineConstants.createSeedSolutionsModel.maxOutputTokens);
-        const tokensLeftForType = Math.floor(tokensLeft / constants_js_1.IEngineConstants.numberOfSearchTypes);
+                IEngineConstants.createSeedSolutionsModel.maxOutputTokens);
+        const tokensLeftForType = Math.floor(tokensLeft / IEngineConstants.numberOfSearchTypes);
         this.logger.debug(`Tokens left for type: ${tokensLeftForType} for type ${type}`);
         return await this.searchForType(subProblemIndex, type, searchQuery, tokensLeftForType);
     }
     async createAllSolutions() {
         for (let subProblemIndex = 0; subProblemIndex <
-            Math.min(this.memory.subProblems.length, constants_js_1.IEngineConstants.maxSubProblems); subProblemIndex++) {
+            Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems); subProblemIndex++) {
             let solutions = [];
             // Create 28 solutions 7*4
             for (let i = 0; i < 4; i++) {
@@ -265,13 +262,12 @@ class CreateSolutionsProcessor extends baseProcessor_js_1.BaseProcessor {
     async process() {
         this.logger.info("Create Seed Solutions Processor");
         super.process();
-        this.chat = new openai_1.ChatOpenAI({
-            temperature: constants_js_1.IEngineConstants.createSearchQueriesModel.temperature,
-            maxTokens: constants_js_1.IEngineConstants.createSearchQueriesModel.maxOutputTokens,
-            modelName: constants_js_1.IEngineConstants.createSearchQueriesModel.name,
-            verbose: constants_js_1.IEngineConstants.createSearchQueriesModel.verbose,
+        this.chat = new ChatOpenAI({
+            temperature: IEngineConstants.createSearchQueriesModel.temperature,
+            maxTokens: IEngineConstants.createSearchQueriesModel.maxOutputTokens,
+            modelName: IEngineConstants.createSearchQueriesModel.name,
+            verbose: IEngineConstants.createSearchQueriesModel.verbose,
         });
         await this.createAllSolutions();
     }
 }
-exports.CreateSolutionsProcessor = CreateSolutionsProcessor;

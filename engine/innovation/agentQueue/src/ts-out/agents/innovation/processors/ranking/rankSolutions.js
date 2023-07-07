@@ -1,11 +1,8 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.RankSolutionsProcessor = void 0;
-const openai_1 = require("langchain/chat_models/openai");
-const schema_1 = require("langchain/schema");
-const constants_js_1 = require("../../../../constants.js");
-const basePairwiseRanking_js_1 = require("./basePairwiseRanking.js");
-class RankSolutionsProcessor extends basePairwiseRanking_js_1.BasePairwiseRankingsProcessor {
+import { ChatOpenAI } from "langchain/chat_models/openai";
+import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
+import { IEngineConstants } from "../../../../constants.js";
+import { BasePairwiseRankingsProcessor } from "./basePairwiseRanking.js";
+export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
     subProblemIndex = 0;
     async voteOnPromptPair(promptPair) {
         const itemOneIndex = promptPair[0];
@@ -13,7 +10,7 @@ class RankSolutionsProcessor extends basePairwiseRanking_js_1.BasePairwiseRankin
         const solutionOne = this.allItems[itemOneIndex];
         const solutionTwo = this.allItems[itemTwoIndex];
         const messages = [
-            new schema_1.SystemChatMessage(`
+            new SystemChatMessage(`
         As an AI expert, your role involves analyzing solutions to complex problem statements and sub-problems.
 
         Please adhere to the following guidelines:
@@ -24,7 +21,7 @@ class RankSolutionsProcessor extends basePairwiseRanking_js_1.BasePairwiseRankin
         5. Output your decision as either "One" or "Two". No explanation is necessary.
         6. Ensure your approach is methodical and systematic. Think step by step.
         `),
-            new schema_1.HumanChatMessage(`
+            new HumanChatMessage(`
         ${this.renderPromblemsWithIndexAndEntities(this.subProblemIndex)}
 
         Solutions for Consideration:
@@ -38,10 +35,10 @@ class RankSolutionsProcessor extends basePairwiseRanking_js_1.BasePairwiseRankin
         Main Obstacles to Solution One Adoption: ${solutionOne.mainObstacleToSolutionAdoption}
 
         Pros of Solution One:
-        ${solutionOne.pros.slice(0, constants_js_1.IEngineConstants.maxProsConsUsedForRanking)}
+        ${solutionOne.pros.slice(0, IEngineConstants.maxProsConsUsedForRanking)}
 
         Cons of Solution One:
-        ${solutionOne.cons.slice(0, constants_js_1.IEngineConstants.maxProsConsUsedForRanking)}
+        ${solutionOne.cons.slice(0, IEngineConstants.maxProsConsUsedForRanking)}
 
         Solution Two:
         ----------------------------------------
@@ -52,27 +49,27 @@ class RankSolutionsProcessor extends basePairwiseRanking_js_1.BasePairwiseRankin
         Main Obstacles to Solution Two Adoption: ${solutionTwo.mainObstacleToSolutionAdoption}
 
         Pros of Solution Two:
-        ${solutionTwo.pros.slice(0, constants_js_1.IEngineConstants.maxProsConsUsedForRanking)}
+        ${solutionTwo.pros.slice(0, IEngineConstants.maxProsConsUsedForRanking)}
 
         Cons of Solution Two:
-        ${solutionTwo.cons.slice(0, constants_js_1.IEngineConstants.maxProsConsUsedForRanking)}
+        ${solutionTwo.cons.slice(0, IEngineConstants.maxProsConsUsedForRanking)}
 
         The Most Effective Solution Is:
         `),
         ];
-        return await this.getResultsFromLLM("rank-solutions", constants_js_1.IEngineConstants.solutionsRankingsModel, messages, itemOneIndex, itemTwoIndex);
+        return await this.getResultsFromLLM("rank-solutions", IEngineConstants.solutionsRankingsModel, messages, itemOneIndex, itemTwoIndex);
     }
     async process() {
         this.logger.info("Rank Solutions Processor");
         super.process();
-        this.chat = new openai_1.ChatOpenAI({
-            temperature: constants_js_1.IEngineConstants.solutionsRankingsModel.temperature,
-            maxTokens: constants_js_1.IEngineConstants.solutionsRankingsModel.maxOutputTokens,
-            modelName: constants_js_1.IEngineConstants.solutionsRankingsModel.name,
-            verbose: constants_js_1.IEngineConstants.solutionsRankingsModel.verbose,
+        this.chat = new ChatOpenAI({
+            temperature: IEngineConstants.solutionsRankingsModel.temperature,
+            maxTokens: IEngineConstants.solutionsRankingsModel.maxOutputTokens,
+            modelName: IEngineConstants.solutionsRankingsModel.name,
+            verbose: IEngineConstants.solutionsRankingsModel.verbose,
         });
         for (let s = 0; s <
-            Math.min(this.memory.subProblems.length, constants_js_1.IEngineConstants.maxSubProblems); s++) {
+            Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems); s++) {
             this.subProblemIndex = s;
             if (this.memory.subProblems[s].solutions.populations &&
                 this.memory.subProblems[s].solutions.populations.length > 0 &&
@@ -95,4 +92,3 @@ class RankSolutionsProcessor extends basePairwiseRanking_js_1.BasePairwiseRankin
         }
     }
 }
-exports.RankSolutionsProcessor = RankSolutionsProcessor;

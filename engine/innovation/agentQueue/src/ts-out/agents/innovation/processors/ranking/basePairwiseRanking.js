@@ -1,9 +1,6 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.BasePairwiseRankingsProcessor = void 0;
-const baseProcessor_js_1 = require("../baseProcessor.js");
-const constants_js_1 = require("../../../../constants.js");
-class BasePairwiseRankingsProcessor extends baseProcessor_js_1.BaseProcessor {
+import { BaseProcessor } from "../baseProcessor.js";
+import { IEngineConstants } from "../../../../constants.js";
+export class BasePairwiseRankingsProcessor extends BaseProcessor {
     prompts = [];
     allItems;
     INITIAL_ELO_RATING = 1000;
@@ -34,7 +31,7 @@ class BasePairwiseRankingsProcessor extends baseProcessor_js_1.BaseProcessor {
     async getResultsFromLLM(stageName, modelConstant, messages, itemOneIndex, itemTwoIndex) {
         let wonItemIndex;
         let lostItemIndex;
-        const maxRetryCount = constants_js_1.IEngineConstants.rankingLLMmaxRetryCount;
+        const maxRetryCount = IEngineConstants.rankingLLMmaxRetryCount;
         let retry = true;
         let retryCount = 0;
         while (retry && retryCount < maxRetryCount) {
@@ -132,4 +129,3 @@ class BasePairwiseRankingsProcessor extends baseProcessor_js_1.BaseProcessor {
         super.process();
     }
 }
-exports.BasePairwiseRankingsProcessor = BasePairwiseRankingsProcessor;

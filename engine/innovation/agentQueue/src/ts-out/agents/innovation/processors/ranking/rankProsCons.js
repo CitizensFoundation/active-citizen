@@ -1,11 +1,8 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.RankProsConsProcessor = void 0;
-const openai_1 = require("langchain/chat_models/openai");
-const schema_1 = require("langchain/schema");
-const constants_js_1 = require("../../../../constants.js");
-const basePairwiseRanking_js_1 = require("./basePairwiseRanking.js");
-class RankProsConsProcessor extends basePairwiseRanking_js_1.BasePairwiseRankingsProcessor {
+import { ChatOpenAI } from "langchain/chat_models/openai";
+import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
+import { IEngineConstants } from "../../../../constants.js";
+import { BasePairwiseRankingsProcessor } from "./basePairwiseRanking.js";
+export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
     subProblemIndex = 0;
     currentSolutionIndex = 0;
     currentProsOrCons;
@@ -27,7 +24,7 @@ class RankProsConsProcessor extends basePairwiseRanking_js_1.BasePairwiseRanking
         const prosOrConsOne = this.allItems[itemOneIndex];
         const prosOrConsTwo = this.allItems[itemTwoIndex];
         const messages = [
-            new schema_1.SystemChatMessage(`
+            new SystemChatMessage(`
         As an AI expert, your role involves analyzing ${this.currentProsOrCons} associated with solutions to complex problem statements and sub-problems.
 
         Please adhere to the following guidelines:
@@ -38,7 +35,7 @@ class RankProsConsProcessor extends basePairwiseRanking_js_1.BasePairwiseRanking
         4. Output your decision as either "One" or "Two". No explanation is necessary.
         5. Ensure your approach is methodical and systematic. Engage in step-by-step thinking.
         `),
-            new schema_1.HumanChatMessage(`
+            new HumanChatMessage(`
         ${this.renderPromblemsWithIndexAndEntities(this.subProblemIndex)}
 
         ${this.renderCurrentSolution()}
@@ -52,19 +49,19 @@ class RankProsConsProcessor extends basePairwiseRanking_js_1.BasePairwiseRanking
         Please Identify the Best ${this.currentProsOrCons.toUpperCase()}:
         `),
         ];
-        return await this.getResultsFromLLM("rank-pros-cons", constants_js_1.IEngineConstants.prosConsRankingsModel, messages, itemOneIndex, itemTwoIndex);
+        return await this.getResultsFromLLM("rank-pros-cons", IEngineConstants.prosConsRankingsModel, messages, itemOneIndex, itemTwoIndex);
     }
     async process() {
         this.logger.info("Rank Pros Cons Processor");
         super.process();
-        this.chat = new openai_1.ChatOpenAI({
-            temperature: constants_js_1.IEngineConstants.prosConsRankingsModel.temperature,
-            maxTokens: constants_js_1.IEngineConstants.prosConsRankingsModel.maxOutputTokens,
-            modelName: constants_js_1.IEngineConstants.prosConsRankingsModel.name,
-            verbose: constants_js_1.IEngineConstants.prosConsRankingsModel.verbose,
+        this.chat = new ChatOpenAI({
+            temperature: IEngineConstants.prosConsRankingsModel.temperature,
+            maxTokens: IEngineConstants.prosConsRankingsModel.maxOutputTokens,
+            modelName: IEngineConstants.prosConsRankingsModel.name,
+            verbose: IEngineConstants.prosConsRankingsModel.verbose,
         });
         for (let subProblemIndex = 0; subProblemIndex <
-            Math.min(this.memory.subProblems.length, constants_js_1.IEngineConstants.maxSubProblems); subProblemIndex++) {
+            Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems); subProblemIndex++) {
             this.subProblemIndex = subProblemIndex;
             let solutions;
             if (this.memory.subProblems[subProblemIndex].solutions.populations &&
@@ -105,4 +102,3 @@ class RankProsConsProcessor extends basePairwiseRanking_js_1.BasePairwiseRanking
         }
     }
 }
-exports.RankProsConsProcessor = RankProsConsProcessor;

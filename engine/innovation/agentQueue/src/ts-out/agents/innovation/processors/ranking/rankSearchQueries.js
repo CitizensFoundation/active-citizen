@@ -1,11 +1,8 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.RankSearchQueriesProcessor = void 0;
-const openai_1 = require("langchain/chat_models/openai");
-const schema_1 = require("langchain/schema");
-const constants_js_1 = require("../../../../constants.js");
-const basePairwiseRanking_js_1 = require("./basePairwiseRanking.js");
-class RankSearchQueriesProcessor extends basePairwiseRanking_js_1.BasePairwiseRankingsProcessor {
+import { ChatOpenAI } from "langchain/chat_models/openai";
+import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
+import { IEngineConstants } from "../../../../constants.js";
+import { BasePairwiseRankingsProcessor } from "./basePairwiseRanking.js";
+export class RankSearchQueriesProcessor extends BasePairwiseRankingsProcessor {
     subProblemIndex = 0;
     entitiesIndex = 0;
     currentEntity;
@@ -42,7 +39,7 @@ class RankSearchQueriesProcessor extends basePairwiseRanking_js_1.BasePairwiseRa
         const itemOne = this.allItems[itemOneIndex];
         const itemTwo = this.allItems[itemTwoIndex];
         const messages = [
-            new schema_1.SystemChatMessage(`
+            new SystemChatMessage(`
         You are an AI expert trained to rank search queries based on their relevance to complex problem statements, sub-problems and affected entities.
 
         Please follow these guidelines:
@@ -51,7 +48,7 @@ class RankSearchQueriesProcessor extends basePairwiseRanking_js_1.BasePairwiseRa
         3. Your task is to analyze, compare, and rank these search queries based on their relevance to the given problemm sub-problem and affected entities.
         4. Output your decision as either "One" or "Two". No explanation is required.
         5. Ensure a systematic and methodical approach to this task. Think step by step.`),
-            new schema_1.HumanChatMessage(`
+            new HumanChatMessage(`
         Search query type: ${this.searchQueryType}
 
         ${this.renderProblemDetail()}
@@ -67,11 +64,11 @@ class RankSearchQueriesProcessor extends basePairwiseRanking_js_1.BasePairwiseRa
         The Most Relevant Search Query Is:
        `),
         ];
-        return await this.getResultsFromLLM("rank-search-queries", constants_js_1.IEngineConstants.searchQueryRankingsModel, messages, itemOneIndex, itemTwoIndex);
+        return await this.getResultsFromLLM("rank-search-queries", IEngineConstants.searchQueryRankingsModel, messages, itemOneIndex, itemTwoIndex);
     }
     async processSubProblems(searchQueryType) {
         for (let s = 0; s <
-            Math.min(this.memory.subProblems.length, constants_js_1.IEngineConstants.maxSubProblems); s++) {
+            Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems); s++) {
             let queriesToRank = this.memory.subProblems[s].searchQueries[searchQueryType];
             this.subProblemIndex = s;
             this.searchQueryTarget = "subProblem";
@@ -86,7 +83,7 @@ class RankSearchQueriesProcessor extends basePairwiseRanking_js_1.BasePairwiseRa
     }
     async processEntities(subProblemIndex, searchQueryType) {
         for (let e = 0; e <
-            Math.min(this.memory.subProblems[subProblemIndex].entities.length, constants_js_1.IEngineConstants.maxTopEntitiesToSearch); e++) {
+            Math.min(this.memory.subProblems[subProblemIndex].entities.length, IEngineConstants.maxTopEntitiesToSearch); e++) {
             this.currentEntity = this.memory.subProblems[subProblemIndex].entities[e];
             let queriesToRank = this.memory.subProblems[subProblemIndex].entities[e].searchQueries[searchQueryType];
             this.setupRankingPrompts(queriesToRank);
@@ -97,11 +94,11 @@ class RankSearchQueriesProcessor extends basePairwiseRanking_js_1.BasePairwiseRa
     async process() {
         this.logger.info("Rank Search Queries Processor");
         super.process();
-        this.chat = new openai_1.ChatOpenAI({
-            temperature: constants_js_1.IEngineConstants.searchQueryRankingsModel.temperature,
-            maxTokens: constants_js_1.IEngineConstants.searchQueryRankingsModel.maxOutputTokens,
-            modelName: constants_js_1.IEngineConstants.searchQueryRankingsModel.name,
-            verbose: constants_js_1.IEngineConstants.searchQueryRankingsModel.verbose,
+        this.chat = new ChatOpenAI({
+            temperature: IEngineConstants.searchQueryRankingsModel.temperature,
+            maxTokens: IEngineConstants.searchQueryRankingsModel.maxOutputTokens,
+            modelName: IEngineConstants.searchQueryRankingsModel.name,
+            verbose: IEngineConstants.searchQueryRankingsModel.verbose,
         });
         for (const searchQueryType of [
             "general",
@@ -121,4 +118,3 @@ class RankSearchQueriesProcessor extends basePairwiseRanking_js_1.BasePairwiseRa
         await this.saveMemory();
     }
 }
-exports.RankSearchQueriesProcessor = RankSearchQueriesProcessor;
