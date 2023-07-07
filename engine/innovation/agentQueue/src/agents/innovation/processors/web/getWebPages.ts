@@ -30,21 +30,18 @@ export class GetWebPagesProcessor extends BaseProcessor {
   ) {
     return [
       new SystemChatMessage(
-        `You are an expert trained to analyse complex text in relation to a given problem statement.
+        `As an expert trained to analyze complex text in relation to a given problem statement, adhere to the following guidelines:
 
-        Adhere to the following guidelines:
-        1. You are refining the Current Analysis JSON with new information from the provided New Text Context.
-        2. Analyze how this text is related to the problem statement and output after Refined Analysis JSON:
-        2. Suggest possible solutions to the problem statement.
-        3. Provide a summary of the text.
-        4. Provide a list of tags for the text.
-        5. Provide a list of entities for the text.
-        6. Output all paragraphs that are relevant to the problem statement
-        7. If there are citations or references, output them in references seperatly not in allParagraphs.
-        9. Output everything in JSON without an explanation
-          [ { allRelevantParagraphs, possibleSolutionToProblem, relevanceToProblem, summary, tags, entities, references } ].
-        10. Let's think step-by-step.
-      `
+        1. Refine the Current Analysis JSON with new information from the New Text Context.
+        2. Analyze the relation of this text to the problem statement and output a Refined Analysis JSON.
+        3. Suggest potential solutions to the problem statement.
+        4. Provide a summary of the text.
+        5. Identify a list of tags for the text.
+        6. Highlight the entities found in the text.
+        7. Select and output all paragraphs relevant to the problem statement.
+        8. If there are citations or references, list them separately under 'references', not in 'allParagraphs'.
+        9. Output everything in JSON format without further explanation.
+        10. Tackle the task step-by-step.`
       ),
       new HumanChatMessage(
         `
@@ -57,8 +54,7 @@ export class GetWebPagesProcessor extends BaseProcessor {
         New Text Context:
         ${text}
 
-        Refined Analysis JSON:
-      `
+        Refined Analysis JSON:`
       ),
     ];
   }
@@ -69,20 +65,18 @@ export class GetWebPagesProcessor extends BaseProcessor {
   ) {
     return [
       new SystemChatMessage(
-        `You are an expert trained to analyse complex text in relation to a given problem statement.
+        `As an expert trained to analyze complex text in relation to a given problem statement, adhere to the following guidelines:
 
-        Adhere to the following guidelines:
-        1. Analyze how the text context is related to the problem statement.
-        2. Suggest possible solutions to the problem statement.
+        1. Analyze how the text is related to the problem statement.
+        2. Suggest potential solutions to the problem statement.
         3. Provide a summary of the text.
-        4. Provide a list of tags for the text.
-        5. Provide a list of entities for the text.
-        6. Output all paragraphs that are relevant to the problem statement
-        7. If there are citations or references, output them in references seperatly not in allParagraphs.
-        8. Never output in markdown format.
-        9. Output everything in JSON without an explanation
-          [ { allRelevantParagraphs, possibleSolutionToProblem, relevanceToProblem, summary, tags, entities, references } ].
-        10. Let's think step-by-step.
+        4. Identify a list of tags for the text.
+        5. Highlight the entities found in the text.
+        6. Select and output all paragraphs relevant to the problem statement.
+        7. If there are citations or references, list them separately under 'references', not in 'allParagraphs'.
+        8. Avoid using markdown format.
+        9. Output everything in JSON format without further explanation.
+        10. Tackle the task step-by-step.
 
         Examples:
 
@@ -205,9 +199,7 @@ export class GetWebPagesProcessor extends BaseProcessor {
           "possibleSolutionToProblem": [
             "Adopting faster formation protocols and using the cell resistance measured at low states of charge as an early-life diagnostic feature for screening new formation protocols."
           ],
-          "relevanceToProblem": [
-            "The text discusses the impact of formation protocols on battery lifetime, which is directly related to the problem of prototype robotic prosthetic leg batteries not lasting long enough."
-          ],
+          "relevanceToProblem": "The text discusses the impact of formation protocols on battery lifetime, which is directly related to the problem of prototype robotic prosthetic leg batteries not lasting long enough.",
           "summary": [
             "The text discusses the potential of faster formation protocols in improving the lifetime of lithium-ion batteries. It identifies the cell resistance measured at low states of charge as a diagnostic feature that can predict battery lifetime. This signal is related to the quantity of lithium consumed during formation, and it can be used to evaluate any changes in the manufacturing process that could affect battery lifetime."
           ],
@@ -235,7 +227,7 @@ export class GetWebPagesProcessor extends BaseProcessor {
             "Benchmark Minerals Intelligence, EV Battery arms race enters new gear with 115 megafactories, Europe sees most rapid growth, 2019."
           ]
         }
-      `
+        `
       ),
       new HumanChatMessage(
         `
@@ -245,11 +237,12 @@ export class GetWebPagesProcessor extends BaseProcessor {
         Text Context:
         ${text}
 
-        JSON Output:
-      `
+        JSON Output:`
       ),
     ];
   }
+
+
 
   async getTokenCount(text: string) {
     const emptyMessages = this.renderInitialMessages(
