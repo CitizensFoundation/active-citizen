@@ -200,9 +200,7 @@ export class GetWebPagesProcessor extends BaseProcessor {
             "Adopting faster formation protocols and using the cell resistance measured at low states of charge as an early-life diagnostic feature for screening new formation protocols."
           ],
           "relevanceToProblem": "The text discusses the impact of formation protocols on battery lifetime, which is directly related to the problem of prototype robotic prosthetic leg batteries not lasting long enough.",
-          "summary": [
-            "The text discusses the potential of faster formation protocols in improving the lifetime of lithium-ion batteries. It identifies the cell resistance measured at low states of charge as a diagnostic feature that can predict battery lifetime. This signal is related to the quantity of lithium consumed during formation, and it can be used to evaluate any changes in the manufacturing process that could affect battery lifetime."
-          ],
+          "summary": "The text discusses the potential of faster formation protocols in improving the lifetime of lithium-ion batteries. It identifies the cell resistance measured at low states of charge as a diagnostic feature that can predict battery lifetime. This signal is related to the quantity of lithium consumed during formation, and it can be used to evaluate any changes in the manufacturing process that could affect battery lifetime.",
           "tags": [
             "Battery lifetime",
             "Formation protocols",
