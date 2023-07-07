@@ -3,8 +3,11 @@ import { ChatOpenAI } from "langchain/chat_models/openai";
 import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
 
 import { IEngineConstants } from "../../../../constants.js";
+import { CreateSolutionsProcessor } from "../create/createSolutions.js";
 
-export class CreatePopulationProcessor extends BaseProcessor {
+//TODO: Pentalty for similar ideas in the ranking somehow
+
+export class CreatePopulationProcessor extends CreateSolutionsProcessor {
   async renderRecombinationPrompt(
     parentA: IEngineSolution,
     parentB: IEngineSolution
@@ -106,6 +109,32 @@ export class CreatePopulationProcessor extends BaseProcessor {
   async mutate(individual: IEngineSolution) {
     const mutant = await this.performMutation(individual);
     return mutant;
+  }
+
+  async getNewSolutions(maxNumberOfSolution: number) {
+    const textContexts = await this.getTextContext(
+      this.currentSubProblemIndex!,
+      undefined
+    );
+
+    const newSolutions = await this.createSolutions(
+      this.currentSubProblemIndex!,
+      textContexts.general,
+      textContexts.scientific,
+      textContexts.openData,
+      textContexts.news,
+      undefined
+    );
+
+    if (newSolutions.length > maxNumberOfSolution) {
+      newSolutions.splice(
+        0,
+        newSolutions.length - maxNumberOfSolution,
+        ...newSolutions.slice(0, maxNumberOfSolution)
+      );
+    }
+
+    return newSolutions;
   }
 
   selectParent(population: any[]) {

@@ -196,12 +196,13 @@ export class IEngineConstants {
 
   static evolution = {
     populationSize: 50,
-    keepElitePercent: 0.05,
     useEliteForSeedPercent: 0.3,
+    keepElitePercent: 0.1,
+    randomImmigrationPercent: 0.1,
+    mutationOffspringPercent: 0.2,
+    crossoverPercent: 0.5,
     mutationRate: 0.1,
     mutationPromptChangesRate: 'medium' as mutationRates,
-    crossoverPercent: 0.5,
-    mutationOffspringPercent: 0.2,
     selectParentTournamentSize: 7
   }
 
@@ -210,3 +211,4 @@ export class IEngineConstants {
 
 
 type mutationRates = 'low' | 'medium' | 'high';
+

@@ -80,6 +80,41 @@ export class CreateSolutionsProcessor extends BaseProcessor {
     );
   }
 
+  renderCreateForTestTokens(
+    subProblemIndex: number,
+    alreadyCreatedSolutions: string | undefined = undefined
+  ) {
+    const messages = [
+      this.renderCreateSystemMessage(),
+      new HumanChatMessage(
+        `
+            ${this.renderPromblemsWithIndexAndEntities(subProblemIndex)}
+
+            Possible general context for solutions:
+
+            Possible scientific context for solutions:
+
+            Possible open data context for solutions:
+
+            Possible news context for solutions:
+
+            ${
+              alreadyCreatedSolutions
+                ? `
+              Already created solutions:
+              ${alreadyCreatedSolutions}
+            `
+                : ``
+            }
+
+            Solutions JSON Output:
+           `
+      ),
+    ];
+
+    return messages;
+  }
+
   async renderCreatePrompt(
     generalTextContext: string,
     scientificTextContext: string,
