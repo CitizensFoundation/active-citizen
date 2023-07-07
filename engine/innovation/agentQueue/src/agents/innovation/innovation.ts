@@ -19,6 +19,7 @@ export class AgentInnovation extends BaseAgent {
         "create-entities": {},
         "create-search-queries": {},
         "create-seed-solutions": {},
+        "create-pros-cons": {},
         "rank-search-results": {},
         "rank-sub-problems": {},
         "rank-search-queries": {},

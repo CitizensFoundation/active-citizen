@@ -105,6 +105,16 @@ export class IEngineConstants {
     verbose: true,
   };
 
+  static createProsConsModel: IEngineBaseAIModelConstants = {
+    name: "gpt-4",
+    temperature: 0.9,
+    maxOutputTokens: 2048,
+    tokenLimit: 8192,
+    inTokenCostUSD: gpt4InTokenPrice,
+    outTokenCostUSD: gpt4OutTokenPrice,
+    verbose: true,
+  };
+
   static getPageTimeout = 1000 * 10;
 
   static getPageCacheExpiration = 60 * 60 * 24 * 7 * 4 * 6; // 6 months
@@ -148,7 +158,8 @@ export class IEngineConstants {
     refine: {
       createSubProblems: true,
       createEntities: true,
-      createSolutions: true
+      createSolutions: true,
+      createProsCons: true
     }
   }
 

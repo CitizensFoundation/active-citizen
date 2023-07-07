@@ -150,6 +150,7 @@ type IEngineStageTypes =
   | "create-sub-problems"
   | "create-entities"
   | "create-search-queries"
+  | "create-pros-cons"
   | "rank-search-results"
   | "rank-search-queries"
   | "rank-sub-problems"

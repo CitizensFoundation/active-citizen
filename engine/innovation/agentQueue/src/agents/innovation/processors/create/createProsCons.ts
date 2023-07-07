@@ -5,60 +5,79 @@ import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
 import { IEngineConstants } from "../../../../constants.js";
 
 export class CreateProsConsProcessor extends BaseProcessor {
-  async renderRefinePrompt(prosOrCons: string, results: IEngineAffectedEntity[]) {
+  currentSolutionIndex = 0;
+
+  renderCurrentSolution() {
+    const solution = this.memory.subProblems[this.currentSubProblemIndex!].solutions.seed[this.currentSolutionIndex!];
+
+    return `
+      Solution:
+
+      Title: ${solution.title}
+      Description: ${solution.description}
+
+      How Solution One Can Help: ${solution.howCanSolutionHelp}
+      Main Obstacles to Solution One Adoption: ${solution.mainObstacleToSolutionAdoption}
+    `;
+  }
+
+  async renderRefinePrompt(prosOrCons: string, results: string[]) {
     const messages = [
       new SystemChatMessage(
         `
-        As an AI expert, your role is to refine the ${prosOrCons} associated with solutions to a problem, its sub-problems, and any affected entities.
+        As an AI expert, it's your responsibility to refine the given ${prosOrCons} pertaining to solutions, sub-problems, and affected entities.
 
-        Please adhere to these guidelines:
+        Keep these guidelines in mind:
 
-        1. Refine ${prosOrCons} to make them concise, consistent, detailed, and succinct.
-        2. Consider the context provided by the problem statement, sub-problems, and affected entities.
-        3. Ensure the refined ${prosOrCons} are relevant and directly applicable.
-        4. Output should be in plain text, not markdown format.
-        5. Maintain a step-by-step approach in your thinking.
+        1. Make the ${prosOrCons} concise, consistent, detailed, and succinct.
+        2. Expand on the ${prosOrCons} by considering the problem statement, sub-problems, and affected entities, if needed.
+        3. Contextualize the ${prosOrCons} considering the problem statement, sub-problems, and affected entities.
+        4. Ensure the refined ${prosOrCons} are relevant and directly applicable.
+        5. Output should be in JSON format only, not markdown.
+        6. The ${prosOrCons} should be formatted as an array of strings in JSON format: [ ${prosOrCons} ].
+        7. Follow a step-by-step approach in your thought process.
         `
       ),
       new HumanChatMessage(
         `
-         ${this.renderProblemStatement()}
+        ${this.renderPromblemsWithIndexAndEntities(this.currentSubProblemIndex!)}
 
-         ${this.renderSubProblem(this.currentSubProblemIndex!)}
+        ${this.renderCurrentSolution()}
 
-         Review and Refine the Previous JSON Output of ${prosOrCons}:
-         ${JSON.stringify(results, null, 2)}
+        Please review and refine the following ${prosOrCons}:
+        ${JSON.stringify(results, null, 2)}
 
-         New Refined JSON Output of ${prosOrCons}:
-       `
+        Generate and output the new JSON for the ${prosOrCons} below:
+        `
       ),
     ];
     return messages;
   }
 
-
   async renderCreatePrompt(prosOrCons: string) {
     const messages = [
       new SystemChatMessage(
         `
-        As an AI expert, your role is to generate creative and practical ${prosOrCons} for solutions to a problem, its sub-problems, and any affected entities.
+        As an AI expert, your task is to creatively generate practical ${prosOrCons} for the provided solutions, their associated sub-problems, and any affected entities.
 
-        Please adhere to these guidelines:
+        Follow these guidelines:
 
         1. Generate and output up to ${IEngineConstants.maxNumberGeneratedProsConsForSolution} ${prosOrCons}.
-        2. Ensure that each of the ${prosOrCons} is concise, consistent, detailed, and succinct.
-        3. Consider the context provided by the problem statement, sub-problems, and affected entities.
-        4. Make sure each ${prosOrCons} is directly applicable to the solution.
-        5. Output should be in plain text, not markdown format.
-        6. Format the ${prosOrCons} as an array of strings in JSON format: ['${prosOrCons}1', '${prosOrCons}2', ...].
-        7. Approach this task with step-by-step reasoning.
+        2. Ensure that each ${prosOrCons} is concise, consistent, detailed, and succinct.
+        3. The ${prosOrCons} must be in line with the context given by the problem statement, sub-problems, and affected entities.
+        4. Each ${prosOrCons} should be directly applicable to the solution.
+        5. Output should be in JSON format only, not markdown format.
+        6. The ${prosOrCons} should be formatted as an array of strings in JSON format: [ ${prosOrCons} ].
+        7. Maintain a step-by-step approach in your reasoning.
         `
       ),
       new HumanChatMessage(
         `
          ${this.renderPromblemsWithIndexAndEntities(this.currentSubProblemIndex!)}
 
-         JSON Output of ${prosOrCons}:
+         ${this.renderCurrentSolution()}
+
+         Generate and output JSON for the ${prosOrCons} below:
        `
       ),
     ];
@@ -67,50 +86,62 @@ export class CreateProsConsProcessor extends BaseProcessor {
   }
 
 
-  async createEntities() {
-    //TODO: Human review and improvements of this partly GPT-4 generated prompt
+  async createProsCons() {
+    for (const prosOrCons of ["pros", "cons"] as const) {
+      for (
+        let subProblemIndex = 0;
+        subProblemIndex <
+        Math.min(
+          this.memory.subProblems.length,
+          IEngineConstants.maxSubProblems
+        );
+        subProblemIndex++
+      ) {
+        this.currentSubProblemIndex = subProblemIndex;
 
-    this.currentSubProblemIndex = 0;
+        for (
+          let solutionIndex = 0;
+          solutionIndex <
+          this.memory.subProblems[subProblemIndex].solutions.seed.length;
+          solutionIndex++
+        ) {
+          this.currentSolutionIndex = solutionIndex;
 
-    for (
-      let s = 0;
-      s <
-      Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems);
-      s++
-    ) {
-      this.currentSubProblemIndex = s;
+          let results = (await this.callLLM(
+            "create-pros-cons",
+            IEngineConstants.createProsConsModel,
+            await this.renderCreatePrompt(prosOrCons)
+          )) as string[];
 
-      let results = (await this.callLLM(
-        "create-entities",
-        IEngineConstants.createEntitiesModel,
-        await this.renderCreatePrompt()
-      )) as IEngineAffectedEntity[];
+          if (IEngineConstants.enable.refine.createProsCons) {
+            results = (await this.callLLM(
+              "create-pros-cons",
+              IEngineConstants.createProsConsModel,
+              await this.renderRefinePrompt(prosOrCons, results)
+            )) as string[];
+          }
 
-      if (IEngineConstants.enable.refine.createEntities) {
-        results = (await this.callLLM(
-          "create-entities",
-          IEngineConstants.createEntitiesModel,
-          await this.renderRefinePrompt(results)
-        )) as IEngineAffectedEntity[];
+          this.memory.subProblems[subProblemIndex].solutions.seed[
+            solutionIndex
+          ][prosOrCons] = results;
+
+          await this.saveMemory();
+        }
       }
-
-      this.memory.subProblems[s].entities = results;
-
-      await this.saveMemory();
     }
   }
 
   async process() {
-    this.logger.info("Create Entities Processor");
+    this.logger.info("Create ProsCons Processor");
     super.process();
 
     this.chat = new ChatOpenAI({
-      temperature: IEngineConstants.createEntitiesModel.temperature,
-      maxTokens: IEngineConstants.createEntitiesModel.maxOutputTokens,
-      modelName: IEngineConstants.createEntitiesModel.name,
-      verbose: IEngineConstants.createEntitiesModel.verbose,
+      temperature: IEngineConstants.createProsConsModel.temperature,
+      maxTokens: IEngineConstants.createProsConsModel.maxOutputTokens,
+      modelName: IEngineConstants.createProsConsModel.name,
+      verbose: IEngineConstants.createProsConsModel.verbose,
     });
 
-    await this.createEntities();
+    await this.createProsCons();
   }
 }

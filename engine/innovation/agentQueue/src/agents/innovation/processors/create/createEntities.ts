@@ -16,7 +16,7 @@ export class CreateEntitiesProcessor extends BaseProcessor {
         1. Refine entities and their positive and negative effects in relation to the problem statement and subproblem.
         2. Ensure entity names are concise and consistent.
         3. Limit the description of positive and negative effects to how the subproblem affects the entity, without suggesting solutions. This should be a brief three to four sentence analysis.
-        4. Use plain text only. Avoid markdown formatting.
+        4. Use JSON output only. Avoid markdown formatting.
         5. Elaborate on the reasons behind the negative and positive effects to enhance clarity.
         6. If important negative and positive effects are missing from the entities, please add them.
         7. Maintain a methodical, step-by-step approach.
