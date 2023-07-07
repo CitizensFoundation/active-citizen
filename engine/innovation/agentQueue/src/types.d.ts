@@ -97,6 +97,7 @@ interface IEngineSubProblem {
   searchResults: IEngineSearchResults;
   solutions: {
     seed: IEngineSolution[];
+    populations: IEngineSolution[][];
   }
 }
 
@@ -127,6 +128,8 @@ interface IEngineSolution {
   id: string;
   title: string;
   description: string;
+  fitness?: number;
+  eloScore?: number;
   howCanSolutionHelp: string;
   mainObstacleToSolutionAdoption: string;
   affectedEntities?: IEngineSolutionAffectedEntity[];
@@ -157,6 +160,10 @@ type IEngineStageTypes =
   | "rank-entities"
   | "rank-solutions"
   | "rank-pros-cons"
+  | "evolve-create-population"
+  | "evolve-mutate-population"
+  | "evolve-recombine-population"
+  | "evolve-rank-population"
   | "web-search"
   | "web-get-pages"
   | "create-seed-solutions"

@@ -125,6 +125,27 @@ export class IEngineConstants {
     verbose: true,
   };
 
+
+  static evolutionMutateModel: IEngineBaseAIModelConstants = {
+    name: "gpt-4",
+    temperature: 1.2,
+    maxOutputTokens: 1024,
+    tokenLimit: 8192,
+    inTokenCostUSD: gpt4InTokenPrice,
+    outTokenCostUSD: gpt4OutTokenPrice,
+    verbose: true,
+  };
+
+  static evolutionRecombineModel: IEngineBaseAIModelConstants = {
+    name: "gpt-4",
+    temperature: 1.0,
+    maxOutputTokens: 1024,
+    tokenLimit: 8192,
+    inTokenCostUSD: gpt4InTokenPrice,
+    outTokenCostUSD: gpt4OutTokenPrice,
+    verbose: true,
+  };
+
   static getPageTimeout = 1000 * 10;
 
   static getPageCacheExpiration = 60 * 60 * 24 * 7 * 4 * 6; // 6 months
@@ -173,9 +194,18 @@ export class IEngineConstants {
     }
   }
 
-  static  = 0.5;
+  static evolution = {
+    keepElitePercent: 0.05,
+    useEliteForSeedPercent: 0.3,
+    mutationRate: 0.1,
+    mutationPromptChangesRate: 'medium' as mutationRates,
+    crossoverPercent: 0.5,
+    mutationOffspringPercent: 0.2,
+    selectParentTournamentSize: 7
+  }
 
   static currentUserAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36";
 }
 
 
+type mutationRates = 'low' | 'medium' | 'high';

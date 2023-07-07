@@ -93,6 +93,7 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
       } catch (error) {
         this.logger.error(error);
         if (retryCount < maxRetryCount) {
+          await new Promise((resolve) => setTimeout(resolve, 3000));
           retryCount++;
         } else {
           throw error;

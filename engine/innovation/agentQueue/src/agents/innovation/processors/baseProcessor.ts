@@ -3,6 +3,7 @@ import { Base } from "../../../base";
 import { AIChatMessage, BaseChatMessage, HumanChatMessage, SystemChatMessage } from "langchain/schema";
 import { ChatOpenAI } from "langchain/chat_models/openai";
 import { IEngineConstants } from "../../../constants";
+import { parse } from "path";
 
 const Redis = require("ioredis");
 const redis = new Redis(process.env.REDIS_MEMORY_URL || undefined);
@@ -158,10 +159,15 @@ export abstract class BaseProcessor extends Base {
               parsedJson = JSON.parse(response.text.trim());
             } catch (error) {
               this.logger.error(error);
-              retryCount++;
             }
-            retry = false;
-            return parsedJson;
+
+            if (parsedJson) {
+              retry = false;
+              return parsedJson;
+            }
+
+            await new Promise((resolve) => setTimeout(resolve, 2500));
+            retryCount++;
           } else {
             retry = false;
             return response.text.trim();
