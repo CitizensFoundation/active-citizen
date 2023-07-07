@@ -118,7 +118,7 @@ export class CreateSearchQueriesProcessor extends BaseProcessor {
         );
         e++
       ) {
-        this.memory.subProblems[s].entities[e] = await this.callLLM(
+        this.memory.subProblems[s].entities[e].searchQueries = await this.callLLM(
           "create-search-queries",
           IEngineConstants.createSearchQueriesModel,
           await this.renderEntityPrompt(

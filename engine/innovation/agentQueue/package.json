@@ -14,7 +14,7 @@
   },
   "scripts": {
     "test": "gulp test:local",
-    "start": "nodemon -e ts src/out-ts/queue.js",
+    "start": "nodemon -q src/out-tsc/main.js",
     "watch-start": "tsc --project ./src/ --outDir ./src/ts-out -w & nodemon -q src/out-tsc/main.js",
     "worker": "node api/server-api/ts-out/ac-services/workers/main.js"
   },

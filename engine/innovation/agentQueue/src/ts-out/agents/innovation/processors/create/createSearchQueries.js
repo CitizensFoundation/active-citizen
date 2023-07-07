@@ -80,7 +80,7 @@ export class CreateSearchQueriesProcessor extends BaseProcessor {
             await this.saveMemory();
             for (let e = 0; e <
                 Math.min(this.memory.subProblems[s].entities.length, IEngineConstants.maxTopEntitiesToSearch); e++) {
-                this.memory.subProblems[s].entities[e] = await this.callLLM("create-search-queries", IEngineConstants.createSearchQueriesModel, await this.renderEntityPrompt(promblemText, this.memory.subProblems[s].entities[e]));
+                this.memory.subProblems[s].entities[e].searchQueries = await this.callLLM("create-search-queries", IEngineConstants.createSearchQueriesModel, await this.renderEntityPrompt(promblemText, this.memory.subProblems[s].entities[e]));
                 await this.saveMemory();
             }
         }
