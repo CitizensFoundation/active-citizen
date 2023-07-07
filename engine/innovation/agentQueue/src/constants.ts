@@ -85,6 +85,16 @@ export class IEngineConstants {
     verbose: true,
   };
 
+  static prosConsRankingsModel: IEngineBaseAIModelConstants = {
+    name: "gpt-4",
+    temperature: 0.0,
+    maxOutputTokens: 2,
+    tokenLimit: 8192,
+    inTokenCostUSD: gpt4InTokenPrice,
+    outTokenCostUSD: gpt4OutTokenPrice,
+    verbose: true,
+  };
+
   static getPageAnalysisModel: IEngineBaseAIModelConstants = {
     name: "gpt-3.5-turbo-16k",
     temperature: 0.0,

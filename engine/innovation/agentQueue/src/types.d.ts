@@ -156,6 +156,7 @@ type IEngineStageTypes =
   | "rank-sub-problems"
   | "rank-entities"
   | "rank-solutions"
+  | "rank-pros-cons"
   | "web-search"
   | "web-get-pages"
   | "create-seed-solutions"

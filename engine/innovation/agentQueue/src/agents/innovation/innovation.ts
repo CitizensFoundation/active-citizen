@@ -25,6 +25,7 @@ export class AgentInnovation extends BaseAgent {
         "rank-search-queries": {},
         "rank-entities": {},
         "rank-solutions": {},
+        "rank-pros-cons": {},
         "web-search": {},
         "web-get-pages": {},
         "parse": {},

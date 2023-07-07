@@ -83,10 +83,10 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
     super.process();
 
     this.chat = new ChatOpenAI({
-      temperature: IEngineConstants.subProblemsRankingsModel.temperature,
-      maxTokens: IEngineConstants.subProblemsRankingsModel.maxOutputTokens,
-      modelName: IEngineConstants.subProblemsRankingsModel.name,
-      verbose: IEngineConstants.subProblemsRankingsModel.verbose,
+      temperature: IEngineConstants.solutionsRankingsModel.temperature,
+      maxTokens: IEngineConstants.solutionsRankingsModel.maxOutputTokens,
+      modelName: IEngineConstants.solutionsRankingsModel.name,
+      verbose: IEngineConstants.solutionsRankingsModel.verbose,
     });
 
     for (
