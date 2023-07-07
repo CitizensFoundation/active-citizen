@@ -12,7 +12,7 @@ export class CreatePopulationProcessor extends BaseProcessor {
     return [
       new SystemChatMessage(
         `
-        As an AI expert, your task is to recombine the attributes of two parent solutions (Parent A and Parent B) to create a new offspring solution.
+        As an AI genetic algorithm expert, your task is to recombine the attributes of two parent solutions (Parent A and Parent B) to create a new offspring solution.
 
         Please recombine these solutions considering the following guidelines:
         1. The offspring should contain attributes from both parents.
@@ -27,20 +27,10 @@ export class CreatePopulationProcessor extends BaseProcessor {
         )}
 
         Parent A:
-        Title: ${parentA.title}
-        Description: ${parentA.description}
-        How Can Solution Help: ${parentA.howCanSolutionHelp}
-        Main Obstacle to Solution Adoption: ${
-          parentA.mainObstacleToSolutionAdoption
-        }
+        ${JSON.stringify(parentA, null, 2)}
 
         Parent B:
-        Title: ${parentB.title}
-        Description: ${parentB.description}
-        How Can Solution Help: ${parentB.howCanSolutionHelp}
-        Main Obstacle to Solution Adoption: ${
-          parentB.mainObstacleToSolutionAdoption
-        }
+        ${JSON.stringify(parentB, null, 2)}
 
         Generate and output JSON for the offspring solution below:
         `
@@ -51,13 +41,14 @@ export class CreatePopulationProcessor extends BaseProcessor {
     return [
       new SystemChatMessage(
         `
-        As an AI expert, your task is to mutate the following individual solution with a ${IEngineConstants.evolution.mutationPromptChangesRate} level of changes.
+        As an AI genetic algorithm expert, your task is to mutate the solution below.
 
         Please consider the following guidelines:
-        1. The mutation should introduce new attributes or alter existing ones.
-        2. The mutation should be logical and meaningful.
-        3. The mutated individual should still be a viable solution to the problem.
-        `
+        1. Mutate the solution with a ${IEngineConstants.evolution.mutationPromptChangesRate} rate of changes.
+        2. The mutation should introduce new attributes or alter existing ones.
+        3. The mutation should be logical and meaningful.
+        4. The mutated individual should still be a viable solution to the problem.
+      `
       ),
       new HumanChatMessage(
         `
@@ -65,19 +56,15 @@ export class CreatePopulationProcessor extends BaseProcessor {
           this.currentSubProblemIndex!
         )}
 
-        Individual to mutate:
-        Title: ${individual.title}
-        Description: ${individual.description}
-        How Can Solution Help: ${individual.howCanSolutionHelp}
-        Main Obstacle to Solution Adoption: ${
-          individual.mainObstacleToSolutionAdoption
-        }
+        Solution to mutate:
+        ${JSON.stringify(individual, null, 2)}
 
         Generate and output JSON for the mutated solution below:
         `
       ),
     ];
   }
+
   async performRecombination(
     parentA: IEngineSolution,
     parentB: IEngineSolution
@@ -135,6 +122,24 @@ export class CreatePopulationProcessor extends BaseProcessor {
     return tournament[0];
   }
 
+  getPreviousPopulation(subProblemIndex: number) {
+    if (!this.memory.subProblems[subProblemIndex].solutions.populations) {
+      this.memory.subProblems[subProblemIndex].solutions.populations = [];
+    }
+
+    if (
+      this.memory.subProblems[subProblemIndex].solutions.populations.length >
+      0
+    ) {
+      return this.memory.subProblems[subProblemIndex].solutions.populations[
+        this.memory.subProblems[subProblemIndex].solutions.populations
+          .length - 1
+      ];
+    } else {
+      return this.memory.subProblems[subProblemIndex].solutions.seed;
+    }
+  }
+
   async createPopulation() {
     for (
       let subProblemIndex = 0;
@@ -144,23 +149,9 @@ export class CreatePopulationProcessor extends BaseProcessor {
     ) {
       this.currentSubProblemIndex = subProblemIndex;
 
-      let previousPopulation;
+      let previousPopulation = this.getPreviousPopulation(subProblemIndex);
 
-      if (
-        this.memory.subProblems[subProblemIndex].solutions.populations.length >
-        0
-      ) {
-        previousPopulation =
-          this.memory.subProblems[subProblemIndex].solutions.populations[
-            this.memory.subProblems[subProblemIndex].solutions.populations
-              .length - 1
-          ];
-      } else {
-        previousPopulation =
-          this.memory.subProblems[subProblemIndex].solutions.seed;
-      }
-
-      const POPULATION_SIZE = 75;
+      const POPULATION_SIZE = IEngineConstants.evolution.populationSize;
       const newPopulation = [];
 
       const eliteCount = Math.floor(
@@ -212,7 +203,7 @@ export class CreatePopulationProcessor extends BaseProcessor {
   }
 
   async process() {
-    this.logger.info("Create ProsCons Processor");
+    this.logger.info("Evolve Population Processor");
     super.process();
 
     await this.createPopulation();

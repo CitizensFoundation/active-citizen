@@ -195,6 +195,7 @@ export class IEngineConstants {
   }
 
   static evolution = {
+    populationSize: 50,
     keepElitePercent: 0.05,
     useEliteForSeedPercent: 0.3,
     mutationRate: 0.1,
