@@ -37,7 +37,7 @@ export class IEngineConstants {
         tokenLimit: 8192,
         inTokenCostUSD: gpt4InTokenPrice,
         outTokenCostUSD: gpt4OutTokenPrice,
-        verbose: true,
+        verbose: false,
     };
     static searchResultsRankingsModel = {
         name: "gpt-4",
@@ -133,8 +133,8 @@ export class IEngineConstants {
     static getPageCacheExpiration = 60 * 60 * 24 * 7 * 4 * 6; // 6 months
     static maxSubProblems = 7;
     static maxNumberGeneratedOfEntities = 7;
-    static mainLLMmaxRetryCount = 3;
-    static rankingLLMmaxRetryCount = 3;
+    static mainLLMmaxRetryCount = 40;
+    static rankingLLMmaxRetryCount = 40;
     static maxTopEntitiesToSearch = 3;
     static maxTopQueriesToSearchPerType = 2;
     static mainSearchRetryCount = 3;

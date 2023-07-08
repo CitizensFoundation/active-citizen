@@ -42,7 +42,7 @@ export class IEngineConstants {
     tokenLimit: 8192,
     inTokenCostUSD: gpt4InTokenPrice,
     outTokenCostUSD: gpt4OutTokenPrice,
-    verbose: true,
+    verbose: false,
   };
 
   static searchResultsRankingsModel: IEngineBaseAIModelConstants = {
@@ -154,9 +154,9 @@ export class IEngineConstants {
 
   static maxNumberGeneratedOfEntities = 7;
 
-  static mainLLMmaxRetryCount = 3;
+  static mainLLMmaxRetryCount = 40;
 
-  static rankingLLMmaxRetryCount = 3;
+  static rankingLLMmaxRetryCount = 40;
 
   static maxTopEntitiesToSearch = 3;
 

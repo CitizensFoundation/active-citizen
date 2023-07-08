@@ -1,18 +1,18 @@
 import { BaseAgent } from "../baseAgent.js";
 import { Worker, Job } from "bullmq";
-import { CreateSubProblemsProcessor } from "./processors/create/createSubProblems.js";
-import { CreateEntitiesProcessor } from "./processors/create/createEntities.js";
-import { CreateProsConsProcessor } from "./processors/create/createProsCons.js";
-import { CreateSearchQueriesProcessor } from "./processors/create/createSearchQueries.js";
-import { CreateSolutionsProcessor } from "./processors/create/createSolutions.js";
-import { RankEntitiesProcessor } from "./processors/ranking/rankEntities.js";
-import { RankProsConsProcessor } from "./processors/ranking/rankProsCons.js";
-import { RankSearchQueriesProcessor } from "./processors/ranking/rankSearchQueries.js";
-import { RankSearchResultsProcessor } from "./processors/ranking/rankSearchResults.js";
-import { RankSolutionsProcessor } from "./processors/ranking/rankSolutions.js";
-import { RankSubProblemsProcessor } from "./processors/ranking/rankSubProblems.js";
-import { GetWebPagesProcessor } from "./processors/web/getWebPages.js";
-import { SearchWebProcessor } from "./processors/web/searchWeb.js";
+import { CreateSubProblemsProcessor } from "./create/createSubProblems.js";
+import { CreateEntitiesProcessor } from "./create/createEntities.js";
+import { CreateProsConsProcessor } from "./create/createProsCons.js";
+import { CreateSearchQueriesProcessor } from "./create/createSearchQueries.js";
+import { CreateSolutionsProcessor } from "./create/createSolutions.js";
+import { RankEntitiesProcessor } from "./ranking/rankEntities.js";
+import { RankProsConsProcessor } from "./ranking/rankProsCons.js";
+import { RankSearchQueriesProcessor } from "./ranking/rankSearchQueries.js";
+import { RankSearchResultsProcessor } from "./ranking/rankSearchResults.js";
+import { RankSolutionsProcessor } from "./ranking/rankSolutions.js";
+import { RankSubProblemsProcessor } from "./ranking/rankSubProblems.js";
+import { GetWebPagesProcessor } from "./web/getWebPages.js";
+import { SearchWebProcessor } from "./web/searchWeb.js";
 
 export class AgentInnovation extends BaseAgent {
   declare memory: IEngineInnovationMemoryData;
@@ -27,42 +27,65 @@ export class AgentInnovation extends BaseAgent {
       domainId: jobData.domainId,
       currentStage: "create-sub-problems",
       stages: {
+        // Break the main problem down into smaller, more manageable sub-problems
         "create-sub-problems": {},
 
+        // Determine the order of importance or priority of the sub-problems
         "rank-sub-problems": {},
 
+        // Establish the entities (objects, individuals, concepts, etc.) relevant to the problem
         "create-entities": {},
 
+        // Determine the order of importance or priority of the entities
         "rank-entities": {},
 
+        // Formulate search queries to gather relevant data or information
         "create-search-queries": {},
 
+        // Prioritize the search queries based on their expected relevance or importance
         "rank-search-queries": {},
 
+        // Perform web search based on the prioritized queries
         "web-search": {},
 
+        // Rank the search results based on their relevance or usefulness
         "rank-search-results": {},
 
+        // Retrieve web pages obtained from the search
         "web-get-pages": {},
 
+        // Create initial or seed solutions based on the gathered information
         "create-seed-solutions": {},
 
+        // Analyze the advantages and disadvantages of each solution
         "create-pros-cons": {},
 
+        // Rank the pros and cons based on their impact on the solution
         "rank-pros-cons": {},
 
+        // Rank the potential solutions based on their efficacy
         "rank-solutions": {},
 
+        // Initiate a population of solutions for evolutionary computation
         "evolve-create-population": {},
 
+        // Apply mutation operator in the population to introduce variation
         "evolve-mutate-population": {},
 
+        // Apply recombination operator in the population to create new solutions
         "evolve-recombine-population": {},
 
+        // Evaluate and rank the population after mutation and recombination
         "evolve-rank-population": {},
-        "parse": {},
-        "save": {},
-        "done": {}
+
+        // Parse the solution into a human-readable format
+        parse: {},
+
+        // Save the final solution for future use or reference
+        save: {},
+
+        // Indicate the end of the process
+        done: {},
       },
       timeStart: Date.now(),
       totalCost: 0,
@@ -79,18 +102,18 @@ export class AgentInnovation extends BaseAgent {
             general: [],
             scientific: [],
             news: [],
-            openData: []
+            openData: [],
           },
           knowledgeGraph: {
             general: [],
             scientific: [],
             news: [],
             openData: [],
-          }
+          },
         },
       },
       subProblems: [],
-      currentStageData: undefined
+      currentStageData: undefined,
     } as IEngineInnovationMemoryData;
     await this.saveMemory();
   }
@@ -201,7 +224,7 @@ export class AgentInnovation extends BaseAgent {
         await searchWebProcessor.process();
         break;
       default:
-        console.log('No stage matched');
+        console.log("No stage matched");
     }
   }
 }
