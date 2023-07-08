@@ -24,7 +24,7 @@ export class RankSearchResultsProcessor extends BasePairwiseRankingsProcessor {
             detail = `
         ${this.renderProblemStatement()}
 
-        ${this.renderSubProblem(this.currentSubProblemIndex)}
+        ${this.renderSubProblem(this.subProblemIndex)}
 
         Entity:
         ${this.currentEntity.name}
@@ -81,7 +81,7 @@ export class RankSearchResultsProcessor extends BasePairwiseRankingsProcessor {
             this.setupRankingPrompts(resultsToRank);
             await this.performPairwiseRanking();
             this.memory.subProblems[s].searchResults.pages[searchResultType] =
-                this.getOrderedListOfItems();
+                this.getOrderedListOfItems(true);
             this.searchResultTarget = "entity";
             await this.processEntities(s, searchResultType);
             await this.saveMemory();
@@ -95,7 +95,7 @@ export class RankSearchResultsProcessor extends BasePairwiseRankingsProcessor {
             this.setupRankingPrompts(resultsToRank);
             await this.performPairwiseRanking();
             this.memory.subProblems[subProblemIndex].entities[e].searchResults.pages[searchResultType] =
-                this.getOrderedListOfItems();
+                this.getOrderedListOfItems(true);
         }
     }
     async process() {
@@ -103,9 +103,9 @@ export class RankSearchResultsProcessor extends BasePairwiseRankingsProcessor {
         super.process();
         this.chat = new ChatOpenAI({
             temperature: IEngineConstants.searchResultsRankingsModel.temperature,
-            maxTokens: IEngineConstants.searchQueryRankingsModel.maxOutputTokens,
-            modelName: IEngineConstants.searchQueryRankingsModel.name,
-            verbose: IEngineConstants.searchQueryRankingsModel.verbose,
+            maxTokens: IEngineConstants.searchResultsRankingsModel.maxOutputTokens,
+            modelName: IEngineConstants.searchResultsRankingsModel.name,
+            verbose: IEngineConstants.searchResultsRankingsModel.verbose,
         });
         for (const searchResultType of [
             "general",
@@ -113,13 +113,13 @@ export class RankSearchResultsProcessor extends BasePairwiseRankingsProcessor {
             "openData",
             "news",
         ]) {
+            this.searchResultType = searchResultType;
             let resultsToRank = this.memory.problemStatement.searchResults.pages[searchResultType];
             this.searchResultTarget = "problemStatement";
             this.setupRankingPrompts(resultsToRank);
             await this.performPairwiseRanking();
-            this.memory.problemStatement.searchResults.pages[searchResultType] = this.getOrderedListOfItems();
-            this.searchResultType = searchResultType;
-            this.processSubProblems(searchResultType);
+            this.memory.problemStatement.searchResults.pages[searchResultType] = this.getOrderedListOfItems(true);
+            await this.processSubProblems(searchResultType);
         }
         await this.saveMemory();
     }

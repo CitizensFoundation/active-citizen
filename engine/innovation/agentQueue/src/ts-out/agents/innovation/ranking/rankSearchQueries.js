@@ -69,7 +69,10 @@ export class RankSearchQueriesProcessor extends BasePairwiseRankingsProcessor {
     async processSubProblems() {
         for (let s = 4; s <
             Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems); s++) {
-            await this.processEntities(s);
+            //TODO: Remove hack
+            if (s !== 4) {
+                await this.processEntities(s);
+            }
             for (const searchQueryType of [
                 "general",
                 "scientific",

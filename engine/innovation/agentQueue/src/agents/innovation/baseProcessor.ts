@@ -11,7 +11,9 @@ import { IEngineConstants } from "../../constants.js";
 
 import ioredis from "ioredis";
 
-const redis = new ioredis.default(process.env.REDIS_MEMORY_URL || "redis://localhost:6379");
+const redis = new ioredis.default(
+  process.env.REDIS_MEMORY_URL || "redis://localhost:6379"
+);
 
 export abstract class BaseProcessor extends Base {
   memory!: IEngineInnovationMemoryData;
@@ -133,11 +135,10 @@ export abstract class BaseProcessor extends Base {
       let retry = true;
 
       while (retry && retryCount < maxRetries && this.chat) {
+
         const response = await this.chat.call(messages);
 
         if (response) {
-          //this.logger.debug(response);
-
           const tokensIn = await this.chat!.getNumTokensFromMessages(messages);
           const tokensOut = await this.chat!.getNumTokensFromMessages([
             response,
@@ -157,10 +158,13 @@ export abstract class BaseProcessor extends Base {
           this.memory.stages[stage].tokensOutCost! +=
             tokensOut.totalCount * modelConstants.outTokenCostUSD;
 
-          await this.saveMemory();
+          try {
+            await this.saveMemory();
+          } catch (error) {
+            this.logger.error("Error saving memory");
+          }
 
           if (parseJson) {
-            //TODO: Look into using StructuredOutputParser
             let parsedJson;
             try {
               parsedJson = JSON.parse(response.text.trim());
@@ -177,15 +181,25 @@ export abstract class BaseProcessor extends Base {
             retryCount++;
           } else {
             retry = false;
-            return response.text.trim();
+            if (response.text) {
+              return response.text.trim();
+            } else {
+              throw new Error(
+                `callLLM response was empty ${JSON.stringify(response)}`
+              );
+            }
           }
         } else {
           retry = false;
           throw new Error("callLLM response was empty");
         }
-        await new Promise((resolve) => setTimeout(resolve, 4500+(retryCount*5000)));
+        await new Promise((resolve) =>
+          setTimeout(resolve, 4500 + retryCount * 5000)
+        );
       }
     } catch (error) {
+      this.logger.error("Error in callLLM method:");
+      this.logger.error(error);
       throw error;
     }
   }

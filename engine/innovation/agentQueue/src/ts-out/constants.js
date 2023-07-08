@@ -46,7 +46,7 @@ export class IEngineConstants {
         tokenLimit: 8192,
         inTokenCostUSD: gpt4InTokenPrice,
         outTokenCostUSD: gpt4OutTokenPrice,
-        verbose: true,
+        verbose: false,
     };
     static subProblemsRankingsModel = {
         name: "gpt-4",
@@ -137,7 +137,7 @@ export class IEngineConstants {
     static rankingLLMmaxRetryCount = 40;
     static maxTopEntitiesToSearch = 3;
     static maxTopQueriesToSearchPerType = 2;
-    static mainSearchRetryCount = 3;
+    static mainSearchRetryCount = 40;
     static maxTopPagesToGetPerType = 3;
     static maxTopSearchQueriesForSolutionCreation = 3;
     static maxProsConsUsedForRanking = 3;

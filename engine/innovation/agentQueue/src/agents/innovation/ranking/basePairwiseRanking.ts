@@ -78,6 +78,8 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
           false
         );
 
+        //this.logger.debug(`Winning item text: ${winningItemText}`);
+
         if (!winningItemText) {
           throw new Error("No winning item text");
         } else if (winningItemText.trim() == "One") {
@@ -86,7 +88,18 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
         } else if (winningItemText.trim() == "Two") {
           wonItemIndex = itemTwoIndex;
           lostItemIndex = itemOneIndex;
+        } else if (winningItemText.trim() == "Neither") {
+          const randomIndex = Math.floor(Math.random() * 2);
+          if (randomIndex == 0) {
+            wonItemIndex = itemOneIndex;
+            lostItemIndex = itemTwoIndex;
+          } else {
+            wonItemIndex = itemTwoIndex;
+            lostItemIndex = itemOneIndex;
+          }
+          this.logger.warn("LLM returned Neither in pairwise ranking")
         } else {
+          this.logger.error("Invalid winning item text");
           throw new Error("Invalid winning item text");
         }
 
@@ -128,12 +141,11 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
       for (let p = 0; p < this.prompts.length; p++) {
         this.logger.info(`Prompt ${p + 1} of ${this.prompts.length}`);
         const promptPair = this.prompts[p];
-        this.logger.debug(`Prompt pair: ${promptPair}`)
-        console.log(`Prompt ${p + 1} of ${this.prompts.length}  ${promptPair}`);
+        //this.logger.debug(`Prompt pair: ${promptPair}`)
         const { wonItemIndex, lostItemIndex } = await this.voteOnPromptPair(
           promptPair
         );
-        this.logger.debug(`Won item index: ${wonItemIndex} Lost item index: ${lostItemIndex}`)
+        //this.logger.debug(`Won item index: ${wonItemIndex} Lost item index: ${lostItemIndex}`)
 
         if (wonItemIndex !== undefined && lostItemIndex !== undefined) {
           // Update Elo ratings

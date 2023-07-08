@@ -64,6 +64,7 @@ type SerpOrganicResult = {
   title: string;
   link: string;
   date: string;
+  eloScore?: number;
   displayed_link: string;
   snippet: string;
   sitelinks: {
