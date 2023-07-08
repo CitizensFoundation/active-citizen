@@ -28,6 +28,7 @@ export class BaseProcessor extends Base {
 
       ${subProblem.title}
       ${subProblem.description}
+      ${subProblem.whyIsSubProblemImportant}
       `;
     }
     renderSubProblems() {
@@ -37,6 +38,7 @@ export class BaseProcessor extends Base {
             return `
         ${index + 1}. ${subProblem.title}\n
         ${subProblem.description}\n
+        ${subProblem.whyIsSubProblemImportant}\n
         `;
         })}
    `;
@@ -71,7 +73,9 @@ export class BaseProcessor extends Base {
         ${this.memory.problemStatement.description}\n
 
         Sub Problem:\n
+        ${subProblem.title}\n
         ${subProblem.description}\n
+        ${subProblem.whyIsSubProblemImportant}\n
 
         ${entitiesText ? `Entities:\n${entitiesText}` : ""}
       `;

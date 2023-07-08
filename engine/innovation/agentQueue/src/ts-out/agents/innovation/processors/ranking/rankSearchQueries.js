@@ -106,13 +106,13 @@ export class RankSearchQueriesProcessor extends BasePairwiseRankingsProcessor {
             "openData",
             "news",
         ]) {
+            this.searchQueryType = searchQueryType;
             let queriesToRank = this.memory.problemStatement.searchQueries[searchQueryType];
             this.searchQueryTarget = "problemStatement";
             this.setupRankingPrompts(queriesToRank);
             await this.performPairwiseRanking();
             this.memory.problemStatement.searchQueries[searchQueryType] =
                 this.getOrderedListOfItems();
-            this.searchQueryType = searchQueryType;
             this.processSubProblems(searchQueryType);
         }
         await this.saveMemory();

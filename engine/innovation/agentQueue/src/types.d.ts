@@ -100,6 +100,7 @@ interface IEngineProblemStatement {
 interface IEngineSubProblem {
   title: string;
   description: string;
+  whyIsSubProblemImportant: string;
   entities: IEngineAffectedEntity[];
   searchQueries: IEngineSearchQueries;
   searchResults: IEngineSearchResults;

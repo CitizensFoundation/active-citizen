@@ -15,9 +15,11 @@ export class CreateEntitiesProcessor extends BaseProcessor {
         3. Limit the description of positive and negative effects to how the subproblem affects the entity, without suggesting solutions. This should be a brief three to four sentence analysis.
         4. Use JSON output only. Avoid markdown formatting.
         5. Elaborate on the reasons behind the negative and positive effects to enhance clarity.
-        6. If important negative and positive effects are missing from the entities, please add them.
-        7. Always output in exactly this format: [ { name: name, negativeEffects: [ reason ], positiveEffects: [ reason ] } ].
-        8. Maintain a methodical, step-by-step approach.
+        6. If important and related negative and positive effects are missing from the entities, please add them if needed.
+        7. Only add positive effects if the sub problem really has a positive effect on the entity, that rarely happens in this analysis as we are analysis problems.
+        8. If no positive effects are identified leave the positiveEffects array empty.
+        9. Always output in exactly this format: [ { name: name, negativeEffects: [ reason ], positiveEffects: [ reason ] } ].
+        10. Maintain a methodical, step-by-step approach.
         `),
             new HumanChatMessage(`
          ${this.renderProblemStatement()}
@@ -47,8 +49,10 @@ export class CreateEntitiesProcessor extends BaseProcessor {
         6. Limit positive and negative effects to a brief three to four sentence analysis of how the subproblem affects the entity, excluding solution suggestions.
         7. Include Earth's climate and ecology as separate entities, unless irrelevant.
         8. Use JSON output only. Avoid markdown formatting.
-        9. After reviewing the problem statement and subproblem, output in this format: [ { name: name, negativeEffects: [ reason ], positiveEffects: [ reason ] } ].
-        10. Follow a methodical, step-by-step approach to identify all affected entities.
+        9. Only add positive effects if the sub problem really has a positive effect on the entity, that rarely happens in this analysis.
+        9. If no positive effects are identified leave the positiveEffects array empty.
+        11. After reviewing the problem statement and subproblem, output in this format: [ { name: name, negativeEffects: [ reason ], positiveEffects: [ reason ] } ].
+        12. Follow a methodical, step-by-step approach to identify all affected entities.
 
         Example:
 
