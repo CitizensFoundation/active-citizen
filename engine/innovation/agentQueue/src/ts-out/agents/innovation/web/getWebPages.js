@@ -1,7 +1,8 @@
 import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import { IEngineConstants } from "../../../constants.js";
-import * as pdfjs from "pdfjs-dist/build/pdf.js";
+import { PdfReader } from "pdfreader";
+import axios from "axios";
 import { htmlToText } from "html-to-text";
 import { BaseProcessor } from "../baseProcessor.js";
 import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
@@ -12,8 +13,6 @@ import ioredis from "ioredis";
 const redis = new ioredis.default(process.env.REDIS_MEMORY_URL || "redis://localhost:6379");
 //@ts-ignore
 puppeteer.use(StealthPlugin());
-//@ts-ignore
-//pdfjs.GlobalWorkerOptions.workerSrc = require("pdfjs-dist/build/pdf.worker.js");
 export class GetWebPagesProcessor extends BaseProcessor {
     webPageVectorStore = new WebPageVectorStore();
     searchResultTarget;
@@ -302,97 +301,139 @@ export class GetWebPagesProcessor extends BaseProcessor {
     //TODO: Use arxiv API as seperate datasource, use other for non arxiv papers
     // https://github.com/hwchase17/langchain/blob/master/langchain/document_loaders/arxiv.py
     // https://info.arxiv.org/help/api/basics.html
-    async getPdfText(response) {
-        this.logger.debug("Getting PDF text");
-        const pdfBuffer = await response.buffer();
-        const loadingTask = pdfjs.getDocument({ data: pdfBuffer });
-        const pdf = await loadingTask.promise;
-        let fullText = "";
-        for (let i = 1; i <= pdf.numPages; i++) {
-            const page = await pdf.getPage(i);
-            const content = await page.getTextContent();
-            const strings = content.items.map((item) => item.str);
-            fullText += strings.join(" ");
-        }
-        this.logger.debug(`Got PDF text: ${fullText}`);
-        return fullText;
-    }
-    async processPdf(subProblemIndex, response, url, type) {
-        try {
-            const text = await this.getPdfText(response);
-            await this.processPageText(text, subProblemIndex, url, type);
-        }
-        catch (e) {
-            this.logger.error(e);
-        }
-    }
-    async processHtml(subProblemIndex, url, browserPage, type) {
-        try {
-            const html = await browserPage.content();
-            const text = htmlToText(html, {
-                wordwrap: false,
-            });
-            this.logger.debug(`Got HTML text: ${text}`);
-            await this.processPageText(text, subProblemIndex, url, type);
-        }
-        catch (e) {
-            this.logger.error(e);
-        }
-    }
-    async getBrowserPage(browserPage, url) {
-        let response;
-        const redisKey = `pg_ca_v2:${url}`;
-        const cachedPage = await redis.get(redisKey);
-        if (cachedPage) {
+    async getAndProcessPdf(subProblemIndex, url, type) {
+        return new Promise(async (resolve, reject) => {
+            console.log("getAndProcessPdf");
             try {
-                response = JSON.parse(cachedPage);
+                let finalText = "";
+                let pdfBuffer;
+                const redisKey = `pg_ca_v5p:${url}`;
+                const cachedHtml = await redis.get(redisKey);
+                if (cachedHtml) {
+                    pdfBuffer = Buffer.from(cachedHtml, "base64");
+                }
+                else {
+                    const sleepingForMs = IEngineConstants.minSleepBeforeBrowserRequest +
+                        Math.random() *
+                            IEngineConstants.maxAdditionalRandomSleepBeforeBrowserRequest;
+                    this.logger.info(`Fetching PDF ${url} in ${sleepingForMs} ms`);
+                    await new Promise((r) => setTimeout(r, sleepingForMs));
+                    const axiosResponse = await axios.get(url, {
+                        responseType: "arraybuffer",
+                    });
+                    pdfBuffer = axiosResponse.data;
+                    if (pdfBuffer) {
+                        this.logger.debug(`Caching PDF response`);
+                        const base64Pdf = Buffer.from(pdfBuffer).toString("base64");
+                        await redis.set(redisKey, base64Pdf, "EX", IEngineConstants.getPageCacheExpiration);
+                    }
+                }
+                if (pdfBuffer) {
+                    console.log(pdfBuffer);
+                    try {
+                        new PdfReader({}).parseBuffer(pdfBuffer, async (err, item) => {
+                            if (err) {
+                                this.logger.error(`Error parsing PDF ${url}`);
+                                this.logger.error(err);
+                                resolve();
+                            }
+                            else if (!item) {
+                                finalText = finalText.replace(/(\r\n|\n|\r){3,}/gm, "\n\n");
+                                console.log(`Got final text: ${finalText}`);
+                                await this.processPageText(finalText, subProblemIndex, url, type);
+                                resolve();
+                            }
+                            else if (item.text) {
+                                finalText += item.text + " ";
+                            }
+                        });
+                    }
+                    catch (e) {
+                        this.logger.error(e);
+                        resolve();
+                    }
+                }
+                else {
+                    this.logger.error(`No PDF buffer`);
+                    resolve();
+                }
             }
             catch (e) {
-                this.logger.error(`Error parsing cached page ${url}`);
                 this.logger.error(e);
-                response = null;
+                resolve();
             }
-        }
-        else {
-            const sleepingForMs = IEngineConstants.minSleepBeforeBrowserRequest +
-                Math.random() *
-                    IEngineConstants.maxAdditionalRandomSleepBeforeBrowserRequest;
-            this.logger.info(`Fetching page ${url} in ${sleepingForMs} ms`);
-            await new Promise((r) => setTimeout(r, sleepingForMs));
-            let response;
-            try {
-                response = await browserPage.goto(url, {
-                    timeout: IEngineConstants.getPageTimeout,
-                });
-            }
-            catch (e) {
-                this.logger.error(`Error fetching page ${url}`);
-                this.logger.error(e);
-                response = null;
-            }
-            this.logger.debug(`Response ${JSON.stringify(response)}`);
-            if (response) {
-                this.logger.debug(`Caching response`);
-                await redis.set(redisKey, response.toString(), "EX", IEngineConstants.getPageCacheExpiration);
-            }
-        }
-        return response;
+        });
     }
-    async getAndProcessPage(subProblemIndex, url, browserPage, type) {
-        const response = await this.getBrowserPage(browserPage, url);
-        if (response) {
-            if (url.toLowerCase().endsWith(".pdf")) {
-                await this.processPdf(subProblemIndex, response, url, type);
+    async getAndProcessHtml(subProblemIndex, url, browserPage, type) {
+        try {
+            let finalText, htmlText;
+            const redisKey = `pg_ca_v4t:${url}`;
+            const cachedHtml = await redis.get(redisKey);
+            if (cachedHtml) {
+                htmlText = cachedHtml;
             }
             else {
-                await this.processHtml(subProblemIndex, url, browserPage, type);
+                const sleepingForMs = IEngineConstants.minSleepBeforeBrowserRequest +
+                    Math.random() *
+                        IEngineConstants.maxAdditionalRandomSleepBeforeBrowserRequest;
+                this.logger.info(`Fetching HTML page ${url} in ${sleepingForMs} ms`);
+                await new Promise((r) => setTimeout(r, sleepingForMs));
+                const response = await browserPage.goto(url, {
+                    waitUntil: "networkidle0",
+                });
+                if (response) {
+                    htmlText = await response.text();
+                    if (htmlText) {
+                        this.logger.debug(`Caching response`);
+                        await redis.set(redisKey, htmlText.toString(), "EX", IEngineConstants.getPageCacheExpiration);
+                    }
+                }
             }
-            return true;
+            if (htmlText) {
+                finalText = htmlToText(htmlText, {
+                    wordwrap: false,
+                    selectors: [
+                        {
+                            selector: "a",
+                            format: "skip",
+                            options: {
+                                ignoreHref: true,
+                            },
+                        },
+                        {
+                            selector: "img",
+                            format: "skip",
+                        },
+                        {
+                            selector: "form",
+                            format: "skip",
+                        },
+                        {
+                            selector: "nav",
+                            format: "skip",
+                        },
+                    ],
+                });
+                finalText = finalText.replace(/(\r\n|\n|\r){3,}/gm, "\n\n");
+                this.logger.debug(`Got HTML text: ${finalText}`);
+                await this.processPageText(finalText, subProblemIndex, url, type);
+            }
+            else {
+                this.logger.error(`No HTML text found for ${url}`);
+            }
+        }
+        catch (e) {
+            this.logger.error(e);
+        }
+    }
+    async getAndProcessPage(subProblemIndex, url, browserPage, type) {
+        if (url.toLowerCase().endsWith(".pdf")) {
+            await this.getAndProcessPdf(subProblemIndex, url, type);
         }
         else {
-            this.logger.error(`getAndProcessPage: No response for url ${url}`);
-            return false;
+            await this.getAndProcessHtml(subProblemIndex, url, browserPage, type);
         }
+        return true;
     }
     async processSubProblems(searchQueryType, browserPage) {
         for (let s = 0; s <

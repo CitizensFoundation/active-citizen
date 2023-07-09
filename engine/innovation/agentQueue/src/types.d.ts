@@ -1,4 +1,6 @@
 declare module 'pdfjs-dist/build/pdf.js'
+declare module 'pdfreader'
+
 declare module 'puppeteer-extra' {
   import puppeteer from 'puppeteer';
   const puppeteerExtra: typeof puppeteer & {
