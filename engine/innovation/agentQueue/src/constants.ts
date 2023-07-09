@@ -176,9 +176,9 @@ export class IEngineConstants {
 
   static maxNumberGeneratedProsConsForSolution = 21;
 
-  static minSleepBeforeBrowserRequest = 1500;
+  static minSleepBeforeBrowserRequest = 1100;
 
-  static maxAdditionalRandomSleepBeforeBrowserRequest = 2500;
+  static maxAdditionalRandomSleepBeforeBrowserRequest = 1500;
 
   static numberOfSearchTypes = 4;
 

@@ -24,5 +24,4 @@ services:
       DEFAULT_VECTORIZER_MODULE: text2vec-openai
       ENABLE_MODULES: backup-filesystem,text2vec-openai
       OPENAI_APIKEY: ${OPENAI_API_KEY}
-      COHERE_APIKEY: ${COHERE_APIKEY}
       CLUSTER_HOSTNAME: 'node1'

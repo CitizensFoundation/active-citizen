@@ -15,7 +15,7 @@ export class WebPageVectorStore extends Base {
   async addSchema() {
     let classObj;
     try {
-      const data = await fs.readFile('schema/webPage.json', 'utf8');
+      const data = await fs.readFile('./schemas/webPage.json', 'utf8');
       classObj = JSON.parse(data);
     } catch (err) {
       console.error(`Error reading file from disk: ${err}`);
@@ -29,6 +29,27 @@ export class WebPageVectorStore extends Base {
       console.error(`Error creating schema: ${err}`);
     }
   }
+
+  async showScheme() {
+    try {
+      const res = await WebPageVectorStore.client.schema.getter().do()
+      console.log(JSON.stringify(res, null, 2));
+    } catch (err) {
+      console.error(`Error creating schema: ${err}`);
+    }
+  }
+
+  async deleteScheme() {
+    try {
+      const res = await WebPageVectorStore.client.schema.classDeleter()
+      .withClassName("WebPage")
+      .do();
+      console.log(res);
+    } catch (err) {
+      console.error(`Error creating schema: ${err}`);
+    }
+  }
+
 
   async testQuery() {
     const res = await WebPageVectorStore.client.graphql

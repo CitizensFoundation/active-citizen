@@ -341,10 +341,17 @@ export class GetWebPagesProcessor extends BaseProcessor {
     }
     async getBrowserPage(browserPage, url) {
         let response;
-        const redisKey = `pg_ca_v1:${url}`;
+        const redisKey = `pg_ca_v2:${url}`;
         const cachedPage = await redis.get(redisKey);
         if (cachedPage) {
-            response = cachedPage;
+            try {
+                response = JSON.parse(cachedPage);
+            }
+            catch (e) {
+                this.logger.error(`Error parsing cached page ${url}`);
+                this.logger.error(e);
+                response = null;
+            }
         }
         else {
             const sleepingForMs = IEngineConstants.minSleepBeforeBrowserRequest +
@@ -352,10 +359,20 @@ export class GetWebPagesProcessor extends BaseProcessor {
                     IEngineConstants.maxAdditionalRandomSleepBeforeBrowserRequest;
             this.logger.info(`Fetching page ${url} in ${sleepingForMs} ms`);
             await new Promise((r) => setTimeout(r, sleepingForMs));
-            response = await browserPage.goto(url, {
-                timeout: IEngineConstants.getPageTimeout,
-            });
+            let response;
+            try {
+                response = await browserPage.goto(url, {
+                    timeout: IEngineConstants.getPageTimeout,
+                });
+            }
+            catch (e) {
+                this.logger.error(`Error fetching page ${url}`);
+                this.logger.error(e);
+                response = null;
+            }
+            this.logger.debug(`Response ${JSON.stringify(response)}`);
             if (response) {
+                this.logger.debug(`Caching response`);
                 await redis.set(redisKey, response.toString(), "EX", IEngineConstants.getPageCacheExpiration);
             }
         }

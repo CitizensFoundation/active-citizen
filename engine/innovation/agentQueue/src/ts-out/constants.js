@@ -144,8 +144,8 @@ export class IEngineConstants {
     static maxTopSearchQueriesForSolutionCreation = 3;
     static maxTopProsConsUsedForRanking = 3;
     static maxNumberGeneratedProsConsForSolution = 21;
-    static minSleepBeforeBrowserRequest = 1500;
-    static maxAdditionalRandomSleepBeforeBrowserRequest = 2500;
+    static minSleepBeforeBrowserRequest = 7100;
+    static maxAdditionalRandomSleepBeforeBrowserRequest = 1500;
     static numberOfSearchTypes = 4;
     static chances = {
         useMainProblemSearchQueriesNewSolutions: 0.2,
