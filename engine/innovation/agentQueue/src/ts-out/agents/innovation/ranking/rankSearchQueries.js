@@ -67,12 +67,9 @@ export class RankSearchQueriesProcessor extends BasePairwiseRankingsProcessor {
         return await this.getResultsFromLLM("rank-search-queries", IEngineConstants.searchQueryRankingsModel, messages, itemOneIndex, itemTwoIndex);
     }
     async processSubProblems() {
-        for (let s = 4; s <
+        for (let s = 0; s <
             Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems); s++) {
-            //TODO: Remove hack
-            if (s !== 4) {
-                await this.processEntities(s);
-            }
+            await this.processEntities(s);
             for (const searchQueryType of [
                 "general",
                 "scientific",

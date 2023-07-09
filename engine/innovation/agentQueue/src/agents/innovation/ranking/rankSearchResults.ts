@@ -100,6 +100,7 @@ export class RankSearchResultsProcessor extends BasePairwiseRankingsProcessor {
       Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems);
       s++
     ) {
+      this.logger.info(`Ranking Sub Problem ${s} for ${searchResultType} search results`)
       let resultsToRank = this.memory.subProblems[s].searchResults.pages[searchResultType];
 
       this.subProblemIndex = s;
@@ -110,10 +111,10 @@ export class RankSearchResultsProcessor extends BasePairwiseRankingsProcessor {
       this.memory.subProblems[s].searchResults.pages[searchResultType] =
           this.getOrderedListOfItems(true) as SerpOrganicResult[]
 
+      await this.saveMemory();
+
       this.searchResultTarget = "entity";
       await this.processEntities(s, searchResultType);
-
-      await this.saveMemory();
     }
   }
 
@@ -130,6 +131,7 @@ export class RankSearchResultsProcessor extends BasePairwiseRankingsProcessor {
       );
       e++
     ) {
+      this.logger.info(`Ranking Entity ${subProblemIndex}-${e} for ${searchResultType} search results`)
       this.currentEntity = this.memory.subProblems[subProblemIndex].entities[e];
       let resultsToRank = this.memory.subProblems[subProblemIndex].entities[e].searchResults!.pages[searchResultType];
 
@@ -166,6 +168,7 @@ export class RankSearchResultsProcessor extends BasePairwiseRankingsProcessor {
 
       this.searchResultTarget = "problemStatement";
 
+      this.logger.info(`Ranking Main Problem statement for ${searchResultType} search results`)
       this.setupRankingPrompts(resultsToRank);
       await this.performPairwiseRanking();
 

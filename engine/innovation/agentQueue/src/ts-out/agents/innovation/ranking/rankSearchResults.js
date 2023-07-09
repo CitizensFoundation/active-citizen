@@ -75,6 +75,7 @@ export class RankSearchResultsProcessor extends BasePairwiseRankingsProcessor {
     async processSubProblems(searchResultType) {
         for (let s = 0; s <
             Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems); s++) {
+            this.logger.info(`Ranking Sub Problem ${s} for ${searchResultType} search results`);
             let resultsToRank = this.memory.subProblems[s].searchResults.pages[searchResultType];
             this.subProblemIndex = s;
             this.searchResultTarget = "subProblem";
@@ -82,14 +83,15 @@ export class RankSearchResultsProcessor extends BasePairwiseRankingsProcessor {
             await this.performPairwiseRanking();
             this.memory.subProblems[s].searchResults.pages[searchResultType] =
                 this.getOrderedListOfItems(true);
+            await this.saveMemory();
             this.searchResultTarget = "entity";
             await this.processEntities(s, searchResultType);
-            await this.saveMemory();
         }
     }
     async processEntities(subProblemIndex, searchResultType) {
         for (let e = 0; e <
             Math.min(this.memory.subProblems[subProblemIndex].entities.length, IEngineConstants.maxTopEntitiesToSearch); e++) {
+            this.logger.info(`Ranking Entity ${subProblemIndex}-${e} for ${searchResultType} search results`);
             this.currentEntity = this.memory.subProblems[subProblemIndex].entities[e];
             let resultsToRank = this.memory.subProblems[subProblemIndex].entities[e].searchResults.pages[searchResultType];
             this.setupRankingPrompts(resultsToRank);
@@ -116,6 +118,7 @@ export class RankSearchResultsProcessor extends BasePairwiseRankingsProcessor {
             this.searchResultType = searchResultType;
             let resultsToRank = this.memory.problemStatement.searchResults.pages[searchResultType];
             this.searchResultTarget = "problemStatement";
+            this.logger.info(`Ranking Main Problem statement for ${searchResultType} search results`);
             this.setupRankingPrompts(resultsToRank);
             await this.performPairwiseRanking();
             this.memory.problemStatement.searchResults.pages[searchResultType] = this.getOrderedListOfItems(true);

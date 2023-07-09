@@ -51,6 +51,7 @@ export class BasePairwiseRankingsProcessor extends BaseProcessor {
                     lostItemIndex = itemOneIndex;
                 }
                 else if (winningItemText.trim() == "Neither") {
+                    //TODO: Instead of random selection, disable this prompt selection
                     const randomIndex = Math.floor(Math.random() * 2);
                     if (randomIndex == 0) {
                         wonItemIndex = itemOneIndex;
@@ -60,11 +61,20 @@ export class BasePairwiseRankingsProcessor extends BaseProcessor {
                         wonItemIndex = itemTwoIndex;
                         lostItemIndex = itemOneIndex;
                     }
-                    this.logger.warn("LLM returned Neither in pairwise ranking");
+                    this.logger.warn("LLM returned Neither in pairwise ranking for prompt ${JSON.stringify(messages)}");
                 }
                 else {
-                    this.logger.error("Invalid winning item text");
-                    throw new Error("Invalid winning item text");
+                    this.logger.error(`Invalid winning item text ${winningItemText} for prompt ${JSON.stringify(messages)}`);
+                    //TODO: Instead of random selection, disable this prompt selection
+                    const randomIndex = Math.floor(Math.random() * 2);
+                    if (randomIndex == 0) {
+                        wonItemIndex = itemOneIndex;
+                        lostItemIndex = itemTwoIndex;
+                    }
+                    else {
+                        wonItemIndex = itemTwoIndex;
+                        lostItemIndex = itemOneIndex;
+                    }
                 }
                 retry = false;
             }
