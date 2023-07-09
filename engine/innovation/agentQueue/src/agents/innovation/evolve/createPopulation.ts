@@ -147,7 +147,7 @@ export class CreatePopulationProcessor extends CreateSolutionsProcessor {
       tournament.push(population[randomIndex]);
     }
 
-    tournament.sort((a, b) => b.eloRanking - a.eloRanking);
+    tournament.sort((a, b) => b.eloRating - a.eloRating);
     return tournament[0];
   }
 

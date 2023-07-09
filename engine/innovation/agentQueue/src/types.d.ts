@@ -64,7 +64,7 @@ type SerpOrganicResult = {
   title: string;
   link: string;
   date: string;
-  eloScore?: number;
+  eloRating?: number;
   displayed_link: string;
   snippet: string;
   sitelinks: {
@@ -105,7 +105,7 @@ interface IEngineSubProblem {
   entities: IEngineAffectedEntity[];
   searchQueries: IEngineSearchQueries;
   searchResults: IEngineSearchResults;
-  eloScore?: number;
+  eloRating?: number;
   solutions: {
     seed: IEngineSolution[];
     populations: IEngineSolution[][];
@@ -124,7 +124,7 @@ interface IEngineAffectedEntity {
   name: string;
   positiveEffects?: IEngineAffectedEntityAffect[];
   negativeEffects?: IEngineAffectedEntityAffect[];
-  eloScore?: number;
+  eloRating?: number;
   searchQueries?: IEngineSearchQueries;
   searchResults?: IEngineSearchResults;
 }
@@ -140,7 +140,7 @@ interface IEngineSolution {
   id: string;
   title: string;
   description: string;
-  eloScore?: number;
+  eloRating?: number;
   howCanSolutionHelp: string;
   mainObstacleToSolutionAdoption: string;
   affectedEntities?: IEngineSolutionAffectedEntity[];

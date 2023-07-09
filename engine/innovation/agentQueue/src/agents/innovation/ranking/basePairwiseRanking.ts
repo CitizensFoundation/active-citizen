@@ -206,7 +206,7 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
             | IEngineSolution
             | IEngineAffectedEntity
             | IEngineSubProblem
-        ).eloScore = this.eloRatings[i];
+        ).eloRating = this.eloRatings[i];
       }
     }
 

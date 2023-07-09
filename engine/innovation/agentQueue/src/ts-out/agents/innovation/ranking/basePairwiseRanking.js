@@ -140,7 +140,7 @@ export class BasePairwiseRankingsProcessor extends BaseProcessor {
         let allItems = this.allItems;
         if (returnEloRatings) {
             for (let i = 0; i < allItems.length; i++) {
-                allItems[i].eloScore = this.eloRatings[i];
+                allItems[i].eloRating = this.eloRatings[i];
             }
         }
         const orderedItems = allItems.map((item, index) => {

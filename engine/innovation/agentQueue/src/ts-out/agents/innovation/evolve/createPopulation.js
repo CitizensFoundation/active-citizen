@@ -90,7 +90,7 @@ export class CreatePopulationProcessor extends CreateSolutionsProcessor {
             const randomIndex = Math.floor(Math.random() * population.length);
             tournament.push(population[randomIndex]);
         }
-        tournament.sort((a, b) => b.eloRanking - a.eloRanking);
+        tournament.sort((a, b) => b.eloRating - a.eloRating);
         return tournament[0];
     }
     getPreviousPopulation(subProblemIndex) {
