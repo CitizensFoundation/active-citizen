@@ -79,6 +79,7 @@ export abstract class BaseProcessor extends Base {
       const subProblem = this.memory.subProblems[index - 1];
       const entitiesText = `
         ${subProblem.entities
+          .slice(0, IEngineConstants.maxTopEntitiesToRender)
           .map((entity) => {
             let entityEffects = this.renderEntityPosNegReasons(entity);
 

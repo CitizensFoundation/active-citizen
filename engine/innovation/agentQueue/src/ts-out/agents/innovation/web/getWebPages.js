@@ -35,6 +35,13 @@ export class GetWebPagesProcessor extends BaseProcessor {
             new HumanChatMessage(`
         Problem Statement:
         ${problemStatement.description}
+        ${this.searchResultTarget == "subProblem"
+                ? `
+
+        Sub Problem:
+        ${this.renderSubProblem(this.currentSubProblemIndex)}
+        `
+                : ``}
 
         Current Analysis JSON:
         ${JSON.stringify(currentWebPageAnalysis, null, 2)}
@@ -49,7 +56,7 @@ export class GetWebPagesProcessor extends BaseProcessor {
         return [
             new SystemChatMessage(`As an expert trained to analyze complex text in relation to a given problem statement, adhere to the following guidelines:
 
-        1. Analyze how the text is related to the problem statement.
+        1. Analyze how the text under "Text context" is related to the problem statement and sub-problem if specified.
         2. Suggest potential solutions to the problem statement.
         3. Provide a summary of the text.
         4. Identify a list of tags for the text.
@@ -118,6 +125,9 @@ export class GetWebPagesProcessor extends BaseProcessor {
 
         Problem Statement:
         Prototype robotic prosthetic leg batteries are not lasting long enough.
+
+        Sub Problem:
+        Larger batteries are too heavy.
 
         Text context:
         Predicting the impact of formation protocols on
@@ -211,6 +221,13 @@ export class GetWebPagesProcessor extends BaseProcessor {
             new HumanChatMessage(`
         Problem Statement:
         ${problemStatement.description}
+        ${this.searchResultTarget == "subProblem"
+                ? `
+
+        Sub Problem:
+        ${this.renderSubProblem(this.currentSubProblemIndex)}
+        `
+                : ``}
 
         Text Context:
         ${text}
@@ -231,24 +248,27 @@ export class GetWebPagesProcessor extends BaseProcessor {
         return { totalTokenCount, promptTokenCount };
     }
     async getInitialAnalysis(text) {
+        this.logger.info("Get Initial Analysis");
         const messages = this.renderInitialMessages(this.memory.problemStatement, text);
         const analysis = (await this.callLLM("web-get-pages", IEngineConstants.getPageAnalysisModel, messages));
         return analysis;
     }
     async getRefinedAnalysis(currentAnalysis, text) {
+        this.logger.info("Get Refined Analysis");
         const messages = this.renderRefinePrompt(currentAnalysis, this.memory.problemStatement, text);
         const analysis = (await this.callLLM("web-get-pages", IEngineConstants.getPageAnalysisModel, messages));
         return analysis;
     }
     async getTextAnalysis(text) {
         const { totalTokenCount, promptTokenCount } = await this.getTokenCount(text);
+        this.logger.debug(`Total token count: ${totalTokenCount} Prompt token count: ${promptTokenCount}`);
         let textAnalysis;
         if (IEngineConstants.getPageAnalysisModel.tokenLimit < totalTokenCount) {
             const splitter = new RecursiveCharacterTextSplitter({
                 chunkSize: IEngineConstants.getPageAnalysisModel.tokenLimit -
                     promptTokenCount.totalCount -
                     128,
-                chunkOverlap: 100,
+                chunkOverlap: 50,
             });
             this.logger.debug(`Splitting text into chunks of ${splitter.chunkSize} tokens`);
             const documents = await splitter.createDocuments([text]);
@@ -268,6 +288,7 @@ export class GetWebPagesProcessor extends BaseProcessor {
         return textAnalysis;
     }
     async processPageText(text, subProblemIndex, url, type) {
+        this.logger.debug(`Processing page text ${text} for ${url} for ${type} search results ${subProblemIndex} sub problem index`);
         const textAnalysis = await this.getTextAnalysis(text);
         textAnalysis.url = url;
         textAnalysis.subProblemIndex = subProblemIndex;
@@ -275,12 +296,14 @@ export class GetWebPagesProcessor extends BaseProcessor {
         textAnalysis.groupId = this.memory.groupId;
         textAnalysis.communityId = this.memory.communityId;
         textAnalysis.domainId = this.memory.domainId;
+        this.logger.debug(`Got text analysis ${JSON.stringify(textAnalysis, null, 2)}`);
         await this.webPageVectorStore.postWebPage(textAnalysis);
     }
     //TODO: Use arxiv API as seperate datasource, use other for non arxiv papers
     // https://github.com/hwchase17/langchain/blob/master/langchain/document_loaders/arxiv.py
     // https://info.arxiv.org/help/api/basics.html
     async getPdfText(response) {
+        this.logger.debug("Getting PDF text");
         const pdfBuffer = await response.buffer();
         const loadingTask = pdfjs.getDocument({ data: pdfBuffer });
         const pdf = await loadingTask.promise;
@@ -291,6 +314,7 @@ export class GetWebPagesProcessor extends BaseProcessor {
             const strings = content.items.map((item) => item.str);
             fullText += strings.join(" ");
         }
+        this.logger.debug(`Got PDF text: ${fullText}`);
         return fullText;
     }
     async processPdf(subProblemIndex, response, url, type) {
@@ -308,6 +332,7 @@ export class GetWebPagesProcessor extends BaseProcessor {
             const text = htmlToText(html, {
                 wordwrap: false,
             });
+            this.logger.debug(`Got HTML text: ${text}`);
             await this.processPageText(text, subProblemIndex, url, type);
         }
         catch (e) {
@@ -322,10 +347,17 @@ export class GetWebPagesProcessor extends BaseProcessor {
             response = cachedPage;
         }
         else {
+            const sleepingForMs = IEngineConstants.minSleepBeforeBrowserRequest +
+                Math.random() *
+                    IEngineConstants.maxAdditionalRandomSleepBeforeBrowserRequest;
+            this.logger.info(`Fetching page ${url} in ${sleepingForMs} ms`);
+            await new Promise((r) => setTimeout(r, sleepingForMs));
             response = await browserPage.goto(url, {
                 timeout: IEngineConstants.getPageTimeout,
             });
-            await redis.set(redisKey, response.toString(), "EX", IEngineConstants.getPageCacheExpiration);
+            if (response) {
+                await redis.set(redisKey, response.toString(), "EX", IEngineConstants.getPageCacheExpiration);
+            }
         }
         return response;
     }
@@ -341,16 +373,17 @@ export class GetWebPagesProcessor extends BaseProcessor {
             return true;
         }
         else {
-            this.logger.warn(`No response for url ${url}`);
+            this.logger.error(`getAndProcessPage: No response for url ${url}`);
             return false;
         }
     }
     async processSubProblems(searchQueryType, browserPage) {
         for (let s = 0; s <
             Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems); s++) {
-            let pagesToSearch = this.memory.subProblems[s].searchResults.pages[searchQueryType].slice(0, IEngineConstants.maxTopPagesToGetPerType);
+            this.currentSubProblemIndex = s;
+            this.logger.info(`Fetching pages for Sub Problem ${s} for ${searchQueryType} search results`);
             this.searchResultTarget = "subProblem";
-            const urlsToGet = pagesToSearch.map((p) => p.link);
+            const urlsToGet = this.getUrlsToFetch(this.memory.subProblems[s].searchResults.pages[searchQueryType]);
             for (let i = 0; i < urlsToGet.length; i++) {
                 await this.getAndProcessPage(s, urlsToGet[i], browserPage, searchQueryType);
             }
@@ -361,20 +394,32 @@ export class GetWebPagesProcessor extends BaseProcessor {
     async processEntities(subProblemIndex, searchQueryType, browserPage) {
         for (let e = 0; e <
             Math.min(this.memory.subProblems[subProblemIndex].entities.length, IEngineConstants.maxTopEntitiesToSearch); e++) {
-            let pagesToSearch = this.memory.subProblems[subProblemIndex].entities[e].searchResults.pages[searchQueryType].slice(0, IEngineConstants.maxTopPagesToGetPerType);
+            this.logger.info(`Fetching pages for Entity ${subProblemIndex}-${e} for ${searchQueryType} search results`);
             this.searchResultTarget = "entity";
             this.currentEntity = this.memory.subProblems[subProblemIndex].entities[e];
-            const urlsToGet = pagesToSearch.map((p) => p.link);
+            const urlsToGet = this.getUrlsToFetch(this.memory.subProblems[subProblemIndex].entities[e].searchResults
+                .pages[searchQueryType]);
             for (let i = 0; i < urlsToGet.length; i++) {
                 await this.getAndProcessPage(subProblemIndex, urlsToGet[i], browserPage, searchQueryType);
             }
             this.currentEntity = undefined;
         }
     }
+    getUrlsToFetch(allPages) {
+        let outArray = [];
+        outArray = outArray.concat(allPages.filter((page) => page.position <= IEngineConstants.maxWebPagesToGetByTopSearchPosition));
+        outArray = outArray.concat(allPages.slice(0, IEngineConstants.maxTopWebPagesToGet));
+        // Map to URLs and remove duplicates
+        const urlsToGet = Array.from(outArray
+            .map((p) => p.link)
+            .reduce((unique, item) => unique.add(item), new Set()));
+        this.logger.debug(`Got ${urlsToGet.length} URLs to fetch ${JSON.stringify(urlsToGet, null, 2)}`);
+        return urlsToGet;
+    }
     async processProblemStatement(searchQueryType, browserPage) {
-        let pagesToSearch = this.memory.problemStatement.searchResults.pages[searchQueryType].slice(0, IEngineConstants.maxTopPagesToGetPerType);
+        this.logger.info(`Ranking Problem Statement for ${searchQueryType} search results`);
         this.searchResultTarget = "problemStatement";
-        const urlsToGet = pagesToSearch.map((p) => p.link);
+        const urlsToGet = this.getUrlsToFetch(this.memory.problemStatement.searchResults.pages[searchQueryType]);
         for (let i = 0; i < urlsToGet.length; i++) {
             await this.getAndProcessPage(undefined, urlsToGet[i], browserPage, searchQueryType);
         }

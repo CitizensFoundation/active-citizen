@@ -136,12 +136,16 @@ export class IEngineConstants {
     static mainLLMmaxRetryCount = 40;
     static rankingLLMmaxRetryCount = 40;
     static maxTopEntitiesToSearch = 3;
+    static maxTopEntitiesToRender = 3;
     static maxTopQueriesToSearchPerType = 2;
     static mainSearchRetryCount = 40;
-    static maxTopPagesToGetPerType = 3;
+    static maxTopWebPagesToGet = 5;
+    static maxWebPagesToGetByTopSearchPosition = 5;
     static maxTopSearchQueriesForSolutionCreation = 3;
-    static maxProsConsUsedForRanking = 3;
+    static maxTopProsConsUsedForRanking = 3;
     static maxNumberGeneratedProsConsForSolution = 21;
+    static minSleepBeforeBrowserRequest = 1500;
+    static maxAdditionalRandomSleepBeforeBrowserRequest = 2500;
     static numberOfSearchTypes = 4;
     static chances = {
         useMainProblemSearchQueriesNewSolutions: 0.2,

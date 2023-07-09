@@ -35,10 +35,10 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
         Main Obstacles to Solution One Adoption: ${solutionOne.mainObstacleToSolutionAdoption}
 
         Pros of Solution One:
-        ${solutionOne.pros.slice(0, IEngineConstants.maxProsConsUsedForRanking)}
+        ${solutionOne.pros?.slice(0, IEngineConstants.maxTopProsConsUsedForRanking)}
 
         Cons of Solution One:
-        ${solutionOne.cons.slice(0, IEngineConstants.maxProsConsUsedForRanking)}
+        ${solutionOne.cons?.slice(0, IEngineConstants.maxTopProsConsUsedForRanking)}
 
         Solution Two:
         ----------------------------------------
@@ -49,10 +49,10 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
         Main Obstacles to Solution Two Adoption: ${solutionTwo.mainObstacleToSolutionAdoption}
 
         Pros of Solution Two:
-        ${solutionTwo.pros.slice(0, IEngineConstants.maxProsConsUsedForRanking)}
+        ${solutionTwo.pros?.slice(0, IEngineConstants.maxTopProsConsUsedForRanking)}
 
         Cons of Solution Two:
-        ${solutionTwo.cons.slice(0, IEngineConstants.maxProsConsUsedForRanking)}
+        ${solutionTwo.cons?.slice(0, IEngineConstants.maxTopProsConsUsedForRanking)}
 
         The Most Effective Solution Is:
         `),

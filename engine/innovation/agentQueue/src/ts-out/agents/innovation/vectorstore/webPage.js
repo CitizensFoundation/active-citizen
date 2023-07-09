@@ -1,12 +1,44 @@
 import weaviate from 'weaviate-ts-client';
 import { Base } from "../../../base.js";
 import { IEngineConstants } from "../../../constants.js";
+import fs from 'fs/promises';
 export class WebPageVectorStore extends Base {
     //@ts-ignore
     static client = weaviate.client({
         scheme: process.env.WEAVIATE_HTTP_SCHEME || "http",
-        host: process.env.WEAVIATE_HOST || "localhost:8085",
+        host: process.env.WEAVIATE_HOST || "localhost:8080",
     });
+    async addSchema() {
+        let classObj;
+        try {
+            const data = await fs.readFile('schema/webPage.json', 'utf8');
+            classObj = JSON.parse(data);
+        }
+        catch (err) {
+            console.error(`Error reading file from disk: ${err}`);
+            return;
+        }
+        try {
+            const res = await WebPageVectorStore.client.schema.classCreator().withClass(classObj).do();
+            console.log(res);
+        }
+        catch (err) {
+            console.error(`Error creating schema: ${err}`);
+        }
+    }
+    async testQuery() {
+        const res = await WebPageVectorStore.client.graphql
+            .get()
+            .withClassName('WebPage')
+            .withFields('searchType subProblemIndex summary relevanceToProblem \
+        possibleSolutionsToProblem url allRelevantParagraphs tags entities \
+        _additional { distance }')
+            .withNearText({ concepts: ['democracy'] })
+            .withLimit(10)
+            .do();
+        console.log(JSON.stringify(res, null, 2));
+        return res;
+    }
     async postWebPage(webPageAnalysis) {
         return new Promise((resolve, reject) => {
             WebPageVectorStore.client.data

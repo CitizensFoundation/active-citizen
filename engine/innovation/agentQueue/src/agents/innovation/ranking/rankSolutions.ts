@@ -47,15 +47,15 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
         }
 
         Pros of Solution One:
-        ${solutionOne.pros!.slice(
+        ${solutionOne.pros?.slice(
           0,
-          IEngineConstants.maxProsConsUsedForRanking
+          IEngineConstants.maxTopProsConsUsedForRanking
         )}
 
         Cons of Solution One:
-        ${solutionOne.cons!.slice(
+        ${solutionOne.cons?.slice(
           0,
-          IEngineConstants.maxProsConsUsedForRanking
+          IEngineConstants.maxTopProsConsUsedForRanking
         )}
 
         Solution Two:
@@ -69,15 +69,15 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
         }
 
         Pros of Solution Two:
-        ${solutionTwo.pros!.slice(
+        ${solutionTwo.pros?.slice(
           0,
-          IEngineConstants.maxProsConsUsedForRanking
+          IEngineConstants.maxTopProsConsUsedForRanking
         )}
 
         Cons of Solution Two:
-        ${solutionTwo.cons!.slice(
+        ${solutionTwo.cons?.slice(
           0,
-          IEngineConstants.maxProsConsUsedForRanking
+          IEngineConstants.maxTopProsConsUsedForRanking
         )}
 
         The Most Effective Solution Is:

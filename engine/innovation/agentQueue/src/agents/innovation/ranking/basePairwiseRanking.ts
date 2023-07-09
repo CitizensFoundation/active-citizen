@@ -78,8 +78,6 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
           false
         );
 
-        //this.logger.debug(`Winning item text: ${winningItemText}`);
-
         if (!winningItemText) {
           throw new Error("No winning item text");
         } else if (winningItemText.trim() == "One") {
@@ -88,36 +86,33 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
         } else if (winningItemText.trim() == "Two") {
           wonItemIndex = itemTwoIndex;
           lostItemIndex = itemOneIndex;
-        } else if (winningItemText.trim() == "Neither") {
-          //TODO: Instead of random selection, disable this prompt selection
-          const randomIndex = Math.floor(Math.random() * 2);
-          if (randomIndex == 0) {
-            wonItemIndex = itemOneIndex;
-            lostItemIndex = itemTwoIndex;
-          } else {
-            wonItemIndex = itemTwoIndex;
-            lostItemIndex = itemOneIndex;
-          }
-          this.logger.warn("LLM returned Neither in pairwise ranking for prompt ${JSON.stringify(messages)}")
+        } else if (
+          ["Neither", "None", "Both"].indexOf(winningItemText.trim()) > -1
+        ) {
+          wonItemIndex = -1;
+          lostItemIndex = -1;
+          this.logger.warn(
+            `LLM returned Neither, None or Both in pairwise ranking for prompt ${JSON.stringify(
+              messages
+            )}`
+          );
         } else {
-          this.logger.error(`Invalid winning item text ${winningItemText} for prompt ${JSON.stringify(messages)}`);
-          //TODO: Instead of random selection, disable this prompt selection
-          const randomIndex = Math.floor(Math.random() * 2);
-          if (randomIndex == 0) {
-            wonItemIndex = itemOneIndex;
-            lostItemIndex = itemTwoIndex;
-          } else {
-            wonItemIndex = itemTwoIndex;
-            lostItemIndex = itemOneIndex;
-          }
+          this.logger.error(
+            `Invalid winning item text ${winningItemText} for prompt ${JSON.stringify(
+              messages
+            )}`
+          );
+          wonItemIndex = -1;
+          lostItemIndex = -1;
         }
-
         retry = false;
       } catch (error) {
         this.logger.error("Error getting results from LLM");
         this.logger.error(error);
         if (retryCount < maxRetryCount) {
-          await new Promise((resolve) => setTimeout(resolve, 4500+(retryCount*5000)));
+          await new Promise((resolve) =>
+            setTimeout(resolve, 4500 + retryCount * 5000)
+          );
           retryCount++;
         } else {
           throw error;
@@ -155,8 +150,9 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
           promptPair
         );
         //this.logger.debug(`Won item index: ${wonItemIndex} Lost item index: ${lostItemIndex}`)
-
-        if (wonItemIndex !== undefined && lostItemIndex !== undefined) {
+        if (wonItemIndex === -1 && lostItemIndex === -1) {
+          this.logger.debug(`Draw not updating elo score for prompt ${p}`);
+        } else if (wonItemIndex !== undefined && lostItemIndex !== undefined) {
           // Update Elo ratings
           const winnerRating = this.eloRatings[wonItemIndex];
           const loserRating = this.eloRatings[lostItemIndex];
