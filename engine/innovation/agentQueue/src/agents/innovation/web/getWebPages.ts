@@ -40,16 +40,17 @@ export class GetWebPagesProcessor extends BaseProcessor {
       new SystemChatMessage(
         `As an expert trained to analyze complex text in relation to a given problem statement, adhere to the following guidelines:
 
-        1. Refine the Current Analysis JSON with new information from the New Text Context.
+        1. Refine the Current Analysis JSON with new information from the "New Text Context".
         2. Analyze the relation of this text to the problem statement and output a Refined Analysis JSON.
         3. Suggest potential solutions to the problem statement.
         4. Provide a summary of the text.
-        5. Identify a list of tags for the text.
-        6. Highlight the entities found in the text.
-        7. Select and output all paragraphs relevant to the problem statement.
-        8. If there are citations or references, list them separately under 'references', not in 'allParagraphs'.
-        9. Output everything in JSON format without further explanation.
-        10. Tackle the task step-by-step.`
+        5. Identify the key tags for the text.
+        6. Highlight the most important entities found in the text.
+        7. Add new paragraphs to the 'mostRelevantParagraphs' array only if the new paragraphs are very relevant to the problem statement.
+        8. Never output more than 7 paragraphs in the 'mostRelevantParagraphs' array, rather rewrite and combine paragraphs already there.
+        9. If there are citations or references, list them separately under 'references', not in 'mostRelevantParagraphs'. Output at most 7 references.
+        10. Output everything in JSON format without further explanation.
+        11. Tackle the task step-by-step.`
       ),
       new HumanChatMessage(
         `
@@ -87,13 +88,13 @@ export class GetWebPagesProcessor extends BaseProcessor {
         1. Analyze how the text under "Text context" is related to the problem statement and sub-problem if specified.
         2. Suggest potential solutions to the problem statement.
         3. Provide a summary of the text.
-        4. Identify a list of tags for the text.
-        5. Highlight the entities found in the text.
-        6. Select and output all paragraphs relevant to the problem statement.
-        7. If there are citations or references, list them separately under 'references', not in 'allParagraphs'.
+        4. Identify the key tags for the text.
+        5. Highlight the most relevant entities found in the text.
+        6. Always select and output the most relevant paragraph in relation to the problem statement.
+        7. If there are citations or references, list them separately under 'references', not in 'mostRelevantParagraphs'.
         8. Avoid using markdown format.
         9. Output everything in JSON format without further explanation.
-        10. Tackle the task step-by-step.
+        10. Perform the task step-by-step.
 
         Examples:
 
@@ -127,17 +128,10 @@ export class GetWebPagesProcessor extends BaseProcessor {
         JSON Output:
         [
           {
-            "allRelevantParagraphs": [
+            "mostRelevantParagraphs": [
               "Childhood obesity is a serious health problem in the United States where 1 in 5 children and adolescents are affected. Some groups of children are more affected than others, but all children are at risk of gaining weight that is higher than what is considered healthy.",
               "Obesity is complex. Many factors can contribute to excess weight gain including behavior, genetics and taking certain medications. But societal and community factors also matter: child care and school environments, neighborhood design, access to healthy, affordable foods and beverages, and access to safe and convenient places for physical activity affect our ability to make healthy choices.",
               "Every child deserves a healthy start in life. Learn what parents and caregivers can to do help prevent obesity at home, how healthcare systems can help families prevent and manage childhood obesity, and what strategies communities can use to support a healthy, active lifestyle for all.",
-              "Childhood Obesity Facts",
-              "How many children in the United States have obesity?",
-              "Defining Childhood Overweight & Obesity",
-              "How is childhood obesity measured?",
-              "What contributes to childhood obesity? What are the health risks?",
-              "Resources for clinicians and healthcare providers on childhood obesity. Also see CDC’s Clinical Growth Charts.",
-              "Child and Teen BMI Calculator"
             ],
             "possibleSolutionsToProblem": [
               "Parents and caregivers can help prevent obesity at home",
@@ -183,16 +177,6 @@ export class GetWebPagesProcessor extends BaseProcessor {
         may be broadly applicable for evaluating any manufacturing process change that could impact the total lithium consumed
         during formation.
 
-        y. A key question is
-        whether fast formation created more heterogeneous aging behavior which caused the higher variability in aging,
-        Page 12
-        or if the higher variability is due to the cells lasting longer. To answer this question, we employed the modified
-        signed-likelihood ratio test78 to check for equality of the coefficients of variation, defined as the ratio between the
-        standard deviation and the mean cycle life. The resulting p-values were greater than 0.05 in all cases. Therefore,
-        with the available data, we cannot conclude that fast formation increased the variation in aging beyond the effect of
-        improving cycle life. While a relationship between formation protocol and aging variability may still generally exist,
-        this difference could not be determined with our sample sizes (n = 10 cells per group). This result motivates the
-        continued usage of larger samples sizes for future studies on the impact of formation protocol on aging variability.
         3 Conclusion
         In this work, we demonstrated that low-SOC resistance (RLS) correlates to cycle life across two different battery
         formation protocols. As a predictive feature, RLS provided higher prediction accuracy compared to conventional
@@ -212,8 +196,7 @@ export class GetWebPagesProcessor extends BaseProcessor {
 
         JSON Output:
         {
-          "allRelevantParagraphs": [
-            "Increasing the speed of battery formation can significantly lower lithium-ion battery manufacturing costs. However, adopting faster formation protocols in practical manufacturing settings is challenging due to a lack of inexpensive, rapid diagnostic signals that can inform possible impacts to long-term battery lifetime. This work identifies the cell resistance measured at low states of charge as an early-life diagnostic feature for screening new formation protocols. We show that this signal correlates to cycle life and improves the accuracy of data-driven battery lifetime prediction models. The signal is obtainable at the end of the manufacturing line, takes seconds to acquire, and does not require specialized test equipment. We explore a physical connection between this resistance signal and the quantity of lithium consumed during formation, suggesting that the signal may be broadly applicable for evaluating any manufacturing process change that could impact the total lithium consumed during formation.",
+          "mostRelevantParagraphs": [
             "In this work, we demonstrated that low-SOC resistance (RLS) correlates to cycle life across two different battery formation protocols. As a predictive feature, RLS provided higher prediction accuracy compared to conventional measures of formation quality such as Coulombic efficiency as well as state-of-the art predictive features based on changes in discharge voltage curves. RLS is measurable at the end of the manufacturing line using ordinary battery test equipment and can be measured within seconds. Changes in RLS are attributed to differences in the amount of lithium consumed to the SEI during formation, where a decrease in RLS indicates that more lithium is consumed."
           ],
           "possibleSolutionToProblem": [
@@ -335,7 +318,7 @@ export class GetWebPagesProcessor extends BaseProcessor {
     );
 
     this.logger.debug(
-      `Total token count: ${totalTokenCount} Prompt token count: ${promptTokenCount}`
+      `Total token count: ${totalTokenCount} Prompt token count: ${JSON.stringify(promptTokenCount)}`
     );
 
     let textAnalysis: IEngineWebPageAnalysisData;
@@ -381,7 +364,7 @@ export class GetWebPagesProcessor extends BaseProcessor {
     type: IEngineWebPageTypes
   ) {
     this.logger.debug(
-      `Processing page text ${text} for ${url} for ${type} search results ${subProblemIndex} sub problem index`
+      `Processing page text ${text.slice(0,500)} for ${url} for ${type} search results ${subProblemIndex} sub problem index`
     );
 
     const textAnalysis = await this.getTextAnalysis(text);
@@ -397,7 +380,12 @@ export class GetWebPagesProcessor extends BaseProcessor {
       `Got text analysis ${JSON.stringify(textAnalysis, null, 2)}`
     );
 
-    await this.webPageVectorStore.postWebPage(textAnalysis);
+    try {
+      await this.webPageVectorStore.postWebPage(textAnalysis);
+    } catch (e) {
+      this.logger.error(`Error posting web page`);
+      this.logger.error(e);
+    }
   }
 
   //TODO: Use arxiv API as seperate datasource, use other for non arxiv papers
@@ -475,6 +463,7 @@ export class GetWebPagesProcessor extends BaseProcessor {
               }
             );
           } catch (e) {
+            this.logger.error(`No PDF buffer`);
             this.logger.error(e);
             resolve();
           }
@@ -483,6 +472,7 @@ export class GetWebPagesProcessor extends BaseProcessor {
           resolve();
         }
       } catch (e) {
+        this.logger.error(`Error in get pdf`);
         this.logger.error(e);
         resolve();
       }
@@ -558,12 +548,13 @@ export class GetWebPagesProcessor extends BaseProcessor {
 
         finalText = finalText.replace(/(\r\n|\n|\r){3,}/gm, "\n\n");
 
-        this.logger.debug(`Got HTML text: ${finalText}`);
+        //this.logger.debug(`Got HTML text: ${finalText}`);
         await this.processPageText(finalText, subProblemIndex, url, type);
       } else {
         this.logger.error(`No HTML text found for ${url}`);
       }
     } catch (e) {
+      this.logger.error(`Error in get html`);
       this.logger.error(e);
     }
   }
@@ -717,7 +708,7 @@ export class GetWebPagesProcessor extends BaseProcessor {
   }
 
   async getAllPages() {
-    puppeteer.launch({ headless: true }).then(async (browser) => {
+    puppeteer.launch({ headless: "new" }).then(async (browser) => {
       this.logger.debug("Launching browser");
       const browserPage = await browser.newPage();
       await browserPage.setUserAgent(IEngineConstants.currentUserAgent);

@@ -265,7 +265,7 @@ type IEngineWebPageTypes = "general" | "scientific" | "openData" | "news";
 type IEngineWebPageTargets = "problemStatement" | "subProblem" | "entity";
 
 interface IEngineWebPageAnalysisData {
-  allRelevantParagraphs: string[];
+  mostRelevantParagraphs: string[];
   possibleSolutionsToProblem: string[];
   relevanceToProblem: string;
   tags: string[];

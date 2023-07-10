@@ -198,7 +198,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
         ]);
         return tokenCountData.totalCount;
     }
-    //TODO: Figure out the closest allRelevantParagraphs from Weaviate
+    //TODO: Figure out the closest mostRelevantParagraphs from Weaviate
     renderRawSearchResults(rawSearchResults) {
         const results = rawSearchResults.data.Get.WebPage;
         let searchResults = `
@@ -208,7 +208,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
 
       ${results.possibleSolutionsToProblem.join("\n")}
 
-      ${results.allRelevantParagraphs.join("\n")}
+      ${results.mostRelevantParagraphs.join("\n")}
     `;
         return searchResults;
     }

@@ -2,8 +2,8 @@ import { Queue } from "bullmq";
 import ioredis from "ioredis";
 const redis = new ioredis.default(process.env.REDIS_MEMORY_URL || "redis://localhost:6379");
 const deleteALl = false;
-const setNewStage = false;
-const addJob = false;
+const setNewStage = true;
+const addJob = true;
 const myQueue = new Queue("agent-innovation");
 if (deleteALl) {
     await myQueue.drain();

@@ -55,8 +55,8 @@ export class WebPageVectorStore extends Base {
     const res = await WebPageVectorStore.client.graphql
       .get()
       .withClassName('WebPage')
-      .withFields('searchType subProblemIndex summary relevanceToProblem \
-        possibleSolutionsToProblem url allRelevantParagraphs tags entities \
+      .withFields('summary relevanceToProblem \
+        possibleSolutionsToProblem mostRelevantParagraphs tags entities \
         _additional { distance }')
       .withNearText({concepts: ['democracy']})
       .withLimit(10)
@@ -74,6 +74,7 @@ export class WebPageVectorStore extends Base {
         .withProperties(webPageAnalysis as any)
         .do()
         .then((res) => {
+          this.logger.info(`Weaviate: Have saved web page ${(webPageAnalysis as any).url}`)
           resolve(res);
         })
         .catch((err) => {
@@ -129,7 +130,7 @@ export class WebPageVectorStore extends Base {
         })
         .withFields(
           "searchType subProblemIndex summary relevanceToProblem \
-          possibleSolutionsToProblem url allRelevantParagraphs tags entities \
+          possibleSolutionsToProblem url mostRelevantParagraphs tags entities \
           _additional { distance }"
         )
         .do();

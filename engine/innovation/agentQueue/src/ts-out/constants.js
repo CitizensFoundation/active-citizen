@@ -87,11 +87,11 @@ export class IEngineConstants {
     static getPageAnalysisModel = {
         name: "gpt-3.5-turbo-16k",
         temperature: 0.0,
-        maxOutputTokens: 2048,
+        maxOutputTokens: 3300,
         tokenLimit: 16385,
         inTokenCostUSD: gpt35_16kInTokenPrice,
         outTokenCostUSD: gpt35_16kOutTokenPrice,
-        verbose: true,
+        verbose: false,
     };
     static createSeedSolutionsModel = {
         name: "gpt-4",
@@ -145,7 +145,7 @@ export class IEngineConstants {
     static maxTopProsConsUsedForRanking = 3;
     static maxNumberGeneratedProsConsForSolution = 21;
     static minSleepBeforeBrowserRequest = 1100;
-    static maxAdditionalRandomSleepBeforeBrowserRequest = 1500;
+    static maxAdditionalRandomSleepBeforeBrowserRequest = 1100;
     static numberOfSearchTypes = 4;
     static chances = {
         useMainProblemSearchQueriesNewSolutions: 0.2,

@@ -8,7 +8,7 @@ import {
 } from "langchain/schema";
 import { ChatOpenAI } from "langchain/chat_models/openai";
 import { IEngineConstants } from "../../constants.js";
-
+import { jsonrepair } from 'jsonrepair'
 import ioredis from "ioredis";
 
 const redis = new ioredis.default(
@@ -170,8 +170,15 @@ export abstract class BaseProcessor extends Base {
             try {
               parsedJson = JSON.parse(response.text.trim());
             } catch (error) {
-              this.logger.error("Error parsing JSON");
-              this.logger.error(error);
+              this.logger.error(`Error parsing JSON ${response.text.trim()}`);
+              try {
+                this.logger.info(`Trying to fix JSON`);
+                const repaired = jsonrepair(response.text.trim())
+                parsedJson = JSON.parse(repaired);
+              } catch (error) {
+                this.logger.error(`Error parsing fixed JSON`);
+                this.logger.error(error);
+              }
             }
 
             if (parsedJson) {

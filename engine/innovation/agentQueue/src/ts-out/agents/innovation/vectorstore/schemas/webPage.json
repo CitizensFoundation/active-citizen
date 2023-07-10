@@ -91,7 +91,7 @@
           "vectorizePropertyName": true
         }
       },
-      "name": "allRelevantParagraphs"
+      "name": "mostRelevantParagraphs"
     },
     {
       "dataType": [

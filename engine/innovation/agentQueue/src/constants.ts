@@ -98,11 +98,11 @@ export class IEngineConstants {
   static getPageAnalysisModel: IEngineBaseAIModelConstants = {
     name: "gpt-3.5-turbo-16k",
     temperature: 0.0,
-    maxOutputTokens: 2048,
+    maxOutputTokens: 3300,
     tokenLimit: 16385,
     inTokenCostUSD: gpt35_16kInTokenPrice,
     outTokenCostUSD: gpt35_16kOutTokenPrice,
-    verbose: true,
+    verbose: false,
   };
 
   static createSeedSolutionsModel: IEngineBaseAIModelConstants = {
@@ -178,7 +178,7 @@ export class IEngineConstants {
 
   static minSleepBeforeBrowserRequest = 1100;
 
-  static maxAdditionalRandomSleepBeforeBrowserRequest = 1500;
+  static maxAdditionalRandomSleepBeforeBrowserRequest = 1100;
 
   static numberOfSearchTypes = 4;
 
