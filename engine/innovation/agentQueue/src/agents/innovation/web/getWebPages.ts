@@ -46,7 +46,7 @@ export class GetWebPagesProcessor extends BaseProcessor {
         4. Add new paragraphs to the 'mostRelevantParagraphs' array only if the new paragraphs are very relevant to the problem statement.
         5. Never output more than 7 paragraphs in the 'mostRelevantParagraphs' array, rather rewrite and combine paragraphs already there.
         6. Output everything in JSON format without further explanation.
-        8. Tackle the task step-by-step.`
+        7. Tackle the task step-by-step.`
       ),
       new HumanChatMessage(
         `
@@ -81,14 +81,14 @@ export class GetWebPagesProcessor extends BaseProcessor {
       new SystemChatMessage(
         `As an expert trained to analyze complex text in relation to a given problem statement, adhere to the following guidelines:
 
-        1. Analyze how the text under "Text context" is related to the problem statement and sub-problem if specified
+        1. Analyze how the text under "Text context" is related to the problem statement, and sub-problem,if specified.
         2. Output only the most relevant paragraphs you find in the Text Context in the mostRelevantParagraphs JSON array.
-        3. Identify possible solutions to the problem statement in the Text Context and store in the solutionsToProblemIdentifiedInText JSON array.
-        4. Never make up your your own solutions.
-        4. Never store any citations or references in 'mostRelevantParagraphs'.
-        5. Avoid using markdown format.
-        6. Output everything in JSON format without further explanation.
-        7. Perform the task step-by-step.
+        3. Identify possible solutions to the problem statement in the Text Context and output in the solutionsToProblemIdentifiedInText JSON array.
+        4. Never make up your your own solutions always use the text context.
+        5. Never store any citations or references in 'mostRelevantParagraphs'.
+        6. Avoid using markdown format.
+        7. Output everything in JSON format without further explanation.
+        8. Perform the task step-by-step.
 
         Examples:
 
@@ -335,7 +335,7 @@ export class GetWebPagesProcessor extends BaseProcessor {
     type: IEngineWebPageTypes
   ) {
     this.logger.debug(
-      `Processing page text ${text.slice(0,500)} for ${url} for ${type} search results ${subProblemIndex} sub problem index`
+      `Processing page text ${text.slice(0,150)} for ${url} for ${type} search results ${subProblemIndex} sub problem index`
     );
 
     const textAnalysis = await this.getTextAnalysis(text);
@@ -378,6 +378,7 @@ export class GetWebPagesProcessor extends BaseProcessor {
         const cachedHtml = await redis.get(redisKey);
 
         if (cachedHtml) {
+          this.logger.info("Got cached PDF")
           pdfBuffer = Buffer.from(cachedHtml, "base64");
         } else {
           const sleepingForMs =
@@ -463,6 +464,7 @@ export class GetWebPagesProcessor extends BaseProcessor {
       const cachedHtml = await redis.get(redisKey);
 
       if (cachedHtml) {
+        this.logger.info("Got cached HTML")
         htmlText = cachedHtml;
       } else {
         const sleepingForMs =
