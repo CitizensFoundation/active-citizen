@@ -122,8 +122,8 @@ export class GetWebPagesProcessor extends BaseProcessor {
         JSON Output:
         [
           {
-            "summary": "The text discusses the issue of childhood obesity in the United States, highlighting that 1 in 5 children are affected. It explains that obesity is a complex issue with many contributing factors, including behavior, genetics, medication, and societal and community factors. The text suggests that parents, caregivers, healthcare systems, and communities all have a role to play in preventing and managing childhood obesity.",
-            "relevanceToProblem": "The text discusses the problem of childhood obesity, its causes, and potential solutions, which directly relates to the problem statement.",
+            "summary": "Childhood obesity in the United States, affecting 1 in 5 children, is thoroughly examined in the given discourse. It articulates obesity as a multifaceted problem with numerous contributors such as behavior, genetics, medication, and societal and community influences. The importance of the roles parents, caregivers, healthcare systems, and communities play in both preventing and managing childhood obesity is emphasized within the discussion.",
+            "relevanceToProblem": "Direct correlation to the problem statement is seen in the discourse's exploration of childhood obesity, its roots, and potential mitigations.",
             "mostRelevantParagraphs": [
               "Childhood obesity is a serious health problem in the United States where 1 in 5 children and adolescents are affected. Some groups of children are more affected than others, but all children are at risk of gaining weight that is higher than what is considered healthy.",
               "Obesity is complex. Many factors can contribute to excess weight gain including behavior, genetics and taking certain medications. But societal and community factors also matter: child care and school environments, neighborhood design, access to healthy, affordable foods and beverages, and access to safe and convenient places for physical activity affect our ability to make healthy choices.",
@@ -188,8 +188,8 @@ export class GetWebPagesProcessor extends BaseProcessor {
 
         JSON Output:
         {
-          "summary": "The text discusses the potential of faster formation protocols in improving the lifetime of lithium-ion batteries. It identifies the cell resistance measured at low states of charge as a diagnostic feature that can predict battery lifetime. This signal is related to the quantity of lithium consumed during formation, and it can be used to evaluate any changes in the manufacturing process that could affect battery lifetime.",
-          "relevanceToProblem": "The text discusses the impact of formation protocols on battery lifetime, which is directly related to the problem of prototype robotic prosthetic leg batteries not lasting long enough.",
+          "summary": "Faster formation protocols bear potential to augment the lifetime of lithium-ion batteries. Notably, cell resistance, especially at low states of charge, emerges as a predictive feature for battery lifespan. It's indicative of the amount of lithium utilized during formation, serving as a yardstick for assessing alterations in the manufacturing process that might impact battery life.",
+          "relevanceToProblem": "The discussion around the influence of formation protocols on battery lifespan is directly pertinent to the challenge of ensuring the batteries in prototype robotic prosthetic legs last longer.",
           "mostRelevantParagraphs": [
             "In this work, we demonstrated that low-SOC resistance (RLS) correlates to cycle life across two different battery formation protocols. As a predictive feature, RLS provided higher prediction accuracy compared to conventional measures of formation quality such as Coulombic efficiency as well as state-of-the art predictive features based on changes in discharge voltage curves. RLS is measurable at the end of the manufacturing line using ordinary battery test equipment and can be measured within seconds. Changes in RLS are attributed to differences in the amount of lithium consumed to the SEI during formation, where a decrease in RLS indicates that more lithium is consumed."
           ],
