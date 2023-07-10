@@ -56,7 +56,7 @@ export class WebPageVectorStore extends Base {
       .get()
       .withClassName('WebPage')
       .withFields('summary relevanceToProblem \
-        possibleSolutionsToProblem mostRelevantParagraphs tags entities \
+        solutionsToProblemIdentifiedInText mostRelevantParagraphs tags entities \
         _additional { distance }')
       .withNearText({concepts: ['democracy']})
       .withLimit(10)
@@ -130,7 +130,7 @@ export class WebPageVectorStore extends Base {
         })
         .withFields(
           "searchType subProblemIndex summary relevanceToProblem \
-          possibleSolutionsToProblem url mostRelevantParagraphs tags entities \
+          solutionsToProblemIdentifiedInText url mostRelevantParagraphs tags entities \
           _additional { distance }"
         )
         .do();

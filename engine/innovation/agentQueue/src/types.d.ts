@@ -266,7 +266,7 @@ type IEngineWebPageTargets = "problemStatement" | "subProblem" | "entity";
 
 interface IEngineWebPageAnalysisData {
   mostRelevantParagraphs: string[];
-  possibleSolutionsToProblem: string[];
+  solutionsToProblemIdentifiedInText: string[];
   relevanceToProblem: string;
   tags: string[];
   entities: string[];

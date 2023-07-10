@@ -21,17 +21,19 @@ export class GetWebPagesProcessor extends BaseProcessor {
         return [
             new SystemChatMessage(`As an expert trained to analyze complex text in relation to a given problem statement, adhere to the following guidelines:
 
-        1. Refine the Current Analysis JSON with new information from the "New Text Context".
-        2. Analyze the relation of this text to the problem statement and output a Refined Analysis JSON.
-        3. Suggest potential solutions to the problem statement.
-        4. Provide a summary of the text.
-        5. Identify the key tags for the text.
-        6. Highlight the most important entities found in the text.
+        1. Refine the "Current Analysis JSON" data with new information from the "New Text Context", if needed and output in the "Refined Analysis JSON" section.
+        2. Refine or suggest potential solutions to the problem statement.
+        2. Refine the possible solutions to the problem statement based on the new text. Do not make up your own solutions.
+        4. Refine the summary based on the new text, if needed.
+        5. Refine the key tags if needed.
+        6. Highlight the most important entities found in the text but only if they are very relevant to the problem statement. Do not add more than seven in total.
         7. Add new paragraphs to the 'mostRelevantParagraphs' array only if the new paragraphs are very relevant to the problem statement.
         8. Never output more than 7 paragraphs in the 'mostRelevantParagraphs' array, rather rewrite and combine paragraphs already there.
-        9. If there are citations or references, list them separately under 'references', not in 'mostRelevantParagraphs'. Output at most 7 references.
-        10. Output everything in JSON format without further explanation.
-        11. Tackle the task step-by-step.`),
+        9. Never output more than the 7 most relevant entities.
+        10. Never output more than the most 7 relevant tags.
+        11. Only list academic citations and references, not web links.
+        12. Output everything in JSON format without further explanation.
+        13. Tackle the task step-by-step.`),
             new HumanChatMessage(`
         Problem Statement:
         ${problemStatement.description}
@@ -57,15 +59,18 @@ export class GetWebPagesProcessor extends BaseProcessor {
             new SystemChatMessage(`As an expert trained to analyze complex text in relation to a given problem statement, adhere to the following guidelines:
 
         1. Analyze how the text under "Text context" is related to the problem statement and sub-problem if specified.
-        2. Suggest potential solutions to the problem statement.
+        2. Identify possible solutions to the problem statement in the Text Context. Do not make up your own solutions.
         3. Provide a summary of the text.
         4. Identify the key tags for the text.
         5. Highlight the most relevant entities found in the text.
         6. Always select and output the most relevant paragraph in relation to the problem statement.
         7. If there are citations or references, list them separately under 'references', not in 'mostRelevantParagraphs'.
-        8. Avoid using markdown format.
-        9. Output everything in JSON format without further explanation.
-        10. Perform the task step-by-step.
+        8. Only list academic citations and references, not web links.
+        9. Avoid using markdown format.
+        10. Never output more than 7 entities.
+        11. Never output more than 7 tags.
+        12. Output everything in JSON format without further explanation.
+        13. Perform the task step-by-step.
 
         Examples:
 
@@ -104,15 +109,25 @@ export class GetWebPagesProcessor extends BaseProcessor {
               "Obesity is complex. Many factors can contribute to excess weight gain including behavior, genetics and taking certain medications. But societal and community factors also matter: child care and school environments, neighborhood design, access to healthy, affordable foods and beverages, and access to safe and convenient places for physical activity affect our ability to make healthy choices.",
               "Every child deserves a healthy start in life. Learn what parents and caregivers can to do help prevent obesity at home, how healthcare systems can help families prevent and manage childhood obesity, and what strategies communities can use to support a healthy, active lifestyle for all.",
             ],
-            "possibleSolutionsToProblem": [
+            "solutionsToProblemIdentifiedInText": [
               "Parents and caregivers can help prevent obesity at home",
               "Healthcare systems can help families prevent and manage childhood obesity",
               "Communities can use strategies to support a healthy, active lifestyle for all"
             ],
             "relevanceToProblem": "The text discusses the problem of childhood obesity, its causes, and potential solutions, which directly relates to the problem statement.",
             "summary": "The text discusses the issue of childhood obesity in the United States, highlighting that 1 in 5 children are affected. It explains that obesity is a complex issue with many contributing factors, including behavior, genetics, medication, and societal and community factors. The text suggests that parents, caregivers, healthcare systems, and communities all have a role to play in preventing and managing childhood obesity.",
-            "tags": ["Childhood Obesity", "Health", "Prevention", "Management", "United States"],
-            "entities": ["United States", "CDC", "Child and Teen BMI Calculator"]
+            "tags": [
+              "Childhood Obesity",
+              "Health",
+              "Prevention",
+              "Management",
+              "United States"
+            ],
+            "entities": [
+              "United States",
+              "CDC",
+              "Child and Teen BMI Calculator"
+            ]
           }
         ]
 
@@ -170,7 +185,7 @@ export class GetWebPagesProcessor extends BaseProcessor {
           "mostRelevantParagraphs": [
             "In this work, we demonstrated that low-SOC resistance (RLS) correlates to cycle life across two different battery formation protocols. As a predictive feature, RLS provided higher prediction accuracy compared to conventional measures of formation quality such as Coulombic efficiency as well as state-of-the art predictive features based on changes in discharge voltage curves. RLS is measurable at the end of the manufacturing line using ordinary battery test equipment and can be measured within seconds. Changes in RLS are attributed to differences in the amount of lithium consumed to the SEI during formation, where a decrease in RLS indicates that more lithium is consumed."
           ],
-          "possibleSolutionToProblem": [
+          "solutionsToProblemIdentifiedInText": [
             "Adopting faster formation protocols and using the cell resistance measured at low states of charge as an early-life diagnostic feature for screening new formation protocols."
           ],
           "relevanceToProblem": "The text discusses the impact of formation protocols on battery lifetime, which is directly related to the problem of prototype robotic prosthetic leg batteries not lasting long enough.",
@@ -186,9 +201,6 @@ export class GetWebPagesProcessor extends BaseProcessor {
             "Andrew Weng",
             "Peyman Mohtat",
             "Peter M. Attia",
-            "Valentin Sulzer",
-            "Suhak Lee",
-            "Greg Less",
             "Anna Stefanopoulou",
             "Department of Mechanical Engineering, University of Michigan",
             "Department of Materials Science and Engineering, Stanford University",
@@ -254,6 +266,7 @@ export class GetWebPagesProcessor extends BaseProcessor {
             });
             this.logger.debug(`Splitting text into chunks of ${splitter.chunkSize} tokens`);
             const documents = await splitter.createDocuments([text]);
+            this.logger.debug(`Got ${documents.length} documents`);
             for (let d = 0; d < documents.length; d++) {
                 const document = documents[d];
                 if (d == 0) {

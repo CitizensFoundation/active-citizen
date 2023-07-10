@@ -206,7 +206,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
 
       ${results.relevanceToProblem}
 
-      ${results.possibleSolutionsToProblem.join("\n")}
+      ${results.solutionsToProblemIdentifiedInText.join("\n")}
 
       ${results.mostRelevantParagraphs.join("\n")}
     `;
