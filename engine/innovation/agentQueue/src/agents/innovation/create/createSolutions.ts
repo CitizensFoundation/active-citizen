@@ -28,11 +28,10 @@ export class CreateSolutionsProcessor extends BaseProcessor {
         3. Limit solution descriptions to a maximum of six sentences.
         4. Avoid replicating solutions listed under 'Already Created Solutions'.
         5. Refer to the relevant entities in your solutions, if mentioned.
-        6. Utilize the provided contexts to inform and enhance your solutions.
-        7. Avoid mentioning the contexts as it will not be visible to the user.
-        8. Ensure your output is not in markdown format.
-        9. For each problem and sub-problem, produce the solutions in the following JSON format: [ { title, description, howCanSolutionHelp, mainObstacleToSolutionAdoption } ].
-        10. Apply a methodical, step-by-step approach to deliver optimal solutions.
+        6. Avoid mentioning the contexts as it will not be visible to the user.
+        7. Ensure your output is not in markdown format.
+        8. Output your solutions in the following JSON format: [ { title, description, mainBenefitOfSolution, mainObstacleToSolutionAdoption } ].
+        9. Apply a methodical, step-by-step approach to deliver optimal solutions.
         `
       ),
       new HumanChatMessage(
@@ -65,16 +64,15 @@ export class CreateSolutionsProcessor extends BaseProcessor {
       As an expert, you are tasked with crafting innovative solutions for complex problems and associated sub-problems, considering the affected entities.
 
       Adhere to the following guidelines:
-      1. Solutions should be practical, thoughtful, innovative, fair, and succinct.
-      2. Generate seven solutions, presented in JSON format.
-      3. Each solution should include a short title, description, and explanation of its benefits.
+      1. Solutions should be practical, thoughtful, innovative and equitable.
+      2. Generate four solutions, presented in JSON format.
+      3. Each solution should include a short title, description, mainBenefitOfSolution and mainObstacleToSolutionAdoption.
       4. Limit the description of each solution to six sentences maximum.
-      5. Avoid creating solutions listed under 'Already Created Solutions'.
-      6. If entities are mentioned, ensure they are relevant to the proposed solutions.
-      7. The four different contexts provided should inform and inspire your solutions.
-      8. Refrain from referring to the contexts, as it won't be visible to the user.
+      5. Never re-create solutions listed under 'Already Created Solutions'.
+      6. The General, Scientific, Open Data and News Contexts should inform and inspire your solutions.
+      7. Do not refer to the Contexts in your solutions, as the contexts won't be visible to the user.
       9. Do not use markdown format in your output.
-      10. For each problem and sub-problem, generate the solutions in the following JSON format: [ { title, description, howCanSolutionHelp, mainObstacleToSolutionAdoption } ].
+      10. Output your solutions in the following JSON format: [ { title, description, mainBenefitOfSolution, mainObstacleToSolutionAdoption } ].
       11. Employ a methodical, step-by-step approach to devise the best possible solutions.
       `
     );
@@ -90,13 +88,13 @@ export class CreateSolutionsProcessor extends BaseProcessor {
         `
             ${this.renderPromblemsWithIndexAndEntities(subProblemIndex)}
 
-            Possible general context for solutions:
+            General Context from search:
 
-            Possible scientific context for solutions:
+            Scientific Context from search:
 
-            Possible open data context for solutions:
+            Open Data Context from search:
 
-            Possible news context for solutions:
+            News Context from search:
 
             ${
               alreadyCreatedSolutions
@@ -130,16 +128,16 @@ export class CreateSolutionsProcessor extends BaseProcessor {
         ${this.renderPromblemsWithIndexAndEntities(subProblemIndex)}
 
         Contexts for potential solutions:
-        General Context:
+        General Context from search:
         ${generalTextContext}
 
-        Scientific Context:
+        Scientific Context from search:
         ${scientificTextContext}
 
-        Open Data Context:
+        Open Data Context from search:
         ${openDataTextContext}
 
-        News Context:
+        News Context from search:
         ${newsTextContext}
 
         ${
@@ -167,6 +165,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
     newsTextContext: string,
     alreadyCreatedSolutions: string | undefined = undefined
   ): Promise<IEngineSolution[]> {
+    this.logger.info(`Calling LLM for sub problem ${subProblemIndex}`);
     let results = await this.callLLM(
       "create-seed-solutions",
       IEngineConstants.createSeedSolutionsModel,
@@ -181,6 +180,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
     );
 
     if (IEngineConstants.enable.refine.createSolutions) {
+      this.logger.info(`Calling LLM refine for sub problem ${subProblemIndex}`);
       results = await this.callLLM(
         "create-seed-solutions",
         IEngineConstants.createSeedSolutionsModel,
@@ -224,6 +224,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
     searchQueries: IEngineSearchQueries,
     subProblemIndex: number | undefined
   ) {
+    this.logger.info(`Getting all type queries for sub problem ${subProblemIndex}`)
     return {
       general:
         searchQueries.general[this.randomSearchQueryIndex(subProblemIndex)],
@@ -264,12 +265,15 @@ export class CreateSolutionsProcessor extends BaseProcessor {
 
   getSearchQueries(subProblemIndex: number) {
     const otherSubProblemIndexes = [];
+    this.logger.info(`Getting search queries for sub problem ${subProblemIndex}`);
 
-    for (let i = 0; i < this.memory.subProblems.length; i++) {
+    for (let i = 0; i < Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems); i++) {
       if (i != subProblemIndex) {
         otherSubProblemIndexes.push(i);
       }
     }
+
+    this.logger.debug(`otherSubProblemIndexes: ${otherSubProblemIndexes}`);
 
     const randomSubProblemIndex =
       otherSubProblemIndexes[
@@ -332,6 +336,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
     subProblemIndex: number,
     alreadyCreatedSolutions: string | undefined = undefined
   ) {
+    this.logger.info(`Getting text context for sub problem ${subProblemIndex}`);
     const selectedSearchQueries = this.getSearchQueries(subProblemIndex);
 
     return {
@@ -369,17 +374,34 @@ export class CreateSolutionsProcessor extends BaseProcessor {
     return tokenCountData.totalCount;
   }
 
+  getRandomItemFromArray<T>(
+    array: T[],
+    useTopN: number | undefined = undefined
+  ) {
+    if (array && array.length > 0) {
+      const randomIndex = Math.floor(
+        Math.random() *
+          (useTopN ? Math.min(useTopN, array.length) : array.length)
+      );
+      return array[randomIndex];
+    } else {
+      return "";
+    }
+  }
+
   //TODO: Figure out the closest mostRelevantParagraphs from Weaviate
   renderRawSearchResults(rawSearchResults: IEngineWebPageGraphQlResults) {
-    const results = rawSearchResults.data.Get.WebPage;
+    const results = this.getRandomItemFromArray(
+      rawSearchResults.data.Get.WebPage,
+      IEngineConstants.limits.useTopNFromSearchResultsArray
+    ) as IEngineWebPageAnalysisData;
+
     let searchResults = `
-      ${results.summary}
+        ${results.summary}
 
-      ${results.relevanceToProblem}
+        ${this.getRandomItemFromArray(results.solutionsIdentifiedInTextContext)}
 
-      ${results.solutionsToProblemIdentifiedInText.join("\n")}
-
-      ${results.mostRelevantParagraphs.join("\n")}
+        ${this.getRandomItemFromArray(results.mostRelevantParagraphs)}
     `;
 
     return searchResults;
@@ -391,6 +413,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
     searchQuery: string,
     tokensLeftForType: number
   ) {
+    this.logger.info(`Searching for type ${type} with query ${searchQuery}`);
     let rawSearchResults: IEngineWebPageGraphQlResults;
 
     const random = Math.random();
@@ -412,12 +435,14 @@ export class CreateSolutionsProcessor extends BaseProcessor {
         type
       );
     }
+    this.logger.debug("got raw search results")
 
     let searchResults = this.renderRawSearchResults(rawSearchResults);
 
     while (
       (await this.countTokensForString(searchResults)) > tokensLeftForType
     ) {
+      this.logger.debug(`Tokens left for type ${type}: ${tokensLeftForType}`)
       let sentences = searchResults.split(". ");
       sentences.pop();
       searchResults = sentences.join(". ");
@@ -462,10 +487,12 @@ export class CreateSolutionsProcessor extends BaseProcessor {
       Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems);
       subProblemIndex++
     ) {
+      this.logger.info(`Creating solutions for sub problem ${subProblemIndex}`);
       let solutions: IEngineSolution[] = [];
 
-      // Create 28 solutions 7*4
-      for (let i = 0; i < 4; i++) {
+      // Create 100 solutions 4*25
+      for (let i = 0; i < 25; i++) {
+        this.logger.info(`Creating solution ${i}`);
         let alreadyCreatedSolutions;
 
         if (i > 0) {
@@ -501,10 +528,10 @@ export class CreateSolutionsProcessor extends BaseProcessor {
     super.process();
 
     this.chat = new ChatOpenAI({
-      temperature: IEngineConstants.createSearchQueriesModel.temperature,
-      maxTokens: IEngineConstants.createSearchQueriesModel.maxOutputTokens,
-      modelName: IEngineConstants.createSearchQueriesModel.name,
-      verbose: IEngineConstants.createSearchQueriesModel.verbose,
+      temperature: IEngineConstants.createSeedSolutionsModel.temperature,
+      maxTokens: IEngineConstants.createSeedSolutionsModel.maxOutputTokens,
+      modelName: IEngineConstants.createSeedSolutionsModel.name,
+      verbose: IEngineConstants.createSeedSolutionsModel.verbose,
     });
 
     await this.createAllSolutions();

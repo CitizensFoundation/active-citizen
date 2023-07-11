@@ -41,7 +41,7 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
         Title: ${solutionOne.title}
         Description: ${solutionOne.description}
 
-        How Solution One Can Help: ${solutionOne.howCanSolutionHelp}
+        How Solution One Can Help: ${solutionOne.mainBenefitOfSolution}
         Main Obstacles to Solution One Adoption: ${
           solutionOne.mainObstacleToSolutionAdoption
         }
@@ -63,7 +63,7 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
         Title: ${solutionTwo.title}
         Description: ${solutionTwo.description}
 
-        How Solution Two Can Help: ${solutionTwo.howCanSolutionHelp}
+        How Solution Two Can Help: ${solutionTwo.mainBenefitOfSolution}
         Main Obstacles to Solution Two Adoption: ${
           solutionTwo.mainObstacleToSolutionAdoption
         }

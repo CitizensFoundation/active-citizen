@@ -144,6 +144,7 @@ export class BaseProcessor extends Base {
                             catch (error) {
                                 this.logger.error(`Error parsing fixed JSON`);
                                 this.logger.error(error);
+                                retryCount++;
                             }
                         }
                         if (parsedJson) {

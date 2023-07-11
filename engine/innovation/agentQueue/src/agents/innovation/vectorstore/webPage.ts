@@ -56,10 +56,10 @@ export class WebPageVectorStore extends Base {
       .get()
       .withClassName('WebPage')
       .withFields('summary relevanceToProblem \
-        solutionsToProblemIdentifiedInText mostRelevantParagraphs tags entities \
+        solutionsIdentifiedInTextContext mostRelevantParagraphs tags entities \
         _additional { distance }')
       .withNearText({concepts: ['democracy']})
-      .withLimit(10)
+      .withLimit(100)
       .do();
 
     console.log(JSON.stringify(res, null, 2));
@@ -130,7 +130,7 @@ export class WebPageVectorStore extends Base {
         })
         .withFields(
           "searchType subProblemIndex summary relevanceToProblem \
-          solutionsToProblemIdentifiedInText url mostRelevantParagraphs tags entities \
+          solutionsIdentifiedInTextContext url mostRelevantParagraphs tags entities \
           _additional { distance }"
         )
         .do();

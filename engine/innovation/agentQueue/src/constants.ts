@@ -98,7 +98,7 @@ export class IEngineConstants {
   static getPageAnalysisModel: IEngineBaseAIModelConstants = {
     name: "gpt-3.5-turbo-16k",
     temperature: 0.0,
-    maxOutputTokens: 3300,
+    maxOutputTokens: 2048,
     tokenLimit: 16385,
     inTokenCostUSD: gpt35_16kInTokenPrice,
     outTokenCostUSD: gpt35_16kOutTokenPrice,
@@ -190,7 +190,8 @@ export class IEngineConstants {
   }
 
   static limits = {
-    webPageVectorResultsForNewSolutions: 10
+    webPageVectorResultsForNewSolutions: 10,
+    useTopNFromSearchResultsArray: 3
   }
 
   static enable = {

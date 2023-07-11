@@ -21,7 +21,7 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
       Title: ${solution.title}
       Description: ${solution.description}
 
-      How Solution One Can Help: ${solution.howCanSolutionHelp}
+      How Solution One Can Help: ${solution.mainBenefitOfSolution}
       Main Obstacles to Solution One Adoption: ${solution.mainObstacleToSolutionAdoption}
     `;
   }

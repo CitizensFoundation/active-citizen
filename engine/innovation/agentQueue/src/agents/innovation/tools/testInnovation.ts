@@ -35,7 +35,8 @@ if (setNewStage) {
   //memory.currentStage = "rank-search-queries";
   //memory.currentStage = "web-search";
   //memory.currentStage = "rank-search-results";
-  memory.currentStage = "web-get-pages";
+  //memory.currentStage = "web-get-pages";
+  memory.currentStage = "create-seed-solutions";
   await redis.set("st_mem:1:id", JSON.stringify(memory));
 }
 

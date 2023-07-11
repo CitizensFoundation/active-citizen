@@ -38,15 +38,20 @@ export class GetWebPagesProcessor extends BaseProcessor {
   ) {
     return [
       new SystemChatMessage(
-        `As an expert trained to analyze complex text in relation to a given problem statement, adhere to the following guidelines:
+        `
+        As an AI trained to analyze complex texts, follow these instructions:
 
-        1. Refine the "Current Analysis JSON" data with new information from the "New Text Context", if needed, and output in the "Refined Analysis JSON" section.
-        2. Refine the possible solutions to the problem statement based on the new text. Do not make up your own solutions.
-        3. Refine the summary based on the new text, if needed.
-        4. Add new paragraphs to the 'mostRelevantParagraphs' array only if the new paragraphs are very relevant to the problem statement.
-        5. Never output more than 7 paragraphs in the 'mostRelevantParagraphs' array, rather rewrite and combine paragraphs already there.
-        6. Output everything in JSON format without further explanation.
-        7. Tackle the task step-by-step.`
+        1. You are analysing a large document consisting of multiple pages
+        2. The analysis from the previous pages is stored in the "Current Analysis JSON" section.
+        3. Ensuring no information from "Current Analysis JSON" is lost.
+        4. Always output everything that is in the "Current Analysis JSON" section in again in the "Refined Analysis JSON" section plus what you add.
+        5. Evaluate the text from the current page under "New Text Context" and
+           - Add paragraphs to the 'mostRelevantParagraphs' array if they are highly relevant to the problem statement.
+           - Add solutions you find in the text, to the 'solutionsIdentifiedInTextContext' array if they are highly relevant and directly derived from the New Text Context.
+           - Ignore information that isn't closely related to the problem statement.
+           - Don't create your own solutions - rely exclusively on the New Text Context.
+        5. Always return your results in JSON format with no additional comments.
+        6. Think step-by-step.`
       ),
       new HumanChatMessage(
         `
@@ -79,15 +84,15 @@ export class GetWebPagesProcessor extends BaseProcessor {
   ) {
     return [
       new SystemChatMessage(
-        `As an expert trained to analyze complex text in relation to a given problem statement, adhere to the following guidelines:
+        `As an AI designed to analyze textual data, follow these guidelines:
 
-        1. Analyze how the text under "Text context" is related to the problem statement, and sub-problem,if specified.
-        2. Output only the most relevant paragraphs you find in the Text Context in the mostRelevantParagraphs JSON array.
-        3. Identify possible solutions to the problem statement in the Text Context and output in the solutionsToProblemIdentifiedInText JSON array.
-        4. Never make up your your own solutions always use the text context.
-        5. Never store any citations or references in 'mostRelevantParagraphs'.
-        6. Avoid using markdown format.
-        7. Output everything in JSON format without further explanation.
+        1. Examine the "Text context" and determine how it relates to the problem statement and any specified sub-problems.
+        2. Include the most relevant paragraphs from the Text Context in the 'mostRelevantParagraphs' JSON array.
+        3. Identify solutions in the Text Context and include them in the 'solutionsIdentifiedInTextContext' JSON array.
+        4. Only use solutions found within the Text Context - do not generate your own.
+        5. Never store citations or references in the 'mostRelevantParagraphs' array.
+        6. Refrain from using markdown format.
+        7. Output your results in JSON format with no additional explanation.
         8. Perform the task step-by-step.
 
         Examples:
@@ -129,7 +134,7 @@ export class GetWebPagesProcessor extends BaseProcessor {
               "Obesity is complex. Many factors can contribute to excess weight gain including behavior, genetics and taking certain medications. But societal and community factors also matter: child care and school environments, neighborhood design, access to healthy, affordable foods and beverages, and access to safe and convenient places for physical activity affect our ability to make healthy choices.",
               "Every child deserves a healthy start in life. Learn what parents and caregivers can to do help prevent obesity at home, how healthcare systems can help families prevent and manage childhood obesity, and what strategies communities can use to support a healthy, active lifestyle for all.",
             ],
-            "solutionsToProblemIdentifiedInText": [
+            "solutionsIdentifiedInTextContext": [
               "Parents and caregivers can help prevent obesity at home",
               "Healthcare systems can help families prevent and manage childhood obesity",
               "Communities can use strategies to support a healthy, active lifestyle for all"
@@ -193,7 +198,7 @@ export class GetWebPagesProcessor extends BaseProcessor {
           "mostRelevantParagraphs": [
             "In this work, we demonstrated that low-SOC resistance (RLS) correlates to cycle life across two different battery formation protocols. As a predictive feature, RLS provided higher prediction accuracy compared to conventional measures of formation quality such as Coulombic efficiency as well as state-of-the art predictive features based on changes in discharge voltage curves. RLS is measurable at the end of the manufacturing line using ordinary battery test equipment and can be measured within seconds. Changes in RLS are attributed to differences in the amount of lithium consumed to the SEI during formation, where a decrease in RLS indicates that more lithium is consumed."
           ],
-          "solutionsToProblemIdentifiedInText": [
+          "solutionsIdentifiedInTextContext": [
             "Adopting faster formation protocols and using the cell resistance measured at low states of charge as an early-life diagnostic feature for screening new formation protocols."
           ]
         }
@@ -245,6 +250,63 @@ export class GetWebPagesProcessor extends BaseProcessor {
     return { totalTokenCount, promptTokenCount };
   }
 
+  async splitText(fullText: string, maxChunkTokenCount: number): Promise<string[]> {
+    const chunks: string[] = [];
+    const elements = fullText.split('\n');
+    let currentChunk = '';
+
+    const addElementToChunk = async (element: string) => {
+        const potentialChunk = (currentChunk !== '' ? currentChunk + '\n' : '') + element;
+        const tokenCount = await this.getTokenCount(potentialChunk);
+
+        if (tokenCount.totalTokenCount > maxChunkTokenCount) {
+            // If currentChunk is not empty, add it to chunks and start a new chunk with the element
+            if (currentChunk !== '') {
+                chunks.push(currentChunk);
+                currentChunk = element;
+            } else {
+                // If currentChunk is empty, it means that the element is too large to fit in a chunk
+                // In this case, split the element further.
+                if (element.includes(' ')) {
+                    // If the element is a sentence, split it by words
+                    const words = element.split(' ');
+                    for (let word of words) {
+                        await addElementToChunk(word);
+                    }
+                } else {
+                    // If the element is a single word that exceeds maxChunkTokenCount, add it as is
+                    chunks.push(element);
+                }
+            }
+        } else {
+            currentChunk = potentialChunk;
+        }
+    };
+
+    for (let element of elements) {
+        // Before adding an element to a chunk, check its size
+        if ((await this.getTokenCount(element)).totalTokenCount > maxChunkTokenCount) {
+            // If the element is too large, split it by sentences
+            const sentences = element.match(/[^.!?]+[.!?]+/g) || [element];
+            for (let sentence of sentences) {
+                await addElementToChunk(sentence);
+            }
+        } else {
+            await addElementToChunk(element);
+        }
+    }
+
+    // Push any remaining text in currentChunk to chunks
+    if (currentChunk !== '') {
+        chunks.push(currentChunk);
+    }
+
+    this.logger.debug(`Split text into ${chunks.length} chunks ${JSON.stringify(chunks, null, 2)}`)
+
+    return chunks;
+}
+
+
   async getInitialAnalysis(text: string) {
     this.logger.info("Get Initial Analysis");
     const messages = this.renderInitialMessages(
@@ -293,31 +355,31 @@ export class GetWebPagesProcessor extends BaseProcessor {
     let textAnalysis: IEngineWebPageAnalysisData;
 
     if (IEngineConstants.getPageAnalysisModel.tokenLimit < totalTokenCount) {
-      const splitter = new RecursiveCharacterTextSplitter({
-        chunkSize:
-          IEngineConstants.getPageAnalysisModel.tokenLimit -
-          promptTokenCount.totalCount -
-          128,
-        chunkOverlap: 50,
-      });
+      const maxTokenLengthForChunk = IEngineConstants.getPageAnalysisModel.tokenLimit - promptTokenCount.totalCount -128;
 
       this.logger.debug(
-        `Splitting text into chunks of ${splitter.chunkSize} tokens`
+        `Splitting text into chunks of ${maxTokenLengthForChunk} tokens`
       );
 
-      const documents = await splitter.createDocuments([text]);
+      const splitText = await this.splitText(text, maxTokenLengthForChunk);
 
-      this.logger.debug(`Got ${documents.length} documents`);
+      this.logger.debug(`Got ${splitText.length} splitTexts`);
 
-      for (let d = 0; d < documents.length; d++) {
-        const document = documents[d];
+      for (let t = 0; t < splitText.length; t++) {
+        const currentText = splitText[t];
 
-        if (d == 0) {
-          textAnalysis = await this.getInitialAnalysis(document.pageContent);
+        if (t == 0) {
+          textAnalysis = await this.getInitialAnalysis(currentText);
+          this.logger.debug(
+            `Initial text analysis ${JSON.stringify(textAnalysis, null, 2)}`
+          );
         } else {
           textAnalysis = await this.getRefinedAnalysis(
             textAnalysis!,
-            document.pageContent
+            currentText
+          );
+          this.logger.debug(
+            `Refined text analysis ${JSON.stringify(textAnalysis, null, 2)}`
           );
         }
       }
@@ -348,7 +410,7 @@ export class GetWebPagesProcessor extends BaseProcessor {
     textAnalysis.domainId = this.memory.domainId;
 
     this.logger.debug(
-      `Got text analysis ${JSON.stringify(textAnalysis, null, 2)}`
+      `Saving text analysis ${JSON.stringify(textAnalysis, null, 2)}`
     );
 
     try {

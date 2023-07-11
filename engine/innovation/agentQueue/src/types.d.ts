@@ -143,7 +143,7 @@ interface IEngineSolution {
   title: string;
   description: string;
   eloRating?: number;
-  howCanSolutionHelp: string;
+  mainBenefitOfSolution: string;
   mainObstacleToSolutionAdoption: string;
   affectedEntities?: IEngineSolutionAffectedEntity[];
   pros?: string[];
@@ -266,7 +266,7 @@ type IEngineWebPageTargets = "problemStatement" | "subProblem" | "entity";
 
 interface IEngineWebPageAnalysisData {
   mostRelevantParagraphs: string[];
-  solutionsToProblemIdentifiedInText: string[];
+  solutionsIdentifiedInTextContext: string[];
   relevanceToProblem: string;
   tags: string[];
   entities: string[];
@@ -285,7 +285,7 @@ interface IEngineWebPageAnalysisData {
 interface IEngineWebPageGraphQlResults {
   data: {
     Get: {
-      WebPage: IEngineWebPageAnalysisData;
+      WebPage: IEngineWebPageAnalysisData[];
     }
   }
 }
