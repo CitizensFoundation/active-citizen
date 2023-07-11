@@ -407,14 +407,14 @@ export class CreateSolutionsProcessor extends BaseProcessor {
 
     const solutionsIdentifiedInTextContext = this.getRandomItemFromArray(results.solutionsIdentifiedInTextContext);
     const mostRelevantParagraphs = this.getRandomItemFromArray(results.mostRelevantParagraphs);
+    this.logger.debug(`Random Solution: ${solutionsIdentifiedInTextContext}`)
     this.logger.debug(`Summary: ${results.summary}`)
-    this.logger.debug(`Random Solution Identified In Text Context: ${solutionsIdentifiedInTextContext}`)
     this.logger.debug(`Random Most Relevant Paragraph: ${mostRelevantParagraphs}`)
 
     let searchResults = `
-        ${results.summary}
-
         ${solutionsIdentifiedInTextContext}
+
+        ${results.summary}
 
         ${mostRelevantParagraphs}
     `;
@@ -504,6 +504,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
       Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems);
       subProblemIndex++
     ) {
+      this.currentSubProblemIndex = subProblemIndex;
       this.logger.info(`Creating solutions for sub problem ${subProblemIndex}`);
       let solutions: IEngineSolution[] = [];
 
@@ -525,7 +526,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
         );
 
         const newSolutions = await this.createSolutions(
-          i,
+          subProblemIndex,
           textContexts.general,
           textContexts.scientific,
           textContexts.openData,
