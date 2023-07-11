@@ -99,7 +99,7 @@ export abstract class BaseProcessor extends Base {
         ${subProblem.description}\n
         ${subProblem.whyIsSubProblemImportant}\n
 
-        ${entitiesText ? `Entities:\n${entitiesText}` : ""}
+        ${entitiesText ? `Affected Entities:\n${entitiesText}` : ""}
       `;
     }
   }

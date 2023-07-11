@@ -100,7 +100,7 @@ export class IEngineConstants {
         tokenLimit: 8192,
         inTokenCostUSD: gpt4InTokenPrice,
         outTokenCostUSD: gpt4OutTokenPrice,
-        verbose: true,
+        verbose: false,
     };
     static createProsConsModel = {
         name: "gpt-4",

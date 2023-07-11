@@ -71,9 +71,9 @@ export class CreateSolutionsProcessor extends BaseProcessor {
       5. Never re-create solutions listed under 'Already Created Solutions'.
       6. The General, Scientific, Open Data and News Contexts should inform and inspire your solutions.
       7. Do not refer to the Contexts in your solutions, as the contexts won't be visible to the user.
-      9. Do not use markdown format in your output.
-      10. Output your solutions in the following JSON format: [ { title, description, mainBenefitOfSolution, mainObstacleToSolutionAdoption } ].
-      11. Employ a methodical, step-by-step approach to devise the best possible solutions.
+      8. Do not use markdown format in your output.
+      9. Output your solutions in the following JSON format: [ { title, description, mainBenefitOfSolution, mainObstacleToSolutionAdoption } ].
+      10. Employ a methodical, step-by-step approach to devise the best possible solutions.
       `
     );
   }
@@ -224,7 +224,9 @@ export class CreateSolutionsProcessor extends BaseProcessor {
     searchQueries: IEngineSearchQueries,
     subProblemIndex: number | undefined
   ) {
-    this.logger.info(`Getting all type queries for sub problem ${subProblemIndex}`)
+    this.logger.info(
+      `Getting all type queries for sub problem ${subProblemIndex}`
+    );
     return {
       general:
         searchQueries.general[this.randomSearchQueryIndex(subProblemIndex)],
@@ -265,9 +267,16 @@ export class CreateSolutionsProcessor extends BaseProcessor {
 
   getSearchQueries(subProblemIndex: number) {
     const otherSubProblemIndexes = [];
-    this.logger.info(`Getting search queries for sub problem ${subProblemIndex}`);
+    this.logger.info(
+      `Getting search queries for sub problem ${subProblemIndex}`
+    );
 
-    for (let i = 0; i < Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems); i++) {
+    for (
+      let i = 0;
+      i <
+      Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems);
+      i++
+    ) {
       if (i != subProblemIndex) {
         otherSubProblemIndexes.push(i);
       }
@@ -396,12 +405,18 @@ export class CreateSolutionsProcessor extends BaseProcessor {
       IEngineConstants.limits.useTopNFromSearchResultsArray
     ) as IEngineWebPageAnalysisData;
 
+    const solutionsIdentifiedInTextContext = this.getRandomItemFromArray(results.solutionsIdentifiedInTextContext);
+    const mostRelevantParagraphs = this.getRandomItemFromArray(results.mostRelevantParagraphs);
+    this.logger.debug(`Summary: ${results.summary}`)
+    this.logger.debug(`Random Solution Identified In Text Context: ${solutionsIdentifiedInTextContext}`)
+    this.logger.debug(`Random Most Relevant Paragraph: ${mostRelevantParagraphs}`)
+
     let searchResults = `
         ${results.summary}
 
-        ${this.getRandomItemFromArray(results.solutionsIdentifiedInTextContext)}
+        ${solutionsIdentifiedInTextContext}
 
-        ${this.getRandomItemFromArray(results.mostRelevantParagraphs)}
+        ${mostRelevantParagraphs}
     `;
 
     return searchResults;
@@ -421,6 +436,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
     if (
       random < IEngineConstants.chances.useMainProblemVectorSearchNewSolutions
     ) {
+      this.logger.debug("Using main problem vector search");
       rawSearchResults = await this.webPageVectorStore.searchWebPages(
         searchQuery,
         this.memory.groupId,
@@ -428,6 +444,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
         type
       );
     } else {
+      this.logger.debug("Using sub problem vector search");
       rawSearchResults = await this.webPageVectorStore.searchWebPages(
         searchQuery,
         this.memory.groupId,
@@ -435,14 +452,14 @@ export class CreateSolutionsProcessor extends BaseProcessor {
         type
       );
     }
-    this.logger.debug("got raw search results")
+    this.logger.debug("got raw search results");
 
     let searchResults = this.renderRawSearchResults(rawSearchResults);
 
     while (
       (await this.countTokensForString(searchResults)) > tokensLeftForType
     ) {
-      this.logger.debug(`Tokens left for type ${type}: ${tokensLeftForType}`)
+      this.logger.debug(`Tokens left for type ${type}: ${tokensLeftForType}`);
       let sentences = searchResults.split(". ");
       sentences.pop();
       searchResults = sentences.join(". ");
@@ -469,7 +486,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
       tokensLeft / IEngineConstants.numberOfSearchTypes
     );
     this.logger.debug(
-      `Tokens left for type: ${tokensLeftForType} for type ${type}`
+      `Tokens left ${tokensLeftForType} for type ${type}`
     );
 
     return await this.searchForType(
@@ -491,8 +508,9 @@ export class CreateSolutionsProcessor extends BaseProcessor {
       let solutions: IEngineSolution[] = [];
 
       // Create 100 solutions 4*25
-      for (let i = 0; i < 25; i++) {
-        this.logger.info(`Creating solution ${i}`);
+      const solutionBatchCount = 25;
+      for (let i = 0; i < solutionBatchCount; i++) {
+        this.logger.info(`Creating solutions batch ${i+1}/${solutionBatchCount}`);
         let alreadyCreatedSolutions;
 
         if (i > 0) {
@@ -514,6 +532,9 @@ export class CreateSolutionsProcessor extends BaseProcessor {
           textContexts.news,
           alreadyCreatedSolutions
         );
+
+        this.logger.debug(`New Solutions: ${JSON.stringify(newSolutions, null, 2)}`);
+
         solutions = solutions.concat(newSolutions);
       }
 
