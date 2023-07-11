@@ -279,7 +279,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
                         .join("\n");
                 }
                 const textContexts = await this.getTextContext(subProblemIndex, alreadyCreatedSolutions);
-                const newSolutions = await this.createSolutions(i, textContexts.general, textContexts.scientific, textContexts.openData, textContexts.news, alreadyCreatedSolutions);
+                const newSolutions = await this.createSolutions(subProblemIndex, textContexts.general, textContexts.scientific, textContexts.openData, textContexts.news, alreadyCreatedSolutions);
                 this.logger.debug(`New Solutions: ${JSON.stringify(newSolutions, null, 2)}`);
                 solutions = solutions.concat(newSolutions);
             }
