@@ -103,7 +103,15 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
                 for (const prosOrCons of ["pros", "cons"]) {
                     this.currentProsOrCons = prosOrCons;
                     this.logger.debug(`${prosOrCons} before ranking: ${JSON.stringify(solutions[solutionIndex][prosOrCons])}`);
-                    const convertedProsCons = this.convertProsConsToObjects(solutions[solutionIndex][prosOrCons]);
+                    const hasStrings = solutions[solutionIndex][prosOrCons].some(item => typeof item === 'string');
+                    let convertedProsCons;
+                    if (hasStrings) {
+                        this.logger.debug("Converting pros/cons to objects");
+                        convertedProsCons = this.convertProsConsToObjects(solutions[solutionIndex][prosOrCons]);
+                    }
+                    else {
+                        convertedProsCons = solutions[solutionIndex][prosOrCons];
+                    }
                     this.setupRankingPrompts(convertedProsCons);
                     await this.performPairwiseRanking();
                     if (this.memory.subProblems[subProblemIndex].solutions.populations &&

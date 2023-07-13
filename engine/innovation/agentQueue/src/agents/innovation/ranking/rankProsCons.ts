@@ -161,7 +161,16 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
             )}`
           );
 
-          const convertedProsCons = this.convertProsConsToObjects(solutions[solutionIndex][prosOrCons]! as string[]);
+          const hasStrings = solutions[solutionIndex][prosOrCons]!.some(item => typeof item === 'string');
+
+          let convertedProsCons;
+
+          if (hasStrings) {
+            this.logger.debug("Converting pros/cons to objects");
+            convertedProsCons = this.convertProsConsToObjects(solutions[solutionIndex][prosOrCons]! as string[]);
+          } else {
+            convertedProsCons = solutions[solutionIndex][prosOrCons]! as IEngineProCon[];
+          }
 
           this.setupRankingPrompts(convertedProsCons);
           await this.performPairwiseRanking();

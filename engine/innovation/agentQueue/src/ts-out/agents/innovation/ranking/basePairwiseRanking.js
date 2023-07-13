@@ -41,11 +41,13 @@ export class BasePairwiseRankingsProcessor extends BaseProcessor {
                 if (!winningItemText) {
                     throw new Error("No winning item text");
                 }
-                else if (winningItemText.trim() == "One") {
+                else if (["One", "CONS One", "PROS One"].indexOf(winningItemText.trim()) > -1) {
+                    this.logger.debug("One is the winner");
                     wonItemIndex = itemOneIndex;
                     lostItemIndex = itemTwoIndex;
                 }
-                else if (winningItemText.trim() == "Two") {
+                else if (["Two", "CONS Two", "PROS Two"].indexOf(winningItemText.trim()) > -1) {
+                    this.logger.debug("Two is the winner");
                     wonItemIndex = itemTwoIndex;
                     lostItemIndex = itemOneIndex;
                 }
