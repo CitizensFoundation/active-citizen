@@ -6,8 +6,21 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
     subProblemIndex = 0;
     currentSolutionIndex = 0;
     currentProsOrCons;
+    getCurrentSolution() {
+        if (this.memory.subProblems[this.subProblemIndex].solutions.populations &&
+            this.memory.subProblems[this.subProblemIndex].solutions.populations.length >
+                0 &&
+            this.memory.subProblems[this.subProblemIndex].solutions.populations[0]
+                .length > 0) {
+            this.memory.subProblems[this.subProblemIndex].solutions.populations[this.memory.subProblems[this.subProblemIndex].solutions.populations
+                .length - 1][this.currentSolutionIndex];
+        }
+        else {
+            return this.memory.subProblems[this.subProblemIndex].solutions.seed[this.currentSolutionIndex];
+        }
+    }
     renderCurrentSolution() {
-        const solution = this.memory.subProblems[this.currentSubProblemIndex].solutions.seed[this.currentSolutionIndex];
+        const solution = this.getCurrentSolution();
         return `
       Solution:
 
@@ -21,8 +34,8 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
     async voteOnPromptPair(promptPair) {
         const itemOneIndex = promptPair[0];
         const itemTwoIndex = promptPair[1];
-        const prosOrConsOne = this.allItems[itemOneIndex];
-        const prosOrConsTwo = this.allItems[itemTwoIndex];
+        const prosOrConsOne = this.allItems[itemOneIndex].description;
+        const prosOrConsTwo = this.allItems[itemTwoIndex].description;
         const messages = [
             new SystemChatMessage(`
         As an AI expert, your role involves analyzing ${this.currentProsOrCons} associated with solutions to complex problem statements and sub-problems.
@@ -36,7 +49,9 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
         5. Ensure your approach is methodical and systematic. Engage in step-by-step thinking.
         `),
             new HumanChatMessage(`
-        ${this.renderPromblemsWithIndexAndEntities(this.subProblemIndex)}
+        ${this.renderProblemStatement()}
+
+        ${this.renderSubProblem(this.subProblemIndex)}
 
         ${this.renderCurrentSolution()}
 
@@ -50,6 +65,13 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
         `),
         ];
         return await this.getResultsFromLLM("rank-pros-cons", IEngineConstants.prosConsRankingsModel, messages, itemOneIndex, itemTwoIndex);
+    }
+    convertProsConsToObjects(prosCons) {
+        return prosCons.map((prosCon) => {
+            return {
+                description: prosCon
+            };
+        });
     }
     async process() {
         this.logger.info("Rank Pros Cons Processor");
@@ -80,9 +102,10 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
                 this.currentSolutionIndex = solutionIndex;
                 for (const prosOrCons of ["pros", "cons"]) {
                     this.currentProsOrCons = prosOrCons;
-                    this.setupRankingPrompts(solutions[solutionIndex][prosOrCons]);
-                    await this.performPairwiseRanking();
                     this.logger.debug(`${prosOrCons} before ranking: ${JSON.stringify(solutions[solutionIndex][prosOrCons])}`);
+                    const convertedProsCons = this.convertProsConsToObjects(solutions[solutionIndex][prosOrCons]);
+                    this.setupRankingPrompts(convertedProsCons);
+                    await this.performPairwiseRanking();
                     if (this.memory.subProblems[subProblemIndex].solutions.populations &&
                         this.memory.subProblems[subProblemIndex].solutions.populations
                             .length > 0 &&
@@ -96,8 +119,8 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
                         this.memory.subProblems[subProblemIndex].solutions.seed[solutionIndex][prosOrCons] = this.getOrderedListOfItems();
                         this.logger.debug(`${prosOrCons} after ranking: ${JSON.stringify(this.memory.subProblems[subProblemIndex].solutions.seed[solutionIndex][prosOrCons])}`);
                     }
-                    await this.saveMemory();
                 }
+                await this.saveMemory();
             }
         }
     }

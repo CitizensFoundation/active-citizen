@@ -9,6 +9,7 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
     | IEngineSolution[]
     | IEngineProblemStatement[]
     | IEngineAffectedEntity[]
+    | IEngineProCon[]
     | string[]
     | undefined;
   INITIAL_ELO_RATING: number = 1000;
@@ -27,6 +28,7 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
       | IEngineSolution[]
       | IEngineProblemStatement[]
       | string[]
+      | IEngineProCon[]
       | IEngineAffectedEntity[],
     maxPrompts: number | undefined = undefined
   ) {

@@ -146,8 +146,14 @@ interface IEngineSolution {
   mainBenefitOfSolution: string;
   mainObstacleToSolutionAdoption: string;
   affectedEntities?: IEngineSolutionAffectedEntity[];
-  pros?: string[];
-  cons?: string[];
+  pros?: string[] | IEngineProCon[];
+  cons?: string[] | IEngineProCon[];
+}
+
+interface IEngineProCon {
+  id?: number;
+  description: string;
+  eloRating?: number;
 }
 
 interface IEEngineSearchResultPage {

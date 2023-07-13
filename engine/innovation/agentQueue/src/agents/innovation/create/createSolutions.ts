@@ -282,7 +282,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
       }
     }
 
-    this.logger.debug(`otherSubProblemIndexes: ${otherSubProblemIndexes}`);
+    //this.logger.debug(`otherSubProblemIndexes: ${otherSubProblemIndexes}`);
 
     const randomSubProblemIndex =
       otherSubProblemIndexes[
@@ -508,8 +508,8 @@ export class CreateSolutionsProcessor extends BaseProcessor {
       this.logger.info(`Creating solutions for sub problem ${subProblemIndex}`);
       let solutions: IEngineSolution[] = [];
 
-      // Create 100 solutions 4*25
-      const solutionBatchCount = 25;
+      // Create 60 solutions 4*15
+      const solutionBatchCount = 15;
       for (let i = 0; i < solutionBatchCount; i++) {
         this.logger.info(`Creating solutions batch ${i+1}/${solutionBatchCount}`);
         let alreadyCreatedSolutions;
@@ -539,9 +539,19 @@ export class CreateSolutionsProcessor extends BaseProcessor {
         solutions = solutions.concat(newSolutions);
       }
 
+      this.logger.debug("Created all solutions batches");
+
+      if (!this.memory.subProblems[subProblemIndex].solutions) {
+        this.memory.subProblems[subProblemIndex].solutions = {
+          seed: [],
+          populations: [],
+        };
+      }
+
       this.memory.subProblems[subProblemIndex].solutions.seed = solutions;
 
       await this.saveMemory();
+      this.logger.debug(`Saved memory for sub problem ${subProblemIndex}`)
     }
   }
 
@@ -556,6 +566,11 @@ export class CreateSolutionsProcessor extends BaseProcessor {
       verbose: IEngineConstants.createSeedSolutionsModel.verbose,
     });
 
-    await this.createAllSolutions();
+    try {
+      await this.createAllSolutions();
+    } catch (error) {
+      this.logger.error(error);
+      throw error;
+    }
   }
 }

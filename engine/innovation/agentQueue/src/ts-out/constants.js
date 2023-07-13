@@ -2,6 +2,8 @@ const gpt4InTokenPrice = 0.03 / 1000;
 const gpt4OutTokenPrice = 0.06 / 1000;
 const gpt35_16kInTokenPrice = 0.003 / 1000;
 const gpt35_16kOutTokenPrice = 0.004 / 1000;
+const gpt35InTokenPrice = 0.0015 / 1000;
+const gpt35kOutTokenPrice = 0.002 / 1000;
 export class IEngineConstants {
     static createSubProblemsModel = {
         name: "gpt-4",
@@ -76,12 +78,12 @@ export class IEngineConstants {
         verbose: true,
     };
     static prosConsRankingsModel = {
-        name: "gpt-4",
+        name: "gpt-3.5-turbo",
         temperature: 0.0,
         maxOutputTokens: 2,
         tokenLimit: 8192,
-        inTokenCostUSD: gpt4InTokenPrice,
-        outTokenCostUSD: gpt4OutTokenPrice,
+        inTokenCostUSD: gpt35InTokenPrice,
+        outTokenCostUSD: gpt35kOutTokenPrice,
         verbose: true,
     };
     static getPageAnalysisModel = {
@@ -166,7 +168,7 @@ export class IEngineConstants {
         }
     };
     static evolution = {
-        populationSize: 50,
+        populationSize: 60,
         useEliteForSeedPercent: 0.3,
         // Population split
         keepElitePercent: 0.1,

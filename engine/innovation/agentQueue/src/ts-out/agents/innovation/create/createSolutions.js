@@ -170,7 +170,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
                 otherSubProblemIndexes.push(i);
             }
         }
-        this.logger.debug(`otherSubProblemIndexes: ${otherSubProblemIndexes}`);
+        //this.logger.debug(`otherSubProblemIndexes: ${otherSubProblemIndexes}`);
         const randomSubProblemIndex = otherSubProblemIndexes[Math.floor(Math.random() * otherSubProblemIndexes.length)];
         const problemStatementQueries = this.getAllTypeQueries(this.memory.problemStatement.searchQueries, undefined);
         const subProblemQueries = this.getAllTypeQueries(this.memory.subProblems[subProblemIndex].searchQueries, subProblemIndex);
@@ -268,8 +268,8 @@ export class CreateSolutionsProcessor extends BaseProcessor {
             this.currentSubProblemIndex = subProblemIndex;
             this.logger.info(`Creating solutions for sub problem ${subProblemIndex}`);
             let solutions = [];
-            // Create 100 solutions 4*25
-            const solutionBatchCount = 25;
+            // Create 60 solutions 4*15
+            const solutionBatchCount = 15;
             for (let i = 0; i < solutionBatchCount; i++) {
                 this.logger.info(`Creating solutions batch ${i + 1}/${solutionBatchCount}`);
                 let alreadyCreatedSolutions;
@@ -283,8 +283,16 @@ export class CreateSolutionsProcessor extends BaseProcessor {
                 this.logger.debug(`New Solutions: ${JSON.stringify(newSolutions, null, 2)}`);
                 solutions = solutions.concat(newSolutions);
             }
+            this.logger.debug("Created all solutions batches");
+            if (!this.memory.subProblems[subProblemIndex].solutions) {
+                this.memory.subProblems[subProblemIndex].solutions = {
+                    seed: [],
+                    populations: [],
+                };
+            }
             this.memory.subProblems[subProblemIndex].solutions.seed = solutions;
             await this.saveMemory();
+            this.logger.debug(`Saved memory for sub problem ${subProblemIndex}`);
         }
     }
     async process() {
@@ -296,6 +304,12 @@ export class CreateSolutionsProcessor extends BaseProcessor {
             modelName: IEngineConstants.createSeedSolutionsModel.name,
             verbose: IEngineConstants.createSeedSolutionsModel.verbose,
         });
-        await this.createAllSolutions();
+        try {
+            await this.createAllSolutions();
+        }
+        catch (error) {
+            this.logger.error(error);
+            throw error;
+        }
     }
 }

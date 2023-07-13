@@ -9,11 +9,29 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
   currentSolutionIndex = 0;
   currentProsOrCons: "pros" | "cons" | undefined;
 
-  renderCurrentSolution() {
-    const solution =
-      this.memory.subProblems[this.currentSubProblemIndex!].solutions.seed[
-        this.currentSolutionIndex!
+  getCurrentSolution() {
+    if (
+      this.memory.subProblems[this.subProblemIndex].solutions.populations &&
+      this.memory.subProblems[this.subProblemIndex].solutions.populations.length >
+        0 &&
+      this.memory.subProblems[this.subProblemIndex].solutions.populations[0]
+        .length > 0
+    ) {
+        this.memory.subProblems[this.subProblemIndex].solutions.populations[
+          this.memory.subProblems[this.subProblemIndex].solutions.populations
+            .length - 1
+        ][
+          this.currentSolutionIndex
+        ];
+    } else {
+      return this.memory.subProblems[this.subProblemIndex].solutions.seed[
+        this.currentSolutionIndex
       ];
+    }
+  }
+
+  renderCurrentSolution() {
+    const solution = this.getCurrentSolution()!;
 
     return `
       Solution:
@@ -32,8 +50,8 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
     const itemOneIndex = promptPair[0];
     const itemTwoIndex = promptPair[1];
 
-    const prosOrConsOne = this.allItems![itemOneIndex] as string;
-    const prosOrConsTwo = this.allItems![itemTwoIndex] as string;
+    const prosOrConsOne = (this.allItems![itemOneIndex] as IEngineProCon).description;
+    const prosOrConsTwo = (this.allItems![itemTwoIndex] as IEngineProCon).description;
 
     const messages = [
       new SystemChatMessage(
@@ -57,7 +75,9 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
       ),
       new HumanChatMessage(
         `
-        ${this.renderPromblemsWithIndexAndEntities(this.subProblemIndex)}
+        ${this.renderProblemStatement()}
+
+        ${this.renderSubProblem(this.subProblemIndex)}
 
         ${this.renderCurrentSolution()}
 
@@ -79,6 +99,13 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
       itemOneIndex,
       itemTwoIndex
     );
+  }
+
+  convertProsConsToObjects(prosCons: string[]): IEngineProCon[] {
+    return prosCons.map((prosCon) => {
+      return {
+        description: prosCon
+      }});
   }
 
   async process() {
@@ -128,14 +155,16 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
         for (const prosOrCons of ["pros", "cons"] as const) {
           this.currentProsOrCons = prosOrCons;
 
-          this.setupRankingPrompts(solutions[solutionIndex][prosOrCons]!);
-          await this.performPairwiseRanking();
-
           this.logger.debug(
             `${prosOrCons} before ranking: ${JSON.stringify(
               solutions[solutionIndex][prosOrCons]
             )}`
           );
+
+          const convertedProsCons = this.convertProsConsToObjects(solutions[solutionIndex][prosOrCons]! as string[]);
+
+          this.setupRankingPrompts(convertedProsCons);
+          await this.performPairwiseRanking();
 
           if (
             this.memory.subProblems[subProblemIndex].solutions.populations &&
@@ -148,7 +177,7 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
               this.memory.subProblems[subProblemIndex].solutions.populations
                 .length - 1
             ][solutionIndex][prosOrCons] =
-              this.getOrderedListOfItems() as string[];
+              this.getOrderedListOfItems() as IEngineProCon[];
           } else {
             this.memory.subProblems[subProblemIndex].solutions.seed[
               solutionIndex
@@ -161,10 +190,8 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
               )}`
             );
           }
-
-
-          await this.saveMemory();
         }
+        await this.saveMemory();
       }
     }
   }
