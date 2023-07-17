@@ -5,6 +5,8 @@ import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
 import { IEngineConstants } from "../../../constants.js";
 import { WebPageVectorStore } from "../vectorstore/webPage.js";
 
+const DISABLE_LLM_FOR_DEBUG = false;
+
 export class CreateSolutionsProcessor extends BaseProcessor {
   webPageVectorStore = new WebPageVectorStore();
 
@@ -23,15 +25,14 @@ export class CreateSolutionsProcessor extends BaseProcessor {
         As an expert, your task is to refine the innovative solutions proposed for complex problems and associated sub-problems.
 
         Please follow these guidelines:
-        1. Review and refine the solutions previously generated, avoiding creation of new solutions.
+        1. Review and refine the solutions previously generated, do not create new solutions.
         2. Solutions should be feasible, considered, innovative, fair, and concise.
         3. Limit solution descriptions to a maximum of six sentences.
-        4. Avoid replicating solutions listed under 'Already Created Solutions'.
+        4. Do not replicate solutions listed under 'Already Created Solutions'.
         5. Refer to the relevant entities in your solutions, if mentioned.
-        6. Avoid mentioning the contexts as it will not be visible to the user.
-        7. Ensure your output is not in markdown format.
-        8. Output your solutions in the following JSON format: [ { title, description, mainBenefitOfSolution, mainObstacleToSolutionAdoption } ].
-        9. Apply a methodical, step-by-step approach to deliver optimal solutions.
+        6. Ensure your output is not in markdown format.
+        7. Output your solutions in the following JSON format: [ { title, description, mainBenefitOfSolution, mainObstacleToSolutionAdoption } ].
+        8. Apply a methodical, step-by-step approach to deliver the best solutions.
         `
       ),
       new HumanChatMessage(
@@ -69,7 +70,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
       3. Each solution should include a short title, description, mainBenefitOfSolution and mainObstacleToSolutionAdoption.
       4. Limit the description of each solution to six sentences maximum.
       5. Never re-create solutions listed under 'Already Created Solutions'.
-      6. The General, Scientific, Open Data and News Contexts should inform and inspire your solutions.
+      6. The General, Scientific, Open Data and News Contexts should always inform and inspire your solutions.
       7. Do not refer to the Contexts in your solutions, as the contexts won't be visible to the user.
       8. Do not use markdown format in your output.
       9. Output your solutions in the following JSON format: [ { title, description, mainBenefitOfSolution, mainObstacleToSolutionAdoption } ].
@@ -86,7 +87,9 @@ export class CreateSolutionsProcessor extends BaseProcessor {
       this.renderCreateSystemMessage(),
       new HumanChatMessage(
         `
-            ${this.renderPromblemStatementSubProblemsAndEntities(subProblemIndex)}
+            ${this.renderPromblemStatementSubProblemsAndEntities(
+              subProblemIndex
+            )}
 
             General Context from search:
 
@@ -121,6 +124,10 @@ export class CreateSolutionsProcessor extends BaseProcessor {
     subProblemIndex: number,
     alreadyCreatedSolutions: string | undefined = undefined
   ) {
+    this.logger.debug(`General Context: ${generalTextContext}`);
+    this.logger.debug(`Scientific Context: ${scientificTextContext}`);
+    this.logger.debug(`Open Data Context: ${openDataTextContext}`);
+    this.logger.debug(`News Context: ${newsTextContext}`);
     const messages = [
       this.renderCreateSystemMessage(),
       new HumanChatMessage(
@@ -165,10 +172,8 @@ export class CreateSolutionsProcessor extends BaseProcessor {
     newsTextContext: string,
     alreadyCreatedSolutions: string | undefined = undefined
   ): Promise<IEngineSolution[]> {
-    this.logger.info(`Calling LLM for sub problem ${subProblemIndex}`);
-    let results = await this.callLLM(
-      "create-seed-solutions",
-      IEngineConstants.createSeedSolutionsModel,
+    if (DISABLE_LLM_FOR_DEBUG) {
+      this.logger.info("DISABLE_LLM_FOR_DEBUG is true, skipping LLM call");
       await this.renderCreatePrompt(
         generalTextContext,
         scientificTextContext,
@@ -176,16 +181,14 @@ export class CreateSolutionsProcessor extends BaseProcessor {
         newsTextContext,
         subProblemIndex,
         alreadyCreatedSolutions
-      )
-    );
-
-    if (IEngineConstants.enable.refine.createSolutions) {
-      this.logger.info(`Calling LLM refine for sub problem ${subProblemIndex}`);
-      results = await this.callLLM(
+      );
+      return [];
+    } else {
+      this.logger.info(`Calling LLM for sub problem ${subProblemIndex}`);
+      let results = await this.callLLM(
         "create-seed-solutions",
         IEngineConstants.createSeedSolutionsModel,
-        await this.renderRefinePrompt(
-          results,
+        await this.renderCreatePrompt(
           generalTextContext,
           scientificTextContext,
           openDataTextContext,
@@ -194,9 +197,28 @@ export class CreateSolutionsProcessor extends BaseProcessor {
           alreadyCreatedSolutions
         )
       );
-    }
 
-    return results;
+      if (IEngineConstants.enable.refine.createSolutions) {
+        this.logger.info(
+          `Calling LLM refine for sub problem ${subProblemIndex}`
+        );
+        results = await this.callLLM(
+          "create-seed-solutions",
+          IEngineConstants.createSeedSolutionsModel,
+          await this.renderRefinePrompt(
+            results,
+            generalTextContext,
+            scientificTextContext,
+            openDataTextContext,
+            newsTextContext,
+            subProblemIndex,
+            alreadyCreatedSolutions
+          )
+        );
+      }
+
+      return results;
+    }
   }
 
   randomSearchQueryIndex(subProblemIndex: number | undefined) {
@@ -405,16 +427,26 @@ export class CreateSolutionsProcessor extends BaseProcessor {
       IEngineConstants.limits.useTopNFromSearchResultsArray
     ) as IEngineWebPageAnalysisData;
 
-    const solutionsIdentifiedInTextContext = this.getRandomItemFromArray(results.solutionsIdentifiedInTextContext);
-    const mostRelevantParagraphs = this.getRandomItemFromArray(results.mostRelevantParagraphs);
-    this.logger.debug(`Random Solution: ${solutionsIdentifiedInTextContext}`)
-    this.logger.debug(`Summary: ${results.summary}`)
-    this.logger.debug(`Random Most Relevant Paragraph: ${mostRelevantParagraphs}`)
+    const solutionIdentifiedInTextContext = this.getRandomItemFromArray(
+      results.solutionsIdentifiedInTextContext
+    );
+    const mostRelevantParagraphs = this.getRandomItemFromArray(
+      results.mostRelevantParagraphs
+    );
+    this.logger.debug(`Random Solution: ${solutionIdentifiedInTextContext}`);
+    this.logger.debug(`Summary: ${results.summary}`);
+    this.logger.debug(
+      `Random Most Relevant Paragraph: ${mostRelevantParagraphs}`
+    );
 
     let searchResults = `
-        ${solutionsIdentifiedInTextContext}
+        ${
+          solutionIdentifiedInTextContext
+            ? `Potential solution: ${solutionIdentifiedInTextContext}
 
-        ${results.summary}
+        `
+            : ""
+        }${results.summary}
 
         ${mostRelevantParagraphs}
     `;
@@ -455,6 +487,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
     this.logger.debug("got raw search results");
 
     let searchResults = this.renderRawSearchResults(rawSearchResults);
+    //this.logger.debug(`Before token count: ${searchResults}`)
 
     while (
       (await this.countTokensForString(searchResults)) > tokensLeftForType
@@ -464,6 +497,8 @@ export class CreateSolutionsProcessor extends BaseProcessor {
       sentences.pop();
       searchResults = sentences.join(". ");
     }
+
+    //this.logger.debug(`After token count: ${searchResults}`)
 
     return searchResults;
   }
@@ -485,9 +520,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
     const tokensLeftForType = Math.floor(
       tokensLeft / IEngineConstants.numberOfSearchTypes
     );
-    this.logger.debug(
-      `Tokens left ${tokensLeftForType} for type ${type}`
-    );
+    this.logger.debug(`Tokens left ${tokensLeftForType} for type ${type}`);
 
     return await this.searchForType(
       subProblemIndex,
@@ -511,7 +544,9 @@ export class CreateSolutionsProcessor extends BaseProcessor {
       // Create 60 solutions 4*15
       const solutionBatchCount = 15;
       for (let i = 0; i < solutionBatchCount; i++) {
-        this.logger.info(`Creating solutions batch ${i+1}/${solutionBatchCount}`);
+        this.logger.info(
+          `Creating solutions batch ${i + 1}/${solutionBatchCount}`
+        );
         let alreadyCreatedSolutions;
 
         if (i > 0) {
@@ -534,7 +569,9 @@ export class CreateSolutionsProcessor extends BaseProcessor {
           alreadyCreatedSolutions
         );
 
-        this.logger.debug(`New Solutions: ${JSON.stringify(newSolutions, null, 2)}`);
+        this.logger.debug(
+          `New Solutions: ${JSON.stringify(newSolutions, null, 2)}`
+        );
 
         solutions = solutions.concat(newSolutions);
       }
@@ -551,7 +588,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
       this.memory.subProblems[subProblemIndex].solutions.seed = solutions;
 
       await this.saveMemory();
-      this.logger.debug(`Saved memory for sub problem ${subProblemIndex}`)
+      this.logger.debug(`Saved memory for sub problem ${subProblemIndex}`);
     }
   }
 

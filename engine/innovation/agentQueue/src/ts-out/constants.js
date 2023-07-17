@@ -102,7 +102,7 @@ export class IEngineConstants {
         tokenLimit: 8192,
         inTokenCostUSD: gpt4InTokenPrice,
         outTokenCostUSD: gpt4OutTokenPrice,
-        verbose: false,
+        verbose: true,
     };
     static createProsConsModel = {
         name: "gpt-4",
@@ -143,7 +143,7 @@ export class IEngineConstants {
     static mainSearchRetryCount = 40;
     static maxTopWebPagesToGet = 5;
     static maxWebPagesToGetByTopSearchPosition = 5;
-    static maxTopSearchQueriesForSolutionCreation = 3;
+    static maxTopSearchQueriesForSolutionCreation = 4;
     static maxTopProsConsUsedForRanking = 3;
     static maxNumberGeneratedProsConsForSolution = 21;
     static minSleepBeforeBrowserRequest = 1100;
@@ -152,12 +152,12 @@ export class IEngineConstants {
     static chances = {
         useMainProblemSearchQueriesNewSolutions: 0.2,
         useOtherSubProblemSearchQueriesNewSolutions: 0.1,
-        notUsingFirstSearchQueryForNewSolutions: 0.5,
+        notUsingFirstSearchQueryForNewSolutions: 0.7,
         useMainProblemVectorSearchNewSolutions: 0.1
     };
     static limits = {
         webPageVectorResultsForNewSolutions: 10,
-        useTopNFromSearchResultsArray: 3
+        useTopNFromSearchResultsArray: 4
     };
     static enable = {
         refine: {

@@ -19,8 +19,8 @@ export class CreateProsConsProcessor extends BaseProcessor {
       Title: ${solution.title}
       Description: ${solution.description}
 
-      How Solution One Can Help: ${solution.mainBenefitOfSolution}
-      Main Obstacles to Solution One Adoption: ${solution.mainObstacleToSolutionAdoption}
+      How Solution Can Help: ${solution.mainBenefitOfSolution}
+      Main Obstacles to Solution Adoption: ${solution.mainObstacleToSolutionAdoption}
     `;
   }
 
@@ -68,7 +68,7 @@ export class CreateProsConsProcessor extends BaseProcessor {
         Follow these guidelines:
 
         1. Generate and output up to ${IEngineConstants.maxNumberGeneratedProsConsForSolution} ${prosOrCons}.
-        2. Ensure that each ${prosOrCons} is concise, consistent, detailed, and succinct.
+        2. Ensure that each ${prosOrCons} is concise, consistent, detailed, and important.
         3. The ${prosOrCons} must be in line with the context given by the problem statement, sub-problems, and affected entities.
         4. Each ${prosOrCons} should be directly applicable to the solution.
         5. Output should be in JSON format only, not markdown format.
