@@ -75,6 +75,7 @@ export class RankSearchQueriesProcessor extends BasePairwiseRankingsProcessor {
                 "openData",
                 "news",
             ]) {
+                this.searchQueryType = searchQueryType;
                 this.logger.info(`Ranking search queries for sub-problem ${s} ${searchQueryType}`);
                 let queriesToRank = this.memory.subProblems[s].searchQueries[searchQueryType];
                 this.searchQueryTarget = "subProblem";
@@ -96,6 +97,7 @@ export class RankSearchQueriesProcessor extends BasePairwiseRankingsProcessor {
                 "openData",
                 "news",
             ]) {
+                this.searchQueryType = searchQueryType;
                 this.logger.info(`Ranking search queries for sub problem ${subProblemIndex} entity ${e} ${searchQueryType}`);
                 this.currentEntity =
                     this.memory.subProblems[subProblemIndex].entities[e];

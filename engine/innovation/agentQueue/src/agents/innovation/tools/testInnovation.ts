@@ -32,11 +32,11 @@ if (setNewStage) {
   //memory.currentStage = "create-entities";
   //memory.currentStage = "rank-entities";
   //memory.currentStage = "create-search-queries";
-  memory.currentStage = "rank-search-queries";
+  //memory.currentStage = "rank-search-queries";
   //memory.currentStage = "web-search";
   //memory.currentStage = "rank-search-results";
   //memory.currentStage = "web-get-pages";
-  //memory.currentStage = "create-seed-solutions";
+  memory.currentStage = "create-seed-solutions";
   //memory.currentStage = "create-pros-cons";
   //memory.currentStage = "rank-pros-cons";
   //memory.currentStage = "rank-solutions";

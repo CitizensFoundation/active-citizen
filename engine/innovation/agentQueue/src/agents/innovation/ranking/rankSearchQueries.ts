@@ -101,6 +101,8 @@ export class RankSearchQueriesProcessor extends BasePairwiseRankingsProcessor {
         "openData",
         "news",
       ] as const) {
+        this.searchQueryType = searchQueryType;
+
         this.logger.info(
           `Ranking search queries for sub-problem ${s} ${searchQueryType}`
         );
@@ -139,6 +141,8 @@ export class RankSearchQueriesProcessor extends BasePairwiseRankingsProcessor {
         "openData",
         "news",
       ] as const) {
+        this.searchQueryType = searchQueryType;
+
         this.logger.info(
           `Ranking search queries for sub problem ${subProblemIndex} entity ${e} ${searchQueryType}`
         );
