@@ -32,18 +32,18 @@ if (setNewStage) {
   //memory.currentStage = "create-entities";
   //memory.currentStage = "rank-entities";
   //memory.currentStage = "create-search-queries";
-  //memory.currentStage = "rank-search-queries";
+  memory.currentStage = "rank-search-queries";
   //memory.currentStage = "web-search";
   //memory.currentStage = "rank-search-results";
   //memory.currentStage = "web-get-pages";
   //memory.currentStage = "create-seed-solutions";
   //memory.currentStage = "create-pros-cons";
   //memory.currentStage = "rank-pros-cons";
-  memory.currentStage = "rank-solutions";
+  //memory.currentStage = "rank-solutions";
   await redis.set("st_mem:1:id", JSON.stringify(memory));
 }
 
-if (addJob) {
+if (addJob || setNewStage) {
   console.log("Adding job to queue");
   await myQueue.add(
     "agent-innovation",

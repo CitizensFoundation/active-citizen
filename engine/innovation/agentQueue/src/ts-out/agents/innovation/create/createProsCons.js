@@ -32,7 +32,7 @@ export class CreateProsConsProcessor extends BaseProcessor {
         7. Follow a step-by-step approach in your thought process.
         `),
             new HumanChatMessage(`
-        ${this.renderPromblemsWithIndexAndEntities(this.currentSubProblemIndex)}
+        ${this.renderPromblemStatementSubProblemsAndEntities(this.currentSubProblemIndex)}
 
         ${this.renderCurrentSolution()}
 
@@ -60,7 +60,7 @@ export class CreateProsConsProcessor extends BaseProcessor {
         7. Maintain a step-by-step approach in your reasoning.
         `),
             new HumanChatMessage(`
-         ${this.renderPromblemsWithIndexAndEntities(this.currentSubProblemIndex)}
+         ${this.renderPromblemStatementSubProblemsAndEntities(this.currentSubProblemIndex)}
 
          ${this.renderCurrentSolution()}
 

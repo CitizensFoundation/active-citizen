@@ -17,13 +17,11 @@ export class RankSearchQueriesProcessor extends BasePairwiseRankingsProcessor {
         }
         else if (this.searchQueryTarget === "subProblem") {
             detail = `
-        ${this.renderPromblemsWithIndexAndEntities(this.subProblemIndex)}
+        ${this.renderSubProblem(this.subProblemIndex)}
       `;
         }
         else if (this.searchQueryTarget === "entity") {
             detail = `
-        ${this.renderProblemStatement()}
-
         ${this.renderSubProblem(this.subProblemIndex)}
 
         Entity:
@@ -45,7 +43,7 @@ export class RankSearchQueriesProcessor extends BasePairwiseRankingsProcessor {
         Please follow these guidelines:
         1. You will receive a problem statement or a sub-problem, possibly along with entities and their impacts (both negative and positive).
         2. You will also see two web search queries, each marked as "Search Query One" and "Search Query Two".
-        3. Your task is to analyze, compare, and rank these search queries based on their relevance to the given problemm sub-problem and affected entities.
+        3. Your task is to analyze, compare, and rank these search queries based on their relevance to the given problem and affected entities.
         4. Output your decision as either "One" or "Two". No explanation is required.
         5. Ensure a systematic and methodical approach to this task. Think step by step.`),
             new HumanChatMessage(`

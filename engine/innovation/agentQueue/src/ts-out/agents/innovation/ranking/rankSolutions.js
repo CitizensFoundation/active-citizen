@@ -30,7 +30,7 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
         6. Ensure your approach is methodical and systematic. Think step by step.
         `),
             new HumanChatMessage(`
-        ${this.renderPromblemsWithIndexAndEntities(this.subProblemIndex)}
+        ${this.renderPromblemStatementSubProblemsAndEntities(this.subProblemIndex)}
 
         Solutions for Consideration:
 

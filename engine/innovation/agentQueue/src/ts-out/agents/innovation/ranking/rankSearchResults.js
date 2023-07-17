@@ -17,13 +17,11 @@ export class RankSearchResultsProcessor extends BasePairwiseRankingsProcessor {
         }
         else if (this.searchResultTarget === "subProblem") {
             detail = `
-        ${this.renderPromblemsWithIndexAndEntities(this.subProblemIndex)}
+        ${this.renderSubProblem(this.subProblemIndex)}
       `;
         }
         else if (this.searchResultTarget === "entity") {
             detail = `
-        ${this.renderProblemStatement()}
-
         ${this.renderSubProblem(this.subProblemIndex)}
 
         Entity:

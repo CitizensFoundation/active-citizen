@@ -25,7 +25,7 @@ export class CreatePopulationProcessor extends CreateSolutionsProcessor {
       ),
       new HumanChatMessage(
         `
-        ${this.renderPromblemsWithIndexAndEntities(
+        ${this.renderPromblemStatementSubProblemsAndEntities(
           this.currentSubProblemIndex!
         )}
 
@@ -55,7 +55,7 @@ export class CreatePopulationProcessor extends CreateSolutionsProcessor {
       ),
       new HumanChatMessage(
         `
-        ${this.renderPromblemsWithIndexAndEntities(
+        ${this.renderPromblemStatementSubProblemsAndEntities(
           this.currentSubProblemIndex!
         )}
 

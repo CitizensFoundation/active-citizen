@@ -50,7 +50,7 @@ export class BaseProcessor extends Base {
       ${this.memory.problemStatement.description}
       `;
     }
-    renderPromblemsWithIndexAndEntities(index) {
+    renderPromblemStatementSubProblemsAndEntities(index) {
         const subProblem = this.memory.subProblems[index];
         const entitiesText = `
       ${subProblem.entities

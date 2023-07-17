@@ -39,7 +39,7 @@ export class IEngineConstants {
         tokenLimit: 8192,
         inTokenCostUSD: gpt4InTokenPrice,
         outTokenCostUSD: gpt4OutTokenPrice,
-        verbose: false,
+        verbose: true,
     };
     static searchResultsRankingsModel = {
         name: "gpt-4",

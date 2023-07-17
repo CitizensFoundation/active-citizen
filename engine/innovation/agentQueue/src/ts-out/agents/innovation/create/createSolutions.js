@@ -22,7 +22,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
         9. Apply a methodical, step-by-step approach to deliver optimal solutions.
         `),
             new HumanChatMessage(`
-        ${this.renderPromblemsWithIndexAndEntities(subProblemIndex)}
+        ${this.renderPromblemStatementSubProblemsAndEntities(subProblemIndex)}
 
         ${alreadyCreatedSolutions
                 ? `
@@ -60,7 +60,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
         const messages = [
             this.renderCreateSystemMessage(),
             new HumanChatMessage(`
-            ${this.renderPromblemsWithIndexAndEntities(subProblemIndex)}
+            ${this.renderPromblemStatementSubProblemsAndEntities(subProblemIndex)}
 
             General Context from search:
 
@@ -86,7 +86,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
         const messages = [
             this.renderCreateSystemMessage(),
             new HumanChatMessage(`
-        ${this.renderPromblemsWithIndexAndEntities(subProblemIndex)}
+        ${this.renderPromblemStatementSubProblemsAndEntities(subProblemIndex)}
 
         Contexts for potential solutions:
         General Context from search:

@@ -36,7 +36,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
       ),
       new HumanChatMessage(
         `
-        ${this.renderPromblemsWithIndexAndEntities(subProblemIndex)}
+        ${this.renderPromblemStatementSubProblemsAndEntities(subProblemIndex)}
 
         ${
           alreadyCreatedSolutions
@@ -86,7 +86,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
       this.renderCreateSystemMessage(),
       new HumanChatMessage(
         `
-            ${this.renderPromblemsWithIndexAndEntities(subProblemIndex)}
+            ${this.renderPromblemStatementSubProblemsAndEntities(subProblemIndex)}
 
             General Context from search:
 
@@ -125,7 +125,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
       this.renderCreateSystemMessage(),
       new HumanChatMessage(
         `
-        ${this.renderPromblemsWithIndexAndEntities(subProblemIndex)}
+        ${this.renderPromblemStatementSubProblemsAndEntities(subProblemIndex)}
 
         Contexts for potential solutions:
         General Context from search:

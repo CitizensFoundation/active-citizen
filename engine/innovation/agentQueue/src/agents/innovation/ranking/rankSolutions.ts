@@ -40,7 +40,7 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
       ),
       new HumanChatMessage(
         `
-        ${this.renderPromblemsWithIndexAndEntities(this.subProblemIndex)}
+        ${this.renderPromblemStatementSubProblemsAndEntities(this.subProblemIndex)}
 
         Solutions for Consideration:
 

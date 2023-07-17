@@ -16,7 +16,7 @@ export class CreatePopulationProcessor extends CreateSolutionsProcessor {
         3. The offspring should be a viable solution to the problem.
         `),
             new HumanChatMessage(`
-        ${this.renderPromblemsWithIndexAndEntities(this.currentSubProblemIndex)}
+        ${this.renderPromblemStatementSubProblemsAndEntities(this.currentSubProblemIndex)}
 
         Parent A:
         ${JSON.stringify(parentA, null, 2)}
@@ -40,7 +40,7 @@ export class CreatePopulationProcessor extends CreateSolutionsProcessor {
         4. The mutated individual should still be a viable solution to the problem.
       `),
             new HumanChatMessage(`
-        ${this.renderPromblemsWithIndexAndEntities(this.currentSubProblemIndex)}
+        ${this.renderPromblemStatementSubProblemsAndEntities(this.currentSubProblemIndex)}
 
         Solution to mutate:
         ${JSON.stringify(individual, null, 2)}

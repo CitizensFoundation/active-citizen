@@ -69,7 +69,7 @@ export abstract class BaseProcessor extends Base {
       `;
   }
 
-  renderPromblemsWithIndexAndEntities(index: number) {
+  renderPromblemStatementSubProblemsAndEntities(index: number) {
     const subProblem = this.memory.subProblems[index];
     const entitiesText = `
       ${subProblem.entities
