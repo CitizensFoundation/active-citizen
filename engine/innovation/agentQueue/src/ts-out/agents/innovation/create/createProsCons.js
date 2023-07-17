@@ -28,7 +28,7 @@ export class CreateProsConsProcessor extends BaseProcessor {
         3. Contextualize the ${prosOrCons} considering the problem statement, sub-problems, and affected entities.
         4. Ensure the refined ${prosOrCons} are relevant and directly applicable.
         5. Output should be in JSON format only, not markdown.
-        6. The ${prosOrCons} should be formatted as an array of strings in JSON format: [ ${prosOrCons} ].
+        6. The ${prosOrCons} should be formatted as an array of strings in JSON format: [ "${prosOrCons} 1", "${prosOrCons} 2" ].
         7. Follow a step-by-step approach in your thought process.
         `),
             new HumanChatMessage(`
@@ -56,7 +56,7 @@ export class CreateProsConsProcessor extends BaseProcessor {
         3. The ${prosOrCons} must be in line with the context given by the problem statement, sub-problems, and affected entities.
         4. Each ${prosOrCons} should be directly applicable to the solution.
         5. Output should be in JSON format only, not markdown format.
-        6. The ${prosOrCons} should be formatted as an array of strings in JSON format: [ ${prosOrCons} ].
+        6. The ${prosOrCons} should be formatted as an array of strings in JSON format: [ "${prosOrCons} 1", "${prosOrCons} 2" ].
         7. Maintain a step-by-step approach in your reasoning.
         `),
             new HumanChatMessage(`

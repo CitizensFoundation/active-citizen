@@ -4,6 +4,14 @@ import { IEngineConstants } from "../../../constants.js";
 import { BasePairwiseRankingsProcessor } from "./basePairwiseRanking.js";
 export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
     subProblemIndex = 0;
+    getProCons(prosCons) {
+        if (prosCons && prosCons.length > 0) {
+            return prosCons.map((proCon) => proCon.description);
+        }
+        else {
+            return [];
+        }
+    }
     async voteOnPromptPair(promptPair) {
         const itemOneIndex = promptPair[0];
         const itemTwoIndex = promptPair[1];
@@ -28,33 +36,27 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
 
         Solution One:
         ----------------------------------------
-        Title: ${solutionOne.title}
-        Description: ${solutionOne.description}
-
-        How Solution One Can Help: ${solutionOne.mainBenefitOfSolution}
-        Main Obstacles to Solution One Adoption: ${solutionOne.mainObstacleToSolutionAdoption}
+        ${solutionOne.title}
+        ${solutionOne.description}
 
         Pros of Solution One:
-        ${solutionOne.pros?.slice(0, IEngineConstants.maxTopProsConsUsedForRanking)}
+        ${this.getProCons(solutionOne.pros).slice(0, IEngineConstants.maxTopProsConsUsedForRanking)}
 
         Cons of Solution One:
-        ${solutionOne.cons?.slice(0, IEngineConstants.maxTopProsConsUsedForRanking)}
+        ${this.getProCons(solutionOne.cons).slice(0, IEngineConstants.maxTopProsConsUsedForRanking)}
 
         Solution Two:
         ----------------------------------------
-        Title: ${solutionTwo.title}
-        Description: ${solutionTwo.description}
-
-        How Solution Two Can Help: ${solutionTwo.mainBenefitOfSolution}
-        Main Obstacles to Solution Two Adoption: ${solutionTwo.mainObstacleToSolutionAdoption}
+        ${solutionTwo.title}
+        ${solutionTwo.description}
 
         Pros of Solution Two:
-        ${solutionTwo.pros?.slice(0, IEngineConstants.maxTopProsConsUsedForRanking)}
+        ${this.getProCons(solutionTwo.pros).slice(0, IEngineConstants.maxTopProsConsUsedForRanking).map}
 
         Cons of Solution Two:
-        ${solutionTwo.cons?.slice(0, IEngineConstants.maxTopProsConsUsedForRanking)}
+        ${this.getProCons(solutionTwo.cons).slice(0, IEngineConstants.maxTopProsConsUsedForRanking)}
 
-        The Most Effective Solution Is:
+        The More Important Solution Is:
         `),
         ];
         return await this.getResultsFromLLM("rank-solutions", IEngineConstants.solutionsRankingsModel, messages, itemOneIndex, itemTwoIndex);
@@ -62,33 +64,39 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
     async process() {
         this.logger.info("Rank Solutions Processor");
         super.process();
-        this.chat = new ChatOpenAI({
-            temperature: IEngineConstants.solutionsRankingsModel.temperature,
-            maxTokens: IEngineConstants.solutionsRankingsModel.maxOutputTokens,
-            modelName: IEngineConstants.solutionsRankingsModel.name,
-            verbose: IEngineConstants.solutionsRankingsModel.verbose,
-        });
-        for (let s = 0; s <
-            Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems); s++) {
-            this.subProblemIndex = s;
-            if (this.memory.subProblems[s].solutions.populations &&
-                this.memory.subProblems[s].solutions.populations.length > 0 &&
-                this.memory.subProblems[s].solutions.populations[0].length > 0) {
-                this.setupRankingPrompts(this.memory.subProblems[s].solutions.populations[this.memory.subProblems[s].solutions.populations.length - 1]);
-                await this.performPairwiseRanking();
-                this.logger.debug(`Population Solutions before ranking: ${JSON.stringify(this.memory.subProblems[s].solutions.populations[this.memory.subProblems[s].solutions.populations.length - 1])}`);
-                this.memory.subProblems[s].solutions.populations[this.memory.subProblems[s].solutions.populations.length - 1] = this.getOrderedListOfItems(true);
-                this.logger.debug(`Popuplation Solutions after ranking: ${JSON.stringify(this.memory.subProblems[s].solutions.populations[this.memory.subProblems[s].solutions.populations.length - 1])}`);
+        try {
+            this.chat = new ChatOpenAI({
+                temperature: IEngineConstants.solutionsRankingsModel.temperature,
+                maxTokens: IEngineConstants.solutionsRankingsModel.maxOutputTokens,
+                modelName: IEngineConstants.solutionsRankingsModel.name,
+                verbose: IEngineConstants.solutionsRankingsModel.verbose,
+            });
+            for (let s = 0; s <
+                Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems); s++) {
+                this.subProblemIndex = s;
+                if (this.memory.subProblems[s].solutions.populations &&
+                    this.memory.subProblems[s].solutions.populations.length > 0 &&
+                    this.memory.subProblems[s].solutions.populations[0].length > 0) {
+                    this.setupRankingPrompts(this.memory.subProblems[s].solutions.populations[this.memory.subProblems[s].solutions.populations.length - 1]);
+                    await this.performPairwiseRanking();
+                    this.logger.debug(`Population Solutions before ranking: ${JSON.stringify(this.memory.subProblems[s].solutions.populations[this.memory.subProblems[s].solutions.populations.length - 1])}`);
+                    this.memory.subProblems[s].solutions.populations[this.memory.subProblems[s].solutions.populations.length - 1] = this.getOrderedListOfItems(true);
+                    this.logger.debug(`Popuplation Solutions after ranking: ${JSON.stringify(this.memory.subProblems[s].solutions.populations[this.memory.subProblems[s].solutions.populations.length - 1])}`);
+                }
+                else {
+                    this.setupRankingPrompts(this.memory.subProblems[s].solutions.seed);
+                    await this.performPairwiseRanking();
+                    this.logger.debug(`Seed Solutions before ranking: ${JSON.stringify(this.memory.subProblems[s].solutions.seed)}`);
+                    this.memory.subProblems[s].solutions.seed =
+                        this.getOrderedListOfItems(true);
+                    this.logger.debug(`Seed Solutions after ranking: ${JSON.stringify(this.memory.subProblems[s].solutions.seed)}`);
+                }
+                await this.saveMemory();
             }
-            else {
-                this.setupRankingPrompts(this.memory.subProblems[s].solutions.seed);
-                await this.performPairwiseRanking();
-                this.logger.debug(`Seed Solutions before ranking: ${JSON.stringify(this.memory.subProblems[s].solutions.seed)}`);
-                this.memory.subProblems[s].solutions.seed =
-                    this.getOrderedListOfItems(true);
-                this.logger.debug(`Seed Solutions after ranking: ${JSON.stringify(this.memory.subProblems[s].solutions.seed)}`);
-            }
-            await this.saveMemory();
+        }
+        catch (error) {
+            this.logger.error(error);
+            throw error;
         }
     }
 }

@@ -70,39 +70,31 @@ export abstract class BaseProcessor extends Base {
   }
 
   renderPromblemsWithIndexAndEntities(index: number) {
-    if (index === 0) {
-      return `
+    const subProblem = this.memory.subProblems[index];
+    const entitiesText = `
+      ${subProblem.entities
+        .slice(0, IEngineConstants.maxTopEntitiesToRender)
+        .map((entity) => {
+          let entityEffects = this.renderEntityPosNegReasons(entity);
+
+          if (entityEffects.length > 0) {
+            entityEffects = `\n${entity.name}\n${entityEffects}\n}`;
+          }
+
+          return entityEffects;
+        })
+        .join("")}`;
+    return `
       Problem Statement:\n
       ${this.memory.problemStatement.description}\n
-      `;
-    } else {
-      const subProblem = this.memory.subProblems[index - 1];
-      const entitiesText = `
-        ${subProblem.entities
-          .slice(0, IEngineConstants.maxTopEntitiesToRender)
-          .map((entity) => {
-            let entityEffects = this.renderEntityPosNegReasons(entity);
 
-            if (entityEffects.length > 0) {
-              entityEffects = `\n${entity.name}\n${entityEffects}\n}`;
-            }
+      Sub Problem:\n
+      ${subProblem.title}\n
+      ${subProblem.description}\n
 
-            return entityEffects;
-          })
-          .join("")}`;
-      return `
-        Problem Statement:\n
-        ${this.memory.problemStatement.description}\n
-
-        Sub Problem:\n
-        ${subProblem.title}\n
-        ${subProblem.description}\n
-        ${subProblem.whyIsSubProblemImportant}\n
-
-        ${entitiesText ? `Affected Entities:\n${entitiesText}` : ""}
-      `;
-    }
-  }
+      ${entitiesText ? `Affected Entities:\n${entitiesText}` : ""}
+    `;
+}
 
   renderEntityPosNegReasons(item: IEngineAffectedEntity) {
     let itemEffects = "";

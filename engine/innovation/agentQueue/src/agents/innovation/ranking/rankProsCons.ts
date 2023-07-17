@@ -35,12 +35,9 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
 
     return `
       Solution:
+      ${solution.title}
+      ${solution.description}
 
-      Title: ${solution.title}
-      Description: ${solution.description}
-
-      How Solution One Can Help: ${solution.mainBenefitOfSolution}
-      Main Obstacles to Solution One Adoption: ${solution.mainObstacleToSolutionAdoption}
     `;
   }
 
@@ -53,24 +50,32 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
     const prosOrConsOne = (this.allItems![itemOneIndex] as IEngineProCon).description;
     const prosOrConsTwo = (this.allItems![itemTwoIndex] as IEngineProCon).description;
 
+    let proConSingle;
+
+    if (this.currentProsOrCons === "pros") {
+      proConSingle = "Pro";
+    } else {
+      proConSingle = "Con";
+    }
+
     const messages = [
       new SystemChatMessage(
         `
         As an AI expert, your role involves analyzing ${
           this.currentProsOrCons
-        } associated with solutions to complex problem statements and sub-problems.
+        } associated with solutions to problem statements and sub-problems to decide on which ${
+          this.currentProsOrCons
+        } is more important.
 
         Please adhere to the following guidelines:
 
         1. You will be presented with a problem statement, a solution, and two ${
           this.currentProsOrCons
-        }. These will be labeled as "${this.currentProsOrCons!.toUpperCase()} One" and "${this.currentProsOrCons!.toUpperCase()} Two".
-        2. Analyze, compare, and rank these ${
+        }. These will be labeled as "${proConSingle} One" and "${proConSingle} Two".
+        2. Analyze and compare the ${
           this.currentProsOrCons
-        } based on their relevance and importance to the solution and problem statement.
-        3. Consider the entities affected by the solution, if available, while ranking.
-        4. Output your decision as either "One" or "Two". No explanation is necessary.
-        5. Ensure your approach is methodical and systematic. Engage in step-by-step thinking.
+        } based on their relevance and importance to the solution and choose which is more important and output your decision as either "One" or "Two".
+        3. Never explain your reasoning.
         `
       ),
       new HumanChatMessage(
@@ -81,13 +86,13 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
 
         ${this.renderCurrentSolution()}
 
-        ${this.currentProsOrCons!.toUpperCase()} One:
-        ${prosOrConsOne}
+        Which ${proConSingle} is more important regarding the solution above? Output your decision as either "One" or "Two".
 
-        ${this.currentProsOrCons!.toUpperCase()} Two:
-        ${prosOrConsTwo}
+        ${proConSingle} One: ${prosOrConsOne}
 
-        Please Identify the Best ${this.currentProsOrCons!.toUpperCase()}:
+        ${proConSingle} Two: ${prosOrConsTwo}
+
+        The more important ${proConSingle} is:
         `
       ),
     ];
@@ -119,89 +124,101 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
       verbose: IEngineConstants.prosConsRankingsModel.verbose,
     });
 
-    for (
-      let subProblemIndex = 0;
-      subProblemIndex <
-      Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems);
-      subProblemIndex++
-    ) {
-      this.subProblemIndex = subProblemIndex;
-
-      let solutions;
-
-      if (
-        this.memory.subProblems[subProblemIndex].solutions.populations &&
-        this.memory.subProblems[subProblemIndex].solutions.populations.length >
-          0 &&
-        this.memory.subProblems[subProblemIndex].solutions.populations[0]
-          .length > 0
-      ) {
-        solutions =
-          this.memory.subProblems[subProblemIndex].solutions.populations[
-            this.memory.subProblems[subProblemIndex].solutions.populations
-              .length - 1
-          ];
-      } else {
-        solutions = this.memory.subProblems[subProblemIndex].solutions.seed;
-      }
-
+    try {
       for (
-        let solutionIndex = 0;
-        solutionIndex < solutions.length;
-        solutionIndex++
+        let subProblemIndex = 0;
+        subProblemIndex <
+        Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems);
+        subProblemIndex++
       ) {
-        this.currentSolutionIndex = solutionIndex;
+        this.subProblemIndex = subProblemIndex;
 
-        for (const prosOrCons of ["pros", "cons"] as const) {
-          this.currentProsOrCons = prosOrCons;
+        let solutions;
 
-          this.logger.debug(
-            `${prosOrCons} before ranking: ${JSON.stringify(
-              solutions[solutionIndex][prosOrCons]
-            )}`
-          );
-
-          const hasStrings = solutions[solutionIndex][prosOrCons]!.some(item => typeof item === 'string');
-
-          let convertedProsCons;
-
-          if (hasStrings) {
-            this.logger.debug("Converting pros/cons to objects");
-            convertedProsCons = this.convertProsConsToObjects(solutions[solutionIndex][prosOrCons]! as string[]);
-          } else {
-            convertedProsCons = solutions[solutionIndex][prosOrCons]! as IEngineProCon[];
-          }
-
-          this.setupRankingPrompts(convertedProsCons);
-          await this.performPairwiseRanking();
-
-          if (
-            this.memory.subProblems[subProblemIndex].solutions.populations &&
-            this.memory.subProblems[subProblemIndex].solutions.populations
-              .length > 0 &&
-            this.memory.subProblems[subProblemIndex].solutions.populations[0]
-              .length > 0
-          ) {
+        if (
+          this.memory.subProblems[subProblemIndex].solutions.populations &&
+          this.memory.subProblems[subProblemIndex].solutions.populations.length >
+            0 &&
+          this.memory.subProblems[subProblemIndex].solutions.populations[0]
+            .length > 0
+        ) {
+          solutions =
             this.memory.subProblems[subProblemIndex].solutions.populations[
               this.memory.subProblems[subProblemIndex].solutions.populations
                 .length - 1
-            ][solutionIndex][prosOrCons] =
-              this.getOrderedListOfItems() as IEngineProCon[];
-          } else {
-            this.memory.subProblems[subProblemIndex].solutions.seed[
-              solutionIndex
-            ][prosOrCons] = this.getOrderedListOfItems() as string[];
+            ];
+        } else {
+          solutions = this.memory.subProblems[subProblemIndex].solutions.seed;
+        }
+
+        for (
+          let solutionIndex = 0;
+          solutionIndex < solutions.length;
+          solutionIndex++
+        ) {
+          this.currentSolutionIndex = solutionIndex;
+
+          for (const prosOrCons of ["pros", "cons"] as const) {
+            this.currentProsOrCons = prosOrCons;
+
             this.logger.debug(
-              `${prosOrCons} after ranking: ${JSON.stringify(
-                this.memory.subProblems[subProblemIndex].solutions.seed[
-                  solutionIndex
-                ][prosOrCons]
+              `${prosOrCons} before ranking: ${JSON.stringify(
+                solutions[solutionIndex][prosOrCons]
               )}`
             );
+
+            if (solutions[solutionIndex][prosOrCons] && solutions[solutionIndex][prosOrCons]!.length > 0) {
+              const firstItem = solutions[solutionIndex][prosOrCons]![0];
+
+              const hasStrings = typeof firstItem === "string";
+
+              let convertedProsCons;
+
+              if (hasStrings) {
+                this.logger.debug("Converting pros/cons to objects");
+                convertedProsCons = this.convertProsConsToObjects(solutions[solutionIndex][prosOrCons]! as string[]);
+              } else {
+                convertedProsCons = solutions[solutionIndex][prosOrCons]! as IEngineProCon[];
+              }
+
+              this.setupRankingPrompts(convertedProsCons);
+              await this.performPairwiseRanking();
+
+              if (
+                this.memory.subProblems[subProblemIndex].solutions.populations &&
+                this.memory.subProblems[subProblemIndex].solutions.populations
+                  .length > 0 &&
+                this.memory.subProblems[subProblemIndex].solutions.populations[0]
+                  .length > 0
+              ) {
+                this.memory.subProblems[subProblemIndex].solutions.populations[
+                  this.memory.subProblems[subProblemIndex].solutions.populations
+                    .length - 1
+                ][solutionIndex][prosOrCons] =
+                  this.getOrderedListOfItems(true) as IEngineProCon[];
+              } else {
+                this.memory.subProblems[subProblemIndex].solutions.seed[
+                  solutionIndex
+                ][prosOrCons] = this.getOrderedListOfItems(true) as string[];
+                this.logger.debug(
+                  `${prosOrCons} after ranking: ${JSON.stringify(
+                    this.memory.subProblems[subProblemIndex].solutions.seed[
+                      solutionIndex
+                    ][prosOrCons]
+                  )}`
+                );
+              }
+            } else {
+              this.logger.error(`No ${prosOrCons} to rank`)
+            }
+
           }
+          await this.saveMemory();
         }
-        await this.saveMemory();
       }
+    } catch (error) {
+      this.logger.error(error);
     }
+
   }
 }

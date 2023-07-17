@@ -69,6 +69,7 @@ export class RankSearchQueriesProcessor extends BasePairwiseRankingsProcessor {
     async processSubProblems() {
         for (let s = 0; s <
             Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems); s++) {
+            this.subProblemIndex = s;
             await this.processEntities(s);
             for (const searchQueryType of [
                 "general",
@@ -78,7 +79,6 @@ export class RankSearchQueriesProcessor extends BasePairwiseRankingsProcessor {
             ]) {
                 this.logger.info(`Ranking search queries for sub-problem ${s} ${searchQueryType}`);
                 let queriesToRank = this.memory.subProblems[s].searchQueries[searchQueryType];
-                this.subProblemIndex = s;
                 this.searchQueryTarget = "subProblem";
                 this.setupRankingPrompts(queriesToRank);
                 await this.performPairwiseRanking();

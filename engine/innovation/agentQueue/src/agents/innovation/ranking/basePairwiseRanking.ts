@@ -16,7 +16,7 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
   K_FACTOR_INITIAL: number = 60; // Initial K-factor
   K_FACTOR_MIN: number = 10; // Minimum K-factor
   NUM_COMPARISONS_FOR_MIN_K: number = 20; // Number of comparisons for K to reach its minimum
-  maxNumberOfPrompts: number = 750;
+  maxNumberOfPrompts: number = 500;
 
   numComparisons: Record<number, number> = {};
   KFactors: Record<number, number> = {};
@@ -83,12 +83,12 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
         if (!winningItemText) {
           throw new Error("No winning item text");
         } else if (
-          ["One", "CONS One", "PROS One"].indexOf(winningItemText.trim()) > -1) {
+          ["One", "Con One", "Pro One"].indexOf(winningItemText.trim()) > -1) {
           this.logger.debug("One is the winner");
           wonItemIndex = itemOneIndex;
           lostItemIndex = itemTwoIndex;
         } else if (
-          ["Two", "CONS Two", "PROS Two"].indexOf(winningItemText.trim()) > -1) {
+          ["Two", "Con Two", "Pro Two"].indexOf(winningItemText.trim()) > -1) {
           this.logger.debug("Two is the winner");
           wonItemIndex = itemTwoIndex;
           lostItemIndex = itemOneIndex;
@@ -151,7 +151,7 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
       for (let p = 0; p < this.prompts.length; p++) {
         this.logger.info(`Prompt ${p + 1} of ${this.prompts.length}`);
         const promptPair = this.prompts[p];
-        //this.logger.debug(`Prompt pair: ${promptPair}`)
+        this.logger.debug(`Prompt pair: ${promptPair}`)
         const { wonItemIndex, lostItemIndex } = await this.voteOnPromptPair(
           promptPair
         );
@@ -191,7 +191,6 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
       }
     } catch (error) {
       this.logger.error("Error performing pairwise ranking");
-      // If error is object use strinigfiy in the log
       if (typeof error === "object") {
         this.logger.error(JSON.stringify(error));
       } else {

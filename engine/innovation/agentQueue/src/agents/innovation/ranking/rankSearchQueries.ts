@@ -93,6 +93,7 @@ export class RankSearchQueriesProcessor extends BasePairwiseRankingsProcessor {
       Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems);
       s++
     ) {
+      this.subProblemIndex = s;
 
       await this.processEntities(s);
 
@@ -108,7 +109,6 @@ export class RankSearchQueriesProcessor extends BasePairwiseRankingsProcessor {
         let queriesToRank =
           this.memory.subProblems[s].searchQueries[searchQueryType];
 
-        this.subProblemIndex = s;
         this.searchQueryTarget = "subProblem";
 
         this.setupRankingPrompts(queriesToRank);
