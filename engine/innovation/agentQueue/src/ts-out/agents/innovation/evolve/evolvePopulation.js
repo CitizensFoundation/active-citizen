@@ -110,7 +110,14 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
     }
     async getNewSolutions(maxNumberOfSolutions) {
         this.logger.info(`Getting new solutions: ${maxNumberOfSolutions}`);
+        this.chat = new ChatOpenAI({
+            temperature: IEngineConstants.createSolutionsModel.temperature,
+            maxTokens: IEngineConstants.createSolutionsModel.maxOutputTokens,
+            modelName: IEngineConstants.createSolutionsModel.name,
+            verbose: IEngineConstants.createSolutionsModel.verbose,
+        });
         const textContexts = await this.getTextContext(this.currentSubProblemIndex, undefined);
+        this.logger.debug(`Text contexts: ${JSON.stringify(textContexts, null, 2)}`);
         const newSolutions = await this.createSolutions(this.currentSubProblemIndex, textContexts.general, textContexts.scientific, textContexts.openData, textContexts.news, undefined);
         if (newSolutions.length > maxNumberOfSolutions) {
             newSolutions.splice(0, newSolutions.length - maxNumberOfSolutions, ...newSolutions.slice(0, maxNumberOfSolutions));
@@ -154,6 +161,38 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
                 newPopulation.push(previousPopulation[i]);
                 this.logger.debug(`Elite: ${previousPopulation[i].title}`);
             }
+            // Immigration
+            let immigrationCount = Math.floor(populationSize * IEngineConstants.evolution.randomImmigrationPercent);
+            this.logger.info(`Immigration count: ${immigrationCount}`);
+            if (newPopulation.length + immigrationCount > populationSize) {
+                immigrationCount = populationSize - newPopulation.length;
+            }
+            let newSolutions = [];
+            this.logger.debug("Before creating new solutions");
+            while (newSolutions.length < immigrationCount) {
+                newSolutions = [
+                    ...newSolutions,
+                    ...(await this.getNewSolutions(immigrationCount)),
+                ];
+                this.logger.debug(`New solutions: ${JSON.stringify(newSolutions, null, 2)}`);
+            }
+            this.logger.debug("After creating new solutions");
+            newPopulation.push(...newSolutions);
+            // Crossover
+            let crossoverCount = Math.floor(populationSize * IEngineConstants.evolution.crossoverPercent);
+            this.logger.debug(`Crossover count: ${crossoverCount}`);
+            for (let i = 0; i < crossoverCount; i++) {
+                const parentA = this.selectParent(previousPopulation);
+                const parentB = this.selectParent(previousPopulation);
+                this.logger.debug(`Parent A: ${parentA.title}`);
+                this.logger.debug(`Parent B: ${parentB.title}`);
+                let offspring = await this.recombine(parentA, parentB);
+                if (Math.random() < IEngineConstants.evolution.mutationOffspringPercent) {
+                    offspring = await this.mutate(offspring);
+                }
+                this.logger.debug(`Offspring: ${JSON.stringify(offspring, null, 2)}`);
+                newPopulation.push(offspring);
+            }
             // Mutation
             let mutationCount = Math.floor(populationSize * IEngineConstants.evolution.mutationOffspringPercent);
             if (newPopulation.length + mutationCount > populationSize) {
@@ -176,37 +215,6 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
                     throw error;
                 }
             }
-            // Immigration
-            let immigrationCount = Math.floor(populationSize * IEngineConstants.evolution.randomImmigrationPercent);
-            this.logger.info(`Immigration count: ${immigrationCount}`);
-            if (newPopulation.length + immigrationCount > populationSize) {
-                immigrationCount = populationSize - newPopulation.length;
-            }
-            let newSolutions = [];
-            this.logger.debug("Before creating new solutions");
-            while (newSolutions.length < immigrationCount) {
-                newSolutions = [
-                    ...newSolutions,
-                    ...(await this.getNewSolutions(immigrationCount)),
-                ];
-            }
-            this.logger.debug(`New solutions: ${JSON.stringify(newSolutions, null, 2)}`);
-            newPopulation.push(...newSolutions);
-            // Crossover
-            let crossoverCount = populationSize - eliteCount - immigrationCount - mutationCount;
-            this.logger.debug(`Crossover count: ${crossoverCount}`);
-            for (let i = 0; i < crossoverCount; i++) {
-                const parentA = this.selectParent(previousPopulation);
-                const parentB = this.selectParent(previousPopulation);
-                this.logger.debug(`Parent A: ${parentA.title}`);
-                this.logger.debug(`Parent B: ${parentB.title}`);
-                let offspring = await this.recombine(parentA, parentB);
-                if (Math.random() < IEngineConstants.evolution.mutationOffspringPercent) {
-                    offspring = await this.mutate(offspring);
-                }
-                this.logger.debug(`Offspring: ${JSON.stringify(offspring, null, 2)}`);
-                newPopulation.push(offspring);
-            }
             this.memory.subProblems[subProblemIndex].solutions.populations.push(newPopulation);
             await this.saveMemory();
         }
@@ -219,6 +227,7 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
         catch (error) {
             this.logger.error("Error in Evolve Population Processor");
             this.logger.error(error);
+            this.logger.error(error.stack);
             throw error;
         }
     }

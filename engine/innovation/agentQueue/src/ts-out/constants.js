@@ -95,7 +95,7 @@ export class IEngineConstants {
         outTokenCostUSD: gpt35_16kOutTokenPrice,
         verbose: false,
     };
-    static createSeedSolutionsModel = {
+    static createSolutionsModel = {
         name: "gpt-4",
         temperature: 0.9,
         maxOutputTokens: 1200,

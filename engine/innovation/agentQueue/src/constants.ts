@@ -108,7 +108,7 @@ export class IEngineConstants {
     verbose: false,
   };
 
-  static createSeedSolutionsModel: IEngineBaseAIModelConstants = {
+  static createSolutionsModel: IEngineBaseAIModelConstants = {
     name: "gpt-4",
     temperature: 0.9,
     maxOutputTokens: 1200,

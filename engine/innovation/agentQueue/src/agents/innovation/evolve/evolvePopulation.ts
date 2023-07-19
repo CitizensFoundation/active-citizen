@@ -153,10 +153,20 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
 
   async getNewSolutions(maxNumberOfSolutions: number) {
     this.logger.info(`Getting new solutions: ${maxNumberOfSolutions}`);
+
+    this.chat = new ChatOpenAI({
+      temperature: IEngineConstants.createSolutionsModel.temperature,
+      maxTokens: IEngineConstants.createSolutionsModel.maxOutputTokens,
+      modelName: IEngineConstants.createSolutionsModel.name,
+      verbose: IEngineConstants.createSolutionsModel.verbose,
+    });
+
     const textContexts = await this.getTextContext(
       this.currentSubProblemIndex!,
       undefined
     );
+
+    this.logger.debug(`Text contexts: ${JSON.stringify(textContexts, null, 2)}`)
 
     const newSolutions = await this.createSolutions(
       this.currentSubProblemIndex!,
@@ -333,9 +343,10 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
 
     try {
       await this.createPopulation();
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error("Error in Evolve Population Processor");
       this.logger.error(error);
+      this.logger.error(error.stack);
       throw error;
     }
   }

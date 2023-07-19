@@ -125,10 +125,10 @@ export class CreateSolutionsProcessor extends BaseProcessor {
         }
         else {
             this.logger.info(`Calling LLM for sub problem ${subProblemIndex}`);
-            let results = await this.callLLM("create-seed-solutions", IEngineConstants.createSeedSolutionsModel, await this.renderCreatePrompt(generalTextContext, scientificTextContext, openDataTextContext, newsTextContext, subProblemIndex, alreadyCreatedSolutions));
+            let results = await this.callLLM("create-seed-solutions", IEngineConstants.createSolutionsModel, await this.renderCreatePrompt(generalTextContext, scientificTextContext, openDataTextContext, newsTextContext, subProblemIndex, alreadyCreatedSolutions));
             if (IEngineConstants.enable.refine.createSolutions) {
                 this.logger.info(`Calling LLM refine for sub problem ${subProblemIndex}`);
-                results = await this.callLLM("create-seed-solutions", IEngineConstants.createSeedSolutionsModel, await this.renderRefinePrompt(results, generalTextContext, scientificTextContext, openDataTextContext, newsTextContext, subProblemIndex, alreadyCreatedSolutions));
+                results = await this.callLLM("create-seed-solutions", IEngineConstants.createSolutionsModel, await this.renderRefinePrompt(results, generalTextContext, scientificTextContext, openDataTextContext, newsTextContext, subProblemIndex, alreadyCreatedSolutions));
             }
             return results;
         }
@@ -276,9 +276,9 @@ export class CreateSolutionsProcessor extends BaseProcessor {
     async getSearchQueryTextContext(subProblemIndex, searchQuery, type, alreadyCreatedSolutions = undefined) {
         const tokenCountData = await this.chat.getNumTokensFromMessages(this.renderCreateForTestTokens(subProblemIndex, alreadyCreatedSolutions));
         const currentTokens = tokenCountData.totalCount;
-        const tokensLeft = IEngineConstants.createSeedSolutionsModel.tokenLimit -
+        const tokensLeft = IEngineConstants.createSolutionsModel.tokenLimit -
             (currentTokens +
-                IEngineConstants.createSeedSolutionsModel.maxOutputTokens);
+                IEngineConstants.createSolutionsModel.maxOutputTokens);
         const tokensLeftForType = Math.floor(tokensLeft / IEngineConstants.numberOfSearchTypes);
         this.logger.debug(`Tokens left ${tokensLeftForType} for type ${type}`);
         return await this.searchForType(subProblemIndex, type, searchQuery, tokensLeftForType);
@@ -320,10 +320,10 @@ export class CreateSolutionsProcessor extends BaseProcessor {
         this.logger.info("Create Seed Solutions Processor");
         super.process();
         this.chat = new ChatOpenAI({
-            temperature: IEngineConstants.createSeedSolutionsModel.temperature,
-            maxTokens: IEngineConstants.createSeedSolutionsModel.maxOutputTokens,
-            modelName: IEngineConstants.createSeedSolutionsModel.name,
-            verbose: IEngineConstants.createSeedSolutionsModel.verbose,
+            temperature: IEngineConstants.createSolutionsModel.temperature,
+            maxTokens: IEngineConstants.createSolutionsModel.maxOutputTokens,
+            modelName: IEngineConstants.createSolutionsModel.name,
+            verbose: IEngineConstants.createSolutionsModel.verbose,
         });
         try {
             await this.createAllSolutions();
@@ -331,6 +331,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
         catch (error) {
             this.logger.error("Error creating solutions");
             this.logger.error(error);
+            this.logger.error(error.stack);
             throw error;
         }
     }

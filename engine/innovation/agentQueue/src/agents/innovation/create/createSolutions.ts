@@ -187,7 +187,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
       this.logger.info(`Calling LLM for sub problem ${subProblemIndex}`);
       let results = await this.callLLM(
         "create-seed-solutions",
-        IEngineConstants.createSeedSolutionsModel,
+        IEngineConstants.createSolutionsModel,
         await this.renderCreatePrompt(
           generalTextContext,
           scientificTextContext,
@@ -204,7 +204,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
         );
         results = await this.callLLM(
           "create-seed-solutions",
-          IEngineConstants.createSeedSolutionsModel,
+          IEngineConstants.createSolutionsModel,
           await this.renderRefinePrompt(
             results,
             generalTextContext,
@@ -538,9 +538,9 @@ export class CreateSolutionsProcessor extends BaseProcessor {
     );
     const currentTokens = tokenCountData.totalCount;
     const tokensLeft =
-      IEngineConstants.createSeedSolutionsModel.tokenLimit -
+      IEngineConstants.createSolutionsModel.tokenLimit -
       (currentTokens +
-        IEngineConstants.createSeedSolutionsModel.maxOutputTokens);
+        IEngineConstants.createSolutionsModel.maxOutputTokens);
     const tokensLeftForType = Math.floor(
       tokensLeft / IEngineConstants.numberOfSearchTypes
     );
@@ -621,18 +621,20 @@ export class CreateSolutionsProcessor extends BaseProcessor {
     super.process();
 
     this.chat = new ChatOpenAI({
-      temperature: IEngineConstants.createSeedSolutionsModel.temperature,
-      maxTokens: IEngineConstants.createSeedSolutionsModel.maxOutputTokens,
-      modelName: IEngineConstants.createSeedSolutionsModel.name,
-      verbose: IEngineConstants.createSeedSolutionsModel.verbose,
+      temperature: IEngineConstants.createSolutionsModel.temperature,
+      maxTokens: IEngineConstants.createSolutionsModel.maxOutputTokens,
+      modelName: IEngineConstants.createSolutionsModel.name,
+      verbose: IEngineConstants.createSolutionsModel.verbose,
     });
 
     try {
       await this.createAllSolutions();
-    } catch (error) {
-      this.logger.error("Error creating solutions")
+    } catch (error: any) {
+      this.logger.error("Error creating solutions");
       this.logger.error(error);
+      this.logger.error(error.stack);
       throw error;
     }
+
   }
 }
