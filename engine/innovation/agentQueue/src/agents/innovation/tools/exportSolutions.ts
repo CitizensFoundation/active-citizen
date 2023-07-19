@@ -4,7 +4,7 @@ import fs from "fs";
 import process from "process";
 import path from "path";
 
-const maxFullDetailSolutions = 7;
+const maxFullDetailSolutions = 10;
 
 let filePath = process.argv[2] || "currentMemory.json";
 
@@ -52,7 +52,13 @@ let html = `
       ${memory.problemStatement.searchResults.pages.general
         .map(
           (result) =>
-            `<li>${result.title} - <a href="${result.link}">${result.link}</a></li>`
+            `<li>${result.title} - <a href="${
+              //@ts-ignore
+              result.url || result.link
+            }">${
+              //@ts-ignore
+              result.url || result.link
+            }</a></li>`
         )
         .join("")}
     </ul>
@@ -64,7 +70,7 @@ for (
   s++
 ) {
   const subProblem = memory.subProblems[s];
-  const solutions = subProblem.solutions.seed;
+  const solutions = subProblem.solutions.populations[0];
 
   html += `
     <div class="card">

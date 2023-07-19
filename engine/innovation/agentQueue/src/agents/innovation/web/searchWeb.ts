@@ -1,27 +1,46 @@
 import { BaseProcessor } from "../baseProcessor.js";
 import type { BaseResponse, GoogleParameters } from "serpapi";
-import { getJson } from "serpapi";
+import { getJson as serpApiGetJson } from "serpapi";
 import { IEngineConstants } from "../../../constants.js";
 import ioredis from "ioredis";
+import { BingSearchApi } from "./bingSearchApi.js";
 
 const redis = new ioredis.default(
   process.env.REDIS_MEMORY_URL || "redis://localhost:6379"
 );
 
 export class SearchWebProcessor extends BaseProcessor {
-  async serpApiSearch(
-    q: string,
-    location: string = "New York, New York"
-  ): Promise<BaseResponse<GoogleParameters>> {
-    const redisKey = `s_web_v2:${q}`;
+  async callSearchApi(query: string): Promise<IEngineSearchResultItem[]> {
+    if (process.env.AZURE_BING_SEARCH_KEY) {
+      const bingSearchApi = new BingSearchApi();
+      return await bingSearchApi.search(query);
+    } else if (process.env.SERP_API_KEY) {
+      const searchResults = await this.serpApiSearch(query);
+      const outResults: IEngineSearchResultItem[] = [];
+      for (let i = 0; i < searchResults.organic_results.length; i++) {
+        outResults.push({
+          originalPosition: searchResults.organic_results[i].position,
+          title: searchResults.organic_results[i].title,
+          url: searchResults.organic_results[i].link,
+          description: searchResults.organic_results[i].snippet,
+          date: searchResults.organic_results[i].date,
+        });
+      }
+      return outResults;
+    } else {
+      this.logger.error("Missing search API key");
+      throw new Error("Missing search API key");
+    }
+  }
 
-    const searchData: BaseResponse<GoogleParameters> = (await redis.get(
-      redisKey
-    )) as unknown as BaseResponse<GoogleParameters>;
+  async serpApiSearch(q: string): Promise<BaseResponse<GoogleParameters>> {
+    const redisKey = `s_web_v3:${q}`;
 
-    if (searchData && searchData!=null && searchData.length>30) {
+    const searchData: string | null = await redis.get(redisKey);
+
+    if (searchData && searchData != null && searchData.length > 30) {
       this.logger.debug(`Using cached search data for ${q} ${searchData}`);
-      return searchData;
+      return JSON.parse(searchData);
     } else {
       let retry = true;
       const maxRetries = IEngineConstants.mainSearchRetryCount;
@@ -29,7 +48,6 @@ export class SearchWebProcessor extends BaseProcessor {
 
       const params = {
         q,
-        location,
         hl: "en",
         gl: "us",
         api_key: process.env.SERP_API_KEY,
@@ -41,24 +59,26 @@ export class SearchWebProcessor extends BaseProcessor {
 
       while (retry && retryCount < maxRetries) {
         try {
-          response = await getJson("google", params);
+          response = await serpApiGetJson("google", params);
           retry = false;
           this.logger.info("Got search data from SerpApi");
         } catch (e) {
-          this.logger.error(`Failed to get search data for ${q}`)
+          this.logger.error(`Failed to get search data for ${q}`);
           this.logger.error(e);
           if (retryCount < maxRetries) {
             retry = false;
             throw e;
           } else {
-            await new Promise((resolve) => setTimeout(resolve, 5000+(retryCount*5000)));
+            await new Promise((resolve) =>
+              setTimeout(resolve, 5000 + retryCount * 5000)
+            );
             retryCount++;
           }
         }
       }
 
       if (response) {
-        await redis.set(redisKey, JSON.stringify(searchData));
+        await redis.set(redisKey, JSON.stringify(response));
         this.logger.debug(JSON.stringify(response, null, 2));
 
         this.logger.debug(`Returning search data`);
@@ -72,41 +92,29 @@ export class SearchWebProcessor extends BaseProcessor {
   }
 
   async getQueryResults(queriesToSearch: string[]) {
-    let searchResults: SerpOrganicResults = [];
-    let knowledgeGraphResults: SerpKnowledgeGraph[] = [];
+    let searchResults: IEngineSearchResultItem[] = [];
 
     for (let q = 0; q < queriesToSearch.length; q++) {
-      const generalSearchData = await this.serpApiSearch(queriesToSearch[q]);
-      this.logger.debug(`Got Search Data 1: ${JSON.stringify(generalSearchData)}`);
+      const generalSearchData = await this.callSearchApi(queriesToSearch[q]);
 
-      if (generalSearchData.organic_results) {
-        searchResults = [
-          ...searchResults,
-          ...(generalSearchData.organic_results as SerpOrganicResults),
-        ];
+      this.logger.debug(
+        `Got Search Data 1: ${JSON.stringify(generalSearchData)}`
+      );
+
+      if (generalSearchData) {
+        searchResults = [...searchResults, ...generalSearchData];
       } else {
-        this.logger.error("No organic results");
+        this.logger.error("No search results");
       }
 
       this.logger.debug("Got Search Results 2");
 
-      if (generalSearchData.knowledge_graph) {
-        knowledgeGraphResults = [
-          ...knowledgeGraphResults,
-          ...(generalSearchData.knowledge_graph as SerpKnowledgeGraph[]),
-        ];
-      } else {
-        this.logger.warn("No knowledge graph results");
-      }
-
-      this.logger.debug("Got Search Results 3");
-
       this.logger.debug(`Search Results: ${JSON.stringify(searchResults)}`);
 
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 500));
     }
 
-    return { searchResults, knowledgeGraphResults };
+    return { searchResults };
   }
 
   async processSubProblems(searchQueryType: IEngineWebPageTypes) {
@@ -130,19 +138,11 @@ export class SearchWebProcessor extends BaseProcessor {
             news: [],
             openData: [],
           },
-          knowledgeGraph: {
-            general: [],
-            scientific: [],
-            news: [],
-            openData: [],
-          },
         };
       }
 
       this.memory.subProblems[s].searchResults.pages[searchQueryType] =
         results.searchResults;
-      this.memory.subProblems[s].searchResults.knowledgeGraph[searchQueryType] =
-        results.knowledgeGraphResults;
 
       await this.processEntities(s, searchQueryType);
 
@@ -180,23 +180,12 @@ export class SearchWebProcessor extends BaseProcessor {
             news: [],
             openData: [],
           },
-          knowledgeGraph: {
-            general: [],
-            scientific: [],
-            news: [],
-            openData: [],
-          },
         };
       }
 
       this.memory.subProblems[subProblemIndex].entities[e].searchResults!.pages[
         searchQueryType
       ] = results.searchResults;
-
-      this.memory.subProblems[subProblemIndex].entities[
-        e
-      ].searchResults!.knowledgeGraph[searchQueryType] =
-        results.knowledgeGraphResults;
 
       await this.saveMemory();
     }
@@ -213,9 +202,6 @@ export class SearchWebProcessor extends BaseProcessor {
 
     this.memory.problemStatement.searchResults!.pages[searchQueryType] =
       results.searchResults;
-    this.memory.problemStatement.searchResults!.knowledgeGraph[
-      searchQueryType
-    ] = results.knowledgeGraphResults;
 
     await this.saveMemory();
   }

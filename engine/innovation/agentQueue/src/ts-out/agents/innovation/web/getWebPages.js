@@ -483,11 +483,11 @@ export class GetWebPagesProcessor extends BaseProcessor {
     }
     getUrlsToFetch(allPages) {
         let outArray = [];
-        outArray = outArray.concat(allPages.filter((page) => page.position <= IEngineConstants.maxWebPagesToGetByTopSearchPosition));
+        outArray = outArray.concat(allPages.filter((page) => page.originalPosition <= IEngineConstants.maxWebPagesToGetByTopSearchPosition));
         outArray = outArray.concat(allPages.slice(0, IEngineConstants.maxTopWebPagesToGet));
         // Map to URLs and remove duplicates
         const urlsToGet = Array.from(outArray
-            .map((p) => p.link)
+            .map((p) => p.url)
             .reduce((unique, item) => unique.add(item), new Set()));
         this.logger.debug(`Got ${urlsToGet.length} URLs to fetch ${JSON.stringify(urlsToGet, null, 2)}`);
         return urlsToGet;

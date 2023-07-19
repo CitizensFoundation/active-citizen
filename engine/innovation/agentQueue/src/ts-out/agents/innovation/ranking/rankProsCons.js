@@ -142,6 +142,7 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
             }
         }
         catch (error) {
+            this.logger.error("Error in Rank Pros Cons Processor");
             this.logger.error(error);
         }
     }

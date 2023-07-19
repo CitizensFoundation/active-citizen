@@ -37,36 +37,31 @@ export class RankSearchResultsProcessor extends BasePairwiseRankingsProcessor {
         const itemOne = this.allItems[itemOneIndex];
         const itemTwo = this.allItems[itemTwoIndex];
         let itemOneTitle = itemOne.title;
-        let itemOneDescription = itemOne.snippet;
+        let itemOneDescription = itemOne.description;
         let itemTwoTitle = itemTwo.title;
-        let itemTwoDescription = itemTwo.snippet;
+        let itemTwoDescription = itemTwo.description;
         const messages = [
-            new SystemChatMessage(`
-        You are an AI expert, trained to rank search results pertaining to complex problem statements and sub-problems.
+            new SystemChatMessage(`You are an expert in assessing relevance of search results.
 
-        Please adhere to these guidelines:
-        1. You will be presented with a problem statement or sub-problem, possibly including entities affected by the problem in either positive or negative ways.
-        2. You will also receive two web links, each accompanied by a title and description, marked as "Search Result One" and "Search Result Two".
-        3. Your task is to analyze, compare, and rank these search results based on their relevance to the provided problem statement or sub-problem.
-        4. Output your decision as either "One" or "Two". No explanation is required.
-        5. Ensure your approach is methodical and systematic. Think step by step.`),
-            new HumanChatMessage(`
-        Search Result Type: ${this.searchResultType}
+         Guidelines:
+         Assess search results "One" and "Two" for problem relevance, especially regarding indicated solutions.
+         Output your decision as either "One" or "Two". No explanation is required.
+         Think step by step.`),
+            new HumanChatMessage(`${this.renderProblemDetail()}
 
-        ${this.renderProblemDetail()}
+         Search Type: ${this.searchResultType}
 
-        Search Results to Rank:
+         Search Results to assess:
 
-        Search Result One:
-        ${itemOneTitle}
-        ${itemOneDescription}
+         One:
+         ${itemOneTitle}
+         ${itemOneDescription}
 
-        Search Result Two:
-        ${itemTwoTitle}
-        ${itemTwoDescription}
+         Two:
+         ${itemTwoTitle}
+         ${itemTwoDescription}
 
-        The Most Relevant Search Result Is:
-       `),
+         The most relevant search result is: `),
         ];
         return await this.getResultsFromLLM("rank-search-results", IEngineConstants.searchResultsRankingsModel, messages, itemOneIndex, itemTwoIndex);
     }

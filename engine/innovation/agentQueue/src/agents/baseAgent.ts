@@ -28,6 +28,7 @@ export abstract class BaseAgent extends BaseWorker {
         this.logger.debug(`Initialized memory for ${JSON.stringify(jobData)}`);
       }
     } catch (error) {
+      this.logger.error("Error initializing memory");
       this.logger.error(error);
     }
   }

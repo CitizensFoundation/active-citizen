@@ -13,6 +13,7 @@ import { RankSolutionsProcessor } from "./ranking/rankSolutions.js";
 import { RankSubProblemsProcessor } from "./ranking/rankSubProblems.js";
 import { GetWebPagesProcessor } from "./web/getWebPages.js";
 import { SearchWebProcessor } from "./web/searchWeb.js";
+import { EvolvePopulationProcessor } from "./evolve/evolvePopulation.js";
 
 export class AgentInnovation extends BaseAgent {
   declare memory: IEngineInnovationMemoryData;
@@ -103,13 +104,7 @@ export class AgentInnovation extends BaseAgent {
             scientific: [],
             news: [],
             openData: [],
-          },
-          knowledgeGraph: {
-            general: [],
-            scientific: [],
-            news: [],
-            openData: [],
-          },
+          }
         },
       },
       subProblems: [],
@@ -223,8 +218,15 @@ export class AgentInnovation extends BaseAgent {
         );
         await searchWebProcessor.process();
         break;
+      case "evolve-create-population":
+        const createPopulationProcessor = new EvolvePopulationProcessor(
+          this.job,
+          this.memory
+        );
+        await createPopulationProcessor.process();
+        break;
       default:
-        console.log("No stage matched");
+      console.log("No stage matched");
     }
   }
 }

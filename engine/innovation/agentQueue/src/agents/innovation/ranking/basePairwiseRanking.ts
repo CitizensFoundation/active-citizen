@@ -5,7 +5,7 @@ import { IEngineConstants } from "../../../constants.js";
 export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
   prompts: number[][] = [];
   allItems:
-    | SerpOrganicResult[]
+    | IEngineSearchResultItem[]
     | IEngineSolution[]
     | IEngineProblemStatement[]
     | IEngineAffectedEntity[]
@@ -16,7 +16,7 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
   K_FACTOR_INITIAL: number = 60; // Initial K-factor
   K_FACTOR_MIN: number = 10; // Minimum K-factor
   NUM_COMPARISONS_FOR_MIN_K: number = 20; // Number of comparisons for K to reach its minimum
-  maxNumberOfPrompts: number = 500;
+  maxNumberOfPrompts: number = 600;
 
   numComparisons: Record<number, number> = {};
   KFactors: Record<number, number> = {};
@@ -24,7 +24,7 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
 
   setupRankingPrompts(
     allItems:
-      | SerpOrganicResult[]
+      | IEngineSearchResultItem[]
       | IEngineSolution[]
       | IEngineProblemStatement[]
       | string[]
@@ -194,6 +194,7 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
       if (typeof error === "object") {
         this.logger.error(JSON.stringify(error));
       } else {
+        this.logger.error("Error performing pairwise ranking");
         this.logger.error(error);
       }
 

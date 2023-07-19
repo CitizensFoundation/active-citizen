@@ -22,7 +22,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
         8. Apply a methodical, step-by-step approach to deliver the best solutions.
         `),
             new HumanChatMessage(`
-        ${this.renderPromblemStatementSubProblemsAndEntities(subProblemIndex)}
+        ${this.renderProblemStatementSubProblemsAndEntities(subProblemIndex)}
 
         ${alreadyCreatedSolutions
                 ? `
@@ -60,7 +60,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
         const messages = [
             this.renderCreateSystemMessage(),
             new HumanChatMessage(`
-            ${this.renderPromblemStatementSubProblemsAndEntities(subProblemIndex)}
+            ${this.renderProblemStatementSubProblemsAndEntities(subProblemIndex)}
 
             General Context from search:
 
@@ -90,7 +90,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
         const messages = [
             this.renderCreateSystemMessage(),
             new HumanChatMessage(`
-        ${this.renderPromblemStatementSubProblemsAndEntities(subProblemIndex)}
+        ${this.renderProblemStatementSubProblemsAndEntities(subProblemIndex)}
 
         Contexts for potential solutions:
         General Context from search:
@@ -133,14 +133,11 @@ export class CreateSolutionsProcessor extends BaseProcessor {
             return results;
         }
     }
-    randomSearchQueryIndex(subProblemIndex) {
+    randomSearchQueryIndex(searchQueries, type) {
         const randomIndex = Math.min(Math.floor(Math.random() *
-            (IEngineConstants.maxTopSearchQueriesForSolutionCreation + 1)), subProblemIndex
-            ? this.memory.subProblems[subProblemIndex].searchQueries.general
-                .length - 1
-            : 2);
+            (IEngineConstants.maxTopSearchQueriesForSolutionCreation + 1)), searchQueries[type].length - 1);
         if (Math.random() <
-            IEngineConstants.chances.notUsingFirstSearchQueryForNewSolutions) {
+            IEngineConstants.chances.createSolutions.notUsingFirstSearchQuery) {
             return randomIndex;
         }
         else {
@@ -150,25 +147,30 @@ export class CreateSolutionsProcessor extends BaseProcessor {
     getAllTypeQueries(searchQueries, subProblemIndex) {
         this.logger.info(`Getting all type queries for sub problem ${subProblemIndex}`);
         return {
-            general: searchQueries.general[this.randomSearchQueryIndex(subProblemIndex)],
-            scientific: searchQueries.scientific[this.randomSearchQueryIndex(subProblemIndex)],
-            openData: searchQueries.openData[this.randomSearchQueryIndex(subProblemIndex)],
-            news: searchQueries.news[this.randomSearchQueryIndex(subProblemIndex)],
+            general: searchQueries.general[this.randomSearchQueryIndex(searchQueries, "general")],
+            scientific: searchQueries.scientific[this.randomSearchQueryIndex(searchQueries, "scientific")],
+            openData: searchQueries.openData[this.randomSearchQueryIndex(searchQueries, "openData")],
+            news: searchQueries.news[this.randomSearchQueryIndex(searchQueries, "news")],
         };
     }
-    getRandomSearchQueryForType(type, problemStatementQueries, subProblemQueries, otherSubProblemQueries) {
+    getRandomSearchQueryForType(type, problemStatementQueries, subProblemQueries, otherSubProblemQueries, randomEntitySearchQueries) {
         let random = Math.random();
         let selectedQuery;
-        if (random < IEngineConstants.chances.useMainProblemSearchQueriesNewSolutions) {
+        const mainProblemChance = IEngineConstants.chances.createSolutions.searchQueries.useMainProblemSearchQueries;
+        const otherSubProblemChance = mainProblemChance + IEngineConstants.chances.createSolutions.searchQueries.useOtherSubProblemSearchQueries;
+        const subProblemChance = otherSubProblemChance + IEngineConstants.chances.createSolutions.searchQueries.useSubProblemSearchQueries;
+        // The remaining probability is assigned to randomEntitySearchQueries
+        if (random < mainProblemChance) {
             selectedQuery = problemStatementQueries[type];
         }
-        else if (random <
-            IEngineConstants.chances.useOtherSubProblemSearchQueriesNewSolutions +
-                IEngineConstants.chances.useMainProblemSearchQueriesNewSolutions) {
+        else if (random < otherSubProblemChance) {
             selectedQuery = otherSubProblemQueries[type];
         }
-        else {
+        else if (random < subProblemChance) {
             selectedQuery = subProblemQueries[type];
+        }
+        else {
+            selectedQuery = randomEntitySearchQueries[type];
         }
         return selectedQuery;
     }
@@ -185,12 +187,15 @@ export class CreateSolutionsProcessor extends BaseProcessor {
         const randomSubProblemIndex = otherSubProblemIndexes[Math.floor(Math.random() * otherSubProblemIndexes.length)];
         const problemStatementQueries = this.getAllTypeQueries(this.memory.problemStatement.searchQueries, undefined);
         const subProblemQueries = this.getAllTypeQueries(this.memory.subProblems[subProblemIndex].searchQueries, subProblemIndex);
+        const entities = this.memory.subProblems[subProblemIndex].entities;
+        const randomEntity = entities[Math.floor(Math.random() * entities.length)];
+        const randomEntitySearchQueries = this.getAllTypeQueries(randomEntity.searchQueries, subProblemIndex);
         const otherSubProblemQueries = this.getAllTypeQueries(this.memory.subProblems[randomSubProblemIndex].searchQueries, randomSubProblemIndex);
         //TODO: Refactor the types to be an array ["scientific", "general", ...]
-        let scientific = this.getRandomSearchQueryForType("scientific", problemStatementQueries, subProblemQueries, otherSubProblemQueries);
-        let general = this.getRandomSearchQueryForType("general", problemStatementQueries, subProblemQueries, otherSubProblemQueries);
-        let openData = this.getRandomSearchQueryForType("openData", problemStatementQueries, subProblemQueries, otherSubProblemQueries);
-        let news = this.getRandomSearchQueryForType("news", problemStatementQueries, subProblemQueries, otherSubProblemQueries);
+        let scientific = this.getRandomSearchQueryForType("scientific", problemStatementQueries, subProblemQueries, otherSubProblemQueries, randomEntitySearchQueries);
+        let general = this.getRandomSearchQueryForType("general", problemStatementQueries, subProblemQueries, otherSubProblemQueries, randomEntitySearchQueries);
+        let openData = this.getRandomSearchQueryForType("openData", problemStatementQueries, subProblemQueries, otherSubProblemQueries, randomEntitySearchQueries);
+        let news = this.getRandomSearchQueryForType("news", problemStatementQueries, subProblemQueries, otherSubProblemQueries, randomEntitySearchQueries);
         return {
             scientific,
             general,
@@ -226,7 +231,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
     }
     //TODO: Figure out the closest mostRelevantParagraphs from Weaviate
     renderRawSearchResults(rawSearchResults) {
-        const results = this.getRandomItemFromArray(rawSearchResults.data.Get.WebPage, IEngineConstants.limits.useTopNFromSearchResultsArray);
+        const results = this.getRandomItemFromArray(rawSearchResults.data.Get.WebPage, IEngineConstants.limits.useRandomTopFromVectorSearchResults);
         const solutionIdentifiedInTextContext = this.getRandomItemFromArray(results.solutionsIdentifiedInTextContext);
         const mostRelevantParagraphs = this.getRandomItemFromArray(results.mostRelevantParagraphs);
         this.logger.debug(`Random Solution: ${solutionIdentifiedInTextContext}`);
@@ -247,8 +252,9 @@ export class CreateSolutionsProcessor extends BaseProcessor {
         this.logger.info(`Searching for type ${type} with query ${searchQuery}`);
         let rawSearchResults;
         const random = Math.random();
-        if (random < IEngineConstants.chances.useMainProblemVectorSearchNewSolutions) {
-            this.logger.debug("Using main problem vector search");
+        if (random <
+            IEngineConstants.chances.createSolutions.vectorSearchAcrossAllProblems) {
+            this.logger.debug("Using vector search across all problems");
             rawSearchResults = await this.webPageVectorStore.searchWebPages(searchQuery, this.memory.groupId, undefined, type);
         }
         else {
@@ -323,6 +329,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
             await this.createAllSolutions();
         }
         catch (error) {
+            this.logger.error("Error creating solutions");
             this.logger.error(error);
             throw error;
         }

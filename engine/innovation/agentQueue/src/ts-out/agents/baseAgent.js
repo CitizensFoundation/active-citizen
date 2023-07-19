@@ -21,6 +21,7 @@ export class BaseAgent extends BaseWorker {
             }
         }
         catch (error) {
+            this.logger.error("Error initializing memory");
             this.logger.error(error);
         }
     }

@@ -9,16 +9,6 @@ declare module 'puppeteer-extra' {
   };
   export = puppeteerExtra;
 }
-type SerpKnowledgeGraph = {
-  title: string;
-  type: string;
-  kgmid: string;
-  knowledge_graph_search_link: string;
-  serpapi_knowledge_graph_search_link: string;
-  header_images: HeaderImage[];
-  description: string;
-  source: Source;
-};
 
 type HeaderImage = {
   image: string;
@@ -241,18 +231,21 @@ interface IEngineSearchQuery {
   openData: string;
 }
 
+interface IEngineSearchResultItem {
+  title: string;
+  originalPosition: number;
+  description: string;
+  url: string;
+  date: string;
+  eloRating?: number;
+}
+
 interface IEngineSearchResults {
   pages: {
-    general: SerpOrganicResult[];
-    scientific: SerpOrganicResult[];
-    news: SerpOrganicResult[];
-    openData: SerpOrganicResult[];
-  };
-  knowledgeGraph: {
-    general: SerpKnowledgeGraph[];
-    scientific: SerpKnowledgeGraph[];
-    news: SerpKnowledgeGraph[];
-    openData: SerpKnowledgeGraph[];
+    general: IEngineSearchResultItem[];
+    scientific: IEngineSearchResultItem[];
+    news: IEngineSearchResultItem[];
+    openData: IEngineSearchResultItem[];
   };
 }
 

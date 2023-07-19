@@ -686,13 +686,13 @@ export class GetWebPagesProcessor extends BaseProcessor {
     }
   }
 
-  getUrlsToFetch(allPages: SerpOrganicResult[]): string[] {
-    let outArray: SerpOrganicResult[] = [];
+  getUrlsToFetch(allPages: IEngineSearchResultItem[]): string[] {
+    let outArray: IEngineSearchResultItem[] = [];
 
     outArray = outArray.concat(
       allPages.filter(
         (page) =>
-          page.position <= IEngineConstants.maxWebPagesToGetByTopSearchPosition
+          page.originalPosition <= IEngineConstants.maxWebPagesToGetByTopSearchPosition
       )
     );
 
@@ -703,7 +703,7 @@ export class GetWebPagesProcessor extends BaseProcessor {
     // Map to URLs and remove duplicates
     const urlsToGet: string[] = Array.from(
       outArray
-        .map((p) => p.link)
+        .map((p) => p.url)
         .reduce((unique, item) => unique.add(item), new Set())
     ) as string[];
 

@@ -40,45 +40,40 @@ export class RankSearchResultsProcessor extends BasePairwiseRankingsProcessor {
     const itemOneIndex = promptPair[0];
     const itemTwoIndex = promptPair[1];
 
-    const itemOne = this.allItems![itemOneIndex] as SerpOrganicResult;
-    const itemTwo = this.allItems![itemTwoIndex] as SerpOrganicResult;
+    const itemOne = this.allItems![itemOneIndex] as IEngineSearchResultItem;
+    const itemTwo = this.allItems![itemTwoIndex] as IEngineSearchResultItem;
 
     let itemOneTitle = itemOne.title;
-    let itemOneDescription = itemOne.snippet;
+    let itemOneDescription = itemOne.description;
 
     let itemTwoTitle = itemTwo.title;
-    let itemTwoDescription = itemTwo.snippet;
+    let itemTwoDescription = itemTwo.description;
 
     const messages = [
       new SystemChatMessage(
-        `
-        You are an AI expert, trained to rank search results pertaining to complex problem statements and sub-problems.
+        `You are an expert in assessing relevance of search results.
 
-        Please adhere to these guidelines:
-        1. You will be presented with a problem statement or sub-problem, possibly including entities affected by the problem in either positive or negative ways.
-        2. You will also receive two web links, each accompanied by a title and description, marked as "Search Result One" and "Search Result Two".
-        3. Your task is to analyze, compare, and rank these search results based on their relevance to the provided problem statement or sub-problem.
-        4. Output your decision as either "One" or "Two". No explanation is required.
-        5. Ensure your approach is methodical and systematic. Think step by step.`
+         Guidelines:
+         Assess search results "One" and "Two" for problem relevance, especially regarding indicated solutions.
+         Output your decision as either "One" or "Two". No explanation is required.
+         Think step by step.`
       ),
       new HumanChatMessage(
-        `
-        Search Result Type: ${this.searchResultType}
+        `${this.renderProblemDetail()}
 
-        ${this.renderProblemDetail()}
+         Search Type: ${this.searchResultType}
 
-        Search Results to Rank:
+         Search Results to assess:
 
-        Search Result One:
-        ${itemOneTitle}
-        ${itemOneDescription}
+         One:
+         ${itemOneTitle}
+         ${itemOneDescription}
 
-        Search Result Two:
-        ${itemTwoTitle}
-        ${itemTwoDescription}
+         Two:
+         ${itemTwoTitle}
+         ${itemTwoDescription}
 
-        The Most Relevant Search Result Is:
-       `
+         The most relevant search result is: `
       ),
     ];
 
@@ -107,7 +102,7 @@ export class RankSearchResultsProcessor extends BasePairwiseRankingsProcessor {
       await this.performPairwiseRanking();
 
       this.memory.subProblems[s].searchResults.pages[searchResultType] =
-          this.getOrderedListOfItems(true) as SerpOrganicResult[]
+          this.getOrderedListOfItems(true) as IEngineSearchResultItem[]
 
       await this.saveMemory();
 
@@ -139,7 +134,7 @@ export class RankSearchResultsProcessor extends BasePairwiseRankingsProcessor {
       this.memory.subProblems[subProblemIndex].entities[
         e
       ].searchResults!.pages[searchResultType] =
-        this.getOrderedListOfItems(true) as SerpOrganicResult[];
+        this.getOrderedListOfItems(true) as IEngineSearchResultItem[];
     }
   }
 
@@ -170,7 +165,7 @@ export class RankSearchResultsProcessor extends BasePairwiseRankingsProcessor {
       this.setupRankingPrompts(resultsToRank);
       await this.performPairwiseRanking();
 
-      this.memory.problemStatement.searchResults.pages[searchResultType] = this.getOrderedListOfItems(true) as SerpOrganicResult[];
+      this.memory.problemStatement.searchResults.pages[searchResultType] = this.getOrderedListOfItems(true) as IEngineSearchResultItem[];
 
       await this.processSubProblems(searchResultType);
     }

@@ -43,7 +43,7 @@ export class CreateProsConsProcessor extends BaseProcessor {
       ),
       new HumanChatMessage(
         `
-        ${this.renderPromblemStatementSubProblemsAndEntities(
+        ${this.renderProblemStatementSubProblemsAndEntities(
           this.currentSubProblemIndex!
         )}
 
@@ -78,7 +78,7 @@ export class CreateProsConsProcessor extends BaseProcessor {
       ),
       new HumanChatMessage(
         `
-         ${this.renderPromblemStatementSubProblemsAndEntities(
+         ${this.renderProblemStatementSubProblemsAndEntities(
            this.currentSubProblemIndex!
          )}
 

@@ -42,7 +42,6 @@ export abstract class BaseProcessor extends Base {
     const subProblem = this.memory.subProblems[subProblemIndex];
     return `
       Sub Problem:
-
       ${subProblem.title}
       ${subProblem.description}
       ${subProblem.whyIsSubProblemImportant}
@@ -69,7 +68,7 @@ export abstract class BaseProcessor extends Base {
       `;
   }
 
-  renderPromblemStatementSubProblemsAndEntities(index: number) {
+  renderProblemStatementSubProblemsAndEntities(index: number) {
     const subProblem = this.memory.subProblems[index];
     const entitiesText = `
       ${subProblem.entities
@@ -180,6 +179,7 @@ export abstract class BaseProcessor extends Base {
             }
 
             retryCount++;
+            this.logger.debug(`Retrying callLLM ${retryCount}`)
           } else {
             retry = false;
             if (response.text) {
@@ -192,6 +192,7 @@ export abstract class BaseProcessor extends Base {
           }
         } else {
           retry = false;
+          this.logger.error(`callLLM response was empty`);
           throw new Error("callLLM response was empty");
         }
         await new Promise((resolve) =>

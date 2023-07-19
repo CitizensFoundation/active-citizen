@@ -2,7 +2,7 @@ import { IEngineConstants } from "../../../constants.js";
 import fs from "fs";
 import process from "process";
 import path from "path";
-const maxFullDetailSolutions = 7;
+const maxFullDetailSolutions = 10;
 let filePath = process.argv[2] || "currentMemory.json";
 if (!path.isAbsolute(filePath)) {
     filePath = path.join(process.cwd(), filePath);
@@ -42,13 +42,17 @@ let html = `
     <h2>Search Results:</h2>
     <ul>
       ${memory.problemStatement.searchResults.pages.general
-    .map((result) => `<li>${result.title} - <a href="${result.link}">${result.link}</a></li>`)
+    .map((result) => `<li>${result.title} - <a href="${
+//@ts-ignore
+result.url || result.link}">${
+//@ts-ignore
+result.url || result.link}</a></li>`)
     .join("")}
     </ul>
 `;
 for (let s = 0; s < Math.min(memory.subProblems.length, IEngineConstants.maxSubProblems); s++) {
     const subProblem = memory.subProblems[s];
-    const solutions = subProblem.solutions.seed;
+    const solutions = subProblem.solutions.populations[0];
     html += `
     <div class="card">
       <h2>Sub Problem: ${subProblem.title} (${formatElo(subProblem.eloRating)})</h2>

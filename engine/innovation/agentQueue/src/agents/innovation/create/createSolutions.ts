@@ -37,7 +37,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
       ),
       new HumanChatMessage(
         `
-        ${this.renderPromblemStatementSubProblemsAndEntities(subProblemIndex)}
+        ${this.renderProblemStatementSubProblemsAndEntities(subProblemIndex)}
 
         ${
           alreadyCreatedSolutions
@@ -87,7 +87,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
       this.renderCreateSystemMessage(),
       new HumanChatMessage(
         `
-            ${this.renderPromblemStatementSubProblemsAndEntities(
+            ${this.renderProblemStatementSubProblemsAndEntities(
               subProblemIndex
             )}
 
@@ -132,7 +132,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
       this.renderCreateSystemMessage(),
       new HumanChatMessage(
         `
-        ${this.renderPromblemStatementSubProblemsAndEntities(subProblemIndex)}
+        ${this.renderProblemStatementSubProblemsAndEntities(subProblemIndex)}
 
         Contexts for potential solutions:
         General Context from search:
@@ -221,20 +221,20 @@ export class CreateSolutionsProcessor extends BaseProcessor {
     }
   }
 
-  randomSearchQueryIndex(subProblemIndex: number | undefined) {
+  randomSearchQueryIndex(
+    searchQueries: IEngineSearchQueries,
+    type: IEngineWebPageTypes
+  ) {
     const randomIndex = Math.min(
       Math.floor(
         Math.random() *
           (IEngineConstants.maxTopSearchQueriesForSolutionCreation + 1)
       ),
-      subProblemIndex
-        ? this.memory.subProblems[subProblemIndex].searchQueries.general
-            .length - 1
-        : 2
+      searchQueries[type].length - 1
     );
     if (
       Math.random() <
-      IEngineConstants.chances.notUsingFirstSearchQueryForNewSolutions
+      IEngineConstants.chances.createSolutions.notUsingFirstSearchQuery
     ) {
       return randomIndex;
     } else {
@@ -251,12 +251,20 @@ export class CreateSolutionsProcessor extends BaseProcessor {
     );
     return {
       general:
-        searchQueries.general[this.randomSearchQueryIndex(subProblemIndex)],
+        searchQueries.general[
+          this.randomSearchQueryIndex(searchQueries, "general")
+        ],
       scientific:
-        searchQueries.scientific[this.randomSearchQueryIndex(subProblemIndex)],
+        searchQueries.scientific[
+          this.randomSearchQueryIndex(searchQueries, "scientific")
+        ],
       openData:
-        searchQueries.openData[this.randomSearchQueryIndex(subProblemIndex)],
-      news: searchQueries.news[this.randomSearchQueryIndex(subProblemIndex)],
+        searchQueries.openData[
+          this.randomSearchQueryIndex(searchQueries, "openData")
+        ],
+      news: searchQueries.news[
+        this.randomSearchQueryIndex(searchQueries, "news")
+      ],
     };
   }
 
@@ -264,24 +272,26 @@ export class CreateSolutionsProcessor extends BaseProcessor {
     type: IEngineWebPageTypes,
     problemStatementQueries: IEngineSearchQuery,
     subProblemQueries: IEngineSearchQuery,
-    otherSubProblemQueries: IEngineSearchQuery
+    otherSubProblemQueries: IEngineSearchQuery,
+    randomEntitySearchQueries: IEngineSearchQuery
   ) {
     let random = Math.random();
 
     let selectedQuery: string;
 
-    if (
-      random < IEngineConstants.chances.useMainProblemSearchQueriesNewSolutions
-    ) {
+    const mainProblemChance = IEngineConstants.chances.createSolutions.searchQueries.useMainProblemSearchQueries;
+    const otherSubProblemChance = mainProblemChance + IEngineConstants.chances.createSolutions.searchQueries.useOtherSubProblemSearchQueries;
+    const subProblemChance = otherSubProblemChance + IEngineConstants.chances.createSolutions.searchQueries.useSubProblemSearchQueries;
+    // The remaining probability is assigned to randomEntitySearchQueries
+
+    if (random < mainProblemChance) {
       selectedQuery = problemStatementQueries[type];
-    } else if (
-      random <
-      IEngineConstants.chances.useOtherSubProblemSearchQueriesNewSolutions +
-        IEngineConstants.chances.useMainProblemSearchQueriesNewSolutions
-    ) {
+    } else if (random < otherSubProblemChance) {
       selectedQuery = otherSubProblemQueries[type];
-    } else {
+    } else if (random < subProblemChance) {
       selectedQuery = subProblemQueries[type];
+    } else {
+      selectedQuery = randomEntitySearchQueries[type];
     }
 
     return selectedQuery;
@@ -321,6 +331,15 @@ export class CreateSolutionsProcessor extends BaseProcessor {
       subProblemIndex
     );
 
+    const entities = this.memory.subProblems[subProblemIndex].entities;
+
+    const randomEntity = entities[Math.floor(Math.random() * entities.length)];
+
+    const randomEntitySearchQueries = this.getAllTypeQueries(
+      randomEntity.searchQueries!,
+      subProblemIndex
+    );
+
     const otherSubProblemQueries = this.getAllTypeQueries(
       this.memory.subProblems[randomSubProblemIndex].searchQueries,
       randomSubProblemIndex
@@ -331,28 +350,32 @@ export class CreateSolutionsProcessor extends BaseProcessor {
       "scientific",
       problemStatementQueries,
       subProblemQueries,
-      otherSubProblemQueries
+      otherSubProblemQueries,
+      randomEntitySearchQueries
     );
 
     let general = this.getRandomSearchQueryForType(
       "general",
       problemStatementQueries,
       subProblemQueries,
-      otherSubProblemQueries
+      otherSubProblemQueries,
+      randomEntitySearchQueries
     );
 
     let openData = this.getRandomSearchQueryForType(
       "openData",
       problemStatementQueries,
       subProblemQueries,
-      otherSubProblemQueries
+      otherSubProblemQueries,
+      randomEntitySearchQueries
     );
 
     let news = this.getRandomSearchQueryForType(
       "news",
       problemStatementQueries,
       subProblemQueries,
-      otherSubProblemQueries
+      otherSubProblemQueries,
+      randomEntitySearchQueries
     );
 
     return {
@@ -424,7 +447,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
   renderRawSearchResults(rawSearchResults: IEngineWebPageGraphQlResults) {
     const results = this.getRandomItemFromArray(
       rawSearchResults.data.Get.WebPage,
-      IEngineConstants.limits.useTopNFromSearchResultsArray
+      IEngineConstants.limits.useRandomTopFromVectorSearchResults
     ) as IEngineWebPageAnalysisData;
 
     const solutionIdentifiedInTextContext = this.getRandomItemFromArray(
@@ -466,9 +489,10 @@ export class CreateSolutionsProcessor extends BaseProcessor {
     const random = Math.random();
 
     if (
-      random < IEngineConstants.chances.useMainProblemVectorSearchNewSolutions
+      random <
+      IEngineConstants.chances.createSolutions.vectorSearchAcrossAllProblems
     ) {
-      this.logger.debug("Using main problem vector search");
+      this.logger.debug("Using vector search across all problems");
       rawSearchResults = await this.webPageVectorStore.searchWebPages(
         searchQuery,
         this.memory.groupId,
@@ -606,6 +630,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
     try {
       await this.createAllSolutions();
     } catch (error) {
+      this.logger.error("Error creating solutions")
       this.logger.error(error);
       throw error;
     }

@@ -115,12 +115,12 @@ export class IEngineConstants {
     };
     static evolutionMutateModel = {
         name: "gpt-4",
-        temperature: 1.2,
+        temperature: 1.0,
         maxOutputTokens: 1024,
         tokenLimit: 8192,
         inTokenCostUSD: gpt4InTokenPrice,
         outTokenCostUSD: gpt4OutTokenPrice,
-        verbose: true,
+        verbose: false,
     };
     static evolutionRecombineModel = {
         name: "gpt-4",
@@ -129,7 +129,7 @@ export class IEngineConstants {
         tokenLimit: 8192,
         inTokenCostUSD: gpt4InTokenPrice,
         outTokenCostUSD: gpt4OutTokenPrice,
-        verbose: true,
+        verbose: false,
     };
     static getPageTimeout = 1000 * 10;
     static getPageCacheExpiration = 60 * 60 * 24 * 7 * 4 * 6; // 6 months
@@ -143,41 +143,48 @@ export class IEngineConstants {
     static mainSearchRetryCount = 40;
     static maxTopWebPagesToGet = 5;
     static maxWebPagesToGetByTopSearchPosition = 5;
-    static maxTopSearchQueriesForSolutionCreation = 4;
+    static maxSearchResults = 10;
     static maxTopProsConsUsedForRanking = 3;
     static maxNumberGeneratedProsConsForSolution = 14;
     static minSleepBeforeBrowserRequest = 1100;
     static maxAdditionalRandomSleepBeforeBrowserRequest = 1100;
     static numberOfSearchTypes = 4;
     static chances = {
-        useMainProblemSearchQueriesNewSolutions: 0.2,
-        useOtherSubProblemSearchQueriesNewSolutions: 0.1,
-        notUsingFirstSearchQueryForNewSolutions: 0.7,
-        useMainProblemVectorSearchNewSolutions: 0.1
+        createSolutions: {
+            searchQueries: {
+                useMainProblemSearchQueries: 0.05,
+                useOtherSubProblemSearchQueries: 0.05,
+                useSubProblemSearchQueries: 0.5,
+                useRandomEntitySearchQueries: 0.4,
+            },
+            notUsingFirstSearchQuery: 0.7,
+            vectorSearchAcrossAllProblems: 0.1,
+        },
     };
+    static maxTopSearchQueriesForSolutionCreation = 4;
     static limits = {
         webPageVectorResultsForNewSolutions: 10,
-        useTopNFromSearchResultsArray: 4
+        useRandomTopFromVectorSearchResults: 3,
     };
     static enable = {
         refine: {
             createSubProblems: true,
             createEntities: true,
             createSolutions: true,
-            createProsCons: true
-        }
+            createProsCons: true,
+        },
     };
     static evolution = {
         populationSize: 60,
         useEliteForSeedPercent: 0.3,
         // Population split
         keepElitePercent: 0.1,
-        randomImmigrationPercent: 0.1,
+        randomImmigrationPercent: 0.3,
         mutationOffspringPercent: 0.3,
-        crossoverPercent: 0.5,
+        crossoverPercent: 0.3,
         mutationRate: 0.1,
-        mutationPromptChangesRate: 'medium',
-        selectParentTournamentSize: 7
+        mutationPromptChangesRate: "medium",
+        selectParentTournamentSize: 7,
     };
     static currentUserAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36";
 }
