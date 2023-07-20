@@ -39,13 +39,28 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
         `),
         ];
     }
-    renderMutatePrompt(individual) {
+    renderMutatePrompt(individual, mutateRate = undefined) {
+        if (!mutateRate) {
+            const random = Math.random();
+            if (random < IEngineConstants.evolution.lowMutationRate) {
+                mutateRate = "medium";
+            }
+            else if (random <
+                IEngineConstants.evolution.lowMutationRate +
+                    IEngineConstants.evolution.mediumMutationRate) {
+                mutateRate = "medium";
+            }
+            else {
+                mutateRate = "high";
+            }
+        }
+        this.logger.debug(`Mutate rate: ${mutateRate}`);
         return [
             new SystemChatMessage(`
         As an AI genetic algorithm expert, your task is to mutate the solution presented below.
 
         Please consider the following guidelines:
-        1. Implement mutation at a rate of ${IEngineConstants.evolution.mutationPromptChangesRate} changes.
+        1. Implement mutation at a rate of ${mutateRate} changes.
         2. The mutation process should introduce new attributes or alter existing ones.
         3. Ensure that the mutation is logical and meaningful.
         4. The mutated solution should continue to offer a viable solution to the problem presented.
@@ -75,7 +90,7 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
         const offspring = await this.performRecombination(parentA, parentB);
         return offspring;
     }
-    async performMutation(individual) {
+    async performMutation(individual, mutateRate = undefined) {
         this.logger.debug("Performing mutation");
         this.chat = new ChatOpenAI({
             temperature: IEngineConstants.evolutionMutateModel.temperature,
@@ -85,7 +100,7 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
         });
         this.logger.debug("Before mutation");
         try {
-            const mutant = (await this.callLLM("evolve-mutate-population", IEngineConstants.evolutionMutateModel, this.renderMutatePrompt(individual)));
+            const mutant = (await this.callLLM("evolve-mutate-population", IEngineConstants.evolutionMutateModel, this.renderMutatePrompt(individual, mutateRate)));
             this.logger.debug("After mutation");
             return mutant;
         }
@@ -95,9 +110,9 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
             throw error;
         }
     }
-    async mutate(individual) {
+    async mutate(individual, mutateRate = undefined) {
         try {
-            const mutant = await this.performMutation(individual);
+            const mutant = await this.performMutation(individual, mutateRate);
             return mutant;
         }
         catch (error) {
@@ -197,8 +212,8 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
                 this.logger.debug(`Parent A: ${parentA.title}`);
                 this.logger.debug(`Parent B: ${parentB.title}`);
                 let offspring = await this.recombine(parentA, parentB);
-                if (Math.random() < IEngineConstants.evolution.mutationOffspringPercent) {
-                    offspring = await this.mutate(offspring);
+                if (Math.random() < IEngineConstants.evolution.crossoverMutationPercent) {
+                    offspring = await this.mutate(offspring, "low");
                 }
                 this.logger.debug(`Offspring: ${JSON.stringify(offspring, null, 2)}`);
                 newPopulation.push(offspring);

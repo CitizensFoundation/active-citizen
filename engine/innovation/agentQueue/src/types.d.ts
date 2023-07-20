@@ -288,3 +288,5 @@ interface IEngineWebPageGraphQlResults {
     }
   }
 }
+
+type IEngineMutationRates = "low" | "medium" | "high";

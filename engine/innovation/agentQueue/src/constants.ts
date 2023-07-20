@@ -225,7 +225,6 @@ export class IEngineConstants {
 
   static evolution = {
     populationSize: 60,
-    useEliteForSeedPercent: 0.3,
 
     // Population split
     keepElitePercent: 0.1,
@@ -233,13 +232,16 @@ export class IEngineConstants {
     mutationOffspringPercent: 0.3,
     crossoverPercent: 0.3,
 
-    mutationRate: 0.1,
-    mutationPromptChangesRate: "medium" as mutationRates,
+    // General mutation rate split
+    lowMutationRate: 0.3,
+    mediumMutationRate: 0.5,
+    highMutationRate: 0.2,
+
     selectParentTournamentSize: 7,
-  };
+    crossoverMutationPercent: 0.4
+ };
 
   static currentUserAgent =
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36";
 }
 
-type mutationRates = "low" | "medium" | "high";
