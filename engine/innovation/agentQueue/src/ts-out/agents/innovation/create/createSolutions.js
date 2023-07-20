@@ -183,12 +183,16 @@ export class CreateSolutionsProcessor extends BaseProcessor {
                 otherSubProblemIndexes.push(i);
             }
         }
-        //this.logger.debug(`otherSubProblemIndexes: ${otherSubProblemIndexes}`);
+        this.logger.debug(`otherSubProblemIndexes: ${otherSubProblemIndexes}`);
         const randomSubProblemIndex = otherSubProblemIndexes[Math.floor(Math.random() * otherSubProblemIndexes.length)];
         const problemStatementQueries = this.getAllTypeQueries(this.memory.problemStatement.searchQueries, undefined);
         const subProblemQueries = this.getAllTypeQueries(this.memory.subProblems[subProblemIndex].searchQueries, subProblemIndex);
         const entities = this.memory.subProblems[subProblemIndex].entities;
-        const randomEntity = entities[Math.floor(Math.random() * entities.length)];
+        this.logger.debug(`Entities: ${JSON.stringify(entities, null, 2)}`);
+        this.logger.debug(`SP: ${JSON.stringify(this.memory.subProblems[subProblemIndex], null, 2)}`);
+        const chosenEntities = entities.splice(0, IEngineConstants.maxTopEntitiesToSearch);
+        const randomEntity = chosenEntities[Math.floor(Math.random() * chosenEntities.length)];
+        this.logger.debug(`Random Entity: ${JSON.stringify(randomEntity.searchQueries, null, 2)}`);
         const randomEntitySearchQueries = this.getAllTypeQueries(randomEntity.searchQueries, subProblemIndex);
         const otherSubProblemQueries = this.getAllTypeQueries(this.memory.subProblems[randomSubProblemIndex].searchQueries, randomSubProblemIndex);
         //TODO: Refactor the types to be an array ["scientific", "general", ...]

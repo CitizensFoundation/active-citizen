@@ -314,7 +314,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
       }
     }
 
-    //this.logger.debug(`otherSubProblemIndexes: ${otherSubProblemIndexes}`);
+    this.logger.debug(`otherSubProblemIndexes: ${otherSubProblemIndexes}`);
 
     const randomSubProblemIndex =
       otherSubProblemIndexes[
@@ -332,8 +332,14 @@ export class CreateSolutionsProcessor extends BaseProcessor {
     );
 
     const entities = this.memory.subProblems[subProblemIndex].entities;
+    this.logger.debug(`Entities: ${JSON.stringify(entities, null, 2)}`);
+    this.logger.debug(`SP: ${JSON.stringify(this.memory.subProblems[subProblemIndex], null, 2)}`);
 
-    const randomEntity = entities[Math.floor(Math.random() * entities.length)];
+    const chosenEntities = entities.slice(0, IEngineConstants.maxTopEntitiesToSearch);
+
+    const randomEntity = chosenEntities[Math.floor(Math.random() * chosenEntities.length)];
+
+    this.logger.debug(`Random Entity: ${JSON.stringify(randomEntity.searchQueries, null, 2)}`)
 
     const randomEntitySearchQueries = this.getAllTypeQueries(
       randomEntity.searchQueries!,

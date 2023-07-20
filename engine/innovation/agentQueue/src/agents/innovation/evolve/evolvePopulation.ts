@@ -151,8 +151,8 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
     }
   }
 
-  async getNewSolutions(maxNumberOfSolutions: number) {
-    this.logger.info(`Getting new solutions: ${maxNumberOfSolutions}`);
+  async getNewSolutions(alreadyCreatedSolutions: IEngineSolution[]) {
+    this.logger.info(`Getting new solutions`);
 
     this.chat = new ChatOpenAI({
       temperature: IEngineConstants.createSolutionsModel.temperature,
@@ -161,12 +161,22 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
       verbose: IEngineConstants.createSolutionsModel.verbose,
     });
 
+    let alreadyCreatedSolutionsText;
+
+    if (alreadyCreatedSolutions.length > 0) {
+      alreadyCreatedSolutionsText = alreadyCreatedSolutions
+        .map((solution) => solution.title)
+        .join("\n");
+    }
+
     const textContexts = await this.getTextContext(
       this.currentSubProblemIndex!,
-      undefined
+      alreadyCreatedSolutionsText
     );
 
-    this.logger.debug(`Text contexts: ${JSON.stringify(textContexts, null, 2)}`)
+    this.logger.debug(
+      `Evolution Text contexts: ${JSON.stringify(textContexts, null, 2)}`
+    );
 
     const newSolutions = await this.createSolutions(
       this.currentSubProblemIndex!,
@@ -174,16 +184,8 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
       textContexts.scientific,
       textContexts.openData,
       textContexts.news,
-      undefined
+      alreadyCreatedSolutionsText
     );
-
-    if (newSolutions.length > maxNumberOfSolutions) {
-      newSolutions.splice(
-        0,
-        newSolutions.length - maxNumberOfSolutions,
-        ...newSolutions.slice(0, maxNumberOfSolutions)
-      );
-    }
 
     return newSolutions;
   }
@@ -262,17 +264,29 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
       this.logger.debug("Before creating new solutions");
 
       while (newSolutions.length < immigrationCount) {
-        newSolutions = [
-          ...newSolutions,
-          ...(await this.getNewSolutions(immigrationCount)),
-        ];
+        const currentSolutions = await this.getNewSolutions(newSolutions);
+        this.logger.debug("After getting new solutions");
+
+        newSolutions = [...newSolutions, ...currentSolutions];
 
         this.logger.debug(
-          `New solutions: ${JSON.stringify(newSolutions, null, 2)}`
+          `New solutions for population: ${JSON.stringify(
+            newSolutions,
+            null,
+            2
+          )}`
         );
       }
 
-      this.logger.debug("After creating new solutions");
+      if (newSolutions.length > immigrationCount) {
+        newSolutions.slice(
+          0,
+          newSolutions.length - immigrationCount,
+          ...newSolutions.slice(0, immigrationCount)
+        );
+      }
+
+      this.logger.debug("After creating new solutions: " + newSolutions.length);
 
       newPopulation.push(...newSolutions);
 
