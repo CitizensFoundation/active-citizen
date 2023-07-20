@@ -88,14 +88,14 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
                         this.logger.debug(`${prosOrCons} before ranking: ${JSON.stringify(solution[prosOrCons], null, 2)}`);
                         this.logger.debug("Converting pros/cons to objects");
                         const convertedProsCons = this.convertProsConsToObjects(solution[prosOrCons]);
-                        this.setupRankingPrompts(solutionIndex, convertedProsCons);
-                        await this.performPairwiseRanking({
+                        this.setupRankingPrompts(subProblemIndex, convertedProsCons);
+                        await this.performPairwiseRanking(subProblemIndex, {
                             solution: solutionDescription,
                             prosOrCons,
                             subProblemIndex,
                         });
-                        subProblem.solutions.populations[this.currentPopulationIndex(subProblemIndex)][solutionIndex][prosOrCons] = this.getOrderedListOfItems(solutionIndex, true);
-                        this.logger.debug(`${prosOrCons} before ranking: ${JSON.stringify(subProblem.solutions.populations[this.currentPopulationIndex(subProblemIndex)][solutionIndex][prosOrCons], null, 2)}`);
+                        subProblem.solutions.populations[this.currentPopulationIndex(subProblemIndex)][solutionIndex][prosOrCons] = this.getOrderedListOfItems(subProblemIndex, true);
+                        this.logger.debug(`${prosOrCons} after ranking: ${JSON.stringify(subProblem.solutions.populations[this.currentPopulationIndex(subProblemIndex)][solutionIndex][prosOrCons], null, 2)}`);
                     }
                     else {
                         this.logger.debug(`${prosOrCons} already ranked: ${JSON.stringify(solution[prosOrCons], null, 2)}`);

@@ -97,6 +97,7 @@ export class BasePairwiseRankingsProcessor extends BaseProcessor {
     }
     async performPairwiseRanking(subProblemIndex, additionalData) {
         this.logger.info("Performing pairwise ranking");
+        this.logger.debug(`Sub-problem index: ${subProblemIndex} ${this.prompts[subProblemIndex]}`);
         try {
             for (let p = 0; p < this.prompts[subProblemIndex].length; p++) {
                 this.logger.info(`Prompt ${p + 1} of ${this.prompts[subProblemIndex].length}`);

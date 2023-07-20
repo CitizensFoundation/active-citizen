@@ -154,9 +154,9 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
               solution[prosOrCons]! as string[]
             );
 
-            this.setupRankingPrompts(solutionIndex, convertedProsCons);
+            this.setupRankingPrompts(subProblemIndex, convertedProsCons);
 
-            await this.performPairwiseRanking({
+            await this.performPairwiseRanking(subProblemIndex, {
               solution: solutionDescription,
               prosOrCons,
               subProblemIndex,
@@ -165,12 +165,12 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
             subProblem.solutions.populations[
               this.currentPopulationIndex(subProblemIndex)
             ][solutionIndex][prosOrCons] = this.getOrderedListOfItems(
-              solutionIndex,
+              subProblemIndex,
               true
             ) as IEngineProCon[];
 
             this.logger.debug(
-              `${prosOrCons} before ranking: ${JSON.stringify(
+              `${prosOrCons} after ranking: ${JSON.stringify(
                 subProblem.solutions.populations[
                   this.currentPopulationIndex(subProblemIndex)
                 ][solutionIndex][prosOrCons],
