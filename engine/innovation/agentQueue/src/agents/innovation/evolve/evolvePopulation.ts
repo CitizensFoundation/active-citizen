@@ -257,44 +257,6 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
         this.logger.debug(`Elite: ${previousPopulation[i].title}`);
       }
 
-      // Immigration
-      let immigrationCount = Math.floor(
-        populationSize * IEngineConstants.evolution.randomImmigrationPercent
-      );
-
-      this.logger.info(`Immigration count: ${immigrationCount}`);
-
-      if (newPopulation.length + immigrationCount > populationSize) {
-        immigrationCount = populationSize - newPopulation.length;
-      }
-
-      let newSolutions: IEngineSolution[] = [];
-
-      this.logger.debug("Before creating new solutions");
-
-      while (newSolutions.length < immigrationCount) {
-        const currentSolutions = await this.getNewSolutions(newSolutions);
-        this.logger.debug("After getting new solutions");
-
-        newSolutions = [...newSolutions, ...currentSolutions];
-
-        this.logger.debug(
-          `New solutions for population: ${JSON.stringify(
-            newSolutions,
-            null,
-            2
-          )}`
-        );
-      }
-
-      if (newSolutions.length > immigrationCount) {
-        newSolutions.splice(immigrationCount);
-      }
-
-      this.logger.debug("After creating new solutions: " + newSolutions.length);
-
-      newPopulation.push(...newSolutions);
-
       // Crossover
       let crossoverCount = Math.floor(
         populationSize * IEngineConstants.evolution.crossoverPercent
@@ -348,6 +310,44 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
           throw error;
         }
       }
+
+      // Immigration
+      let immigrationCount = Math.floor(
+        populationSize * IEngineConstants.evolution.randomImmigrationPercent
+      );
+
+      this.logger.info(`Immigration count: ${immigrationCount}`);
+
+      if (newPopulation.length + immigrationCount > populationSize) {
+        immigrationCount = populationSize - newPopulation.length;
+      }
+
+      let newSolutions: IEngineSolution[] = [];
+
+      this.logger.debug("Before creating new solutions");
+
+      while (newSolutions.length < immigrationCount) {
+        const currentSolutions = await this.getNewSolutions(newSolutions);
+        this.logger.debug("After getting new solutions");
+
+        newSolutions = [...newSolutions, ...currentSolutions];
+
+        this.logger.debug(
+          `New solutions for population: ${JSON.stringify(
+            newSolutions,
+            null,
+            2
+          )}`
+        );
+      }
+
+      if (newSolutions.length > immigrationCount) {
+        newSolutions.splice(immigrationCount);
+      }
+
+      this.logger.debug("After creating new solutions: " + newSolutions.length);
+
+      newPopulation.push(...newSolutions);
 
       this.logger.info(
         `New population size: ${newPopulation.length} for sub problem ${subProblemIndex}`

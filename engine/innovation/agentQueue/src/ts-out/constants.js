@@ -102,7 +102,7 @@ export class IEngineConstants {
         tokenLimit: 8192,
         inTokenCostUSD: gpt4InTokenPrice,
         outTokenCostUSD: gpt4OutTokenPrice,
-        verbose: true,
+        verbose: false,
     };
     static evolveSolutionsModel = {
         name: "gpt-4",
@@ -111,7 +111,7 @@ export class IEngineConstants {
         tokenLimit: 8192,
         inTokenCostUSD: gpt4InTokenPrice,
         outTokenCostUSD: gpt4OutTokenPrice,
-        verbose: true,
+        verbose: false,
     };
     static createProsConsModel = {
         name: "gpt-4",
@@ -129,7 +129,7 @@ export class IEngineConstants {
         tokenLimit: 8192,
         inTokenCostUSD: gpt4InTokenPrice,
         outTokenCostUSD: gpt4OutTokenPrice,
-        verbose: false,
+        verbose: true,
     };
     static evolutionRecombineModel = {
         name: "gpt-4",
@@ -138,7 +138,7 @@ export class IEngineConstants {
         tokenLimit: 8192,
         inTokenCostUSD: gpt4InTokenPrice,
         outTokenCostUSD: gpt4OutTokenPrice,
-        verbose: false,
+        verbose: true,
     };
     static getPageTimeout = 1000 * 10;
     static getPageCacheExpiration = 60 * 60 * 24 * 7 * 4 * 6; // 6 months
