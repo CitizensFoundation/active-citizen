@@ -170,7 +170,8 @@ export class CreateSolutionsProcessor extends BaseProcessor {
     scientificTextContext: string,
     openDataTextContext: string,
     newsTextContext: string,
-    alreadyCreatedSolutions: string | undefined = undefined
+    alreadyCreatedSolutions: string | undefined = undefined,
+    stageName: IEngineStageTypes = "create-seed-solutions"
   ): Promise<IEngineSolution[]> {
     if (DISABLE_LLM_FOR_DEBUG) {
       this.logger.info("DISABLE_LLM_FOR_DEBUG is true, skipping LLM call");
@@ -186,7 +187,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
     } else {
       this.logger.info(`Calling LLM for sub problem ${subProblemIndex}`);
       let results = await this.callLLM(
-        "create-seed-solutions",
+        stageName,
         IEngineConstants.createSolutionsModel,
         await this.renderCreatePrompt(
           generalTextContext,
@@ -203,7 +204,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
           `Calling LLM refine for sub problem ${subProblemIndex}`
         );
         results = await this.callLLM(
-          "create-seed-solutions",
+          stageName,
           IEngineConstants.createSolutionsModel,
           await this.renderRefinePrompt(
             results,
@@ -332,8 +333,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
     );
 
     const entities = this.memory.subProblems[subProblemIndex].entities;
-    this.logger.debug(`Entities: ${JSON.stringify(entities, null, 2)}`);
-    this.logger.debug(`SP: ${JSON.stringify(this.memory.subProblems[subProblemIndex], null, 2)}`);
+    //this.logger.debug(`Entities: ${JSON.stringify(entities, null, 2)}`);
 
     const chosenEntities = entities.slice(0, IEngineConstants.maxTopEntitiesToSearch);
 

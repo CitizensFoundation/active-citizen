@@ -16,15 +16,15 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
     renderRecombinationPrompt(parentA, parentB) {
         return [
             new SystemChatMessage(`
-        As an AI genetic algorithm expert, your task is to recombine the attributes of two parent solutions (Parent A and Parent B) to create a new offspring solution.
+        As an AI genetic algorithm expert, your task is to create a new solution by merging the attributes of two parent solutions (Parent A and Parent B).
 
-        Please recombine these solutions considering the following guidelines:
-        1. The offspring should contain attributes from both parents.
-        2. The recombination should be logical and meaningful.
-        3. The offspring should be a viable solution to the problem.
-        5. Output your recombined solution in the following JSON format: { title, description, mainBenefitOfSolution, mainObstacleToSolutionAdoption }.
-        6. Never add JSON properties, only change existing ones.
-        7. Think step by step.
+        Please consider the following guidelines when developing your merged solution:
+        1. The merged solution should contain some attributes from both parents but in a new way - not merely the attributes from parent A followed by those from parent B.
+        2. The title of the merged solution should be approximately the same length as the parent titles.
+        3. The combination should be logical, meaningful and present a standalone solution to the problem at hand - not two solutions in one.
+        4. Do not refer "the merged solution" in your output, the solution should be presented as a standalone solution.
+        5. Output your merged solution in the following JSON format: { title, description, mainBenefitOfSolution, mainObstacleToSolutionAdoption }. Do not add any new JSON properties.
+        6. Think step by step.
         `),
             new HumanChatMessage(`
         ${this.renderProblemStatementSubProblemsAndEntities(this.currentSubProblemIndex)}
@@ -35,25 +35,23 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
         Parent B:
         ${this.renderSolution(parentB)}
 
-        Generate and output JSON for the offspring solution below:
+        Generate and output JSON for the merged solution below:
         `),
         ];
     }
     renderMutatePrompt(individual) {
         return [
             new SystemChatMessage(`
-        As an AI genetic algorithm expert, your task is to mutate the solution below.
+        As an AI genetic algorithm expert, your task is to mutate the solution presented below.
 
         Please consider the following guidelines:
-        1. Mutate the solution with a ${IEngineConstants.evolution.mutationPromptChangesRate} rate of changes.
-        2. The mutation should introduce new attributes or alter existing ones.
-        3. The mutation should be logical and meaningful.
-        4. The mutated individual should still be a viable solution to the problem.
-        5. Output your mutated solution in the following JSON format: { title, description, mainBenefitOfSolution, mainObstacleToSolutionAdoption }.
-        6. Never add JSON properties, only change existing ones.
-        7. Think step by step.
-
-      `),
+        1. Implement mutation at a rate of ${IEngineConstants.evolution.mutationPromptChangesRate} changes.
+        2. The mutation process should introduce new attributes or alter existing ones.
+        3. Ensure that the mutation is logical and meaningful.
+        4. The mutated solution should continue to offer a viable solution to the problem presented.
+        5. Output your mutated solution in the following JSON format: { title, description, mainBenefitOfSolution, mainObstacleToSolutionAdoption }. Do not add any new JSON properties.
+        6. Think step by step.
+        `),
             new HumanChatMessage(`
         ${this.renderProblemStatementSubProblemsAndEntities(this.currentSubProblemIndex)}
 
@@ -111,10 +109,10 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
     async getNewSolutions(alreadyCreatedSolutions) {
         this.logger.info(`Getting new solutions`);
         this.chat = new ChatOpenAI({
-            temperature: IEngineConstants.createSolutionsModel.temperature,
-            maxTokens: IEngineConstants.createSolutionsModel.maxOutputTokens,
-            modelName: IEngineConstants.createSolutionsModel.name,
-            verbose: IEngineConstants.createSolutionsModel.verbose,
+            temperature: IEngineConstants.evolveSolutionsModel.temperature,
+            maxTokens: IEngineConstants.evolveSolutionsModel.maxOutputTokens,
+            modelName: IEngineConstants.evolveSolutionsModel.name,
+            verbose: IEngineConstants.evolveSolutionsModel.verbose,
         });
         let alreadyCreatedSolutionsText;
         if (alreadyCreatedSolutions.length > 0) {
@@ -124,14 +122,16 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
         }
         const textContexts = await this.getTextContext(this.currentSubProblemIndex, alreadyCreatedSolutionsText);
         this.logger.debug(`Evolution Text contexts: ${JSON.stringify(textContexts, null, 2)}`);
-        const newSolutions = await this.createSolutions(this.currentSubProblemIndex, textContexts.general, textContexts.scientific, textContexts.openData, textContexts.news, alreadyCreatedSolutionsText);
+        const newSolutions = await this.createSolutions(this.currentSubProblemIndex, textContexts.general, textContexts.scientific, textContexts.openData, textContexts.news, alreadyCreatedSolutionsText, "evolve-create-population");
         return newSolutions;
     }
-    selectParent(population) {
+    selectParent(population, excludedIndividual) {
         const tournamentSize = IEngineConstants.evolution.selectParentTournamentSize;
         let tournament = [];
-        for (let i = 0; i < tournamentSize; i++) {
+        while (tournament.length < tournamentSize) {
             const randomIndex = Math.floor(Math.random() * population.length);
+            if (excludedIndividual && population[randomIndex] === excludedIndividual)
+                continue;
             tournament.push(population[randomIndex]);
         }
         tournament.sort((a, b) => b.eloRating - a.eloRating);
@@ -151,10 +151,12 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
             throw new Error("No previous population found." + subProblemIndex);
         }
     }
-    async createPopulation() {
+    async evolvePopulation() {
         for (let subProblemIndex = 0; subProblemIndex <
             Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems); subProblemIndex++) {
             this.currentSubProblemIndex = subProblemIndex;
+            this.logger.info(`Evolve population for sub problem ${subProblemIndex}`);
+            this.logger.info(`Current number of generations: ${this.memory.subProblems[subProblemIndex].solutions.populations.length}`);
             let previousPopulation = this.getPreviousPopulation(subProblemIndex);
             const populationSize = IEngineConstants.evolution.populationSize;
             const newPopulation = [];
@@ -179,7 +181,7 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
                 this.logger.debug(`New solutions for population: ${JSON.stringify(newSolutions, null, 2)}`);
             }
             if (newSolutions.length > immigrationCount) {
-                newSolutions.splice(0, newSolutions.length - immigrationCount, ...newSolutions.slice(0, immigrationCount));
+                newSolutions.splice(immigrationCount);
             }
             this.logger.debug("After creating new solutions: " + newSolutions.length);
             newPopulation.push(...newSolutions);
@@ -188,7 +190,7 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
             this.logger.debug(`Crossover count: ${crossoverCount}`);
             for (let i = 0; i < crossoverCount; i++) {
                 const parentA = this.selectParent(previousPopulation);
-                const parentB = this.selectParent(previousPopulation);
+                const parentB = this.selectParent(previousPopulation, parentA);
                 this.logger.debug(`Parent A: ${parentA.title}`);
                 this.logger.debug(`Parent B: ${parentB.title}`);
                 let offspring = await this.recombine(parentA, parentB);
@@ -220,14 +222,16 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
                     throw error;
                 }
             }
+            this.logger.info(`New population size: ${newPopulation.length} for sub problem ${subProblemIndex}`);
             this.memory.subProblems[subProblemIndex].solutions.populations.push(newPopulation);
+            this.logger.debug(`Current number of generations after push: ${this.memory.subProblems[subProblemIndex].solutions.populations.length}`);
             await this.saveMemory();
         }
     }
     async process() {
         this.logger.info("Evolve Population Processor");
         try {
-            await this.createPopulation();
+            await this.evolvePopulation();
         }
         catch (error) {
             this.logger.error("Error in Evolve Population Processor");

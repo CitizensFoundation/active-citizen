@@ -117,7 +117,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
         ];
         return messages;
     }
-    async createSolutions(subProblemIndex, generalTextContext, scientificTextContext, openDataTextContext, newsTextContext, alreadyCreatedSolutions = undefined) {
+    async createSolutions(subProblemIndex, generalTextContext, scientificTextContext, openDataTextContext, newsTextContext, alreadyCreatedSolutions = undefined, stageName = "create-seed-solutions") {
         if (DISABLE_LLM_FOR_DEBUG) {
             this.logger.info("DISABLE_LLM_FOR_DEBUG is true, skipping LLM call");
             await this.renderCreatePrompt(generalTextContext, scientificTextContext, openDataTextContext, newsTextContext, subProblemIndex, alreadyCreatedSolutions);
@@ -125,10 +125,10 @@ export class CreateSolutionsProcessor extends BaseProcessor {
         }
         else {
             this.logger.info(`Calling LLM for sub problem ${subProblemIndex}`);
-            let results = await this.callLLM("create-seed-solutions", IEngineConstants.createSolutionsModel, await this.renderCreatePrompt(generalTextContext, scientificTextContext, openDataTextContext, newsTextContext, subProblemIndex, alreadyCreatedSolutions));
+            let results = await this.callLLM(stageName, IEngineConstants.createSolutionsModel, await this.renderCreatePrompt(generalTextContext, scientificTextContext, openDataTextContext, newsTextContext, subProblemIndex, alreadyCreatedSolutions));
             if (IEngineConstants.enable.refine.createSolutions) {
                 this.logger.info(`Calling LLM refine for sub problem ${subProblemIndex}`);
-                results = await this.callLLM("create-seed-solutions", IEngineConstants.createSolutionsModel, await this.renderRefinePrompt(results, generalTextContext, scientificTextContext, openDataTextContext, newsTextContext, subProblemIndex, alreadyCreatedSolutions));
+                results = await this.callLLM(stageName, IEngineConstants.createSolutionsModel, await this.renderRefinePrompt(results, generalTextContext, scientificTextContext, openDataTextContext, newsTextContext, subProblemIndex, alreadyCreatedSolutions));
             }
             return results;
         }
@@ -188,9 +188,8 @@ export class CreateSolutionsProcessor extends BaseProcessor {
         const problemStatementQueries = this.getAllTypeQueries(this.memory.problemStatement.searchQueries, undefined);
         const subProblemQueries = this.getAllTypeQueries(this.memory.subProblems[subProblemIndex].searchQueries, subProblemIndex);
         const entities = this.memory.subProblems[subProblemIndex].entities;
-        this.logger.debug(`Entities: ${JSON.stringify(entities, null, 2)}`);
-        this.logger.debug(`SP: ${JSON.stringify(this.memory.subProblems[subProblemIndex], null, 2)}`);
-        const chosenEntities = entities.splice(0, IEngineConstants.maxTopEntitiesToSearch);
+        //this.logger.debug(`Entities: ${JSON.stringify(entities, null, 2)}`);
+        const chosenEntities = entities.slice(0, IEngineConstants.maxTopEntitiesToSearch);
         const randomEntity = chosenEntities[Math.floor(Math.random() * chosenEntities.length)];
         this.logger.debug(`Random Entity: ${JSON.stringify(randomEntity.searchQueries, null, 2)}`);
         const randomEntitySearchQueries = this.getAllTypeQueries(randomEntity.searchQueries, subProblemIndex);
