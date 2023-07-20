@@ -6,16 +6,23 @@ import { BasePairwiseRankingsProcessor } from "./basePairwiseRanking.js";
 
 export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
   async voteOnPromptPair(
+    subProblemIndex: number,
     promptPair: number[],
-    additionalData: { solution: string; prosOrCons: "pros" | "cons"; subProblemIndex: number; }
+    additionalData: {
+      solution: string;
+      prosOrCons: "pros" | "cons";
+      subProblemIndex: number;
+    }
   ): Promise<IEnginePairWiseVoteResults> {
     const itemOneIndex = promptPair[0];
     const itemTwoIndex = promptPair[1];
 
-    const prosOrConsOne = (this.allItems![itemOneIndex] as IEngineProCon)
-      .description;
-    const prosOrConsTwo = (this.allItems![itemTwoIndex] as IEngineProCon)
-      .description;
+    const prosOrConsOne = (
+      this.allItems![subProblemIndex]![itemOneIndex] as IEngineProCon
+    ).description;
+    const prosOrConsTwo = (
+      this.allItems![subProblemIndex]![itemTwoIndex] as IEngineProCon
+    ).description;
 
     let proConSingle;
 
@@ -28,12 +35,20 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
     const messages = [
       new SystemChatMessage(
         `
-        As an AI expert, your role involves analyzing ${additionalData.prosOrCons} associated with solutions to problem statements and sub-problems to decide on which ${additionalData!.prosOrCons} is more important.
+        As an AI expert, your role involves analyzing ${
+          additionalData.prosOrCons
+        } associated with solutions to problem statements and sub-problems to decide on which ${
+          additionalData!.prosOrCons
+        } is more important.
 
         Please adhere to the following guidelines:
 
-        1. You will be presented with a problem statement, a solution, and two ${additionalData.prosOrCons}. These will be labeled as "${proConSingle} One" and "${proConSingle} Two".
-        2. Analyze and compare the ${additionalData.prosOrCons} based on their relevance and importance to the solution and choose which is more important and output your decision as either "One" or "Two".
+        1. You will be presented with a problem statement, a solution, and two ${
+          additionalData.prosOrCons
+        }. These will be labeled as "${proConSingle} One" and "${proConSingle} Two".
+        2. Analyze and compare the ${
+          additionalData.prosOrCons
+        } based on their relevance and importance to the solution and choose which is more important and output your decision as either "One" or "Two".
         3. Never explain your reasoning.
         `
       ),
@@ -57,6 +72,7 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
     ];
 
     return await this.getResultsFromLLM(
+      subProblemIndex,
       "rank-pros-cons",
       IEngineConstants.prosConsRankingsModel,
       messages,
@@ -86,11 +102,11 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
 
     try {
       // Parallel execution of the subproblems
-      const subProblemPromises = this.memory.subProblems.map(
-        (subProblem, subProblemIndex) => {
+      const subProblemPromises = this.memory.subProblems
+        .slice(0, IEngineConstants.maxSubProblems)
+        .map((subProblem, subProblemIndex) => {
           return this.processSubProblem(subProblem, subProblemIndex);
-        }
-      );
+        });
 
       await Promise.all(subProblemPromises);
     } catch (error) {
@@ -138,17 +154,18 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
               solution[prosOrCons]! as string[]
             );
 
-            this.setupRankingPrompts(convertedProsCons);
+            this.setupRankingPrompts(solutionIndex, convertedProsCons);
 
             await this.performPairwiseRanking({
               solution: solutionDescription,
               prosOrCons,
-              subProblemIndex
+              subProblemIndex,
             } as any);
 
             subProblem.solutions.populations[
               this.currentPopulationIndex(subProblemIndex)
             ][solutionIndex][prosOrCons] = this.getOrderedListOfItems(
+              solutionIndex,
               true
             ) as IEngineProCon[];
 
@@ -157,6 +174,14 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
                 subProblem.solutions.populations[
                   this.currentPopulationIndex(subProblemIndex)
                 ][solutionIndex][prosOrCons],
+                null,
+                2
+              )}`
+            );
+          } else {
+            this.logger.debug(
+              `${prosOrCons} already ranked: ${JSON.stringify(
+                solution[prosOrCons],
                 null,
                 2
               )}`

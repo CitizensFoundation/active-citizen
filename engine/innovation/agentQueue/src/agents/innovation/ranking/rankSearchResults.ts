@@ -35,13 +35,14 @@ export class RankSearchResultsProcessor extends BasePairwiseRankingsProcessor {
   }
 
   async voteOnPromptPair(
+    subProblemIndex: number,
     promptPair: number[]
   ): Promise<IEnginePairWiseVoteResults> {
     const itemOneIndex = promptPair[0];
     const itemTwoIndex = promptPair[1];
 
-    const itemOne = this.allItems![itemOneIndex] as IEngineSearchResultItem;
-    const itemTwo = this.allItems![itemTwoIndex] as IEngineSearchResultItem;
+    const itemOne = this.allItems![subProblemIndex]![itemOneIndex] as IEngineSearchResultItem;
+    const itemTwo = this.allItems![subProblemIndex]![itemTwoIndex] as IEngineSearchResultItem;
 
     let itemOneTitle = itemOne.title;
     let itemOneDescription = itemOne.description;
@@ -78,6 +79,7 @@ export class RankSearchResultsProcessor extends BasePairwiseRankingsProcessor {
     ];
 
     return await this.getResultsFromLLM(
+      subProblemIndex,
       "rank-search-results",
       IEngineConstants.searchResultsRankingsModel,
       messages,
@@ -98,11 +100,11 @@ export class RankSearchResultsProcessor extends BasePairwiseRankingsProcessor {
 
       this.subProblemIndex = s;
       this.searchResultTarget = "subProblem";
-      this.setupRankingPrompts(resultsToRank);
-      await this.performPairwiseRanking();
+      this.setupRankingPrompts(s,resultsToRank);
+      await this.performPairwiseRanking(s);
 
       this.memory.subProblems[s].searchResults.pages[searchResultType] =
-          this.getOrderedListOfItems(true) as IEngineSearchResultItem[]
+          this.getOrderedListOfItems(s,true) as IEngineSearchResultItem[]
 
       await this.saveMemory();
 
@@ -128,13 +130,13 @@ export class RankSearchResultsProcessor extends BasePairwiseRankingsProcessor {
       this.currentEntity = this.memory.subProblems[subProblemIndex].entities[e];
       let resultsToRank = this.memory.subProblems[subProblemIndex].entities[e].searchResults!.pages[searchResultType];
 
-      this.setupRankingPrompts(resultsToRank);
-      await this.performPairwiseRanking();
+      this.setupRankingPrompts(subProblemIndex*e, resultsToRank);
+      await this.performPairwiseRanking(subProblemIndex*e);
 
       this.memory.subProblems[subProblemIndex].entities[
         e
       ].searchResults!.pages[searchResultType] =
-        this.getOrderedListOfItems(true) as IEngineSearchResultItem[];
+        this.getOrderedListOfItems(subProblemIndex*e, true) as IEngineSearchResultItem[];
     }
   }
 
@@ -162,10 +164,10 @@ export class RankSearchResultsProcessor extends BasePairwiseRankingsProcessor {
       this.searchResultTarget = "problemStatement";
 
       this.logger.info(`Ranking Main Problem statement for ${searchResultType} search results`)
-      this.setupRankingPrompts(resultsToRank);
-      await this.performPairwiseRanking();
+      this.setupRankingPrompts(-1,resultsToRank);
+      await this.performPairwiseRanking(-1);
 
-      this.memory.problemStatement.searchResults.pages[searchResultType] = this.getOrderedListOfItems(true) as IEngineSearchResultItem[];
+      this.memory.problemStatement.searchResults.pages[searchResultType] = this.getOrderedListOfItems(-1,true) as IEngineSearchResultItem[];
 
       await this.processSubProblems(searchResultType);
     }

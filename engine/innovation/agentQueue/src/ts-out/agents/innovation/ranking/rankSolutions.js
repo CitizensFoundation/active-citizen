@@ -11,11 +11,11 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
             return [];
         }
     }
-    async voteOnPromptPair(promptPair, subProblemIndex) {
+    async voteOnPromptPair(subProblemIndex, promptPair) {
         const itemOneIndex = promptPair[0];
         const itemTwoIndex = promptPair[1];
-        const solutionOne = this.allItems[itemOneIndex];
-        const solutionTwo = this.allItems[itemTwoIndex];
+        const solutionOne = this.allItems[subProblemIndex][itemOneIndex];
+        const solutionTwo = this.allItems[subProblemIndex][itemTwoIndex];
         const messages = [
             new SystemChatMessage(`
         You are an expert in comparing and assessing solutions to problems.
@@ -57,15 +57,15 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
         The more important solution is:
         `),
         ];
-        return await this.getResultsFromLLM("rank-solutions", IEngineConstants.solutionsRankingsModel, messages, itemOneIndex, itemTwoIndex);
+        return await this.getResultsFromLLM(subProblemIndex, "rank-solutions", IEngineConstants.solutionsRankingsModel, messages, itemOneIndex, itemTwoIndex);
     }
     async processSubProblem(subProblemIndex) {
         const currentPopulationIndex = this.currentPopulationIndex(subProblemIndex);
         this.logger.info(`Ranking solutions for sub problem ${subProblemIndex} population ${currentPopulationIndex}`);
-        this.setupRankingPrompts(this.memory.subProblems[subProblemIndex].solutions.populations[currentPopulationIndex]);
+        this.setupRankingPrompts(subProblemIndex, this.memory.subProblems[subProblemIndex].solutions.populations[currentPopulationIndex]);
         await this.performPairwiseRanking(subProblemIndex);
         this.logger.debug(`Population Solutions before ranking: ${JSON.stringify(this.memory.subProblems[subProblemIndex].solutions.populations[currentPopulationIndex])}`);
-        this.memory.subProblems[subProblemIndex].solutions.populations[currentPopulationIndex] = this.getOrderedListOfItems(true);
+        this.memory.subProblems[subProblemIndex].solutions.populations[currentPopulationIndex] = this.getOrderedListOfItems(subProblemIndex, true);
         this.logger.debug(`Popuplation Solutions after ranking: ${JSON.stringify(this.memory.subProblems[subProblemIndex].solutions.populations[currentPopulationIndex])}`);
         await this.saveMemory();
     }
@@ -79,7 +79,9 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
                 modelName: IEngineConstants.solutionsRankingsModel.name,
                 verbose: IEngineConstants.solutionsRankingsModel.verbose,
             });
-            const subProblemsPromises = Array.from({ length: Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems) }, async (_, subProblemIndex) => this.processSubProblem(subProblemIndex));
+            const subProblemsPromises = Array.from({
+                length: Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems),
+            }, async (_, subProblemIndex) => this.processSubProblem(subProblemIndex));
             await Promise.all(subProblemsPromises);
             this.logger.info("Rank Solutions Processor Completed");
         }

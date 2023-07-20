@@ -31,11 +31,11 @@ export class RankSearchResultsProcessor extends BasePairwiseRankingsProcessor {
         }
         return detail;
     }
-    async voteOnPromptPair(promptPair) {
+    async voteOnPromptPair(subProblemIndex, promptPair) {
         const itemOneIndex = promptPair[0];
         const itemTwoIndex = promptPair[1];
-        const itemOne = this.allItems[itemOneIndex];
-        const itemTwo = this.allItems[itemTwoIndex];
+        const itemOne = this.allItems[subProblemIndex][itemOneIndex];
+        const itemTwo = this.allItems[subProblemIndex][itemTwoIndex];
         let itemOneTitle = itemOne.title;
         let itemOneDescription = itemOne.description;
         let itemTwoTitle = itemTwo.title;
@@ -63,7 +63,7 @@ export class RankSearchResultsProcessor extends BasePairwiseRankingsProcessor {
 
          The most relevant search result is: `),
         ];
-        return await this.getResultsFromLLM("rank-search-results", IEngineConstants.searchResultsRankingsModel, messages, itemOneIndex, itemTwoIndex);
+        return await this.getResultsFromLLM(subProblemIndex, "rank-search-results", IEngineConstants.searchResultsRankingsModel, messages, itemOneIndex, itemTwoIndex);
     }
     async processSubProblems(searchResultType) {
         for (let s = 0; s <
@@ -72,10 +72,10 @@ export class RankSearchResultsProcessor extends BasePairwiseRankingsProcessor {
             let resultsToRank = this.memory.subProblems[s].searchResults.pages[searchResultType];
             this.subProblemIndex = s;
             this.searchResultTarget = "subProblem";
-            this.setupRankingPrompts(resultsToRank);
-            await this.performPairwiseRanking();
+            this.setupRankingPrompts(s, resultsToRank);
+            await this.performPairwiseRanking(s);
             this.memory.subProblems[s].searchResults.pages[searchResultType] =
-                this.getOrderedListOfItems(true);
+                this.getOrderedListOfItems(s, true);
             await this.saveMemory();
             this.searchResultTarget = "entity";
             await this.processEntities(s, searchResultType);
@@ -87,10 +87,10 @@ export class RankSearchResultsProcessor extends BasePairwiseRankingsProcessor {
             this.logger.info(`Ranking Entity ${subProblemIndex}-${e} for ${searchResultType} search results`);
             this.currentEntity = this.memory.subProblems[subProblemIndex].entities[e];
             let resultsToRank = this.memory.subProblems[subProblemIndex].entities[e].searchResults.pages[searchResultType];
-            this.setupRankingPrompts(resultsToRank);
-            await this.performPairwiseRanking();
+            this.setupRankingPrompts(subProblemIndex * e, resultsToRank);
+            await this.performPairwiseRanking(subProblemIndex * e);
             this.memory.subProblems[subProblemIndex].entities[e].searchResults.pages[searchResultType] =
-                this.getOrderedListOfItems(true);
+                this.getOrderedListOfItems(subProblemIndex * e, true);
         }
     }
     async process() {
@@ -112,9 +112,9 @@ export class RankSearchResultsProcessor extends BasePairwiseRankingsProcessor {
             let resultsToRank = this.memory.problemStatement.searchResults.pages[searchResultType];
             this.searchResultTarget = "problemStatement";
             this.logger.info(`Ranking Main Problem statement for ${searchResultType} search results`);
-            this.setupRankingPrompts(resultsToRank);
-            await this.performPairwiseRanking();
-            this.memory.problemStatement.searchResults.pages[searchResultType] = this.getOrderedListOfItems(true);
+            this.setupRankingPrompts(-1, resultsToRank);
+            await this.performPairwiseRanking(-1);
+            this.memory.problemStatement.searchResults.pages[searchResultType] = this.getOrderedListOfItems(-1, true);
             await this.processSubProblems(searchResultType);
         }
         await this.saveMemory();

@@ -4,11 +4,11 @@ import { IEngineConstants } from "../../../constants.js";
 import { BasePairwiseRankingsProcessor } from "./basePairwiseRanking.js";
 export class RankEntitiesProcessor extends BasePairwiseRankingsProcessor {
     subProblemIndex = 0;
-    async voteOnPromptPair(promptPair) {
+    async voteOnPromptPair(subProblemIndex, promptPair) {
         const itemOneIndex = promptPair[0];
         const itemTwoIndex = promptPair[1];
-        const itemOne = this.allItems[itemOneIndex];
-        const itemTwo = this.allItems[itemTwoIndex];
+        const itemOne = this.allItems[subProblemIndex][itemOneIndex];
+        const itemTwo = this.allItems[subProblemIndex][itemTwoIndex];
         let itemOneTitle = itemOne.name;
         let itemOneEffects = this.renderEntityPosNegReasons(itemOne);
         let itemTwoTitle = itemTwo.name;
@@ -41,7 +41,7 @@ export class RankEntitiesProcessor extends BasePairwiseRankingsProcessor {
          The More Affected Entity Is:
        `),
         ];
-        return await this.getResultsFromLLM("rank-entities", IEngineConstants.entitiesRankingsModel, messages, itemOneIndex, itemTwoIndex);
+        return await this.getResultsFromLLM(subProblemIndex, "rank-entities", IEngineConstants.entitiesRankingsModel, messages, itemOneIndex, itemTwoIndex);
     }
     async process() {
         this.logger.info("Rank Entities Processor");
@@ -59,10 +59,10 @@ export class RankEntitiesProcessor extends BasePairwiseRankingsProcessor {
                 return ((entity.positiveEffects && entity.positiveEffects.length > 0) ||
                     (entity.negativeEffects && entity.negativeEffects.length > 0));
             });
-            this.setupRankingPrompts(filteredEntities);
-            await this.performPairwiseRanking();
+            this.setupRankingPrompts(s, filteredEntities);
+            await this.performPairwiseRanking(s);
             this.memory.subProblems[s].entities =
-                this.getOrderedListOfItems(true);
+                this.getOrderedListOfItems(s, true);
             await this.saveMemory();
             this.currentSubProblemIndex++;
         }

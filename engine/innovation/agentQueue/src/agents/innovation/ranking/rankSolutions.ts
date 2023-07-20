@@ -5,7 +5,6 @@ import { IEngineConstants } from "../../../constants.js";
 import { BasePairwiseRankingsProcessor } from "./basePairwiseRanking.js";
 
 export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
-
   getProCons(prosCons: IEngineProCon[] | undefined) {
     if (prosCons && prosCons.length > 0) {
       return prosCons.map((proCon) => proCon.description);
@@ -15,14 +14,18 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
   }
 
   async voteOnPromptPair(
-    promptPair: number[],
-    subProblemIndex: number
+    subProblemIndex: number,
+    promptPair: number[]
   ): Promise<IEnginePairWiseVoteResults> {
     const itemOneIndex = promptPair[0];
     const itemTwoIndex = promptPair[1];
 
-    const solutionOne = this.allItems![itemOneIndex] as IEngineSolution;
-    const solutionTwo = this.allItems![itemTwoIndex] as IEngineSolution;
+    const solutionOne = this.allItems![subProblemIndex]![
+      itemOneIndex
+    ] as IEngineSolution;
+    const solutionTwo = this.allItems![subProblemIndex]![
+      itemTwoIndex
+    ] as IEngineSolution;
 
     const messages = [
       new SystemChatMessage(
@@ -39,9 +42,7 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
       ),
       new HumanChatMessage(
         `
-        ${this.renderProblemStatementSubProblemsAndEntities(
-          subProblemIndex
-        )}
+        ${this.renderProblemStatementSubProblemsAndEntities(subProblemIndex)}
 
         Solutions to assess:
 
@@ -85,6 +86,7 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
     ];
 
     return await this.getResultsFromLLM(
+      subProblemIndex,
       "rank-solutions",
       IEngineConstants.solutionsRankingsModel,
       messages,
@@ -95,9 +97,12 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
 
   async processSubProblem(subProblemIndex: number) {
     const currentPopulationIndex = this.currentPopulationIndex(subProblemIndex);
-    this.logger.info(`Ranking solutions for sub problem ${subProblemIndex} population ${currentPopulationIndex}`);
+    this.logger.info(
+      `Ranking solutions for sub problem ${subProblemIndex} population ${currentPopulationIndex}`
+    );
 
     this.setupRankingPrompts(
+      subProblemIndex,
       this.memory.subProblems[subProblemIndex].solutions.populations[
         currentPopulationIndex
       ]
@@ -115,7 +120,7 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
 
     this.memory.subProblems[subProblemIndex].solutions.populations[
       currentPopulationIndex
-    ] = this.getOrderedListOfItems(true) as IEngineSolution[];
+    ] = this.getOrderedListOfItems(subProblemIndex, true) as IEngineSolution[];
 
     this.logger.debug(
       `Popuplation Solutions after ranking: ${JSON.stringify(
@@ -141,7 +146,12 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
       });
 
       const subProblemsPromises = Array.from(
-        { length: Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems) },
+        {
+          length: Math.min(
+            this.memory.subProblems.length,
+            IEngineConstants.maxSubProblems
+          ),
+        },
         async (_, subProblemIndex) => this.processSubProblem(subProblemIndex)
       );
 

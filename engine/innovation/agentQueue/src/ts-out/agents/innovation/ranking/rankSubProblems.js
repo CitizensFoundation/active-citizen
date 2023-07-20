@@ -4,11 +4,11 @@ import { IEngineConstants } from "../../../constants.js";
 import { BasePairwiseRankingsProcessor } from "./basePairwiseRanking.js";
 export class RankSubProblemsProcessor extends BasePairwiseRankingsProcessor {
     subProblemIndex = 0;
-    async voteOnPromptPair(promptPair) {
+    async voteOnPromptPair(subProblemIndex, promptPair) {
         const itemOneIndex = promptPair[0];
         const itemTwoIndex = promptPair[1];
-        const itemOne = this.allItems[itemOneIndex];
-        const itemTwo = this.allItems[itemTwoIndex];
+        const itemOne = this.allItems[subProblemIndex][itemOneIndex];
+        const itemTwo = this.allItems[subProblemIndex][itemTwoIndex];
         const messages = [
             new SystemChatMessage(`
         You are an AI expert trained to analyse complex problem statements and associated sub-problems to determine their relevance.
@@ -37,7 +37,7 @@ export class RankSubProblemsProcessor extends BasePairwiseRankingsProcessor {
         The Most Relevant Sub-Problem Is:
         `),
         ];
-        return await this.getResultsFromLLM("rank-sub-problems", IEngineConstants.subProblemsRankingsModel, messages, itemOneIndex, itemTwoIndex);
+        return await this.getResultsFromLLM(subProblemIndex, "rank-sub-problems", IEngineConstants.subProblemsRankingsModel, messages, itemOneIndex, itemTwoIndex);
     }
     async process() {
         this.logger.info("Rank Sub Problems Processor");
@@ -48,10 +48,10 @@ export class RankSubProblemsProcessor extends BasePairwiseRankingsProcessor {
             modelName: IEngineConstants.subProblemsRankingsModel.name,
             verbose: IEngineConstants.subProblemsRankingsModel.verbose,
         });
-        this.setupRankingPrompts(this.memory.subProblems);
-        await this.performPairwiseRanking();
+        this.setupRankingPrompts(-1, this.memory.subProblems);
+        await this.performPairwiseRanking(-1);
         this.logger.debug(`Sub problems before ranking: ${JSON.stringify(this.memory.subProblems)}`);
-        this.memory.subProblems = this.getOrderedListOfItems(true);
+        this.memory.subProblems = this.getOrderedListOfItems(-1, true);
         this.logger.debug(`Sub problems after ranking: ${JSON.stringify(this.memory.subProblems)}`);
         await this.saveMemory();
     }

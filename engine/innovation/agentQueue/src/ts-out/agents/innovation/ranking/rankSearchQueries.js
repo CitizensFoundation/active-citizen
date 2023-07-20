@@ -31,11 +31,11 @@ export class RankSearchQueriesProcessor extends BasePairwiseRankingsProcessor {
         }
         return detail;
     }
-    async voteOnPromptPair(promptPair) {
+    async voteOnPromptPair(subProblemIndex, promptPair) {
         const itemOneIndex = promptPair[0];
         const itemTwoIndex = promptPair[1];
-        const itemOne = this.allItems[itemOneIndex];
-        const itemTwo = this.allItems[itemTwoIndex];
+        const itemOne = this.allItems[subProblemIndex][itemOneIndex];
+        const itemTwo = this.allItems[subProblemIndex][itemTwoIndex];
         const messages = [
             new SystemChatMessage(`
         You are an AI expert trained to rank search queries based on their relevance to complex problem statements, sub-problems and affected entities.
@@ -62,7 +62,7 @@ export class RankSearchQueriesProcessor extends BasePairwiseRankingsProcessor {
         The Most Relevant Search Query Is:
        `),
         ];
-        return await this.getResultsFromLLM("rank-search-queries", IEngineConstants.searchQueryRankingsModel, messages, itemOneIndex, itemTwoIndex);
+        return await this.getResultsFromLLM(subProblemIndex, "rank-search-queries", IEngineConstants.searchQueryRankingsModel, messages, itemOneIndex, itemTwoIndex);
     }
     async processSubProblems() {
         for (let s = 0; s <
@@ -79,10 +79,10 @@ export class RankSearchQueriesProcessor extends BasePairwiseRankingsProcessor {
                 this.logger.info(`Ranking search queries for sub-problem ${s} ${searchQueryType}`);
                 let queriesToRank = this.memory.subProblems[s].searchQueries[searchQueryType];
                 this.searchQueryTarget = "subProblem";
-                this.setupRankingPrompts(queriesToRank);
-                await this.performPairwiseRanking();
+                this.setupRankingPrompts(s, queriesToRank);
+                await this.performPairwiseRanking(s);
                 this.memory.subProblems[s].searchQueries[searchQueryType] =
-                    this.getOrderedListOfItems();
+                    this.getOrderedListOfItems(s);
             }
             await this.saveMemory();
         }
@@ -102,10 +102,10 @@ export class RankSearchQueriesProcessor extends BasePairwiseRankingsProcessor {
                 this.currentEntity =
                     this.memory.subProblems[subProblemIndex].entities[e];
                 let queriesToRank = this.currentEntity.searchQueries[searchQueryType];
-                this.setupRankingPrompts(queriesToRank);
-                await this.performPairwiseRanking();
+                this.setupRankingPrompts(subProblemIndex * e, queriesToRank);
+                await this.performPairwiseRanking(subProblemIndex * e);
                 this.logger.debug("Entity Queries ranked");
-                this.memory.subProblems[subProblemIndex].entities[e].searchQueries[searchQueryType] = this.getOrderedListOfItems();
+                this.memory.subProblems[subProblemIndex].entities[e].searchQueries[searchQueryType] = this.getOrderedListOfItems(subProblemIndex * e);
             }
         }
     }
@@ -130,10 +130,10 @@ export class RankSearchQueriesProcessor extends BasePairwiseRankingsProcessor {
             this.searchQueryType = searchQueryType;
             let queriesToRank = this.memory.problemStatement.searchQueries[searchQueryType];
             this.searchQueryTarget = "problemStatement";
-            this.setupRankingPrompts(queriesToRank);
-            await this.performPairwiseRanking();
+            this.setupRankingPrompts(-1, queriesToRank);
+            await this.performPairwiseRanking(-1);
             this.memory.problemStatement.searchQueries[searchQueryType] =
-                this.getOrderedListOfItems();
+                this.getOrderedListOfItems(-1);
             this.logger.debug("Search Queries Ranked");
             this.logger.debug(this.memory.problemStatement.searchQueries[searchQueryType]);
             await this.saveMemory();

@@ -36,13 +36,14 @@ export class RankSearchQueriesProcessor extends BasePairwiseRankingsProcessor {
   }
 
   async voteOnPromptPair(
+    subProblemIndex: number,
     promptPair: number[]
   ): Promise<IEnginePairWiseVoteResults> {
     const itemOneIndex = promptPair[0];
     const itemTwoIndex = promptPair[1];
 
-    const itemOne = this.allItems![itemOneIndex] as string;
-    const itemTwo = this.allItems![itemTwoIndex] as string;
+    const itemOne = this.allItems![subProblemIndex]![itemOneIndex] as string;
+    const itemTwo = this.allItems![subProblemIndex]![itemTwoIndex] as string;
 
     const messages = [
       new SystemChatMessage(
@@ -76,6 +77,7 @@ export class RankSearchQueriesProcessor extends BasePairwiseRankingsProcessor {
     ];
 
     return await this.getResultsFromLLM(
+      subProblemIndex,
       "rank-search-queries",
       IEngineConstants.searchQueryRankingsModel,
       messages,
@@ -111,11 +113,11 @@ export class RankSearchQueriesProcessor extends BasePairwiseRankingsProcessor {
 
         this.searchQueryTarget = "subProblem";
 
-        this.setupRankingPrompts(queriesToRank);
-        await this.performPairwiseRanking();
+        this.setupRankingPrompts(s,queriesToRank);
+        await this.performPairwiseRanking(s);
 
         this.memory.subProblems[s].searchQueries[searchQueryType] =
-          this.getOrderedListOfItems() as string[];
+          this.getOrderedListOfItems(s) as string[];
       }
 
       await this.saveMemory();
@@ -152,13 +154,13 @@ export class RankSearchQueriesProcessor extends BasePairwiseRankingsProcessor {
 
         let queriesToRank = this.currentEntity.searchQueries![searchQueryType];
 
-        this.setupRankingPrompts(queriesToRank);
-        await this.performPairwiseRanking();
+        this.setupRankingPrompts(subProblemIndex*e,queriesToRank);
+        await this.performPairwiseRanking(subProblemIndex*e);
         this.logger.debug("Entity Queries ranked")
 
         this.memory.subProblems[subProblemIndex].entities[e].searchQueries![
           searchQueryType
-        ] = this.getOrderedListOfItems() as string[];
+        ] = this.getOrderedListOfItems(subProblemIndex*e) as string[];
       }
     }
   }
@@ -192,11 +194,11 @@ export class RankSearchQueriesProcessor extends BasePairwiseRankingsProcessor {
 
       this.searchQueryTarget = "problemStatement";
 
-      this.setupRankingPrompts(queriesToRank);
-      await this.performPairwiseRanking();
+      this.setupRankingPrompts(-1, queriesToRank);
+      await this.performPairwiseRanking(-1);
 
       this.memory.problemStatement.searchQueries[searchQueryType] =
-        this.getOrderedListOfItems() as string[];
+        this.getOrderedListOfItems(-1) as string[];
 
       this.logger.debug("Search Queries Ranked")
       this.logger.debug(this.memory.problemStatement.searchQueries[searchQueryType])

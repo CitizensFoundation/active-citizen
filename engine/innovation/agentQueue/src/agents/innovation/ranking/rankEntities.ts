@@ -9,13 +9,14 @@ export class RankEntitiesProcessor extends BasePairwiseRankingsProcessor {
   subProblemIndex = 0;
 
   async voteOnPromptPair(
+    subProblemIndex: number,
     promptPair: number[]
   ): Promise<IEnginePairWiseVoteResults> {
     const itemOneIndex = promptPair[0];
     const itemTwoIndex = promptPair[1];
 
-    const itemOne = this.allItems![itemOneIndex] as IEngineAffectedEntity;
-    const itemTwo = this.allItems![itemTwoIndex] as IEngineAffectedEntity;
+    const itemOne = this.allItems![subProblemIndex]![itemOneIndex] as IEngineAffectedEntity;
+    const itemTwo = this.allItems![subProblemIndex]![itemTwoIndex] as IEngineAffectedEntity;
 
     let itemOneTitle = itemOne.name;
     let itemOneEffects = this.renderEntityPosNegReasons(itemOne);
@@ -58,6 +59,7 @@ export class RankEntitiesProcessor extends BasePairwiseRankingsProcessor {
 
 
     return await this.getResultsFromLLM(
+      subProblemIndex,
       "rank-entities",
       IEngineConstants.entitiesRankingsModel,
       messages,
@@ -95,11 +97,11 @@ export class RankEntitiesProcessor extends BasePairwiseRankingsProcessor {
         }
       );
 
-      this.setupRankingPrompts(filteredEntities);
-      await this.performPairwiseRanking();
+      this.setupRankingPrompts(s,filteredEntities);
+      await this.performPairwiseRanking(s);
 
       this.memory.subProblems[s].entities =
-        this.getOrderedListOfItems(true) as IEngineAffectedEntity[];
+        this.getOrderedListOfItems(s,true) as IEngineAffectedEntity[];
 
       await this.saveMemory();
 

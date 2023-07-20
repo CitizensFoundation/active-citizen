@@ -3,13 +3,11 @@ import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
 import { IEngineConstants } from "../../../constants.js";
 import { BasePairwiseRankingsProcessor } from "./basePairwiseRanking.js";
 export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
-    async voteOnPromptPair(promptPair, additionalData) {
+    async voteOnPromptPair(subProblemIndex, promptPair, additionalData) {
         const itemOneIndex = promptPair[0];
         const itemTwoIndex = promptPair[1];
-        const prosOrConsOne = this.allItems[itemOneIndex]
-            .description;
-        const prosOrConsTwo = this.allItems[itemTwoIndex]
-            .description;
+        const prosOrConsOne = this.allItems[subProblemIndex][itemOneIndex].description;
+        const prosOrConsTwo = this.allItems[subProblemIndex][itemTwoIndex].description;
         let proConSingle;
         if (additionalData.prosOrCons === "pros") {
             proConSingle = "Pro";
@@ -43,7 +41,7 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
         The more important ${proConSingle} is:
         `),
         ];
-        return await this.getResultsFromLLM("rank-pros-cons", IEngineConstants.prosConsRankingsModel, messages, itemOneIndex, itemTwoIndex);
+        return await this.getResultsFromLLM(subProblemIndex, "rank-pros-cons", IEngineConstants.prosConsRankingsModel, messages, itemOneIndex, itemTwoIndex);
     }
     convertProsConsToObjects(prosCons) {
         return prosCons.map((prosCon) => {
@@ -63,7 +61,9 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
         });
         try {
             // Parallel execution of the subproblems
-            const subProblemPromises = this.memory.subProblems.map((subProblem, subProblemIndex) => {
+            const subProblemPromises = this.memory.subProblems
+                .slice(0, IEngineConstants.maxSubProblems)
+                .map((subProblem, subProblemIndex) => {
                 return this.processSubProblem(subProblem, subProblemIndex);
             });
             await Promise.all(subProblemPromises);
@@ -88,14 +88,17 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
                         this.logger.debug(`${prosOrCons} before ranking: ${JSON.stringify(solution[prosOrCons], null, 2)}`);
                         this.logger.debug("Converting pros/cons to objects");
                         const convertedProsCons = this.convertProsConsToObjects(solution[prosOrCons]);
-                        this.setupRankingPrompts(convertedProsCons);
+                        this.setupRankingPrompts(solutionIndex, convertedProsCons);
                         await this.performPairwiseRanking({
                             solution: solutionDescription,
                             prosOrCons,
-                            subProblemIndex
+                            subProblemIndex,
                         });
-                        subProblem.solutions.populations[this.currentPopulationIndex(subProblemIndex)][solutionIndex][prosOrCons] = this.getOrderedListOfItems(true);
+                        subProblem.solutions.populations[this.currentPopulationIndex(subProblemIndex)][solutionIndex][prosOrCons] = this.getOrderedListOfItems(solutionIndex, true);
                         this.logger.debug(`${prosOrCons} before ranking: ${JSON.stringify(subProblem.solutions.populations[this.currentPopulationIndex(subProblemIndex)][solutionIndex][prosOrCons], null, 2)}`);
+                    }
+                    else {
+                        this.logger.debug(`${prosOrCons} already ranked: ${JSON.stringify(solution[prosOrCons], null, 2)}`);
                     }
                 }
                 else {

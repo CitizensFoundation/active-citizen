@@ -8,13 +8,14 @@ export class RankSubProblemsProcessor extends BasePairwiseRankingsProcessor {
   subProblemIndex = 0;
 
   async voteOnPromptPair(
+    subProblemIndex: number,
     promptPair: number[]
   ): Promise<IEnginePairWiseVoteResults> {
     const itemOneIndex = promptPair[0];
     const itemTwoIndex = promptPair[1];
 
-    const itemOne = this.allItems![itemOneIndex] as IEngineSubProblem;
-    const itemTwo = this.allItems![itemTwoIndex] as IEngineSubProblem;
+    const itemOne = this.allItems![subProblemIndex]![itemOneIndex] as IEngineSubProblem;
+    const itemTwo = this.allItems![subProblemIndex]![itemTwoIndex] as IEngineSubProblem;
 
     const messages = [
       new SystemChatMessage(
@@ -50,6 +51,7 @@ export class RankSubProblemsProcessor extends BasePairwiseRankingsProcessor {
     ];
 
     return await this.getResultsFromLLM(
+      subProblemIndex,
       "rank-sub-problems",
       IEngineConstants.subProblemsRankingsModel,
       messages,
@@ -70,11 +72,11 @@ export class RankSubProblemsProcessor extends BasePairwiseRankingsProcessor {
       verbose: IEngineConstants.subProblemsRankingsModel.verbose,
     });
 
-    this.setupRankingPrompts(this.memory.subProblems);
-    await this.performPairwiseRanking();
+    this.setupRankingPrompts(-1, this.memory.subProblems);
+    await this.performPairwiseRanking(-1);
 
     this.logger.debug(`Sub problems before ranking: ${JSON.stringify(this.memory.subProblems)}`);
-    this.memory.subProblems = this.getOrderedListOfItems(true) as IEngineSubProblem[];
+    this.memory.subProblems = this.getOrderedListOfItems(-1,true) as IEngineSubProblem[];
     this.logger.debug(`Sub problems after ranking: ${JSON.stringify(this.memory.subProblems)}`);
 
     await this.saveMemory();

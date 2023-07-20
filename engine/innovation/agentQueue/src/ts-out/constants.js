@@ -84,7 +84,7 @@ export class IEngineConstants {
         tokenLimit: 8192,
         inTokenCostUSD: gpt35InTokenPrice,
         outTokenCostUSD: gpt35kOutTokenPrice,
-        verbose: false,
+        verbose: true,
     };
     static getPageAnalysisModel = {
         name: "gpt-3.5-turbo-16k",
