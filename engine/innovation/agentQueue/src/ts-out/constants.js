@@ -75,7 +75,7 @@ export class IEngineConstants {
         tokenLimit: 8192,
         inTokenCostUSD: gpt4InTokenPrice,
         outTokenCostUSD: gpt4OutTokenPrice,
-        verbose: true,
+        verbose: false,
     };
     static prosConsRankingsModel = {
         name: "gpt-3.5-turbo",
@@ -84,7 +84,7 @@ export class IEngineConstants {
         tokenLimit: 8192,
         inTokenCostUSD: gpt35InTokenPrice,
         outTokenCostUSD: gpt35kOutTokenPrice,
-        verbose: true,
+        verbose: false,
     };
     static getPageAnalysisModel = {
         name: "gpt-3.5-turbo-16k",
@@ -120,7 +120,7 @@ export class IEngineConstants {
         tokenLimit: 8192,
         inTokenCostUSD: gpt4InTokenPrice,
         outTokenCostUSD: gpt4OutTokenPrice,
-        verbose: true,
+        verbose: false,
     };
     static evolutionMutateModel = {
         name: "gpt-4",
@@ -154,7 +154,7 @@ export class IEngineConstants {
     static maxWebPagesToGetByTopSearchPosition = 5;
     static maxSearchResults = 10;
     static maxTopProsConsUsedForRanking = 3;
-    static maxNumberGeneratedProsConsForSolution = 14;
+    static maxNumberGeneratedProsConsForSolution = 9;
     static minSleepBeforeBrowserRequest = 1100;
     static maxAdditionalRandomSleepBeforeBrowserRequest = 1100;
     static numberOfSearchTypes = 4;

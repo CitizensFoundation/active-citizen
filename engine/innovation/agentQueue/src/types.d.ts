@@ -99,7 +99,6 @@ interface IEngineSubProblem {
   searchResults: IEngineSearchResults;
   eloRating?: number;
   solutions: {
-    seed: IEngineSolution[];
     populations: IEngineSolution[][];
   }
 }

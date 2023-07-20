@@ -64,7 +64,7 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
     if (!mutateRate) {
       const random = Math.random();
       if (random < IEngineConstants.evolution.lowMutationRate) {
-        mutateRate = "medium";
+        mutateRate = "low";
       } else if (
         random <
         IEngineConstants.evolution.lowMutationRate +
@@ -242,7 +242,6 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
     if (
       this.memory.subProblems[subProblemIndex].solutions.populations.length > 0
     ) {
-      return this.memory.subProblems[subProblemIndex].solutions.populations[0];
       return this.memory.subProblems[subProblemIndex].solutions.populations[
         this.memory.subProblems[subProblemIndex].solutions.populations.length -
           1

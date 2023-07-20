@@ -7,17 +7,7 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
     currentSolutionIndex = 0;
     currentProsOrCons;
     getCurrentSolution() {
-        if (this.memory.subProblems[this.subProblemIndex].solutions.populations &&
-            this.memory.subProblems[this.subProblemIndex].solutions.populations.length >
-                0 &&
-            this.memory.subProblems[this.subProblemIndex].solutions.populations[0]
-                .length > 0) {
-            this.memory.subProblems[this.subProblemIndex].solutions.populations[this.memory.subProblems[this.subProblemIndex].solutions.populations
-                .length - 1][this.currentSolutionIndex];
-        }
-        else {
-            return this.memory.subProblems[this.subProblemIndex].solutions.seed[this.currentSolutionIndex];
-        }
+        return this.memory.subProblems[this.subProblemIndex].solutions.populations[this.currentPopulationIndex(this.subProblemIndex)][this.currentSolutionIndex];
     }
     renderCurrentSolution() {
         const solution = this.getCurrentSolution();
@@ -31,8 +21,10 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
     async voteOnPromptPair(promptPair) {
         const itemOneIndex = promptPair[0];
         const itemTwoIndex = promptPair[1];
-        const prosOrConsOne = this.allItems[itemOneIndex].description;
-        const prosOrConsTwo = this.allItems[itemTwoIndex].description;
+        const prosOrConsOne = this.allItems[itemOneIndex]
+            .description;
+        const prosOrConsTwo = this.allItems[itemTwoIndex]
+            .description;
         let proConSingle;
         if (this.currentProsOrCons === "pros") {
             proConSingle = "Pro";
@@ -71,7 +63,7 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
     convertProsConsToObjects(prosCons) {
         return prosCons.map((prosCon) => {
             return {
-                description: prosCon
+                description: prosCon,
             };
         });
     }
@@ -88,49 +80,27 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
             for (let subProblemIndex = 0; subProblemIndex <
                 Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems); subProblemIndex++) {
                 this.subProblemIndex = subProblemIndex;
+                this.logger.info(`Ranking pros/cons for sub problem ${subProblemIndex} currentPopulationIndex ${this.currentPopulationIndex(subProblemIndex)}`);
                 let solutions;
-                if (this.memory.subProblems[subProblemIndex].solutions.populations &&
-                    this.memory.subProblems[subProblemIndex].solutions.populations.length >
-                        0 &&
-                    this.memory.subProblems[subProblemIndex].solutions.populations[0]
-                        .length > 0) {
-                    solutions =
-                        this.memory.subProblems[subProblemIndex].solutions.populations[this.memory.subProblems[subProblemIndex].solutions.populations
-                            .length - 1];
-                }
-                else {
-                    solutions = this.memory.subProblems[subProblemIndex].solutions.seed;
-                }
+                solutions =
+                    this.memory.subProblems[subProblemIndex].solutions.populations[this.currentPopulationIndex(subProblemIndex)];
                 for (let solutionIndex = 0; solutionIndex < solutions.length; solutionIndex++) {
                     this.currentSolutionIndex = solutionIndex;
                     for (const prosOrCons of ["pros", "cons"]) {
                         this.currentProsOrCons = prosOrCons;
                         this.logger.debug(`${prosOrCons} before ranking: ${JSON.stringify(solutions[solutionIndex][prosOrCons])}`);
-                        if (solutions[solutionIndex][prosOrCons] && solutions[solutionIndex][prosOrCons].length > 0) {
+                        if (solutions[solutionIndex][prosOrCons] &&
+                            solutions[solutionIndex][prosOrCons].length > 0) {
                             const firstItem = solutions[solutionIndex][prosOrCons][0];
                             const hasStrings = typeof firstItem === "string";
                             let convertedProsCons;
+                            // Only rank if the pros/cons are strings from the creation step
                             if (hasStrings) {
                                 this.logger.debug("Converting pros/cons to objects");
                                 convertedProsCons = this.convertProsConsToObjects(solutions[solutionIndex][prosOrCons]);
-                            }
-                            else {
-                                convertedProsCons = solutions[solutionIndex][prosOrCons];
-                            }
-                            this.setupRankingPrompts(convertedProsCons);
-                            await this.performPairwiseRanking();
-                            if (this.memory.subProblems[subProblemIndex].solutions.populations &&
-                                this.memory.subProblems[subProblemIndex].solutions.populations
-                                    .length > 0 &&
-                                this.memory.subProblems[subProblemIndex].solutions.populations[0]
-                                    .length > 0) {
-                                this.memory.subProblems[subProblemIndex].solutions.populations[this.memory.subProblems[subProblemIndex].solutions.populations
-                                    .length - 1][solutionIndex][prosOrCons] =
-                                    this.getOrderedListOfItems(true);
-                            }
-                            else {
-                                this.memory.subProblems[subProblemIndex].solutions.seed[solutionIndex][prosOrCons] = this.getOrderedListOfItems(true);
-                                this.logger.debug(`${prosOrCons} after ranking: ${JSON.stringify(this.memory.subProblems[subProblemIndex].solutions.seed[solutionIndex][prosOrCons])}`);
+                                this.setupRankingPrompts(convertedProsCons);
+                                await this.performPairwiseRanking();
+                                this.memory.subProblems[subProblemIndex].solutions.populations[this.currentPopulationIndex(subProblemIndex)][solutionIndex][prosOrCons] = this.getOrderedListOfItems(true);
                             }
                         }
                         else {

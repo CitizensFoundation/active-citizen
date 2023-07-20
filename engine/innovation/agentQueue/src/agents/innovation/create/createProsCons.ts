@@ -9,7 +9,8 @@ export class CreateProsConsProcessor extends BaseProcessor {
 
   renderCurrentSolution() {
     const solution =
-      this.memory.subProblems[this.currentSubProblemIndex!].solutions.seed[
+      this.memory.subProblems[this.currentSubProblemIndex!].solutions
+        .populations[this.currentPopulationIndex(this.currentSubProblemIndex!)][
         this.currentSolutionIndex!
       ];
 
@@ -37,7 +38,7 @@ export class CreateProsConsProcessor extends BaseProcessor {
         3. Contextualize the ${prosOrCons} considering the problem statement, sub-problems, and affected entities.
         4. Ensure the refined ${prosOrCons} are relevant and directly applicable.
         5. Output should be in JSON format only, not markdown.
-        6. The ${prosOrCons} should be outputed as an JSON array: [ "${prosOrCons} 1", "${prosOrCons} 2" ].
+        6. The ${prosOrCons} should be outputed as an JSON array: [ "...", "..." ].
         7. Follow a step-by-step approach in your thought process.
         `
       ),
@@ -103,21 +104,10 @@ export class CreateProsConsProcessor extends BaseProcessor {
 
       let solutions;
 
-      if (
-        this.memory.subProblems[subProblemIndex].solutions.populations &&
-        this.memory.subProblems[subProblemIndex].solutions.populations.length >
-          0 &&
-        this.memory.subProblems[subProblemIndex].solutions.populations[0]
-          .length > 0
-      ) {
-        solutions =
-          this.memory.subProblems[subProblemIndex].solutions.populations[
-            this.memory.subProblems[subProblemIndex].solutions.populations
-              .length - 1
-          ];
-      } else {
-        solutions = this.memory.subProblems[subProblemIndex].solutions.seed;
-      }
+      solutions =
+        this.memory.subProblems[subProblemIndex].solutions.populations[
+          this.currentPopulationIndex(subProblemIndex)
+        ];
 
       for (
         let solutionIndex = 0;
@@ -126,41 +116,59 @@ export class CreateProsConsProcessor extends BaseProcessor {
       ) {
         this.currentSolutionIndex = solutionIndex;
 
-        for (const prosOrCons of ["pros", "cons"] as const) {
-          let results = (await this.callLLM(
-            "create-pros-cons",
-            IEngineConstants.createProsConsModel,
-            await this.renderCreatePrompt(prosOrCons)
-          )) as string[];
+        this.logger.info(
+          `Creating pros cons solution ${solutionIndex}/${
+            solutions.length
+          } of sub problem ${subProblemIndex} currentPopulationIndex ${this.currentPopulationIndex(
+            subProblemIndex
+          )}`
+        );
 
-          if (IEngineConstants.enable.refine.createProsCons) {
-            results = (await this.callLLM(
+        this.logger.debug(
+          `${
+            this.memory.subProblems[subProblemIndex].solutions.populations[
+              this.currentPopulationIndex(subProblemIndex)
+            ][solutionIndex].title
+          }`
+        );
+
+        for (const prosOrCons of ["pros", "cons"] as const) {
+          if (
+            this.memory.subProblems[subProblemIndex].solutions.populations[
+              this.currentPopulationIndex(subProblemIndex)
+            ][solutionIndex][prosOrCons] &&
+            this.memory.subProblems[subProblemIndex].solutions.populations[
+              this.currentPopulationIndex(subProblemIndex)
+            ][solutionIndex][prosOrCons]!.length > 0
+          ) {
+            this.logger.info(
+              `Skipping ${prosOrCons} for solution ${solutionIndex} of sub problem ${subProblemIndex} as it already exists`
+            );
+          } else {
+            let results = (await this.callLLM(
               "create-pros-cons",
               IEngineConstants.createProsConsModel,
-              await this.renderRefinePrompt(prosOrCons, results)
+              await this.renderCreatePrompt(prosOrCons)
             )) as string[];
-          }
 
-          if (
-            this.memory.subProblems[subProblemIndex].solutions.populations &&
-            this.memory.subProblems[subProblemIndex].solutions.populations
-              .length > 0 &&
-            this.memory.subProblems[subProblemIndex].solutions.populations[0]
-              .length > 0
-          ) {
-            solutions = this.memory.subProblems[
-              subProblemIndex
-            ].solutions.populations[
-              this.memory.subProblems[subProblemIndex].solutions.populations
-                .length - 1
+            if (IEngineConstants.enable.refine.createProsCons) {
+              results = (await this.callLLM(
+                "create-pros-cons",
+                IEngineConstants.createProsConsModel,
+                await this.renderRefinePrompt(prosOrCons, results)
+              )) as string[];
+            }
+
+            this.logger.debug(
+              `${prosOrCons}: ${JSON.stringify(results, null, 2)}`
+            );
+
+            this.memory.subProblems[subProblemIndex].solutions.populations[
+              this.currentPopulationIndex(subProblemIndex)
             ][solutionIndex][prosOrCons] = results;
-          } else {
-            this.memory.subProblems[subProblemIndex].solutions.seed[
-              solutionIndex
-            ][prosOrCons] = results;
-          }
 
-          await this.saveMemory();
+            await this.saveMemory();
+          }
         }
       }
     }

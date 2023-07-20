@@ -560,7 +560,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
     );
   }
 
-  async createAllSolutions() {
+  async createAllSeedSolutions() {
     for (
       let subProblemIndex = 0;
       subProblemIndex <
@@ -610,12 +610,11 @@ export class CreateSolutionsProcessor extends BaseProcessor {
 
       if (!this.memory.subProblems[subProblemIndex].solutions) {
         this.memory.subProblems[subProblemIndex].solutions = {
-          seed: [],
           populations: [],
         };
       }
 
-      this.memory.subProblems[subProblemIndex].solutions.seed = solutions;
+      this.memory.subProblems[subProblemIndex].solutions.populations.push(solutions);
 
       await this.saveMemory();
       this.logger.debug(`Saved memory for sub problem ${subProblemIndex}`);
@@ -634,7 +633,7 @@ export class CreateSolutionsProcessor extends BaseProcessor {
     });
 
     try {
-      await this.createAllSolutions();
+      await this.createAllSeedSolutions();
     } catch (error: any) {
       this.logger.error("Error creating solutions");
       this.logger.error(error);

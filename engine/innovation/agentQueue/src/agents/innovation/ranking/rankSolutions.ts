@@ -116,24 +116,9 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
       ) {
         this.subProblemIndex = s;
 
-        if (
-          this.memory.subProblems[s].solutions!.seed &&
-          this.memory.subProblems[s].solutions!.seed.length > 0 &&
-          !(
-            this.memory.subProblems[s].solutions.populations &&
-            this.memory.subProblems[s].solutions.populations.length > 0 &&
-            this.memory.subProblems[s].solutions.populations[0].length > 0
-          )
-        ) {
-          this.logger.info("Converting seed solutions to first population");
-          this.memory.subProblems[s].solutions.populations = [
-            this.memory.subProblems[s].solutions!.seed,
-          ];
-          this.memory.subProblems[s].solutions!.seed = [];
-        }
+        const currentPopulationIndex = this.currentPopulationIndex(this.subProblemIndex);
 
-        const currentPopulationIndex =
-          this.memory.subProblems[s].solutions.populations.length - 1;
+        this.logger.info(`Ranking solutions for sub problem ${s} population ${currentPopulationIndex}`);
 
         this.setupRankingPrompts(
           this.memory.subProblems[s].solutions.populations[

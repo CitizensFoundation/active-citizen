@@ -22,6 +22,9 @@ export class BaseProcessor extends Base {
     async saveMemory() {
         await redis.set(this.memory.redisKey, JSON.stringify(this.memory));
     }
+    currentPopulationIndex(subProblemIndex) {
+        return this.memory.subProblems[subProblemIndex].solutions.populations.length - 1;
+    }
     renderSubProblem(subProblemIndex) {
         const subProblem = this.memory.subProblems[subProblemIndex];
         return `

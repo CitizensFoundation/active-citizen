@@ -38,6 +38,10 @@ export abstract class BaseProcessor extends Base {
     await redis.set(this.memory.redisKey, JSON.stringify(this.memory));
   }
 
+  currentPopulationIndex(subProblemIndex: number) {
+    return this.memory.subProblems[subProblemIndex].solutions.populations.length - 1;
+  }
+
   renderSubProblem(subProblemIndex: number) {
     const subProblem = this.memory.subProblems[subProblemIndex];
     return `

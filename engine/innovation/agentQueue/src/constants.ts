@@ -85,7 +85,7 @@ export class IEngineConstants {
     tokenLimit: 8192,
     inTokenCostUSD: gpt4InTokenPrice,
     outTokenCostUSD: gpt4OutTokenPrice,
-    verbose: true,
+    verbose: false,
   };
 
   static prosConsRankingsModel: IEngineBaseAIModelConstants = {
@@ -95,7 +95,7 @@ export class IEngineConstants {
     tokenLimit: 8192,
     inTokenCostUSD: gpt35InTokenPrice,
     outTokenCostUSD: gpt35kOutTokenPrice,
-    verbose: true,
+    verbose: false,
   };
 
   static getPageAnalysisModel: IEngineBaseAIModelConstants = {
@@ -135,7 +135,7 @@ export class IEngineConstants {
     tokenLimit: 8192,
     inTokenCostUSD: gpt4InTokenPrice,
     outTokenCostUSD: gpt4OutTokenPrice,
-    verbose: true,
+    verbose: false,
   };
 
   static evolutionMutateModel: IEngineBaseAIModelConstants = {
@@ -186,7 +186,7 @@ export class IEngineConstants {
 
   static maxTopProsConsUsedForRanking = 3;
 
-  static maxNumberGeneratedProsConsForSolution = 14;
+  static maxNumberGeneratedProsConsForSolution = 9;
 
   static minSleepBeforeBrowserRequest = 1100;
 

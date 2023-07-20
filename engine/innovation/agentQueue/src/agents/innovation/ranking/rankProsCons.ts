@@ -10,24 +10,9 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
   currentProsOrCons: "pros" | "cons" | undefined;
 
   getCurrentSolution() {
-    if (
-      this.memory.subProblems[this.subProblemIndex].solutions.populations &&
-      this.memory.subProblems[this.subProblemIndex].solutions.populations.length >
-        0 &&
-      this.memory.subProblems[this.subProblemIndex].solutions.populations[0]
-        .length > 0
-    ) {
-        this.memory.subProblems[this.subProblemIndex].solutions.populations[
-          this.memory.subProblems[this.subProblemIndex].solutions.populations
-            .length - 1
-        ][
-          this.currentSolutionIndex
-        ];
-    } else {
-      return this.memory.subProblems[this.subProblemIndex].solutions.seed[
-        this.currentSolutionIndex
-      ];
-    }
+    return this.memory.subProblems[this.subProblemIndex].solutions.populations[
+      this.currentPopulationIndex(this.subProblemIndex)
+    ][this.currentSolutionIndex];
   }
 
   renderCurrentSolution() {
@@ -47,8 +32,10 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
     const itemOneIndex = promptPair[0];
     const itemTwoIndex = promptPair[1];
 
-    const prosOrConsOne = (this.allItems![itemOneIndex] as IEngineProCon).description;
-    const prosOrConsTwo = (this.allItems![itemTwoIndex] as IEngineProCon).description;
+    const prosOrConsOne = (this.allItems![itemOneIndex] as IEngineProCon)
+      .description;
+    const prosOrConsTwo = (this.allItems![itemTwoIndex] as IEngineProCon)
+      .description;
 
     let proConSingle;
 
@@ -61,20 +48,12 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
     const messages = [
       new SystemChatMessage(
         `
-        As an AI expert, your role involves analyzing ${
-          this.currentProsOrCons
-        } associated with solutions to problem statements and sub-problems to decide on which ${
-          this.currentProsOrCons
-        } is more important.
+        As an AI expert, your role involves analyzing ${this.currentProsOrCons} associated with solutions to problem statements and sub-problems to decide on which ${this.currentProsOrCons} is more important.
 
         Please adhere to the following guidelines:
 
-        1. You will be presented with a problem statement, a solution, and two ${
-          this.currentProsOrCons
-        }. These will be labeled as "${proConSingle} One" and "${proConSingle} Two".
-        2. Analyze and compare the ${
-          this.currentProsOrCons
-        } based on their relevance and importance to the solution and choose which is more important and output your decision as either "One" or "Two".
+        1. You will be presented with a problem statement, a solution, and two ${this.currentProsOrCons}. These will be labeled as "${proConSingle} One" and "${proConSingle} Two".
+        2. Analyze and compare the ${this.currentProsOrCons} based on their relevance and importance to the solution and choose which is more important and output your decision as either "One" or "Two".
         3. Never explain your reasoning.
         `
       ),
@@ -109,8 +88,9 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
   convertProsConsToObjects(prosCons: string[]): IEngineProCon[] {
     return prosCons.map((prosCon) => {
       return {
-        description: prosCon
-      }});
+        description: prosCon,
+      };
+    });
   }
 
   async process() {
@@ -128,28 +108,26 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
       for (
         let subProblemIndex = 0;
         subProblemIndex <
-        Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems);
+        Math.min(
+          this.memory.subProblems.length,
+          IEngineConstants.maxSubProblems
+        );
         subProblemIndex++
       ) {
         this.subProblemIndex = subProblemIndex;
 
+        this.logger.info(
+          `Ranking pros/cons for sub problem ${subProblemIndex} currentPopulationIndex ${this.currentPopulationIndex(
+            subProblemIndex
+          )}`
+        );
+
         let solutions;
 
-        if (
-          this.memory.subProblems[subProblemIndex].solutions.populations &&
-          this.memory.subProblems[subProblemIndex].solutions.populations.length >
-            0 &&
-          this.memory.subProblems[subProblemIndex].solutions.populations[0]
-            .length > 0
-        ) {
-          solutions =
-            this.memory.subProblems[subProblemIndex].solutions.populations[
-              this.memory.subProblems[subProblemIndex].solutions.populations
-                .length - 1
-            ];
-        } else {
-          solutions = this.memory.subProblems[subProblemIndex].solutions.seed;
-        }
+        solutions =
+          this.memory.subProblems[subProblemIndex].solutions.populations[
+            this.currentPopulationIndex(subProblemIndex)
+          ];
 
         for (
           let solutionIndex = 0;
@@ -167,59 +145,41 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
               )}`
             );
 
-            if (solutions[solutionIndex][prosOrCons] && solutions[solutionIndex][prosOrCons]!.length > 0) {
+            if (
+              solutions[solutionIndex][prosOrCons] &&
+              solutions[solutionIndex][prosOrCons]!.length > 0
+            ) {
               const firstItem = solutions[solutionIndex][prosOrCons]![0];
 
               const hasStrings = typeof firstItem === "string";
 
               let convertedProsCons;
 
+              // Only rank if the pros/cons are strings from the creation step
               if (hasStrings) {
                 this.logger.debug("Converting pros/cons to objects");
-                convertedProsCons = this.convertProsConsToObjects(solutions[solutionIndex][prosOrCons]! as string[]);
-              } else {
-                convertedProsCons = solutions[solutionIndex][prosOrCons]! as IEngineProCon[];
-              }
-
-              this.setupRankingPrompts(convertedProsCons);
-              await this.performPairwiseRanking();
-
-              if (
-                this.memory.subProblems[subProblemIndex].solutions.populations &&
-                this.memory.subProblems[subProblemIndex].solutions.populations
-                  .length > 0 &&
-                this.memory.subProblems[subProblemIndex].solutions.populations[0]
-                  .length > 0
-              ) {
-                this.memory.subProblems[subProblemIndex].solutions.populations[
-                  this.memory.subProblems[subProblemIndex].solutions.populations
-                    .length - 1
-                ][solutionIndex][prosOrCons] =
-                  this.getOrderedListOfItems(true) as IEngineProCon[];
-              } else {
-                this.memory.subProblems[subProblemIndex].solutions.seed[
-                  solutionIndex
-                ][prosOrCons] = this.getOrderedListOfItems(true) as string[];
-                this.logger.debug(
-                  `${prosOrCons} after ranking: ${JSON.stringify(
-                    this.memory.subProblems[subProblemIndex].solutions.seed[
-                      solutionIndex
-                    ][prosOrCons]
-                  )}`
+                convertedProsCons = this.convertProsConsToObjects(
+                  solutions[solutionIndex][prosOrCons]! as string[]
                 );
+                this.setupRankingPrompts(convertedProsCons);
+                await this.performPairwiseRanking();
+
+                this.memory.subProblems[subProblemIndex].solutions.populations[
+                  this.currentPopulationIndex(subProblemIndex)
+                ][solutionIndex][prosOrCons] = this.getOrderedListOfItems(
+                  true
+                ) as IEngineProCon[];
               }
             } else {
-              this.logger.error(`No ${prosOrCons} to rank`)
+              this.logger.error(`No ${prosOrCons} to rank`);
             }
-
           }
           await this.saveMemory();
         }
       }
     } catch (error) {
-      this.logger.error("Error in Rank Pros Cons Processor")
+      this.logger.error("Error in Rank Pros Cons Processor");
       this.logger.error(error);
     }
-
   }
 }
