@@ -53,7 +53,8 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
   }
 
   abstract voteOnPromptPair(
-    promptPair: number[]
+    promptPair: number[],
+    additionalData?: any
   ): Promise<IEnginePairWiseVoteResults>;
 
   async getResultsFromLLM(
@@ -145,7 +146,7 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
     }
   }
 
-  async performPairwiseRanking() {
+  async performPairwiseRanking(additionalData?: any) {
     this.logger.info("Performing pairwise ranking");
     try {
       for (let p = 0; p < this.prompts.length; p++) {
@@ -153,7 +154,7 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
         const promptPair = this.prompts[p];
         this.logger.debug(`Prompt pair: ${promptPair}`)
         const { wonItemIndex, lostItemIndex } = await this.voteOnPromptPair(
-          promptPair
+          promptPair, additionalData
         );
         //this.logger.debug(`Won item index: ${wonItemIndex} Lost item index: ${lostItemIndex}`)
         if (wonItemIndex === -1 && lostItemIndex === -1) {

@@ -23,7 +23,8 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
 
   renderRecombinationPrompt(
     parentA: IEngineSolution,
-    parentB: IEngineSolution
+    parentB: IEngineSolution,
+    subProblemIndex: number
   ) {
     return [
       new SystemChatMessage(
@@ -41,9 +42,7 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
       ),
       new HumanChatMessage(
         `
-        ${this.renderProblemStatementSubProblemsAndEntities(
-          this.currentSubProblemIndex!
-        )}
+        ${this.renderProblemStatementSubProblemsAndEntities(subProblemIndex)}
 
         Parent A:
         ${this.renderSolution(parentA)}
@@ -59,6 +58,7 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
 
   renderMutatePrompt(
     individual: IEngineSolution,
+    subProblemIndex: number,
     mutateRate: IEngineMutationRates | undefined = undefined
   ) {
     if (!mutateRate) {
@@ -94,9 +94,7 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
       ),
       new HumanChatMessage(
         `
-        ${this.renderProblemStatementSubProblemsAndEntities(
-          this.currentSubProblemIndex!
-        )}
+        ${this.renderProblemStatementSubProblemsAndEntities(subProblemIndex)}
 
         Solution to mutate:
         ${this.renderSolution(individual)}
@@ -109,7 +107,8 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
 
   async performRecombination(
     parentA: IEngineSolution,
-    parentB: IEngineSolution
+    parentB: IEngineSolution,
+    subProblemIndex: number
   ) {
     this.chat = new ChatOpenAI({
       temperature: IEngineConstants.evolutionRecombineModel.temperature,
@@ -121,17 +120,26 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
     return (await this.callLLM(
       "evolve-recombine-population",
       IEngineConstants.evolutionRecombineModel,
-      this.renderRecombinationPrompt(parentA, parentB)
+      this.renderRecombinationPrompt(parentA, parentB, subProblemIndex)
     )) as IEngineSolution;
   }
 
-  async recombine(parentA: IEngineSolution, parentB: IEngineSolution) {
-    const offspring = await this.performRecombination(parentA, parentB);
+  async recombine(
+    parentA: IEngineSolution,
+    parentB: IEngineSolution,
+    subProblemIndex: number
+  ) {
+    const offspring = await this.performRecombination(
+      parentA,
+      parentB,
+      subProblemIndex
+    );
     return offspring;
   }
 
   async performMutation(
     individual: IEngineSolution,
+    subProblemIndex: number,
     mutateRate: IEngineMutationRates | undefined = undefined
   ) {
     this.logger.debug("Performing mutation");
@@ -148,7 +156,7 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
       const mutant = (await this.callLLM(
         "evolve-mutate-population",
         IEngineConstants.evolutionMutateModel,
-        this.renderMutatePrompt(individual, mutateRate)
+        this.renderMutatePrompt(individual, subProblemIndex, mutateRate)
       )) as IEngineSolution;
 
       this.logger.debug("After mutation");
@@ -163,10 +171,15 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
 
   async mutate(
     individual: IEngineSolution,
+    subProblemIndex: number,
     mutateRate: IEngineMutationRates | undefined = undefined
   ) {
     try {
-      const mutant = await this.performMutation(individual, mutateRate);
+      const mutant = await this.performMutation(
+        individual,
+        subProblemIndex,
+        mutateRate
+      );
       return mutant;
     } catch (error) {
       this.logger.error("Error in mutate");
@@ -175,7 +188,10 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
     }
   }
 
-  async getNewSolutions(alreadyCreatedSolutions: IEngineSolution[]) {
+  async getNewSolutions(
+    alreadyCreatedSolutions: IEngineSolution[],
+    subProblemIndex: number
+  ) {
     this.logger.info(`Getting new solutions`);
 
     this.chat = new ChatOpenAI({
@@ -194,7 +210,7 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
     }
 
     const textContexts = await this.getTextContext(
-      this.currentSubProblemIndex!,
+      subProblemIndex,
       alreadyCreatedSolutionsText
     );
 
@@ -203,7 +219,7 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
     );
 
     const newSolutions = await this.createSolutions(
-      this.currentSubProblemIndex!,
+      subProblemIndex,
       textContexts.general,
       textContexts.scientific,
       textContexts.openData,
@@ -252,142 +268,143 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
     }
   }
 
+  async evolveSubProblem(subProblemIndex: number) {
+    this.logger.info(`Evolve population for sub problem ${subProblemIndex}`);
+    this.logger.info(
+      `Current number of generations: ${this.memory.subProblems[subProblemIndex].solutions.populations.length}`
+    );
+
+    let previousPopulation = this.getPreviousPopulation(subProblemIndex);
+
+    const populationSize = IEngineConstants.evolution.populationSize;
+    const newPopulation = [];
+
+    const eliteCount = Math.floor(
+      previousPopulation.length * IEngineConstants.evolution.keepElitePercent
+    );
+
+    this.logger.debug(`Elite count: ${eliteCount}`);
+
+    for (let i = 0; i < eliteCount; i++) {
+      newPopulation.push(previousPopulation[i]);
+      this.logger.debug(`Elite: ${previousPopulation[i].title}`);
+    }
+
+    // Mutation
+    let mutationCount = Math.floor(
+      populationSize * IEngineConstants.evolution.mutationOffspringPercent
+    );
+
+    if (newPopulation.length + mutationCount > populationSize) {
+      mutationCount = populationSize - newPopulation.length;
+    }
+
+    this.logger.debug(`Mutation count: ${mutationCount}`);
+
+    for (let i = 0; i < mutationCount; i++) {
+      this.logger.debug(`Mutation ${i + 1} of ${mutationCount}`);
+      const parent = this.selectParent(previousPopulation);
+      this.logger.debug(`Parent: ${parent.title}`);
+      try {
+        const mutant = await this.mutate(parent, subProblemIndex);
+        this.logger.debug(`Mutant: ${JSON.stringify(mutant, null, 2)}`);
+        newPopulation.push(mutant);
+        this.logger.debug("After mutant push");
+      } catch (error) {
+        this.logger.error("Error in mutation top");
+        this.logger.error(error);
+        throw error;
+      }
+    }
+
+    // Crossover
+    let crossoverCount = Math.floor(
+      populationSize * IEngineConstants.evolution.crossoverPercent
+    );
+
+    this.logger.debug(`Crossover count: ${crossoverCount}`);
+
+    for (let i = 0; i < crossoverCount; i++) {
+      const parentA = this.selectParent(previousPopulation);
+      const parentB = this.selectParent(previousPopulation, parentA);
+
+      this.logger.debug(`Parent A: ${parentA.title}`);
+      this.logger.debug(`Parent B: ${parentB.title}`);
+
+      let offspring = await this.recombine(parentA, parentB, subProblemIndex);
+
+      if (Math.random() < IEngineConstants.evolution.crossoverMutationPercent) {
+        offspring = await this.mutate(offspring, subProblemIndex, "low");
+      }
+
+      this.logger.debug(`Offspring: ${JSON.stringify(offspring, null, 2)}`);
+
+      newPopulation.push(offspring);
+    }
+
+    // Immigration
+    let immigrationCount = Math.floor(
+      populationSize * IEngineConstants.evolution.randomImmigrationPercent
+    );
+
+    this.logger.info(`Immigration count: ${immigrationCount}`);
+
+    if (newPopulation.length + immigrationCount > populationSize) {
+      immigrationCount = populationSize - newPopulation.length;
+    }
+
+    let newSolutions: IEngineSolution[] = [];
+
+    this.logger.debug("Before creating new solutions");
+
+    while (newSolutions.length < immigrationCount) {
+      const currentSolutions = await this.getNewSolutions(
+        newSolutions,
+        subProblemIndex
+      );
+      this.logger.debug("After getting new solutions");
+
+      newSolutions = [...newSolutions, ...currentSolutions];
+
+      this.logger.debug(
+        `New solutions for population: ${JSON.stringify(newSolutions, null, 2)}`
+      );
+    }
+
+    if (newSolutions.length > immigrationCount) {
+      newSolutions.splice(immigrationCount);
+    }
+
+    this.logger.debug("After creating new solutions: " + newSolutions.length);
+
+    newPopulation.push(...newSolutions);
+
+    this.logger.info(
+      `New population size: ${newPopulation.length} for sub problem ${subProblemIndex}`
+    );
+
+    this.memory.subProblems[subProblemIndex].solutions.populations.push(
+      newPopulation
+    );
+
+    this.logger.debug(
+      `Current number of generations after push: ${this.memory.subProblems[subProblemIndex].solutions.populations.length}`
+    );
+
+    await this.saveMemory();
+  }
+
   async evolvePopulation() {
+    const subProblemPromises = [];
     for (
       let subProblemIndex = 0;
       subProblemIndex <
       Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems);
       subProblemIndex++
     ) {
-      this.currentSubProblemIndex = subProblemIndex;
-
-      this.logger.info(`Evolve population for sub problem ${subProblemIndex}`);
-      this.logger.info(
-        `Current number of generations: ${this.memory.subProblems[subProblemIndex].solutions.populations.length}`
-      );
-
-      let previousPopulation = this.getPreviousPopulation(subProblemIndex);
-
-      const populationSize = IEngineConstants.evolution.populationSize;
-      const newPopulation = [];
-
-      const eliteCount = Math.floor(
-        previousPopulation.length * IEngineConstants.evolution.keepElitePercent
-      );
-
-      this.logger.debug(`Elite count: ${eliteCount}`);
-
-      for (let i = 0; i < eliteCount; i++) {
-        newPopulation.push(previousPopulation[i]);
-        this.logger.debug(`Elite: ${previousPopulation[i].title}`);
-      }
-
-      // Mutation
-      let mutationCount = Math.floor(
-        populationSize * IEngineConstants.evolution.mutationOffspringPercent
-      );
-
-      if (newPopulation.length + mutationCount > populationSize) {
-        mutationCount = populationSize - newPopulation.length;
-      }
-
-      this.logger.debug(`Mutation count: ${mutationCount}`);
-
-      for (let i = 0; i < mutationCount; i++) {
-        this.logger.debug(`Mutation ${i + 1} of ${mutationCount}`);
-        const parent = this.selectParent(previousPopulation);
-        this.logger.debug(`Parent: ${parent.title}`);
-        try {
-          const mutant = await this.mutate(parent);
-          this.logger.debug(`Mutant: ${JSON.stringify(mutant, null, 2)}`);
-          newPopulation.push(mutant);
-          this.logger.debug("After mutant push");
-        } catch (error) {
-          this.logger.error("Error in mutation top");
-          this.logger.error(error);
-          throw error;
-        }
-      }
-
-      // Crossover
-      let crossoverCount = Math.floor(
-        populationSize * IEngineConstants.evolution.crossoverPercent
-      );
-
-      this.logger.debug(`Crossover count: ${crossoverCount}`);
-
-      for (let i = 0; i < crossoverCount; i++) {
-        const parentA = this.selectParent(previousPopulation);
-        const parentB = this.selectParent(previousPopulation, parentA);
-
-        this.logger.debug(`Parent A: ${parentA.title}`);
-        this.logger.debug(`Parent B: ${parentB.title}`);
-
-        let offspring = await this.recombine(parentA, parentB);
-
-        if (
-          Math.random() < IEngineConstants.evolution.crossoverMutationPercent
-        ) {
-          offspring = await this.mutate(offspring, "low");
-        }
-
-        this.logger.debug(`Offspring: ${JSON.stringify(offspring, null, 2)}`);
-
-        newPopulation.push(offspring);
-      }
-
-      // Immigration
-      let immigrationCount = Math.floor(
-        populationSize * IEngineConstants.evolution.randomImmigrationPercent
-      );
-
-      this.logger.info(`Immigration count: ${immigrationCount}`);
-
-      if (newPopulation.length + immigrationCount > populationSize) {
-        immigrationCount = populationSize - newPopulation.length;
-      }
-
-      let newSolutions: IEngineSolution[] = [];
-
-      this.logger.debug("Before creating new solutions");
-
-      while (newSolutions.length < immigrationCount) {
-        const currentSolutions = await this.getNewSolutions(newSolutions);
-        this.logger.debug("After getting new solutions");
-
-        newSolutions = [...newSolutions, ...currentSolutions];
-
-        this.logger.debug(
-          `New solutions for population: ${JSON.stringify(
-            newSolutions,
-            null,
-            2
-          )}`
-        );
-      }
-
-      if (newSolutions.length > immigrationCount) {
-        newSolutions.splice(immigrationCount);
-      }
-
-      this.logger.debug("After creating new solutions: " + newSolutions.length);
-
-      newPopulation.push(...newSolutions);
-
-      this.logger.info(
-        `New population size: ${newPopulation.length} for sub problem ${subProblemIndex}`
-      );
-
-      this.memory.subProblems[subProblemIndex].solutions.populations.push(
-        newPopulation
-      );
-
-      this.logger.debug(
-        `Current number of generations after push: ${this.memory.subProblems[subProblemIndex].solutions.populations.length}`
-      );
-
-      await this.saveMemory();
+      subProblemPromises.push(this.evolveSubProblem(subProblemIndex));
     }
+    await Promise.all(subProblemPromises);
   }
 
   async process() {

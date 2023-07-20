@@ -3,7 +3,6 @@ import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
 import { IEngineConstants } from "../../../constants.js";
 import { BasePairwiseRankingsProcessor } from "./basePairwiseRanking.js";
 export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
-    subProblemIndex = 0;
     getProCons(prosCons) {
         if (prosCons && prosCons.length > 0) {
             return prosCons.map((proCon) => proCon.description);
@@ -12,7 +11,7 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
             return [];
         }
     }
-    async voteOnPromptPair(promptPair) {
+    async voteOnPromptPair(promptPair, subProblemIndex) {
         const itemOneIndex = promptPair[0];
         const itemTwoIndex = promptPair[1];
         const solutionOne = this.allItems[itemOneIndex];
@@ -29,7 +28,7 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
         5. Think step by step.
         `),
             new HumanChatMessage(`
-        ${this.renderProblemStatementSubProblemsAndEntities(this.subProblemIndex)}
+        ${this.renderProblemStatementSubProblemsAndEntities(subProblemIndex)}
 
         Solutions to assess:
 
@@ -60,6 +59,16 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
         ];
         return await this.getResultsFromLLM("rank-solutions", IEngineConstants.solutionsRankingsModel, messages, itemOneIndex, itemTwoIndex);
     }
+    async processSubProblem(subProblemIndex) {
+        const currentPopulationIndex = this.currentPopulationIndex(subProblemIndex);
+        this.logger.info(`Ranking solutions for sub problem ${subProblemIndex} population ${currentPopulationIndex}`);
+        this.setupRankingPrompts(this.memory.subProblems[subProblemIndex].solutions.populations[currentPopulationIndex]);
+        await this.performPairwiseRanking(subProblemIndex);
+        this.logger.debug(`Population Solutions before ranking: ${JSON.stringify(this.memory.subProblems[subProblemIndex].solutions.populations[currentPopulationIndex])}`);
+        this.memory.subProblems[subProblemIndex].solutions.populations[currentPopulationIndex] = this.getOrderedListOfItems(true);
+        this.logger.debug(`Popuplation Solutions after ranking: ${JSON.stringify(this.memory.subProblems[subProblemIndex].solutions.populations[currentPopulationIndex])}`);
+        await this.saveMemory();
+    }
     async process() {
         this.logger.info("Rank Solutions Processor");
         super.process();
@@ -70,18 +79,9 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
                 modelName: IEngineConstants.solutionsRankingsModel.name,
                 verbose: IEngineConstants.solutionsRankingsModel.verbose,
             });
-            for (let s = 0; s <
-                Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems); s++) {
-                this.subProblemIndex = s;
-                const currentPopulationIndex = this.currentPopulationIndex(this.subProblemIndex);
-                this.logger.info(`Ranking solutions for sub problem ${s} population ${currentPopulationIndex}`);
-                this.setupRankingPrompts(this.memory.subProblems[s].solutions.populations[currentPopulationIndex]);
-                await this.performPairwiseRanking();
-                this.logger.debug(`Population Solutions before ranking: ${JSON.stringify(this.memory.subProblems[s].solutions.populations[currentPopulationIndex])}`);
-                this.memory.subProblems[s].solutions.populations[currentPopulationIndex] = this.getOrderedListOfItems(true);
-                this.logger.debug(`Popuplation Solutions after ranking: ${JSON.stringify(this.memory.subProblems[s].solutions.populations[currentPopulationIndex])}`);
-                await this.saveMemory();
-            }
+            const subProblemsPromises = Array.from({ length: Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems) }, async (_, subProblemIndex) => this.processSubProblem(subProblemIndex));
+            await Promise.all(subProblemsPromises);
+            this.logger.info("Rank Solutions Processor Completed");
         }
         catch (error) {
             this.logger.error("Error in Rank Solutions Processor");

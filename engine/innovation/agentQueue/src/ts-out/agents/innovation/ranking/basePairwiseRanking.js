@@ -91,14 +91,14 @@ export class BasePairwiseRankingsProcessor extends BaseProcessor {
                     this.NUM_COMPARISONS_FOR_MIN_K);
         }
     }
-    async performPairwiseRanking() {
+    async performPairwiseRanking(additionalData) {
         this.logger.info("Performing pairwise ranking");
         try {
             for (let p = 0; p < this.prompts.length; p++) {
                 this.logger.info(`Prompt ${p + 1} of ${this.prompts.length}`);
                 const promptPair = this.prompts[p];
                 this.logger.debug(`Prompt pair: ${promptPair}`);
-                const { wonItemIndex, lostItemIndex } = await this.voteOnPromptPair(promptPair);
+                const { wonItemIndex, lostItemIndex } = await this.voteOnPromptPair(promptPair, additionalData);
                 //this.logger.debug(`Won item index: ${wonItemIndex} Lost item index: ${lostItemIndex}`)
                 if (wonItemIndex === -1 && lostItemIndex === -1) {
                     this.logger.debug(`Draw not updating elo score for prompt ${p}`);

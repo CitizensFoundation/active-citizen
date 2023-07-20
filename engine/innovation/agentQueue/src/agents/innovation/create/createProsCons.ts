@@ -1,19 +1,10 @@
 import { BaseProcessor } from "../baseProcessor.js";
 import { ChatOpenAI } from "langchain/chat_models/openai";
 import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
-
 import { IEngineConstants } from "../../../constants.js";
 
 export class CreateProsConsProcessor extends BaseProcessor {
-  currentSolutionIndex = 0;
-
-  renderCurrentSolution() {
-    const solution =
-      this.memory.subProblems[this.currentSubProblemIndex!].solutions
-        .populations[this.currentPopulationIndex(this.currentSubProblemIndex!)][
-        this.currentSolutionIndex!
-      ];
-
+  renderCurrentSolution(solution: IEngineSolution) {
     return `
       Solution:
 
@@ -25,7 +16,12 @@ export class CreateProsConsProcessor extends BaseProcessor {
     `;
   }
 
-  async renderRefinePrompt(prosOrCons: string, results: string[]) {
+  async renderRefinePrompt(
+    prosOrCons: string,
+    results: string[],
+    subProblemIndex: number,
+    solution: IEngineSolution
+  ) {
     const messages = [
       new SystemChatMessage(
         `
@@ -44,11 +40,9 @@ export class CreateProsConsProcessor extends BaseProcessor {
       ),
       new HumanChatMessage(
         `
-        ${this.renderProblemStatementSubProblemsAndEntities(
-          this.currentSubProblemIndex!
-        )}
+        ${this.renderProblemStatementSubProblemsAndEntities(subProblemIndex)}
 
-        ${this.renderCurrentSolution()}
+        ${this.renderCurrentSolution(solution)}
 
         Please review and refine the following ${prosOrCons}:
         ${JSON.stringify(results, null, 2)}
@@ -60,7 +54,11 @@ export class CreateProsConsProcessor extends BaseProcessor {
     return messages;
   }
 
-  async renderCreatePrompt(prosOrCons: string) {
+  async renderCreatePrompt(
+    prosOrCons: string,
+    subProblemIndex: number,
+    solution: IEngineSolution
+  ) {
     const messages = [
       new SystemChatMessage(
         `
@@ -79,11 +77,9 @@ export class CreateProsConsProcessor extends BaseProcessor {
       ),
       new HumanChatMessage(
         `
-         ${this.renderProblemStatementSubProblemsAndEntities(
-           this.currentSubProblemIndex!
-         )}
+         ${this.renderProblemStatementSubProblemsAndEntities(subProblemIndex)}
 
-         ${this.renderCurrentSolution()}
+         ${this.renderCurrentSolution(solution)}
 
          Generate and output JSON for the ${prosOrCons} below:
        `
@@ -94,84 +90,85 @@ export class CreateProsConsProcessor extends BaseProcessor {
   }
 
   async createProsCons() {
-    for (
-      let subProblemIndex = 0;
-      subProblemIndex <
-      Math.min(this.memory.subProblems.length, IEngineConstants.maxSubProblems);
-      subProblemIndex++
-    ) {
-      this.currentSubProblemIndex = subProblemIndex;
+    const subProblemsLimit = Math.min(
+      this.memory.subProblems.length,
+      IEngineConstants.maxSubProblems
+    );
 
-      let solutions;
+    // Create an array of Promises to resolve all the subproblems concurrently
+    const subProblemsPromises = Array.from(
+      { length: subProblemsLimit },
+      async (_, subProblemIndex) => {
+        const solutions =
+          this.memory.subProblems[subProblemIndex].solutions.populations[
+            this.currentPopulationIndex(subProblemIndex)
+          ];
 
-      solutions =
-        this.memory.subProblems[subProblemIndex].solutions.populations[
-          this.currentPopulationIndex(subProblemIndex)
-        ];
+        // Sequentially process each solution for this subproblem
+        for (
+          let solutionIndex = 0;
+          solutionIndex < solutions.length;
+          solutionIndex++
+        ) {
+          this.logger.info(
+            `Creating pros cons solution ${solutionIndex}/${
+              solutions.length
+            } of sub problem ${subProblemIndex} currentPopulationIndex ${this.currentPopulationIndex(
+              subProblemIndex
+            )}`
+          );
 
-      for (
-        let solutionIndex = 0;
-        solutionIndex < solutions.length;
-        solutionIndex++
-      ) {
-        this.currentSolutionIndex = solutionIndex;
-
-        this.logger.info(
-          `Creating pros cons solution ${solutionIndex}/${
-            solutions.length
-          } of sub problem ${subProblemIndex} currentPopulationIndex ${this.currentPopulationIndex(
-            subProblemIndex
-          )}`
-        );
-
-        this.logger.debug(
-          `${
+          const solution =
             this.memory.subProblems[subProblemIndex].solutions.populations[
               this.currentPopulationIndex(subProblemIndex)
-            ][solutionIndex].title
-          }`
-        );
+            ][solutionIndex];
 
-        for (const prosOrCons of ["pros", "cons"] as const) {
-          if (
-            this.memory.subProblems[subProblemIndex].solutions.populations[
-              this.currentPopulationIndex(subProblemIndex)
-            ][solutionIndex][prosOrCons] &&
-            this.memory.subProblems[subProblemIndex].solutions.populations[
-              this.currentPopulationIndex(subProblemIndex)
-            ][solutionIndex][prosOrCons]!.length > 0
-          ) {
-            this.logger.info(
-              `Skipping ${prosOrCons} for solution ${solutionIndex} of sub problem ${subProblemIndex} as it already exists`
-            );
-          } else {
-            let results = (await this.callLLM(
-              "create-pros-cons",
-              IEngineConstants.createProsConsModel,
-              await this.renderCreatePrompt(prosOrCons)
-            )) as string[];
+          this.logger.debug(solution.title);
 
-            if (IEngineConstants.enable.refine.createProsCons) {
-              results = (await this.callLLM(
+          for (const prosOrCons of ["pros", "cons"] as const) {
+            if (solution[prosOrCons] && solution[prosOrCons]!.length > 0) {
+              this.logger.info(
+                `Skipping ${prosOrCons} for solution ${solutionIndex} of sub problem ${subProblemIndex} as it already exists`
+              );
+            } else {
+              let results = (await this.callLLM(
                 "create-pros-cons",
                 IEngineConstants.createProsConsModel,
-                await this.renderRefinePrompt(prosOrCons, results)
+                await this.renderCreatePrompt(
+                  prosOrCons,
+                  subProblemIndex,
+                  solution
+                )
               )) as string[];
+
+              if (IEngineConstants.enable.refine.createProsCons) {
+                results = (await this.callLLM(
+                  "create-pros-cons",
+                  IEngineConstants.createProsConsModel,
+                  await this.renderRefinePrompt(
+                    prosOrCons,
+                    results,
+                    subProblemIndex,
+                    solution
+                  )
+                )) as string[];
+              }
+
+              this.logger.debug(
+                `${prosOrCons}: ${JSON.stringify(results, null, 2)}`
+              );
+
+              solution[prosOrCons] = results;
+
+              await this.saveMemory();
             }
-
-            this.logger.debug(
-              `${prosOrCons}: ${JSON.stringify(results, null, 2)}`
-            );
-
-            this.memory.subProblems[subProblemIndex].solutions.populations[
-              this.currentPopulationIndex(subProblemIndex)
-            ][solutionIndex][prosOrCons] = results;
-
-            await this.saveMemory();
           }
         }
       }
-    }
+    );
+
+    // Wait for all subproblems to finish
+    await Promise.all(subProblemsPromises);
   }
 
   async process() {
@@ -185,6 +182,12 @@ export class CreateProsConsProcessor extends BaseProcessor {
       verbose: IEngineConstants.createProsConsModel.verbose,
     });
 
-    await this.createProsCons();
+    try {
+      await this.createProsCons();
+    } catch (error: any) {
+      this.logger.error(error);
+      this.logger.error(error.stack);
+      throw error;
+    }
   }
 }
