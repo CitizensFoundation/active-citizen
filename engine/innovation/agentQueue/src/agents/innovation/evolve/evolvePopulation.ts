@@ -257,33 +257,6 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
         this.logger.debug(`Elite: ${previousPopulation[i].title}`);
       }
 
-      // Crossover
-      let crossoverCount = Math.floor(
-        populationSize * IEngineConstants.evolution.crossoverPercent
-      );
-
-      this.logger.debug(`Crossover count: ${crossoverCount}`);
-
-      for (let i = 0; i < crossoverCount; i++) {
-        const parentA = this.selectParent(previousPopulation);
-        const parentB = this.selectParent(previousPopulation, parentA);
-
-        this.logger.debug(`Parent A: ${parentA.title}`);
-        this.logger.debug(`Parent B: ${parentB.title}`);
-
-        let offspring = await this.recombine(parentA, parentB);
-
-        if (
-          Math.random() < IEngineConstants.evolution.mutationOffspringPercent
-        ) {
-          offspring = await this.mutate(offspring);
-        }
-
-        this.logger.debug(`Offspring: ${JSON.stringify(offspring, null, 2)}`);
-
-        newPopulation.push(offspring);
-      }
-
       // Mutation
       let mutationCount = Math.floor(
         populationSize * IEngineConstants.evolution.mutationOffspringPercent
@@ -309,6 +282,33 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
           this.logger.error(error);
           throw error;
         }
+      }
+
+      // Crossover
+      let crossoverCount = Math.floor(
+        populationSize * IEngineConstants.evolution.crossoverPercent
+      );
+
+      this.logger.debug(`Crossover count: ${crossoverCount}`);
+
+      for (let i = 0; i < crossoverCount; i++) {
+        const parentA = this.selectParent(previousPopulation);
+        const parentB = this.selectParent(previousPopulation, parentA);
+
+        this.logger.debug(`Parent A: ${parentA.title}`);
+        this.logger.debug(`Parent B: ${parentB.title}`);
+
+        let offspring = await this.recombine(parentA, parentB);
+
+        if (
+          Math.random() < IEngineConstants.evolution.mutationOffspringPercent
+        ) {
+          offspring = await this.mutate(offspring);
+        }
+
+        this.logger.debug(`Offspring: ${JSON.stringify(offspring, null, 2)}`);
+
+        newPopulation.push(offspring);
       }
 
       // Immigration

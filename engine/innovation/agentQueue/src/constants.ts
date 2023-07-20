@@ -145,7 +145,7 @@ export class IEngineConstants {
     tokenLimit: 8192,
     inTokenCostUSD: gpt4InTokenPrice,
     outTokenCostUSD: gpt4OutTokenPrice,
-    verbose: true,
+    verbose: false,
   };
 
   static evolutionRecombineModel: IEngineBaseAIModelConstants = {
@@ -155,7 +155,7 @@ export class IEngineConstants {
     tokenLimit: 8192,
     inTokenCostUSD: gpt4InTokenPrice,
     outTokenCostUSD: gpt4OutTokenPrice,
-    verbose: true,
+    verbose: false,
   };
 
   static getPageTimeout = 1000 * 10;

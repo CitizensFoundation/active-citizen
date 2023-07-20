@@ -129,7 +129,7 @@ export class IEngineConstants {
         tokenLimit: 8192,
         inTokenCostUSD: gpt4InTokenPrice,
         outTokenCostUSD: gpt4OutTokenPrice,
-        verbose: true,
+        verbose: false,
     };
     static evolutionRecombineModel = {
         name: "gpt-4",
@@ -138,7 +138,7 @@ export class IEngineConstants {
         tokenLimit: 8192,
         inTokenCostUSD: gpt4InTokenPrice,
         outTokenCostUSD: gpt4OutTokenPrice,
-        verbose: true,
+        verbose: false,
     };
     static getPageTimeout = 1000 * 10;
     static getPageCacheExpiration = 60 * 60 * 24 * 7 * 4 * 6; // 6 months
