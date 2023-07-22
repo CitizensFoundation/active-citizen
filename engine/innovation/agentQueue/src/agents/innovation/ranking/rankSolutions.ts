@@ -156,7 +156,6 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
       );
 
       await Promise.all(subProblemsPromises);
-
       this.logger.info("Rank Solutions Processor Completed");
     } catch (error) {
       this.logger.error("Error in Rank Solutions Processor");

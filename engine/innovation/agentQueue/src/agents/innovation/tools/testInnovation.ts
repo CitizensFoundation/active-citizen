@@ -38,9 +38,15 @@ if (setNewStage) {
   //memory.currentStage = "web-get-pages";
   //memory.currentStage = "create-seed-solutions";
   //memory.currentStage = "create-pros-cons";
-  memory.currentStage = "rank-pros-cons";
+  //memory.currentStage = "rank-pros-cons";
   //memory.currentStage = "rank-solutions";
-  //memory.currentStage = "evolve-create-population";
+
+  //Repeat for each GA generation
+  memory.currentStage = "evolve-create-population";
+  //memory.currentStage = "create-pros-cons";
+  //memory.currentStage = "rank-pros-cons";
+  //memory.currentStage = "rank-solutions";
+
   await redis.set("st_mem:1:id", JSON.stringify(memory));
 }
 

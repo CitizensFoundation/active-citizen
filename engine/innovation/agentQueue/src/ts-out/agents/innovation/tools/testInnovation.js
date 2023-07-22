@@ -2,7 +2,7 @@ import { Queue } from "bullmq";
 import ioredis from "ioredis";
 const redis = new ioredis.default(process.env.REDIS_MEMORY_URL || "redis://localhost:6379");
 const deleteALl = false;
-const setNewStage = false;
+const setNewStage = true;
 const addJob = false;
 const myQueue = new Queue("agent-innovation");
 if (deleteALl) {
@@ -29,9 +29,13 @@ if (setNewStage) {
     //memory.currentStage = "web-get-pages";
     //memory.currentStage = "create-seed-solutions";
     //memory.currentStage = "create-pros-cons";
-    memory.currentStage = "rank-pros-cons";
+    //memory.currentStage = "rank-pros-cons";
     //memory.currentStage = "rank-solutions";
-    //memory.currentStage = "evolve-create-population";
+    //Repeat for each GA generation
+    memory.currentStage = "evolve-create-population";
+    //memory.currentStage = "create-pros-cons";
+    //memory.currentStage = "rank-pros-cons";
+    //memory.currentStage = "rank-solutions";
     await redis.set("st_mem:1:id", JSON.stringify(memory));
 }
 if (addJob || setNewStage) {

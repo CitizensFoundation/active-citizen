@@ -245,6 +245,7 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
             subProblemPromises.push(this.evolveSubProblem(subProblemIndex));
         }
         await Promise.all(subProblemPromises);
+        this.logger.info("Evolve population all complete");
     }
     async process() {
         this.logger.info("Evolve Population Processor");

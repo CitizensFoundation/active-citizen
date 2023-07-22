@@ -73,7 +73,7 @@ export class BaseProcessor extends Base {
       ${subProblem.title}\n
       ${subProblem.description}\n
 
-      ${entitiesText ? `Affected Entities:\n${entitiesText}` : ""}
+      ${entitiesText ? `Top Affected Entities:\n${entitiesText}` : ""}
     `;
     }
     renderEntityPosNegReasons(item) {
@@ -98,75 +98,96 @@ export class BaseProcessor extends Base {
             const maxRetries = IEngineConstants.mainLLMmaxRetryCount;
             let retry = true;
             while (retry && retryCount < maxRetries && this.chat) {
-                const response = await this.chat.call(messages);
-                if (response) {
-                    const tokensIn = await this.chat.getNumTokensFromMessages(messages);
-                    const tokensOut = await this.chat.getNumTokensFromMessages([
-                        response,
-                    ]);
-                    if (this.memory.stages[stage].tokensIn === undefined) {
-                        this.memory.stages[stage].tokensIn = 0;
-                        this.memory.stages[stage].tokensOut = 0;
-                        this.memory.stages[stage].tokensInCost = 0;
-                        this.memory.stages[stage].tokensOutCost = 0;
-                    }
-                    this.memory.stages[stage].tokensIn += tokensIn.totalCount;
-                    this.memory.stages[stage].tokensOut += tokensOut.totalCount;
-                    this.memory.stages[stage].tokensInCost +=
-                        tokensIn.totalCount * modelConstants.inTokenCostUSD;
-                    this.memory.stages[stage].tokensOutCost +=
-                        tokensOut.totalCount * modelConstants.outTokenCostUSD;
-                    try {
-                        await this.saveMemory();
-                    }
-                    catch (error) {
-                        this.logger.error("Error saving memory");
-                    }
-                    if (parseJson) {
-                        let parsedJson;
+                let response;
+                try {
+                    response = await this.chat.call(messages);
+                    if (response) {
+                        const tokensIn = await this.chat.getNumTokensFromMessages(messages);
+                        const tokensOut = await this.chat.getNumTokensFromMessages([
+                            response,
+                        ]);
+                        if (this.memory.stages[stage].tokensIn === undefined) {
+                            this.memory.stages[stage].tokensIn = 0;
+                            this.memory.stages[stage].tokensOut = 0;
+                            this.memory.stages[stage].tokensInCost = 0;
+                            this.memory.stages[stage].tokensOutCost = 0;
+                        }
+                        this.memory.stages[stage].tokensIn += tokensIn.totalCount;
+                        this.memory.stages[stage].tokensOut += tokensOut.totalCount;
+                        this.memory.stages[stage].tokensInCost +=
+                            tokensIn.totalCount * modelConstants.inTokenCostUSD;
+                        this.memory.stages[stage].tokensOutCost +=
+                            tokensOut.totalCount * modelConstants.outTokenCostUSD;
                         try {
-                            parsedJson = JSON.parse(response.text.trim());
+                            await this.saveMemory();
                         }
                         catch (error) {
-                            this.logger.error(`Error parsing JSON ${response.text.trim()}`);
+                            this.logger.error("Error saving memory");
+                        }
+                        if (parseJson) {
+                            let parsedJson;
                             try {
-                                this.logger.info(`Trying to fix JSON`);
-                                const repaired = jsonrepair(response.text.trim());
-                                parsedJson = JSON.parse(repaired);
+                                parsedJson = JSON.parse(response.text.trim());
                             }
                             catch (error) {
-                                this.logger.error(`Error parsing fixed JSON`);
-                                this.logger.error(error);
-                                retryCount++;
+                                this.logger.warn(`Error parsing JSON ${response.text.trim()}`);
+                                try {
+                                    this.logger.info(`Trying to fix JSON`);
+                                    const repaired = jsonrepair(response.text.trim());
+                                    parsedJson = JSON.parse(repaired);
+                                }
+                                catch (error) {
+                                    this.logger.warn(`Error parsing fixed JSON`);
+                                    this.logger.error(error);
+                                    retryCount++;
+                                }
+                            }
+                            if (parsedJson) {
+                                retry = false;
+                                return parsedJson;
+                            }
+                            retryCount++;
+                            this.logger.warn(`Retrying callLLM ${retryCount}`);
+                        }
+                        else {
+                            retry = false;
+                            if (response.text) {
+                                return response.text.trim();
+                            }
+                            else {
+                                throw new Error(`callLLM response was empty ${JSON.stringify(response)}`);
                             }
                         }
-                        if (parsedJson) {
-                            retry = false;
-                            return parsedJson;
-                        }
-                        retryCount++;
-                        this.logger.debug(`Retrying callLLM ${retryCount}`);
                     }
                     else {
                         retry = false;
-                        if (response.text) {
-                            return response.text.trim();
+                        this.logger.warn(`callLLM response was empty, retrying`);
+                        if (retryCount >= maxRetries) {
+                            throw new Error("callLLM response was empty");
+                            ;
                         }
                         else {
-                            throw new Error(`callLLM response was empty ${JSON.stringify(response)}`);
+                            retryCount++;
                         }
                     }
                 }
-                else {
-                    retry = false;
-                    this.logger.error(`callLLM response was empty`);
-                    throw new Error("callLLM response was empty");
+                catch (error) {
+                    this.logger.warn("Error from LLM, retrying");
+                    this.logger.warn(error);
+                    if (retryCount >= maxRetries) {
+                        throw error;
+                    }
+                    else {
+                        retryCount++;
+                    }
                 }
-                await new Promise((resolve) => setTimeout(resolve, 4500 + retryCount * 5000));
+                const sleepTime = 4500 + retryCount * 5000;
+                this.logger.debug(`Sleeping for ${sleepTime} ms before retrying. Retry count: ${retryCount}}`);
+                await new Promise((resolve) => setTimeout(resolve, sleepTime));
             }
         }
         catch (error) {
-            this.logger.error("Error in callLLM method:");
+            this.logger.error("Unrecoverable Error in callLLM method");
             this.logger.error(error);
             throw error;
         }

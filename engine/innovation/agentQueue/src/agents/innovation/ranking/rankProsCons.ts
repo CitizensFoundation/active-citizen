@@ -109,6 +109,7 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
         });
 
       await Promise.all(subProblemPromises);
+      this.logger.info("Finished processing all sub problems for pros cons ranking");
     } catch (error) {
       this.logger.error("Error in Rank Pros Cons Processor");
       this.logger.error(error);
