@@ -1,5 +1,5 @@
 import { YpAppGlobals } from './@yrpri/yp-app/YpAppGlobals';
-import { CpsServerApi } from './survey/CpsServerApi';
+import { CpsServerApi } from './CpsServerApi.js';
 
 export class CpsAppGlobals extends YpAppGlobals {
   originalQueryParameters: any;

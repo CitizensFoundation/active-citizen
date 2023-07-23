@@ -6,8 +6,8 @@ import { YpBaseElement } from '../common/yp-base-element.js';
 import { YpAccessHelpers } from '../common/YpAccessHelpers.js';
 import { YpMediaHelpers } from '../common/YpMediaHelpers.js';
 
-import '@material/web/navigationbar/navigation-bar.js';
-import '@material/web/navigationtab/navigation-tab.js';
+import '@material/web/labs/navigationbar/navigation-bar.js';
+import '@material/web/labs/navigationtab/navigation-tab.js';
 
 import '@material/web/fab/fab.js';
 import './yp-collection-header.js';

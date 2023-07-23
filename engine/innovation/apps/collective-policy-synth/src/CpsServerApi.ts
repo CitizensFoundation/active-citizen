@@ -6,9 +6,9 @@ export class CpsServerApi extends YpServerApi {
     this.baseUrlPath = urlPath;
   }
 
-  public async getCurrentMemory(): Promise<CpsBootResponse> {
+  public async getMemory(id: number): Promise<CpsBootResponse> {
     return await this.fetchWrapper(
-      this.baseUrlPath + `/memory/current.json`
+      this.baseUrlPath + `/memory/${id}`
     ) as unknown as CpsBootResponse;
   }
 

@@ -1,30 +1,108 @@
-import express from 'express';
-import bodyParser from 'body-parser';
-import * as path from 'path';
-import * as url from 'url';
+import express from "express";
+import bodyParser from "body-parser";
+import * as path from "path";
+import * as url from "url";
 import { createServer } from "http";
 import { Server, Socket } from "socket.io";
-const redis = require("redis");
+import { createClient } from "redis";
+import RedisStore from "connect-redis";
+import session from "express-session";
 
-let redisClient:any;
-
+// Initialize client.
+let redisClient;
 if (process.env.REDIS_URL) {
-  redisClient = redis.createClient(process.env.REDIS_URL, {
-    tls: {
-        rejectUnauthorized: false
-    }
+  redisClient = createClient({
+    url: process.env.REDIS_URL,
+    socket: {
+      tls: true,
+    },
   });
 } else {
-  redisClient = redis.createClient({
-    url: "redis://localhost:6379"
+  redisClient = createClient({
+    url: "redis://localhost:6379",
   });
 }
+
+redisClient.connect().catch(console.error);
+
+// Initialize store.
+let redisStore = new RedisStore({
+  client: redisClient,
+  prefix: "cps:",
+});
 
 const app = express();
 
 const httpServer = createServer(app);
 
 const io = new Server(httpServer, {});
+
+export class App {
+  public app: express.Application;
+  public port: number;
+
+  constructor(controllers: Array<any>, port: number) {
+    this.app = app;
+    this.port = parseInt(process.env.PORT || "8000");
+
+    this.initializeMiddlewares();
+    this.initializeControllers(controllers);
+  }
+
+  private initializeMiddlewares() {
+    this.app.use(bodyParser.json());
+    this.app.use(
+      express.static(
+        path.join(__dirname, "/../apps/collective-policy-synth/dist")
+      )
+    );
+
+    this.app.use(
+      "/memory*",
+      express.static(
+        path.join(__dirname, "/../apps/collective-policy-synth/dist")
+      )
+    );
+
+    app.use(
+      session({
+        store: redisStore,
+        secret: process.env.SESSION_SECRET
+          ? process.env.SESSION_SECRET
+          : "not so secret... use env var.",
+        resave: false,
+        saveUninitialized: false,
+      })
+    );
+
+    if (
+      process.env.NODE_ENV !== "development" &&
+      !process.env.DISABLE_FORCE_HTTPS
+    ) {
+      this.app.enable("trust proxy");
+      this.app.use(function checkProtocol(req, res, next) {
+        console.log(`Protocol ${req.protocol}`);
+        if (!/https/.test(req.protocol)) {
+          res.redirect("https://" + req.headers.host + req.url);
+        } else {
+          return next();
+        }
+      });
+    }
+  }
+
+  private initializeControllers(controllers: Array<any>) {
+    controllers.forEach((controller) => {
+      this.app.use("/", controller.router);
+    });
+  }
+
+  public listen() {
+    httpServer.listen(this.port, () => {
+      console.log(`App listening on the port ${this.port}`);
+    });
+  }
+}
 
 /*io.on("connection", (socket) => {
 
@@ -79,59 +157,3 @@ const io = new Server(httpServer, {});
     console.error("No meeting id from socket");
   }
 });*/
-
-const session = require('express-session')
-let RedisStore = require('connect-redis')(session)
-
-export class App {
-  public app: express.Application;
-  public port: number;
-
-  constructor(controllers: Array<any>, port: number) {
-    this.app = app;
-    this.port =  parseInt(process.env.PORT || "8000");
-
-    this.initializeMiddlewares();
-    this.initializeControllers(controllers);
-  }
-
-  private initializeMiddlewares() {
-    this.app.use(bodyParser.json());
-    this.app.use(express.static(path.join(__dirname, '/../apps/collective-policy-synth/dist')));
-
-    this.app.use('/memory*', express.static(path.join(__dirname, '/../apps/collective-policy-synth/dist')));
-
-    app.use(
-      session({
-        store: new RedisStore({ client: redisClient }),
-        secret: process.env.SESSION_SECRET ? process.env.SESSION_SECRET : 'not so secret... use env var.',
-        resave: false,
-        saveUninitialized: false
-      })
-    )
-
-    if (process.env.NODE_ENV !== 'development' && !process.env.DISABLE_FORCE_HTTPS) {
-      this.app.enable('trust proxy');
-      this.app.use(function checkProtocol (req, res, next) {
-        console.log(`Protocol ${req.protocol}`)
-        if (!/https/.test(req.protocol)) {
-          res.redirect("https://" + req.headers.host + req.url);
-        } else {
-          return next();
-        }
-      });
-    }
-  }
-
-  private initializeControllers(controllers: Array<any>) {
-    controllers.forEach((controller) => {
-      this.app.use('/', controller.router);
-    });
-  }
-
-  public listen() {
-    httpServer.listen(this.port, () => {
-      console.log(`App listening on the port ${this.port}`);
-    });
-  }
-}

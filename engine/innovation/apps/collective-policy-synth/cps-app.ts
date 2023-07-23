@@ -1,10 +1,10 @@
 import { html, css, nothing } from 'lit';
 import { property, customElement, query } from 'lit/decorators.js';
 
-import '@material/web/navigationbar/navigation-bar.js';
-import '@material/web/navigationtab/navigation-tab.js';
-//import '@material/web/navigationdrawer/lib/navigation-drawer-styles.css.js';
-import '@material/web/navigationdrawer/navigation-drawer.js';
+import '@material/web/labs/navigationbar/navigation-bar.js';
+import '@material/web/labs/navigationtab/navigation-tab.js';
+//import '@material/web/labs/navigationdrawer/lib/navigation-drawer-styles.css.js';
+import '@material/web/labs/navigationdrawer/navigation-drawer.js';
 import '@material/web/list/list-item.js';
 import '@material/web/list/list.js';
 import '@material/web/icon/icon.js';
@@ -21,22 +21,17 @@ import {
 import '@material/web/menu/menu.js';
 import { cache } from 'lit/directives/cache.js';
 
-import './@yrpri/common/yp-image.js';
+import './src/@yrpri/common/yp-image.js';
 import { YpBaseElement } from './src/@yrpri/common/yp-base-element.js';
 
 //import './chat/yp-chat-assistant.js';
 import { Layouts } from './src/flexbox-literals/classes.js';
 
-import './survey/aoi-survey-intro.js';
-import './survey/aoi-survey-voting.js';
-import './survey/aoi-survey-results.js';
-import './survey/aoi-survey-analysis.js';
 import { CpsServerApi } from './src/CpsServerApi.js';
 import { CpsAppGlobals } from './src/CpsAppGlobals.js';
-import { NavigationDrawer } from '@material/web/navigationdrawer/lib/navigation-drawer.js';
+import { MdNavigationDrawer } from '@material/web/labs/navigationdrawer/navigation-drawer.js';
 import { Snackbar } from '@material/mwc-snackbar/mwc-snackbar.js';
-import { NavigationTab } from '@material/web/navigationtab/lib/navigation-tab.js';
-import { NavigationBar } from '@material/web/navigationbar/lib/navigation-bar.js';
+import { NavigationBar } from '@material/web/labs/navigationbar/lib/navigation-bar.js';
 import {
   Scheme,
   applyThemeWithContrast,
@@ -44,23 +39,33 @@ import {
 } from './src/@yrpri/common/YpMaterialThemeHelper.js';
 import { CpsAppUser } from './src/CpsAppUser.js';
 
+import './src/cps-problem-statement.js';
+import './src/cps-sub-problems.js';
+import './src/cps-entities.js';
+import './src/cps-solutions.js';
+
 const PagesTypes = {
-  ViewMemory: 1,
+  ProblemStatement: 1,
+  SubProblems: 2,
+  Entities: 3,
+  Solutions: 4,
+  PolicyCategories: 5,
+  PolicyIdeas: 6,
 };
 
 declare global {
   interface Window {
     appGlobals: any /*CpsAppGlobals*/;
     aoiServerApi: CpsServerApi;
-    needsNewEarl: boolean;
-    csrfToken: string;
   }
 }
+
+const currentMemoryId = 1;
 
 @customElement('cps-app')
 export class CpsApp extends YpBaseElement {
   @property({ type: Number })
-  pageIndex = 1;
+  pageIndex = 4;
 
   @property({ type: Object })
   currentMemory: IEngineInnovationMemoryData | undefined;
@@ -81,7 +86,7 @@ export class CpsApp extends YpBaseElement {
   currentError: string | undefined;
 
   @property({ type: String })
-  themeColor = '#0489cf';
+  themeColor = '#3858ca';
 
   @property({ type: String })
   themePrimaryColor = '#000000';
@@ -98,7 +103,7 @@ export class CpsApp extends YpBaseElement {
   @property({ type: String })
   themeScheme: Scheme = 'tonal';
 
-  @property({ type: Number })
+  @property({ type: Boolean })
   themeHighContrast = false;
 
   @property({ type: Boolean })
@@ -116,18 +121,20 @@ export class CpsApp extends YpBaseElement {
   @property({ type: String })
   currentRightAnswer: string;
 
-  @property({ type: String })
-  currentPromptId: number;
+  @property({ type: Number })
+  currentSolutionsGeneration: number | undefined;
 
-  drawer: NavigationDrawer;
+  @property({ type: Number })
+  currentPolicyIdeasGeneration: number | undefined;
+
+  drawer: MdNavigationDrawer;
 
   constructor() {
     super();
 
-    window.aoiServerApi = new CpsServerApi();
+    window.serverApi = new CpsServerApi();
     window.appGlobals = new CpsAppGlobals(window.aoiServerApi);
     window.appUser = new CpsAppUser(window.aoiServerApi);
-    this.earlName = window.appGlobals.earlName;
 
     // Set this.themeDarkMode from localStorage or otherwise to true
     const savedDarkMode = localStorage.getItem('md3-aoi-dark-mode');
@@ -173,9 +180,14 @@ export class CpsApp extends YpBaseElement {
 
   async boot() {
     window.appGlobals.activity('Boot - fetch start');
-    const bootResponse = await window.serverApi.getCurrentMemory() as CpsBootResponse;
+    const bootResponse = (await window.serverApi.getMemory(
+      currentMemoryId
+    )) as CpsBootResponse;
 
     this.currentMemory = bootResponse.currentMemory;
+
+    this.currentSolutionsGeneration =
+      this.currentMemory.subProblems[0].solutions.populations.length;
 
     document.title = bootResponse.name;
 
@@ -187,7 +199,7 @@ export class CpsApp extends YpBaseElement {
 
     this.themeColor = bootResponse.configuration.theme_color
       ? bootResponse.configuration.theme_color
-      : undefined;
+      : "#3858ca";
     this.themePrimaryColor = bootResponse.configuration.theme_primary_color;
     this.themeSecondaryColor = bootResponse.configuration.theme_secondary_color;
     this.themeTertiaryColor = bootResponse.configuration.theme_tertiary_color;
@@ -399,6 +411,12 @@ export class CpsApp extends YpBaseElement {
           margin-bottom: 16px;
         }
 
+        .appTitle {
+          margin-top: 8px;
+          color: var(--md-sys-color-primary);
+          font-weight: 500;
+        }
+
         .ypLogo {
           margin-top: 16px;
         }
@@ -473,9 +491,8 @@ export class CpsApp extends YpBaseElement {
         }
 
         .collectionLogoImage {
-          width: 60px;
-          height: 60px;
-          margin-left: 64px;
+          width: 185px;
+          height: 104px;
         }
 
         .mainPageContainer {
@@ -536,7 +553,6 @@ export class CpsApp extends YpBaseElement {
     }
   }
 
-
   renderIntroduction() {
     return html` <div class="layout vertical center-center"></div> `;
   }
@@ -594,10 +610,22 @@ export class CpsApp extends YpBaseElement {
   _renderPage() {
     if (this.currentMemory) {
       switch (this.pageIndex) {
-        case PagesTypes.ViewMemory:
-          return html`<cps-view-memory
+        case PagesTypes.ProblemStatement:
+          return html`<cps-problem-statement
             .memory="${this.currentMemory}"
-          ></cps-view-memory>`;
+          ></cps-problem-statement>`;
+        case PagesTypes.SubProblems:
+          return html`<cps-sub-problems
+            .memory="${this.currentMemory}"
+          ></cps-sub-problems>`;
+        case PagesTypes.Entities:
+          return html`<cps-entities
+            .memory="${this.currentMemory}"
+          ></cps-entities>`;
+        case PagesTypes.Solutions:
+          return html`<cps-solutions
+            .memory="${this.currentMemory}"
+          ></cps-solutions>`;
         default:
           return html`
             <p>Page not found try going to <a href="#main">Main</a></p>
@@ -657,33 +685,127 @@ export class CpsApp extends YpBaseElement {
     if (this.wide) {
       return html`
         <div class="drawer">
-          <div class="layout horizontal headerContainer">
-            <div class="analyticsHeaderText layout horizontal center-center">
+          <div class="layout horizontal headerContainer center-center">
+            <div class="analyticsHeaderText layout vertical center-center">
               <yp-image
                 class="collectionLogoImage"
                 sizing="contain"
-                src="https://raw.githubusercontent.com/allourideas/allourideas.org/master/public/images/favicon.png"
+                src="https://yrpri-usa-production-direct-assets.s3.amazonaws.com/Robert_Bjarnason_High_quality_abstract_new_high_tech_new_wave.__61a9b3d8-7533-4841-a99e-ef036fed1fbf.png"
               ></yp-image>
+              <div class="appTitle">${this.t('Collective Policy Synth')}</div>
             </div>
           </div>
 
           <md-list>
             <md-list-item
-              class="${this.pageIndex == PagesTypes.ViewMemory &&
+              class="${this.pageIndex == PagesTypes.ProblemStatement &&
               'selectedContainer'}"
-              headline="${this.t('Introduction')}"
+              headline="${this.t('Problem Statement')}"
               @click="${() => this.changeTabTo(0)}"
-              @keydown="${(e: KeyboardEvent) => { if (e.key === 'Enter') { this.changeTabTo(0); } }}"
-              supportingText="${this.t('Why you should participate')}"
+              @keydown="${(e: KeyboardEvent) => {
+                if (e.key === 'Enter') {
+                  this.changeTabTo(0);
+                }
+              }}"
+              supportingText="${this.t(
+                'The core high level problem statement'
+              )}"
             >
               <md-list-item-icon slot="start">
-                <md-icon>info</md-icon>
+                <md-icon>problem</md-icon>
+              </md-list-item-icon></md-list-item
+            >
+            <md-list-item
+              class="${this.pageIndex == PagesTypes.SubProblems &&
+              'selectedContainer'}"
+              headline="${this.t('Sub Problems')}"
+              @click="${() => this.changeTabTo(1)}"
+              @keydown="${(e: KeyboardEvent) => {
+                if (e.key === 'Enter') {
+                  this.changeTabTo(1);
+                }
+              }}"
+              supportingText="${this.t('Specific sub problems')}"
+            >
+              <md-list-item-icon slot="start">
+                <md-icon>folder_open</md-icon>
+              </md-list-item-icon></md-list-item
+            >
+            <md-list-item
+              class="${this.pageIndex == PagesTypes.Entities &&
+              'selectedContainer'}"
+              headline="${this.t('Entities / Stakholders')}"
+              @click="${() => this.changeTabTo(2)}"
+              @keydown="${(e: KeyboardEvent) => {
+                if (e.key === 'Enter') {
+                  this.changeTabTo(2);
+                }
+              }}"
+              supportingText="${this.t('The affected entities / stakholders')}"
+            >
+              <md-list-item-icon slot="start">
+                <md-icon>group</md-icon>
+              </md-list-item-icon></md-list-item
+            >
+            <md-list-item
+              class="${this.pageIndex == PagesTypes.Solutions &&
+              'selectedContainer'}"
+              headline="${this.t('Solutions')} (${this.currentSolutionsGeneration} gen)"
+              @click="${() => this.changeTabTo(3)}"
+              @keydown="${(e: KeyboardEvent) => {
+                if (e.key === 'Enter') {
+                  this.changeTabTo(3);
+                }
+              }}"
+              supportingText="${this.t('Evolving solutions to sub problems')}"
+            >
+              <md-list-item-icon slot="start">
+                <md-icon>online_prediction</md-icon>
+              </md-list-item-icon></md-list-item
+            >
+            <md-list-item
+              class="${this.pageIndex == PagesTypes.PolicyCategories &&
+              'selectedContainer'}"
+              headline="${this.t('Policy categories')}"
+              @click="${() => this.changeTabTo(4)}"
+              @keydown="${(e: KeyboardEvent) => {
+                if (e.key === 'Enter') {
+                  this.changeTabTo(4);
+                }
+              }}"
+              supportingText="${this.t('Policy categories')}"
+            >
+              <md-list-item-icon slot="start">
+                <md-icon>category</md-icon>
+              </md-list-item-icon></md-list-item
+            >
+            <md-list-item
+              class="${this.pageIndex == PagesTypes.PolicyCategories &&
+              'selectedContainer'}"
+              headline="${this.t('Policy ideas')}${this
+                .currentPolicyIdeasGeneration
+                ? html` (${this.currentPolicyIdeasGeneration}g)`
+                : nothing}"
+              @click="${() => this.changeTabTo(5)}"
+              @keydown="${(e: KeyboardEvent) => {
+                if (e.key === 'Enter') {
+                  this.changeTabTo(3);
+                }
+              }}"
+              supportingText="${this.t('Evolving policy ideas')}"
+            >
+              <md-list-item-icon slot="start">
+                <md-icon>policy</md-icon>
               </md-list-item-icon></md-list-item
             >
             <md-list-divider></md-list-divider>
             <md-list-item
               ?hidden="${!this.isAdmin}"
-              @keydown="${(e: KeyboardEvent) => { if (e.key === 'Enter') { this.openAnalytics(); } }}"
+              @keydown="${(e: KeyboardEvent) => {
+                if (e.key === 'Enter') {
+                  this.openAnalytics();
+                }
+              }}"
               @click="${this.openAnalytics}"
               headline="${this.t('Analytics')}"
               supportingText="${this.t('Admin analytics')}"
@@ -694,7 +816,11 @@ export class CpsApp extends YpBaseElement {
             >
             <md-list-item
               ?hidden="${!this.isAdmin}"
-              @keydown="${(e: KeyboardEvent) => { if (e.key === 'Enter') { this.goToAdmin(); } }}"
+              @keydown="${(e: KeyboardEvent) => {
+                if (e.key === 'Enter') {
+                  this.goToAdmin();
+                }
+              }}"
               @click="${this.goToAdmin}"
               headline="${this.t('Administration')}"
               supportingText="${this.t('Administer the process')}"
@@ -707,7 +833,6 @@ export class CpsApp extends YpBaseElement {
             <div class="layout horizontal center-center">
               ${this.renderThemeToggle()}
             </div>
-
           </md-list>
         </div>
       `;
@@ -730,7 +855,7 @@ export class CpsApp extends YpBaseElement {
 
   render() {
     return html`<div class="layout horizontal">
-      ${this.renderNavigationBar()}
+      ${this.currentMemory ? this.renderNavigationBar() : nothing}
       <div class="rightPanel">
         <main>
           <div class="mainPageContainer">${this._renderPage()}</div>
@@ -751,5 +876,6 @@ export class CpsApp extends YpBaseElement {
             `
           : nothing
       }
+      `;
   }
 }

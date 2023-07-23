@@ -1,7 +1,25 @@
 import express from "express";
 import { models } from "../models";
+import {
+  createClient,
+} from "redis";
 
-export class CommentsController {
+let redisClient: any;
+
+if (process.env.REDIS_URL) {
+  redisClient = createClient({
+    url: process.env.REDIS_URL,
+    socket: {
+      tls: true,
+    },
+  });
+} else {
+  redisClient = createClient({
+    url: "redis://localhost:6379",
+  });
+}
+
+export class MemoryController {
   public path = "/api/memory";
   public router = express.Router();
 
@@ -9,19 +27,24 @@ export class CommentsController {
     this.intializeRoutes();
   }
 
-  public intializeRoutes() {
-    this.router.put(this.path + "/current", this.current);
+  public async intializeRoutes() {
+    this.router.get(this.path + "/:id", this.getMemory);
+    await redisClient.connect();
   }
 
-  current = async (req: express.Request, res: express.Response) => {
-    // Get current memory from the redis database
-    const output = await redis.get('st_mem:1:id');
-    const memory = JSON.parse(output);
+  getMemory = async (req: express.Request, res: express.Response) => {
+    const rawMemory = await redisClient.get(`st_mem:${req.params.id}:id`).catch((err: any) => console.error(err));
+    if (rawMemory) {
+      const memory = JSON.parse(rawMemory);
 
-    res.send({
-      isAdmin: true,
-      name: "Collective Policy Synth - Democracy",
-      currentMemory: memory
-    });
+      res.send({
+        isAdmin: true,
+        name: "Collective Policy Synth - Democracy",
+        currentMemory: memory,
+        configuration: {}
+      });
+    } else {
+      res.sendStatus(404);
+    }
   };
 }
