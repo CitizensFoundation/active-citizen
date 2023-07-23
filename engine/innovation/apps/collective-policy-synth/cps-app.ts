@@ -1,0 +1,755 @@
+import { html, css, nothing } from 'lit';
+import { property, customElement, query } from 'lit/decorators.js';
+
+import '@material/web/navigationbar/navigation-bar.js';
+import '@material/web/navigationtab/navigation-tab.js';
+//import '@material/web/navigationdrawer/lib/navigation-drawer-styles.css.js';
+import '@material/web/navigationdrawer/navigation-drawer.js';
+import '@material/web/list/list-item.js';
+import '@material/web/list/list.js';
+import '@material/web/icon/icon.js';
+import '@material/web/iconbutton/standard-icon-button.js';
+import '@material/web/iconbutton/outlined-icon-button.js';
+import '@material/mwc-snackbar/mwc-snackbar.js';
+
+import {
+  applyTheme,
+  argbFromHex,
+  themeFromSourceColor,
+} from '@material/material-color-utilities';
+
+import '@material/web/menu/menu.js';
+import { cache } from 'lit/directives/cache.js';
+
+import './@yrpri/common/yp-image.js';
+import { YpBaseElement } from './src/@yrpri/common/yp-base-element.js';
+
+//import './chat/yp-chat-assistant.js';
+import { Layouts } from './src/flexbox-literals/classes.js';
+
+import './survey/aoi-survey-intro.js';
+import './survey/aoi-survey-voting.js';
+import './survey/aoi-survey-results.js';
+import './survey/aoi-survey-analysis.js';
+import { CpsServerApi } from './src/CpsServerApi.js';
+import { CpsAppGlobals } from './src/CpsAppGlobals.js';
+import { NavigationDrawer } from '@material/web/navigationdrawer/lib/navigation-drawer.js';
+import { Snackbar } from '@material/mwc-snackbar/mwc-snackbar.js';
+import { NavigationTab } from '@material/web/navigationtab/lib/navigation-tab.js';
+import { NavigationBar } from '@material/web/navigationbar/lib/navigation-bar.js';
+import {
+  Scheme,
+  applyThemeWithContrast,
+  themeFromSourceColorWithContrast,
+} from './src/@yrpri/common/YpMaterialThemeHelper.js';
+import { CpsAppUser } from './src/CpsAppUser.js';
+
+const PagesTypes = {
+  ViewMemory: 1,
+};
+
+declare global {
+  interface Window {
+    appGlobals: any /*CpsAppGlobals*/;
+    aoiServerApi: CpsServerApi;
+    needsNewEarl: boolean;
+    csrfToken: string;
+  }
+}
+
+@customElement('cps-app')
+export class CpsApp extends YpBaseElement {
+  @property({ type: Number })
+  pageIndex = 1;
+
+  @property({ type: Object })
+  currentMemory: IEngineInnovationMemoryData | undefined;
+
+  @property({ type: Number })
+  totalNumberOfVotes = 0;
+
+  @property({ type: String })
+  lastSnackbarText: string | undefined;
+
+  @property({ type: String })
+  collectionType = 'domain';
+
+  @property({ type: String })
+  earlName!: string;
+
+  @property({ type: String })
+  currentError: string | undefined;
+
+  @property({ type: String })
+  themeColor = '#0489cf';
+
+  @property({ type: String })
+  themePrimaryColor = '#000000';
+
+  @property({ type: String })
+  themeSecondaryColor = '#000000';
+
+  @property({ type: String })
+  themeTertiaryColor = '#000000';
+
+  @property({ type: String })
+  themeNeutralColor = '#000000';
+
+  @property({ type: String })
+  themeScheme: Scheme = 'tonal';
+
+  @property({ type: Number })
+  themeHighContrast = false;
+
+  @property({ type: Boolean })
+  isAdmin = false;
+
+  @property({ type: Boolean })
+  surveyClosed = false;
+
+  @property({ type: String })
+  appearanceLookup!: string;
+
+  @property({ type: String })
+  currentLeftAnswer: string;
+
+  @property({ type: String })
+  currentRightAnswer: string;
+
+  @property({ type: String })
+  currentPromptId: number;
+
+  drawer: NavigationDrawer;
+
+  constructor() {
+    super();
+
+    window.aoiServerApi = new CpsServerApi();
+    window.appGlobals = new CpsAppGlobals(window.aoiServerApi);
+    window.appUser = new CpsAppUser(window.aoiServerApi);
+    this.earlName = window.appGlobals.earlName;
+
+    // Set this.themeDarkMode from localStorage or otherwise to true
+    const savedDarkMode = localStorage.getItem('md3-aoi-dark-mode');
+    if (savedDarkMode) {
+      this.themeDarkMode = true;
+    } else {
+      this.themeDarkMode = false;
+    }
+
+    const savedHighContrastMode = localStorage.getItem(
+      'md3-aoi-high-contrast-mode'
+    );
+    if (savedHighContrastMode) {
+      this.themeHighContrast = true;
+    } else {
+      this.themeHighContrast = false;
+    }
+
+    window.appGlobals.activity('pageview');
+  }
+
+  getServerUrlFromClusterId(clusterId: number) {
+    if (clusterId == 1) {
+      return 'https://betrireykjavik.is/api';
+    } else if (clusterId == 3) {
+      return 'https://ypus.org/api';
+    } else {
+      return 'https://yrpri.org/api';
+    }
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    this._setupEventListeners();
+
+    const savedColor = localStorage.getItem('md3-yrpri-promotion-color');
+    if (savedColor) {
+      this.fireGlobal('yp-theme-color', savedColor);
+    }
+
+    this.boot();
+  }
+
+  async boot() {
+    window.appGlobals.activity('Boot - fetch start');
+    const bootResponse = await window.serverApi.getCurrentMemory() as CpsBootResponse;
+
+    this.currentMemory = bootResponse.currentMemory;
+
+    document.title = bootResponse.name;
+
+    if (bootResponse.isAdmin === true) {
+      this.isAdmin = true;
+    } else {
+      this.isAdmin = false;
+    }
+
+    this.themeColor = bootResponse.configuration.theme_color
+      ? bootResponse.configuration.theme_color
+      : undefined;
+    this.themePrimaryColor = bootResponse.configuration.theme_primary_color;
+    this.themeSecondaryColor = bootResponse.configuration.theme_secondary_color;
+    this.themeTertiaryColor = bootResponse.configuration.theme_tertiary_color;
+    this.themeNeutralColor = bootResponse.configuration.theme_neutral_color;
+    this.themeScheme = bootResponse.configuration.theme_scheme
+      ? bootResponse.configuration.theme_scheme.toLowerCase()
+      : 'tonal';
+
+    this.themeChanged();
+
+    window.appGlobals.activity('Boot - fetch end');
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this._removeEventListeners();
+  }
+
+  getHexColor(color: string) {
+    if (color) {
+      // Replace all # with nothing
+      color = color.replace(/#/g, '');
+      if (color.length === 6) {
+        return `#${color}`;
+      } else {
+        return undefined;
+      }
+    } else {
+      return undefined;
+    }
+  }
+
+  themeChanged(target: HTMLElement | undefined = undefined) {
+    let themeCss = {} as any;
+
+    const isDark =
+      this.themeDarkMode === undefined
+        ? window.matchMedia('(prefers-color-scheme: dark)').matches
+        : this.themeDarkMode;
+
+    if (this.isAppleDevice) {
+      const theme = themeFromSourceColor(
+        argbFromHex(this.themeColor || this.themePrimaryColor || '#000000'),
+        [
+          {
+            name: 'up-vote',
+            value: argbFromHex('#0F0'),
+            blend: true,
+          },
+          {
+            name: 'down-vote',
+            value: argbFromHex('#F00'),
+            blend: true,
+          },
+        ]
+      );
+
+      applyTheme(theme, { target: document.body, dark: isDark });
+    } else {
+      if (this.getHexColor(this.themeColor)) {
+        themeCss = themeFromSourceColorWithContrast(
+          this.getHexColor(this.themeColor),
+          isDark,
+          this.themeScheme,
+          this.themeHighContrast ? 2.0 : 0.0
+        );
+      } else {
+        themeCss = themeFromSourceColorWithContrast(
+          {
+            primary: this.getHexColor(this.themePrimaryColor || '#000000'),
+            secondary: this.getHexColor(this.themeSecondaryColor || '#000000'),
+            tertiary: this.getHexColor(this.themeTertiaryColor || '#000000'),
+            neutral: this.getHexColor(this.themeNeutralColor || '#000000'),
+          },
+          isDark,
+          'dynamic',
+          this.themeHighContrast ? 2.0 : 0.0
+        );
+      }
+
+      applyThemeWithContrast(document, themeCss);
+    }
+  }
+
+  snackbarclosed() {
+    this.lastSnackbarText = undefined;
+  }
+
+  tabChanged(event: CustomEvent) {
+    if (event.detail.activeIndex == 0) {
+      this.pageIndex = 1;
+    } else if (event.detail.activeIndex == 1) {
+      this.pageIndex = 2;
+    } else if (event.detail.activeIndex == 2) {
+      this.pageIndex = 3;
+    } else if (event.detail.activeIndex == 3) {
+      this.pageIndex = 4;
+    }
+  }
+
+  exitToMainApp() {
+    window.location.href = `/`;
+  }
+
+  async _displaySnackbar(event: CustomEvent) {
+    this.lastSnackbarText = event.detail;
+    await this.updateComplete;
+    (this.$$('#snackbar') as Snackbar).show();
+  }
+
+  _setupEventListeners() {
+    this.addListener('app-error', this._appError);
+    this.addListener('display-snackbar', this._displaySnackbar);
+    this.addListener('toggle-dark-mode', this.toggleDarkMode.bind(this));
+    this.addListener(
+      'toggle-high-contrast-mode',
+      this.toggleHighContrastMode.bind(this)
+    );
+    this.addGlobalListener(
+      'yp-external-goal-trigger',
+      this.externalGoalTrigger.bind(this)
+    );
+  }
+
+  _removeEventListeners() {
+    this.removeListener('display-snackbar', this._displaySnackbar);
+    this.removeListener('app-error', this._appError);
+    this.removeListener('toggle-dark-mode', this.toggleDarkMode.bind(this));
+    this.removeListener(
+      'toggle-high-contrast-mode',
+      this.toggleHighContrastMode.bind(this)
+    );
+  }
+
+  externalGoalTrigger() {
+    try {
+      let triggerUrl = new URL(window.appGlobals.externalGoalTriggerUrl);
+
+      let whiteList = window.appGlobals.exernalGoalParamsWhiteList;
+
+      if (whiteList) {
+        whiteList = whiteList
+          .toLowerCase()
+          .split(',')
+          .map((param: string) => param.trim());
+      }
+
+      for (const key in window.appGlobals.originalQueryParameters) {
+        if (!whiteList || whiteList.includes(key.toLowerCase())) {
+          triggerUrl.searchParams.append(
+            key,
+            window.appGlobals.originalQueryParameters[key]
+          );
+        }
+      }
+
+      window.location.href = triggerUrl.toString();
+    } catch (error) {
+      console.error(
+        'Invalid URL:',
+        window.appGlobals.externalGoalTriggerUrl,
+        error
+      );
+    }
+  }
+
+  updated(changedProperties: Map<string | number | symbol, unknown>): void {
+    super.updated(changedProperties);
+    if (
+      changedProperties.has('themeColor') ||
+      changedProperties.has('themeDarkMode')
+    ) {
+      this.themeChanged();
+    }
+  }
+
+  _appError(event: CustomEvent) {
+    console.error(event.detail.message);
+    this.currentError = event.detail.message;
+    //(this.$$('#errorDialog') as Dialog).open = true;
+  }
+
+  get adminConfirmed() {
+    return true;
+  }
+
+  _settingsColorChanged(event: CustomEvent) {
+    this.fireGlobal('yp-theme-color', event.detail.value);
+  }
+
+  static get styles() {
+    return [
+      Layouts,
+      css`
+        :host {
+          background-color: var(--md-sys-color-background, #fefefe);
+        }
+
+        :host {
+        }
+
+        body {
+          background-color: var(--md-sys-color-background, #fefefe);
+        }
+
+        .analyticsHeaderText {
+          font-size: var(--md-sys-typescale-headline-large-size, 18px);
+          margin-top: 16px;
+          margin-bottom: 16px;
+        }
+
+        .ypLogo {
+          margin-top: 16px;
+        }
+
+        .rightPanel {
+          width: 100%;
+        }
+
+        .drawer {
+          margin-left: 16px;
+          padding-left: 8px;
+          margin-right: 16px;
+          padding-bottom: 560px;
+        }
+
+        md-list-item {
+          --md-list-list-item-container-color: var(--md-sys-color-surface);
+          color: var(--md-sys-color-on-surface);
+          --md-list-list-item-label-text-color: var(--md-sys-color-on-surface);
+        }
+
+        .selectedContainer {
+          --md-list-list-item-container-color: var(
+            --md-sys-color-secondary-container
+          );
+          color: var(--md-sys-color-on-background);
+          --md-list-list-item-label-text-color: var(
+            --md-sys-color-on-background
+          );
+        }
+
+        md-navigation-drawer {
+          --md-navigation-drawer-container-color: var(--md-sys-color-surface);
+        }
+
+        md-list {
+          --md-list-container-color: var(--md-sys-color-surface);
+        }
+
+        md-navigation-bar {
+          --md-navigation-bar-container-color: var(--md-sys-color-surface);
+        }
+
+        .loading {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          width: 100%;
+          height: 100vh;
+        }
+
+        .lightDarkContainer {
+          padding-left: 8px;
+          padding-right: 8px;
+          color: var(--md-sys-color-on-background);
+          font-size: 14px;
+        }
+
+        .darkModeButton {
+          margin: 16px;
+        }
+
+        .topAppBar {
+          border-radius: 48px;
+          background-color: var(--md-sys-color-primary-container);
+          color: var(--md-sys-color-on-primary-container);
+          margin-top: 32px;
+          padding: 0px;
+          padding-left: 32px;
+          padding-right: 32px;
+          text-align: center;
+        }
+
+        .collectionLogoImage {
+          width: 60px;
+          height: 60px;
+          margin-left: 64px;
+        }
+
+        .mainPageContainer {
+          margin-top: 16px;
+        }
+
+        .navContainer {
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          width: 100%;
+          z-index: 7;
+        }
+
+        [hidden] {
+          display: none !important;
+        }
+
+        md-text-button {
+          --md-text-button-label-text-color: #fefefe;
+        }
+
+        md-standard-icon-button {
+          --md-icon-button-unselected-icon-color: #f0f0f0;
+        }
+
+        #goalTriggerSnackbar {
+          padding: 24px;
+        }
+
+        @media (max-width: 960px) {
+          .mainPageContainer {
+            max-width: 100%;
+            width: 100%;
+            margin-bottom: 96px;
+            margin-top: 0;
+          }
+
+          prompt-promotion-dashboard {
+            max-width: 100%;
+          }
+        }
+      `,
+    ];
+  }
+
+  changeTabTo(tabId: number) {
+    this.tabChanged({ detail: { activeIndex: tabId } } as CustomEvent);
+  }
+
+  updateThemeColor(event: CustomEvent) {
+    this.themeColor = event.detail;
+  }
+
+  sendVoteAnalytics() {
+    if (this.totalNumberOfVotes % 10 === 0) {
+      window.appGlobals.activity(`User voted ${this.totalNumberOfVotes} times`);
+    }
+  }
+
+
+  renderIntroduction() {
+    return html` <div class="layout vertical center-center"></div> `;
+  }
+
+  renderShare() {
+    return html` <div class="layout vertical center-center"></div> `;
+  }
+
+  toggleDarkMode() {
+    this.themeDarkMode = !this.themeDarkMode;
+    if (this.themeDarkMode) {
+      window.appGlobals.activity('Settings - dark mode');
+      localStorage.setItem('md3-aoi-dark-mode', 'true');
+    } else {
+      window.appGlobals.activity('Settings - light mode');
+      localStorage.removeItem('md3-aoi-dark-mode');
+    }
+    this.themeChanged();
+  }
+
+  toggleHighContrastMode() {
+    this.themeHighContrast = !this.themeHighContrast;
+    if (this.themeHighContrast) {
+      window.appGlobals.activity('Settings - high contrast mode');
+      localStorage.setItem('md3-aoi-high-contrast-mode', 'true');
+    } else {
+      window.appGlobals.activity('Settings - non high contrast mode');
+      localStorage.removeItem('md3-aoi-high-contrast-mode');
+    }
+    this.themeChanged();
+  }
+
+  startVoting() {
+    this.pageIndex = 2;
+    if (this.$$('#navBar') as NavigationBar) {
+      (this.$$('#navBar') as NavigationBar).activeIndex = 1;
+    }
+  }
+
+  openResults() {
+    this.pageIndex = 3;
+    if (this.$$('#navBar') as NavigationBar) {
+      (this.$$('#navBar') as NavigationBar).activeIndex = 2;
+    }
+  }
+
+  openAnalytics() {
+    window.location.href = `/analytics`;
+  }
+
+  goToAdmin() {
+    window.location.href = `/admin`;
+  }
+
+  _renderPage() {
+    if (this.currentMemory) {
+      switch (this.pageIndex) {
+        case PagesTypes.ViewMemory:
+          return html`<cps-view-memory
+            .memory="${this.currentMemory}"
+          ></cps-view-memory>`;
+        default:
+          return html`
+            <p>Page not found try going to <a href="#main">Main</a></p>
+          `;
+      }
+    } else {
+      return html` <div class="loading">
+        <md-circular-progress indeterminate></md-circular-progress>
+      </div>`;
+    }
+  }
+
+  renderThemeToggle() {
+    return html`<div class="layout vertical center-center lightDarkContainer">
+        ${!this.themeDarkMode
+          ? html`
+              <md-outlined-icon-button
+                class="darkModeButton"
+                @click="${this.toggleDarkMode}"
+                ><md-icon>dark_mode</md-icon></md-outlined-icon-button
+              >
+            `
+          : html`
+              <md-outlined-icon-button
+                class="darkModeButton"
+                @click="${this.toggleDarkMode}"
+                ><md-icon>light_mode</md-icon></md-outlined-icon-button
+              >
+            `}
+        <div>${this.t('Light/Dark')}</div>
+      </div>
+
+      <div
+        class="layout vertical center-center lightDarkContainer"
+        ?hidden="${this.isAppleDevice}"
+      >
+        ${!this.themeHighContrast
+          ? html`
+            <md-outlined-icon-button
+              class="darkModeButton"
+              @click="${this.toggleHighContrastMode}"
+              ><md-icon>contrast</md-icon></md-outlined-icon-button
+            >
+          </div> `
+          : html`
+              <md-outlined-icon-button
+                class="darkModeButton"
+                @click="${this.toggleHighContrastMode}"
+                ><md-icon>contrast_rtl_off</md-icon></md-outlined-icon-button
+              >
+            `}
+        <div>${this.t('Contrast')}</div>
+      </div>`;
+  }
+
+  renderNavigationBar() {
+    if (this.wide) {
+      return html`
+        <div class="drawer">
+          <div class="layout horizontal headerContainer">
+            <div class="analyticsHeaderText layout horizontal center-center">
+              <yp-image
+                class="collectionLogoImage"
+                sizing="contain"
+                src="https://raw.githubusercontent.com/allourideas/allourideas.org/master/public/images/favicon.png"
+              ></yp-image>
+            </div>
+          </div>
+
+          <md-list>
+            <md-list-item
+              class="${this.pageIndex == PagesTypes.ViewMemory &&
+              'selectedContainer'}"
+              headline="${this.t('Introduction')}"
+              @click="${() => this.changeTabTo(0)}"
+              @keydown="${(e: KeyboardEvent) => { if (e.key === 'Enter') { this.changeTabTo(0); } }}"
+              supportingText="${this.t('Why you should participate')}"
+            >
+              <md-list-item-icon slot="start">
+                <md-icon>info</md-icon>
+              </md-list-item-icon></md-list-item
+            >
+            <md-list-divider></md-list-divider>
+            <md-list-item
+              ?hidden="${!this.isAdmin}"
+              @keydown="${(e: KeyboardEvent) => { if (e.key === 'Enter') { this.openAnalytics(); } }}"
+              @click="${this.openAnalytics}"
+              headline="${this.t('Analytics')}"
+              supportingText="${this.t('Admin analytics')}"
+            >
+              <md-list-item-icon slot="start"
+                ><md-icon>monitoring</md-icon></md-list-item-icon
+              ></md-list-item
+            >
+            <md-list-item
+              ?hidden="${!this.isAdmin}"
+              @keydown="${(e: KeyboardEvent) => { if (e.key === 'Enter') { this.goToAdmin(); } }}"
+              @click="${this.goToAdmin}"
+              headline="${this.t('Administration')}"
+              supportingText="${this.t('Administer the process')}"
+            >
+              <md-list-item-icon slot="start"
+                ><md-icon>settings</md-icon></md-list-item-icon
+              ></md-list-item
+            >
+
+            <div class="layout horizontal center-center">
+              ${this.renderThemeToggle()}
+            </div>
+
+          </md-list>
+        </div>
+      `;
+    } else {
+      return html`
+        <div class="navContainer">
+          <md-navigation-bar
+            id="navBar"
+            @navigation-bar-activated="${this.tabChanged}"
+          >
+            <md-navigation-tab .label="${this.t('View Memory')}"
+              ><md-icon slot="activeIcon">info</md-icon>
+              <md-icon slot="inactiveIcon">info</md-icon></md-navigation-tab
+            >
+          </md-navigation-bar>
+        </div>
+      `;
+    }
+  }
+
+  render() {
+    return html`<div class="layout horizontal">
+      ${this.renderNavigationBar()}
+      <div class="rightPanel">
+        <main>
+          <div class="mainPageContainer">${this._renderPage()}</div>
+        </main>
+      </div>
+    </div>
+
+    </div>
+      ${
+        this.lastSnackbarText
+          ? html`
+              <mwc-snackbar
+                id="snackbar"
+                @MDCSnackbar:closed="${this.snackbarclosed}"
+                style="text-align: center;"
+                .labelText="${this.lastSnackbarText}"
+              ></mwc-snackbar>
+            `
+          : nothing
+      }
+  }
+}

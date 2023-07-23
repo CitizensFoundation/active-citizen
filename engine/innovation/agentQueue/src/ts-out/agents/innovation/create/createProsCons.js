@@ -95,6 +95,7 @@ export class CreateProsConsProcessor extends BaseProcessor {
         });
         // Wait for all subproblems to finish
         await Promise.all(subProblemsPromises);
+        this.logger.info("Finished creating pros cons for all");
     }
     async process() {
         this.logger.info("Create ProsCons Processor");

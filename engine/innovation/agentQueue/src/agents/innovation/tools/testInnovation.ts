@@ -42,8 +42,8 @@ if (setNewStage) {
   //memory.currentStage = "rank-solutions";
 
   //Repeat for each GA generation
-  memory.currentStage = "evolve-create-population";
-  //memory.currentStage = "create-pros-cons";
+  //memory.currentStage = "evolve-create-population";
+  memory.currentStage = "create-pros-cons";
   //memory.currentStage = "rank-pros-cons";
   //memory.currentStage = "rank-solutions";
 
