@@ -45,7 +45,7 @@ export class CpsSubProblems extends CpsStageBase {
           subProblem.searchQueries
         )}
         ${this.renderSearchResults(
-          this.t('Search results for sub problem'),
+          this.t('Webpages scraped for sub problem'),
           subProblem.searchResults
         )}
       </div>

@@ -32,6 +32,10 @@ export class CpsSolutions extends CpsStageBase {
           margin-bottom: 16px;
         }
 
+        .title {
+          margin-top: 4px;
+        }
+
         .solutionItem {
           text-align: left;
           background-color: var(--md-sys-color-primary);
@@ -51,29 +55,59 @@ export class CpsSolutions extends CpsStageBase {
           vertical-align: middle;
         }
 
-        button {
-          margin: 5px;
-          padding: 10px;
-          border: none;
-          background-color: #ddd;
-          cursor: pointer;
-          border-radius: 5px;
+        .solution {
+          text-align: left;
+          background-color: var(--md-sys-color-on-primary);
+          color: var(--md-sys-color-primary);
+          border-radius: 16px;
+          padding: 16px;
+          margin: 8px 0;
+          max-width: 960px;
+          width: 100%;
         }
 
-        button:hover {
-          background-color: #ccc;
+        .proCon {
+          margin: 8px;
+          padding: 16px;
+          max-width: 410px;
+          width: 100%;
+          background-color: var(--md-sys-color-on-tertiary);
+          color: var(--md-sys-color-tertiary);
+          border-radius: 16px;
+          font-size: 20px;
+          align-items: self-start;
+          line-height: 1.4;
+        }
+
+        .prosConsHeader {
+          font-size: 24px;
+          color: var(--md-sys-color-tertiary);
+          font-weight: 500;
+          margin-bottom: 8px;
+        }
+
+        .solutionTitle {
+          font-size: 24px;
+          font-weight: 700;
+          letter-spacing: 0.12em;
+          margin: 8px;
+        }
+
+        .solutionDescription {
+          padding: 8px;
+          font-size: 22px;
+          line-height: 1.4;
         }
 
         .solutionAttributes {
           display: flex;
           justify-content: space-between;
+          align-items: self-start;
         }
 
         .pros,
         .cons {
           width: 45%;
-          border: 1px solid #ddd;
-          border-radius: 5px;
           padding: 10px;
           margin: 10px 0;
         }
@@ -107,6 +141,7 @@ export class CpsSolutions extends CpsStageBase {
     return html`
       <div class="topContainer layout vertical center-center">
         ${this.renderSubProblem(subProblem, false, 0, true, true)}
+        <div class="title">${this.t('Solutions')}</div>
         <md-chip-set class="generations" type="filter" single-select>
           ${subProblem.solutions.populations.map(
             (population, index) =>
@@ -122,9 +157,10 @@ export class CpsSolutions extends CpsStageBase {
         ${subProblem.solutions.populations[this.activePopulationIndex].map(
           (solution, index) =>
             html`<div
-            class="solutionItem"
+              class="solutionItem"
               @click="${(): void => {
                 this.activeSolutionIndex = index;
+                window.scrollTo(0, 0);
               }}"
             >
               ${solution.title}
@@ -141,58 +177,59 @@ export class CpsSolutions extends CpsStageBase {
       ];
     const solution = solutions[solutionIndex];
     return html`
-      <div class="topContainer">
-        <md-standard-icon-button
-          aria-label="Previous"
-          @click="${(): void => {
-            if (solutionIndex > 0) {
-              this.activeSolutionIndex = solutionIndex - 1;
-            }
-          }}"
-        >
-          <md-icon>navigate_before</md-icon>
-        </md-standard-icon-button>
-        <md-standard-icon-button
-          aria-label="Next"
-          @click="${(): void => {
-            if (solutionIndex < solutions.length - 1) {
-              this.activeSolutionIndex = solutionIndex + 1;
-            }
-          }}"
-        >
-          <md-icon>navigate_next</md-icon>
-        </md-standard-icon-button>
-        <md-standard-icon-button
-          aria-label="Close"
-          @click="${(): void => (this.activeSolutionIndex = null)}"
-        >
-          <md-icon>close</md-icon>
-        </md-standard-icon-button>
-        <h2>${solution.title}</h2>
-        <div class="solutionDescription">${solution.description}</div>
-        <div class="solutionExtraInfo">
-          <b>${this.t('Main benefit')}:</b> ${solution.mainBenefitOfSolution}
+      <div class="topContainer layout vertical center-center">
+        <div class="layout horizontal center-center">
+          <md-standard-icon-button
+            aria-label="Previous"
+            @click="${(): void => {
+              if (solutionIndex > 0) {
+                this.activeSolutionIndex = solutionIndex - 1;
+              }
+            }}"
+          >
+            <md-icon>navigate_before</md-icon>
+          </md-standard-icon-button>
+          <md-standard-icon-button
+            aria-label="Next"
+            @click="${(): void => {
+              if (solutionIndex < solutions.length - 1) {
+                this.activeSolutionIndex = solutionIndex + 1;
+              }
+            }}"
+          >
+            <md-icon>navigate_next</md-icon>
+          </md-standard-icon-button>
+          <md-standard-icon-button
+            aria-label="Close"
+            @click="${(): void => (this.activeSolutionIndex = null)}"
+          >
+            <md-icon>close</md-icon>
+          </md-standard-icon-button>
         </div>
-        <div class="solutionExtraInfo">
-          <b>${this.t('Main obsticle to adoption')}:</b>
-          ${solution.mainObstacleToSolutionAdoption}
-        </div>
-        <div class="solutionAttributes layout horizontal wrap">
-          <div class="pros flexFactor">
-            <div class="prosConsHeader">${this.t('Pros')}</div>
-            <ul>
-              ${(solution.pros as IEngineProCon[]).map(
-                pro => html`<li>${pro.description}</li>`
-              )}
-            </ul>
+        <div class="solution">
+          <div class="solutionTitle">${solution.title}</div>
+          <div class="solutionDescription">${solution.description}</div>
+          <div class="solutionDescription">
+            ${solution.mainBenefitOfSolution}
           </div>
-          <div class="cons flexFactor">
-            <div class="prosConsHeader">${this.t('Cons')}</div>
-            <ul>
-              ${(solution.cons as IEngineProCon[]).map(
-                con => html`<li>${con.description}</li>`
+          <div class="solutionDescription">
+            ${solution.mainObstacleToSolutionAdoption}
+          </div>
+        </div>
+        <div class="prosCons">
+          <div class="solutionAttributes layout horizontal wrap">
+            <div class="pros flexFactor layout vertical center-center">
+              <div class="prosConsHeader">${this.t('Pros')}</div>
+              ${(solution.pros as IEngineProCon[]).map(
+                pro => html`<div class="proCon">${pro.description}</div>`
               )}
-            </ul>
+            </div>
+            <div class="cons flexFactor layout vertical center-center">
+              <div class="prosConsHeader">${this.t('Cons')}</div>
+              ${(solution.cons as IEngineProCon[]).map(
+                con => html`<div class="proCon">${con.description}</div>`
+              )}
+            </div>
           </div>
         </div>
       </div>

@@ -112,7 +112,7 @@ export class CpsEntities extends CpsStageBase {
                       entity.searchQueries
                     )}
                     ${this.renderSearchResults(
-                      this.t('Search results for entity'),
+                      this.t('Webpages scraped for entity'),
                       entity.searchResults
                     )}
                   `

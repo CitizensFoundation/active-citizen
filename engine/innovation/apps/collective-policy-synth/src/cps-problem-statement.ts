@@ -43,7 +43,7 @@ export class CpsProblemStatement extends CpsStageBase {
           this.memory.problemStatement.searchQueries
         )}
         ${this.renderSearchResults(
-          this.t('Search results for problem statement'),
+          this.t('Webpages scraped for problem statement'),
           this.memory.problemStatement.searchResults
         )}
       </div>
