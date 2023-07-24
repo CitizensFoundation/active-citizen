@@ -5,9 +5,6 @@ import './@yrpri/common/yp-image.js';
 
 import { CpsStageBase } from './cps-stage-base.js';
 
-//TDOO: Share from db config
-const maxNumberOfSubProblems = 7;
-
 @customElement('cps-sub-problems')
 export class CpsSubProblems extends CpsStageBase {
   async connectedCallback() {
@@ -35,22 +32,8 @@ export class CpsSubProblems extends CpsStageBase {
         subProblems[this.activeSubProblemIndex]
       );
     } else {
-      return this.renderSubProblemList(subProblems);
+      return this.renderSubProblemList(subProblems, this.t('Sub problems and Web Searches'));
     }
-  }
-
-  renderSubProblemList(subProblems: IEngineSubProblem[]) {
-    return html`
-      <div class="topContainer layout vertical center-center">
-        ${this.renderProblemStatement()}
-
-        <div class="title">${this.t('Sub Problems')}</div>
-        ${subProblems.map((subProblem, index) => {
-          const isLessProminent = index >= maxNumberOfSubProblems;
-          return this.renderSubProblem(subProblem, isLessProminent, index);
-        })}
-      </div>
-    `;
   }
 
   renderSubProblemScreen(subProblem: IEngineSubProblem) {

@@ -11,8 +11,10 @@ import '@material/web/button/outlined-button.js';
 import '@material/web/circularprogress/circular-progress.js';
 import '@material/web/iconbutton/standard-icon-button.js';
 
+//TDOO: Share from db config
 const maxTopSearchQueries = 2;
 const maxUsedSearchResults = 4;
+const maxNumberOfSubProblems = 7;
 
 export abstract class CpsStageBase extends YpBaseElement {
   @property({ type: Object })
@@ -126,6 +128,11 @@ export abstract class CpsStageBase extends YpBaseElement {
           min-height: 50px;
           min-width: 50px;
           margin-right: 8px;
+        }
+
+        .searchResults {
+          background-color: var(--md-sys-color-surface);
+          color: var(--md-sys-color-on-surface);
         }
 
         .row {
@@ -340,6 +347,20 @@ export abstract class CpsStageBase extends YpBaseElement {
     `;
   }
 
+  renderSubProblemList(subProblems: IEngineSubProblem[], title = this.t('Sub Problems')) {
+    return html`
+      <div class="topContainer layout vertical center-center">
+        ${this.renderProblemStatement()}
+
+        <div class="title">${title}</div>
+        ${subProblems.map((subProblem, index) => {
+          const isLessProminent = index >= maxNumberOfSubProblems;
+          return this.renderSubProblem(subProblem, isLessProminent, index);
+        })}
+      </div>
+    `;
+  }
+
   renderSubProblem(
     subProblem: IEngineSubProblem,
     isLessProminent: boolean,
@@ -369,11 +390,13 @@ export abstract class CpsStageBase extends YpBaseElement {
             : nothing}
         </div>
         <div class="subProblemStatement">${subProblem.description}</div>
-        ${renderMoreInfo ? html`
-          <div class="subProblemStatement">${subProblem.whyIsSubProblemImportant}</div>
-
-        ` : nothing}
-
+        ${renderMoreInfo
+          ? html`
+              <div class="subProblemStatement">
+                ${subProblem.whyIsSubProblemImportant}
+              </div>
+            `
+          : nothing}
       </div>
     `;
   }
@@ -398,7 +421,7 @@ export abstract class CpsStageBase extends YpBaseElement {
           ><md-icon>expand_more</md-icon></md-standard-icon-button
         >
       </div>
-      <div class="layout vertical self-start">
+      <div class="searchResults layout vertical self-start">
         ${this.displayStates.get(title)
           ? Object.entries(searchQueries).map(([type, queries]) => {
               if (queries.length === 0) {
@@ -447,6 +470,7 @@ export abstract class CpsStageBase extends YpBaseElement {
           ><md-icon>expand_more</md-icon></md-standard-icon-button
         >
       </div>
+      <div class="searchResults">
       ${this.displayStates.get(title)
         ? Object.entries(searchResults.pages).map(([type, results]) => {
             if (results.length === 0) {
@@ -480,6 +504,8 @@ export abstract class CpsStageBase extends YpBaseElement {
             `;
           })
         : nothing}
+
+      </div>
     `;
   }
 }

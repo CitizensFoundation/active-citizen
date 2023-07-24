@@ -11,7 +11,8 @@ const maxNumberOfTopEntities = 3;
 
 @customElement('cps-entities')
 export class CpsEntities extends CpsStageBase {
-  @property({ type: Number }) selectedSubProblemIndex: number | undefined;
+  @property({ type: Number })
+  activeEntityIndex: number | null = null;
 
   async connectedCallback() {
     super.connectedCallback();
@@ -31,63 +32,99 @@ export class CpsEntities extends CpsStageBase {
     return [
       super.styles,
       css`
-        .problemStatement {
-          font-size: 22px;
-          padding: 16px;
-          margin: 32px 0;
-          background-color: var(--md-sys-color-surface-variant);
-          color: var(--md-sys-color-on-surface-variant);
-          border-radius: 16px;
-          line-height: 1.6;
-        }
-
-        .subProblemStatement {
-          font-size: 18px;
-          padding: 12px;
-          margin: 28px 0;
-          background-color: var(--md-sys-color-surface-variant);
-          color: var(--md-sys-color-on-surface-variant);
-          border-radius: 12px;
-          line-height: 1.4;
-        }
-
-        .title {
-          font-size: 28px;
-          margin-bottom: 24px;
-          color: var(--md-sys-color-primary);
-          text-decoration: underline;
-        }
-
-        .subProblem {
-          opacity: 1;
-          background-color: var(--md-sys-color-surface-variant);
-          border-radius: 12px;
-          padding: 16px;
-          margin: 16px 0;
-          box-shadow: 0px 3px 6px #00000029;
-        }
-
-        .subProblem.lessProminent {
-          opacity: 0.6;
-        }
-
         .entity {
           opacity: 1;
-          background-color: var(--md-sys-color-surface-variant);
-          border-radius: 12px;
+          background-color: var(--md-sys-color-surface);
+          color: var(--md-sys-color-on-surface);
+          border-radius: 16px;
           padding: 16px;
           margin: 16px 0;
-          box-shadow: 0px 3px 6px #00000029;
+          max-width: 960px;
+          width: 100%;
         }
 
         .entity.lessProminent {
           opacity: 0.6;
+        }
+
+        .entityName {
+          font-size: 24px;
+          font-weight: 500;
+          margin-bottom: 16px;
+          color: var(--md-sys-color-primary);
         }
       `,
     ];
   }
 
   render() {
+    const subProblems = this.memory.subProblems || [];
+    if (this.activeEntityIndex !== null) {
+      return this.renderEntityScreen(
+        subProblems[this.activeSubProblemIndex]!.entities[this.activeEntityIndex]!
+      );
+    } else if (this.activeSubProblemIndex !== null) {
+      return this.renderSubProblemScreen(
+        subProblems[this.activeSubProblemIndex]
+      );
+    } else {
+      return this.renderSubProblemList(subProblems, this.t('Sub Problems and Entities'));
+    }
+  }
+
+  renderSubProblemScreen(subProblem: IEngineSubProblem) {
+    return html`
+      <div class="topContainer layout vertical center-center">
+        ${this.renderSubProblem(subProblem, false, 0, true, true)}
+        ${subProblem.entities.map((entity, entityIndex) => {
+          const isEntityLessProminent = entityIndex >= maxNumberOfTopEntities;
+          return html`
+            <div class="entity ${isEntityLessProminent ? 'lessProminent' : ''}">
+              <div class="entityName">${entity.name}</div>
+              ${entity.negativeEffects?.length > 0
+                ? html`
+                    <div>
+                      Negative Effects:
+                      <ul>
+                        ${entity.negativeEffects?.map(
+                          (effect) => html` <li>${effect}</li> `
+                        )}
+                      </ul>
+                    </div>
+                  `
+                : nothing}
+              ${entity.positiveEffects?.length > 0
+                ? html`
+                    <div>
+                      Positive Effects:
+                      <ul>
+                        ${entity.positiveEffects?.map(
+                          (effect) => html` <li>${effect}</li> `
+                        )}
+                      </ul>
+                    </div>
+                  `
+                : nothing}
+              ${!isEntityLessProminent
+                ? html`
+                    ${this.renderSearchQueries(
+                      this.t('Search queries for entity'),
+                      entity.searchQueries
+                    )}
+                    ${this.renderSearchResults(
+                      this.t('Search results for entity'),
+                      entity.searchResults
+                    )}
+                  `
+                : nothing}
+            </div>
+          `;
+        })}
+      </div>
+    `;
+  }
+
+  renderEntityScreen(entity: IEngineAffectedEntity) {
     const subProblems = this.memory.subProblems || [];
     return html`
       <div class="topContainer layout vertical">
@@ -97,64 +134,7 @@ export class CpsEntities extends CpsStageBase {
         </div>
 
         <div class="title">${this.t('Sub Problems')}</div>
-        ${subProblems.map((subProblem, index) => {
-          const isLessProminent = index >= maxNumberOfSubProblems;
-          return html`
-            <div
-              class="subProblem ${isLessProminent ? 'lessProminent' : ''}"
-              @click=${() =>
-                this.selectedSubProblemIndex === index
-                  ? (this.selectedSubProblemIndex = undefined)
-                  : (this.selectedSubProblemIndex = index)}
-            >
-              <div class="subProblemStatement">${subProblem.description}</div>
-              ${this.selectedSubProblemIndex === index
-                ? subProblem.entities.map((entity, entityIndex) => {
-                    const isEntityLessProminent =
-                      entityIndex >= maxNumberOfTopEntities;
-                    return html`
-                      <div
-                        class="entity ${isEntityLessProminent
-                          ? 'lessProminent'
-                          : ''}"
-                      >
-                        <div>${entity.name}</div>
-                        <div>ELO Rating: ${entity.eloRating || 'N/A'}</div>
-                        ${entity.negativeEffects?.length > 0
-                          ? html`
-                              <div>
-                                Negative Effects:
-                                ${entity.negativeEffects?.join(', ') || 'N/A'}
-                              </div>
-                            `
-                          : nothing}
-                        ${entity.positiveEffects?.length > 0
-                          ? html`
-                              <div>
-                                Positive Effects:
-                                ${entity.positiveEffects?.join(', ') || 'N/A'}
-                              </div>
-                            `
-                          : nothing}
-                        ${!isEntityLessProminent
-                          ? html`
-                              ${this.renderSearchQueries(
-                                this.t('Search queries for entity'),
-                                entity.searchQueries
-                              )}
-                              ${this.renderSearchResults(
-                                this.t('Search results for entity'),
-                                entity.searchResults
-                              )}
-                            `
-                          : nothing}
-                      </div>
-                    `;
-                  })
-                : nothing}
-            </div>
-          `;
-        })}
+
       </div>
     `;
   }
