@@ -25,80 +25,46 @@ export class CpsSubProblems extends CpsStageBase {
   }
 
   static get styles() {
-    return [
-      super.styles,
-      css`
-        .problemStatement {
-          font-size: 22px;
-          padding: 16px;
-          margin: 32px 0;
-          background-color: var(--md-sys-color-surface-variant);
-          color: var(--md-sys-color-on-surface-variant);
-          border-radius: 16px;
-          line-height: 1.6;
-        }
-
-        .subProblemStatement {
-          font-size: 20px;
-          padding: 12px;
-          margin: 28px 0;
-          background-color: var(--md-sys-color-surface-variant);
-          color: var(--md-sys-color-on-surface-variant);
-          border-radius: 12px;
-          line-height: 1.4;
-        }
-
-        .title {
-          font-size: 18px;
-          margin-bottom: 24px;
-          color: var(--md-sys-color-primary);
-          text-decoration: underline;
-        }
-
-        .subProblem {
-          opacity: 1;
-          background-color: var(--md-sys-color-surface-variant);
-          border-radius: 12px;
-          padding: 16px;
-          margin: 16px 0;
-          box-shadow: 0px 3px 6px #00000029;
-        }
-
-        .subProblem.lessProminent {
-          opacity: 0.6;
-        }
-      `,
-    ];
+    return [super.styles, css``];
   }
 
   render() {
     const subProblems = this.memory.subProblems || [];
+    if (this.activeSubProblemIndex !== undefined) {
+      return this.renderSubProblemScreen(
+        subProblems[this.activeSubProblemIndex]
+      );
+    } else {
+      return this.renderSubProblemList(subProblems);
+    }
+  }
+
+  renderSubProblemList(subProblems: IEngineSubProblem[]) {
     return html`
-      <div class="topContainer layout vertical">
-        <div class="layout horizontal center-center">
-          <div class="title">${this.t('Problem Statement')}</div>
-        </div>
-        <div class="problemStatement">
-          ${this.memory.problemStatement.description}
-        </div>
+      <div class="topContainer layout vertical center-center">
+        ${this.renderProblemStatement()}
 
         <div class="title">${this.t('Sub Problems')}</div>
         ${subProblems.map((subProblem, index) => {
           const isLessProminent = index >= maxNumberOfSubProblems;
-          return html`
-            <div class="subProblem ${isLessProminent ? 'lessProminent' : ''}">
-              <div class="subProblemStatement">${subProblem.description}</div>
-              ${this.renderSearchQueries(
-                this.t('Search queries for sub problem'),
-                subProblem.searchQueries
-              )}
-              ${this.renderSearchResults(
-                this.t('Search results for sub problem'),
-                subProblem.searchResults
-              )}
-            </div>
-          `;
+          return this.renderSubProblem(subProblem, isLessProminent, index);
         })}
+      </div>
+    `;
+  }
+
+  renderSubProblemScreen(subProblem: IEngineSubProblem) {
+    return html`
+      <div class="topContainer layout vertical">
+        ${this.renderSubProblem(subProblem, false, 0)}
+        ${this.renderSearchQueries(
+          this.t('Search queries for sub problem'),
+          subProblem.searchQueries
+        )}
+        ${this.renderSearchResults(
+          this.t('Search results for sub problem'),
+          subProblem.searchResults
+        )}
       </div>
     `;
   }
