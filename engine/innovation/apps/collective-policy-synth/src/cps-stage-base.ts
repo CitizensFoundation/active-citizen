@@ -9,6 +9,7 @@ import '@material/web/checkbox/checkbox.js';
 import { Checkbox } from '@material/web/checkbox/lib/checkbox.js';
 import '@material/web/button/outlined-button.js';
 import '@material/web/circularprogress/circular-progress.js';
+import '@material/web/iconbutton/standard-icon-button.js';
 
 const maxTopSearchQueries = 2;
 const maxUsedSearchResults = 4;
@@ -21,10 +22,10 @@ export abstract class CpsStageBase extends YpBaseElement {
   showEloRatings = false;
 
   @property({ type: Number })
-  activeSubProblemIndex: number | undefined;
+  activeSubProblemIndex: number | null = null;
 
   @property({ type: Number })
-  activeSolutionIndex: number | undefined;
+  activeSolutionIndex: number | null = null;
 
   @property({ type: Number })
   activePopulationIndex = 0;
@@ -273,8 +274,6 @@ export abstract class CpsStageBase extends YpBaseElement {
             font-size: 18px;
             margin-bottom: 6px;
           }
-
-
         }
 
         @media (max-width: 960px) {
@@ -288,7 +287,6 @@ export abstract class CpsStageBase extends YpBaseElement {
             font-size: 14px;
             margin-bottom: 3px;
           }
-
         }
 
         @media (min-width: 960px) {
@@ -302,24 +300,33 @@ export abstract class CpsStageBase extends YpBaseElement {
             width: 100vw;
             height: 100vh;
           }
-
-
         }
       `,
     ];
   }
 
   isUsedSearch(result: IEngineSearchResultItem, index: number) {
-    console.error(`position ${result.position} originalPosition index ${index}`)
-    if (index < maxUsedSearchResults
-      || (result.position && result.position <= maxUsedSearchResults)
-      || (result.originalPosition && result.originalPosition <= maxUsedSearchResults)) {
-        console.error("YES")
+    if (
+      index < maxUsedSearchResults ||
+      (result.position && result.position <= maxUsedSearchResults) ||
+      (result.originalPosition &&
+        result.originalPosition <= maxUsedSearchResults)
+    ) {
       return 'selectedSearchItem';
     } else {
-      console.error("NO")
       return ``;
     }
+  }
+
+  closeSubProblem(event: CustomEvent) {
+    this.activeSubProblemIndex = null;
+    event.stopPropagation();
+    window.scrollTo(0, 0);
+  }
+
+  setSubProblem(index: number) {
+    this.activeSubProblemIndex = index;
+    window.scrollTo(0, 0);
   }
 
   renderProblemStatement() {
@@ -336,17 +343,37 @@ export abstract class CpsStageBase extends YpBaseElement {
   renderSubProblem(
     subProblem: IEngineSubProblem,
     isLessProminent: boolean,
-    index: number
+    index: number,
+    renderCloseButton: boolean = false,
+    renderMoreInfo = false
   ) {
     return html`
       <div
         class="subProblem ${isLessProminent
           ? 'lessProminent'
           : 'prominentSubProblem'}"
-        @click="${() => (this.activeSubProblemIndex = index)}"
+        @click="${() => this.setSubProblem(index)}"
       >
-        <div class="subProblemTitle">${subProblem.title}</div>
+        <div class="subProblemTitle layout horizontal">
+          <div>${subProblem.title}</div>
+          <div class="flex"></div>
+          ${renderCloseButton
+            ? html`
+                <md-standard-icon-button
+                  aria-label="Close"
+                  @click="${this.closeSubProblem}"
+                >
+                  <md-icon>close</md-icon>
+                </md-standard-icon-button>
+              `
+            : nothing}
+        </div>
         <div class="subProblemStatement">${subProblem.description}</div>
+        ${renderMoreInfo ? html`
+          <div class="subProblemStatement">${subProblem.whyIsSubProblemImportant}</div>
+
+        ` : nothing}
+
       </div>
     `;
   }
@@ -432,7 +459,9 @@ export abstract class CpsStageBase extends YpBaseElement {
                 ${results.map(
                   (result: IEngineSearchResultItem, index: number) => {
                     return html`
-                      <div class="searchItem ${this.isUsedSearch(result, index)}">
+                      <div
+                        class="searchItem ${this.isUsedSearch(result, index)}"
+                      >
                         <div class="searchTitle">${result.title}</div>
                         <div class="url">
                           <a

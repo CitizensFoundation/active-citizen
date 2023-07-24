@@ -30,7 +30,7 @@ export class CpsSubProblems extends CpsStageBase {
 
   render() {
     const subProblems = this.memory.subProblems || [];
-    if (this.activeSubProblemIndex !== undefined) {
+    if (this.activeSubProblemIndex !== null) {
       return this.renderSubProblemScreen(
         subProblems[this.activeSubProblemIndex]
       );
@@ -55,8 +55,8 @@ export class CpsSubProblems extends CpsStageBase {
 
   renderSubProblemScreen(subProblem: IEngineSubProblem) {
     return html`
-      <div class="topContainer layout vertical">
-        ${this.renderSubProblem(subProblem, false, 0)}
+      <div class="topContainer layout vertical center-center">
+        ${this.renderSubProblem(subProblem, false, 0, true, true)}
         ${this.renderSearchQueries(
           this.t('Search queries for sub problem'),
           subProblem.searchQueries
