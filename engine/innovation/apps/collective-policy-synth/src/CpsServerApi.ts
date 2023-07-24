@@ -8,7 +8,7 @@ export class CpsServerApi extends YpServerApi {
 
   public async getMemory(id: number): Promise<CpsBootResponse> {
     return await this.fetchWrapper(
-      this.baseUrlPath + `/memory/${id}`
+      this.baseUrlPath + `/projects/${id}`
     ) as unknown as CpsBootResponse;
   }
 

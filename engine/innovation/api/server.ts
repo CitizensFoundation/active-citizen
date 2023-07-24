@@ -1,11 +1,11 @@
 const { models } = require('./models');
 import { App } from './app';
-import { AnalyticsController } from './controllers/analyticsController';
-import { MemoryController } from './controllers/memoryController';
+import { AnalyticsController } from './controllers/analyticsController.js';
+import { ProjectsController } from './controllers/projectsController.js';
 
 const app = new App(
   [
-    new MemoryController(),
+    new ProjectsController(),
     new AnalyticsController(),
   ],
   8000,

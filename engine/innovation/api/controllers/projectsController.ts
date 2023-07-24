@@ -19,8 +19,8 @@ if (process.env.REDIS_URL) {
   });
 }
 
-export class MemoryController {
-  public path = "/api/memory";
+export class ProjectsController {
+  public path = "/api/projects";
   public router = express.Router();
 
   constructor() {
@@ -28,11 +28,11 @@ export class MemoryController {
   }
 
   public async intializeRoutes() {
-    this.router.get(this.path + "/:id", this.getMemory);
+    this.router.get(this.path + "/:id", this.getProject);
     await redisClient.connect();
   }
 
-  getMemory = async (req: express.Request, res: express.Response) => {
+  getProject = async (req: express.Request, res: express.Response) => {
     const rawMemory = await redisClient.get(`st_mem:${req.params.id}:id`).catch((err: any) => console.error(err));
     if (rawMemory) {
       const memory = JSON.parse(rawMemory);
