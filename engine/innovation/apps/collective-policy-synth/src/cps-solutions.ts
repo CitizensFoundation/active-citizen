@@ -89,7 +89,8 @@ export class CpsSolutions extends CpsStageBase {
         .solutionTitle {
           font-size: 24px;
           font-weight: 700;
-          letter-spacing: 0.12em;
+          letter-spacing: 0.10em;
+          line-height: 1.4;
           margin: 8px;
         }
 
@@ -163,7 +164,7 @@ export class CpsSolutions extends CpsStageBase {
                 window.scrollTo(0, 0);
               }}"
             >
-              ${solution.title}
+              ${index+1}. ${solution.title}
             </div>`
         )}
       </div>
@@ -207,7 +208,7 @@ export class CpsSolutions extends CpsStageBase {
           </md-standard-icon-button>
         </div>
         <div class="solution">
-          <div class="solutionTitle">${solution.title}</div>
+          <div class="solutionTitle">${solutionIndex+1}. ${solution.title}</div>
           <div class="solutionDescription">${solution.description}</div>
           <div class="solutionDescription">
             ${solution.mainBenefitOfSolution}
