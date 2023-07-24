@@ -11,14 +11,14 @@ const output = await redis.get("st_mem:1:id");
 
 const memory = JSON.parse(output!) as IEngineInnovationMemoryData;
 
-memory.problemStatement.generatingInstructions = `
-  1. Generated solutions should not be too complicated. Later your solutions will be brought together into full policy proposals.
+memory.systemInstructions.createSolutions = `
+  1. Generated solutions should not be too complicated. Later the solutions will be brought together into comprehensive policy proposals.
   2. Assume that civil society will be the main driver of getting solutions implemented.
   3. Keep in mind that politicans and governments need to be convinced to implement solutions.
 `
 
-memory.problemStatement.rankingInstructions = `
-  1. Solutions should be possible to implement, even if difficult but not impossible to implement.
+memory.systemInstructions.rankSolutions = `
+  1. Solutions should be realistic in terms of being practical to implement in todays world.
   2. Solutions should not be too comprehensive. Later the solutions will be brought together into full policy proposals.
 `
 

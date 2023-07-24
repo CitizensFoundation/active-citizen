@@ -86,8 +86,6 @@ interface IEngineWorkerData {
 
 interface IEngineProblemStatement {
   description: string;
-  generatingInstructions: string;
-  rankingInstructions: string;
   searchQueries: IEngineSearchQueries;
   searchResults: IEngineSearchResults;
 }
@@ -258,6 +256,12 @@ interface IEngineInnovationMemoryData extends IEngineMemoryData {
   currentStage: IEngineStageTypes;
   stages: Record<IEngineStageTypes, IEngineInnovationStagesData>;
   problemStatement: IEngineProblemStatement;
+  systemInstructions: {
+    createSubProblems?: string;
+    rankSubProblems?: string;
+    createSolutions: string;
+    rankSolutions: string;
+  }
   subProblems: IEngineSubProblem[];
   currentStageData?:
     | IEEngineSearchResultData
