@@ -23,14 +23,14 @@ x-collective-policy-synth-common: &collective-policy-synth-common
       max-size: "25m"
 
 services:
-#  redis_db:
-#    image: redis:6.2.13-alpine
-#    restart: always
-#    ports:
-#      - '6379:6379'
-#    network_mode: host
-#    volumes:
-#      - redis-db-data:/data
+  redis_db:
+    image: redis:6.2.13-alpine
+    restart: always
+    ports:
+      - '6379:6379'
+    network_mode: host
+    volumes:
+      - redis-db-data:/data
 
   webserver:
     container_name: webserver

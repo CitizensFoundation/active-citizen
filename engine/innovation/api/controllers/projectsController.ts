@@ -1,8 +1,7 @@
 import express from "express";
+import axios from "axios";
 import { models } from "../models";
-import {
-  createClient,
-} from "redis";
+import { createClient } from "redis";
 
 let redisClient: any;
 
@@ -33,18 +32,34 @@ export class ProjectsController {
   }
 
   getProject = async (req: express.Request, res: express.Response) => {
-    const rawMemory = await redisClient.get(`st_mem:${req.params.id}:id`).catch((err: any) => console.error(err));
-    if (rawMemory) {
-      const memory = JSON.parse(rawMemory);
-
-      res.send({
-        isAdmin: true,
-        name: "Collective Policy Synth - Democracy",
-        currentMemory: memory,
-        configuration: {}
-      });
-    } else {
-      res.sendStatus(404);
+    let memoryData;
+    try {
+      const data = await redisClient.get(`st_mem:${req.params.id}:id`);
+      memoryData = data ? JSON.parse(data) : null;
+    } catch (err) {
+      console.error(err);
     }
+
+    if (!memoryData && process.env.BACKUP_MEMORY_URL) {
+      try {
+        const response = await axios.get(`${process.env.BACKUP_MEMORY_URL}/${req.params.id}`);
+        memoryData = response.data;
+        await redisClient.set(`st_mem:${req.params.id}:id`, JSON.stringify(memoryData));
+      } catch (err) {
+        console.error(err);
+        return res.sendStatus(500);
+      }
+    }
+
+    if (!memoryData) {
+      return res.sendStatus(404);
+    }
+
+    return res.send({
+      isAdmin: true,
+      name: "Collective Policy Synth - Democracy",
+      currentMemory: memoryData,
+      configuration: {}
+    });
   };
 }
