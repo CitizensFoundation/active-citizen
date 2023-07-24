@@ -115,6 +115,10 @@ export abstract class CpsStageBase extends YpBaseElement {
           width: 100%;
         }
 
+        .smallerTitle {
+          font-size: 22px;
+        }
+
         .subProblem.lessProminent {
           opacity: 0.75;
         }
@@ -408,7 +412,7 @@ export abstract class CpsStageBase extends YpBaseElement {
 
     return html`
       <div
-        class="title layout horizontal center-center"
+        class="title smallerTitle layout horizontal center-center"
         @click="${(e: Event) => {
           e.stopPropagation();
           this.toggleDisplayState(title);
@@ -457,7 +461,7 @@ export abstract class CpsStageBase extends YpBaseElement {
 
     return html`
       <div
-        class="title layout horizontal"
+        class="title smallerTitle layout horizontal"
         @click="${(e: Event) => {
           e.stopPropagation();
           this.toggleDisplayState(title);
