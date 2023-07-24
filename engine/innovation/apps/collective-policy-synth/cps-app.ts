@@ -44,6 +44,7 @@ import './src/cps-sub-problems.js';
 import './src/cps-entities.js';
 import './src/cps-solutions.js';
 import { IEngineConstants } from './src/constants.js';
+import { YpFormattingHelpers } from './src/@yrpri/common/YpFormattingHelpers.js';
 
 const PagesTypes = {
   ProblemStatement: 1,
@@ -66,7 +67,7 @@ const currentMemoryId = 1;
 @customElement('cps-app')
 export class CpsApp extends YpBaseElement {
   @property({ type: Number })
-  pageIndex = 4;
+  pageIndex = 1;
 
   @property({ type: Object })
   currentMemory: IEngineInnovationMemoryData | undefined;
@@ -126,10 +127,19 @@ export class CpsApp extends YpBaseElement {
   currentRightAnswer: string;
 
   @property({ type: Number })
-  currentSolutionsGeneration = 0;
+  numberOfSolutionsGenerations = 0;
 
   @property({ type: Number })
   currentPolicyIdeasGeneration = 0;
+
+  @property({ type: Number })
+  totalSolutions = 0;
+
+  @property({ type: Number })
+  totalPros = 0;
+
+  @property({ type: Number })
+  totalCons = 0;
 
   drawer: MdNavigationDrawer;
 
@@ -190,7 +200,7 @@ export class CpsApp extends YpBaseElement {
 
     this.currentMemory = bootResponse.currentMemory;
 
-    this.currentSolutionsGeneration =
+    this.numberOfSolutionsGenerations =
       this.currentMemory.subProblems[0].solutions.populations.length;
 
     document.title = bootResponse.name;
@@ -213,6 +223,23 @@ export class CpsApp extends YpBaseElement {
       : 'tonal';
 
     this.themeChanged();
+
+    for (let subProblem of this.currentMemory.subProblems) {
+      if (subProblem.solutions && subProblem.solutions.populations) {
+        for (let population of subProblem.solutions.populations) {
+          this.totalSolutions += population.length;
+
+          for (let solution of population) {
+            if (Array.isArray(solution.pros)) {
+              this.totalPros += solution.pros.length;
+            }
+            if (Array.isArray(solution.cons)) {
+              this.totalCons += solution.cons.length;
+            }
+          }
+        }
+      }
+    }
 
     window.appGlobals.activity('Boot - fetch end');
   }
@@ -450,6 +477,17 @@ export class CpsApp extends YpBaseElement {
         .costItem {
           margin-bottom: 8px;
           margin-left: 8px;
+          color: var(--md-sys-color-on-surface);
+        }
+
+        .statsItem {
+          margin-bottom: 6px;
+          margin-left: 8px;
+          color: var(--md-sys-color-on-surface);
+        }
+
+        .statsContainer {
+          margin-bottom: 16px;
         }
 
         md-list-item {
@@ -656,6 +694,27 @@ export class CpsApp extends YpBaseElement {
     });
   }
 
+  renderStats() {
+    return html`
+      <div class="layout vertical statsContainer">
+        <div class="statsItem">
+          ${this.t('Total solutions')}:
+          ${YpFormattingHelpers.number(this.totalSolutions)}
+        </div>
+        <div class="statsItem">
+          ${this.t('Total pros')}: ${YpFormattingHelpers.number(this.totalPros)}
+        </div>
+        <div class="statsItem">
+          ${this.t('Total cons')}: ${YpFormattingHelpers.number(this.totalCons)}
+        </div>
+        <div class="statsItem">
+          ${this.t('Solutions generations')}:
+          ${YpFormattingHelpers.number(this.numberOfSolutionsGenerations)}
+        </div>
+      </div>
+    `;
+  }
+
   renderCosts() {
     // Calculate total cost
     let totalCost = 0;
@@ -690,20 +749,26 @@ export class CpsApp extends YpBaseElement {
       debugger;
     }
 
-    console.error(`Total cost: ${totalCost}`);
-
     // Render total and model costs
     let costTemplates = [
-      html`<div class="costItem">Total cost: $${totalCost.toFixed(0)}</div>`,
-      html`<div class="costItem">GPT-4 cost: $${gpt4Cost.toFixed(0)}</div>`,
-      html`<div class="costItem">GPT3.5 cost: $${gpt35Cost.toFixed(0)}</div>`,
-      html`<div class="costItem">
-        GPT3.5 16k cost: $${gpt35_16kCost.toFixed(0)}
-      </div>`,
+      html`<div class="costItem">Total cost: $${YpFormattingHelpers.number(totalCost)}</div>`,
     ];
 
     // Render costs for each stage
     if (this.showAllCosts) {
+      costTemplates.push(
+        html`<div class="costItem" style="margin-top: 16px">
+          GPT-4 cost: $${YpFormattingHelpers.number(gpt4Cost)}
+        </div>`
+      );
+      costTemplates.push(
+        html`<div class="costItem">GPT-3.5 cost: $${YpFormattingHelpers.number(gpt35Cost)}</div>`
+      );
+      costTemplates.push(
+        html`<div class="costItem" style="margin-bottom: 16px">
+          GPT-3.5 16k cost: $${YpFormattingHelpers.number(gpt35_16kCost)}
+        </div>`
+      );
       Object.keys(this.currentMemory.stages).forEach(stage => {
         //@ts-ignore
         const stageData = this.currentMemory.stages[stage];
@@ -711,7 +776,7 @@ export class CpsApp extends YpBaseElement {
         if (!isNaN(stageCost)) {
           costTemplates.push(
             html`<div class="costItem">
-              ${this.toCamelCase(stage)}: $${stageCost.toFixed(0)}
+              ${this.toCamelCase(stage)}: $${YpFormattingHelpers.number(stageCost)}
             </div>`
           );
         }
@@ -878,7 +943,7 @@ export class CpsApp extends YpBaseElement {
               class="${this.pageIndex == PagesTypes.Solutions &&
               'selectedContainer'}"
               headline="${this.t('Solutions')} (${this
-                .currentSolutionsGeneration} gen)"
+                .numberOfSolutionsGenerations} gen)"
               @click="${() => this.changeTabTo(3)}"
               @keydown="${(e: KeyboardEvent) => {
                 if (e.key === 'Enter') {
@@ -961,7 +1026,7 @@ export class CpsApp extends YpBaseElement {
             </div>
           </md-list>
           <div class="layout vertical costsContainer">
-            ${this.renderCosts()}
+            ${this.renderStats()} ${this.renderCosts()}
           </div>
         </div>
       `;

@@ -41,17 +41,18 @@ export class CpsSolutions extends CpsStageBase {
           background-color: var(--md-sys-color-primary);
           color: var(--md-sys-color-on-primary);
           border-radius: 16px;
-          padding: 16px;
+          padding: 20px;
           margin: 8px 0;
           max-width: 960px;
           width: 100%;
           font-size: 22px;
-          height: 54px;
+          height: 52px;
           display: flex;
           flex-direction: column;
           justify-content: center;
           align-items: left;
           cursor: pointer;
+          line-height: 1.4;
           vertical-align: middle;
         }
 
@@ -68,7 +69,7 @@ export class CpsSolutions extends CpsStageBase {
 
         .proCon {
           margin: 8px;
-          padding: 16px;
+          padding: 24px;
           max-width: 410px;
           width: 100%;
           background-color: var(--md-sys-color-on-tertiary);

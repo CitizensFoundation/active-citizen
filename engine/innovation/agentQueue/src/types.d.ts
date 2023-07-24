@@ -86,6 +86,8 @@ interface IEngineWorkerData {
 
 interface IEngineProblemStatement {
   description: string;
+  generatingInstructions: string;
+  rankingInstructions: string;
   searchQueries: IEngineSearchQueries;
   searchResults: IEngineSearchResults;
 }
