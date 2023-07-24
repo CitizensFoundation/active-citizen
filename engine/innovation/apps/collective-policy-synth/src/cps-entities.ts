@@ -125,7 +125,6 @@ export class CpsEntities extends CpsStageBase {
   }
 
   renderEntityScreen(entity: IEngineAffectedEntity) {
-    const subProblems = this.memory.subProblems || [];
     return html`
       <div class="topContainer layout vertical">
         <div class="title">${this.t('Problem Statement')}</div>

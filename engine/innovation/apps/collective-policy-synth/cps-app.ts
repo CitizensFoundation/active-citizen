@@ -65,7 +65,7 @@ const currentMemoryId = 1;
 @customElement('cps-app')
 export class CpsApp extends YpBaseElement {
   @property({ type: Number })
-  pageIndex = 3;
+  pageIndex = 4;
 
   @property({ type: Object })
   currentMemory: IEngineInnovationMemoryData | undefined;

@@ -7,9 +7,6 @@ import '@material/web/chips/chip-set.js';
 import '@material/web/chips/filter-chip.js';
 import '@material/web/iconbutton/standard-icon-button.js';
 
-//TDOO: Share from db config
-const maxNumberOfSubProblems = 7;
-
 @customElement('cps-solutions')
 export class CpsSolutions extends CpsStageBase {
   async connectedCallback() {
@@ -30,71 +27,29 @@ export class CpsSolutions extends CpsStageBase {
     return [
       super.styles,
       css`
-        .topContainer {
-          margin-right: 32px;
+        .generations {
+          margin-top: 16px;
+          margin-bottom: 16px;
         }
 
-        .prominentSubProblem {
-          cursor: pointer;
-        }
-
-        .problemStatement {
-          font-size: 22px;
-          padding: 16px;
-          margin: 16px 0;
+        .solutionItem {
+          text-align: left;
+          background-color: var(--md-sys-color-primary);
+          color: var(--md-sys-color-on-primary);
           border-radius: 16px;
-          line-height: 1.4;
-          background-color: var(--md-sys-color-tertiary);
-          color: var(--md-sys-color-on-tertiary);
-          max-width: 960px;
-        }
-
-        .problemStatementText {
           padding: 16px;
-        }
-
-        .subProblemStatement,
-        .subProblemTitle {
-          font-size: 22px;
-          padding: 8px;
           margin: 8px 0;
-          border-radius: 12px;
-          line-height: 1.4;
-          max-width: 960px;
-        }
-
-        .subProblemTitle {
-          color: var(--md-sys-color-primary);
-          font-weight: bold;
-          letter-spacing: 0.12em;
-          padding-bottom: 0;
-        }
-
-        .subProblem {
-          opacity: 1;
-          border-radius: 12px;
-          padding: 16px;
-          margin: 16px 0;
-          background-color: var(--md-sys-color-on-primary);
-          color: var(--md-sys-color-primary);
-          max-width: 960px;
-        }
-
-        .title {
-          font-size: 28px;
-          margin-bottom: 8px;
-          color: var(--md-sys-color-secondary);
-          background-color: var(--md-sys-color-on-secondary);
-          text-align: center;
           max-width: 960px;
           width: 100%;
+          font-size: 22px;
+          height: 54px;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: left;
+          cursor: pointer;
+          vertical-align: middle;
         }
-
-        .subProblem.lessProminent {
-          opacity: 0.75;
-        }
-
-        /* New CSS rules */
 
         button {
           margin: 5px;
@@ -134,49 +89,31 @@ export class CpsSolutions extends CpsStageBase {
 
   render() {
     const subProblems = this.memory.subProblems || [];
-    if (this.activeSolutionIndex !== undefined) {
+    if (this.activeSolutionIndex !== null) {
       return this.renderSolutionScreen(this.activeSolutionIndex);
-    } else if (this.activeSubProblemIndex !== undefined) {
+    } else if (this.activeSubProblemIndex !== null) {
       return this.renderSubProblemScreen(
         subProblems[this.activeSubProblemIndex]
       );
     } else {
-      return this.renderSubProblemList(subProblems);
+      return this.renderSubProblemList(
+        subProblems,
+        this.t('Sub problems and Solutions')
+      );
     }
-  }
-
-  renderSubProblemList(subProblems: IEngineSubProblem[]) {
-    return html`
-      <div class="topContainer layout vertical center-center">
-        ${this.renderProblemStatement()}
-
-        <div class="title">${this.t('Sub Problems')}</div>
-        ${subProblems.map((subProblem, index) => {
-          const isLessProminent = index >= maxNumberOfSubProblems;
-          return this.renderSubProblem(subProblem, isLessProminent, index);
-        })}
-      </div>
-    `;
   }
 
   renderSubProblemScreen(subProblem: IEngineSubProblem) {
     return html`
-      <div class="topContainer layout vertical">
-        <div class="layout horizontal">
-          <md-standard-icon-button
-            aria-label="Close"
-            @click="${(): void => (this.activeSubProblemIndex = undefined)}"
-          >
-            <md-icon>close</md-icon>
-          </md-standard-icon-button>
-          <h2>${subProblem.title}</h2>
-        </div>
-        <md-chip-set type="filter" single-select>
+      <div class="topContainer layout vertical center-center">
+        ${this.renderSubProblem(subProblem, false, 0, true, true)}
+        <md-chip-set class="generations" type="filter" single-select>
           ${subProblem.solutions.populations.map(
             (population, index) =>
               html`
                 <md-filter-chip
                   label="Generation ${index + 1}"
+                  .selected="${this.activePopulationIndex === index}"
                   @click="${() => (this.activePopulationIndex = index)}"
                 ></md-filter-chip>
               `
@@ -185,6 +122,7 @@ export class CpsSolutions extends CpsStageBase {
         ${subProblem.solutions.populations[this.activePopulationIndex].map(
           (solution, index) =>
             html`<div
+            class="solutionItem"
               @click="${(): void => {
                 this.activeSolutionIndex = index;
               }}"
@@ -226,7 +164,7 @@ export class CpsSolutions extends CpsStageBase {
         </md-standard-icon-button>
         <md-standard-icon-button
           aria-label="Close"
-          @click="${(): void => (this.activeSolutionIndex = undefined)}"
+          @click="${(): void => (this.activeSolutionIndex = null)}"
         >
           <md-icon>close</md-icon>
         </md-standard-icon-button>
