@@ -29,22 +29,6 @@ export class CpsProblemStatement extends CpsStageBase {
     return [
       super.styles,
       css`
-        .problemStatement {
-          font-size: 26px;
-          padding: 16px;
-          margin: 32px 0;
-          background-color: var(--md-sys-color-surface-variant);
-          color: var(--md-sys-color-on-surface-variant);
-          border-radius: 16px;
-          line-height: 1.6;
-        }
-
-        .title {
-          font-size: 32px;
-          margin-bottom: 24px;
-          color: var(--md-sys-color-primary);
-          text-decoration: underline;
-        }
       `,
     ];
   }
@@ -52,10 +36,7 @@ export class CpsProblemStatement extends CpsStageBase {
   render() {
     return html`
       <div class="topContainer layout vertical center-center">
-        <div class="title">${this.t('Problem Statement')}</div>
-        <div class="problemStatment">
-          ${this.memory.problemStatement.description}
-        </div>
+        ${this.renderProblemStatement()}
 
         ${this.renderSearchQueries(
           this.t('Search queries for problem statement'),

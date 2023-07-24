@@ -65,7 +65,7 @@ const currentMemoryId = 1;
 @customElement('cps-app')
 export class CpsApp extends YpBaseElement {
   @property({ type: Number })
-  pageIndex = 4;
+  pageIndex = 1;
 
   @property({ type: Object })
   currentMemory: IEngineInnovationMemoryData | undefined;
@@ -122,10 +122,10 @@ export class CpsApp extends YpBaseElement {
   currentRightAnswer: string;
 
   @property({ type: Number })
-  currentSolutionsGeneration: number | undefined;
+  currentSolutionsGeneration = 0;
 
   @property({ type: Number })
-  currentPolicyIdeasGeneration: number | undefined;
+  currentPolicyIdeasGeneration = 0;
 
   drawer: MdNavigationDrawer;
 
@@ -782,10 +782,7 @@ export class CpsApp extends YpBaseElement {
             <md-list-item
               class="${this.pageIndex == PagesTypes.PolicyCategories &&
               'selectedContainer'}"
-              headline="${this.t('Policy ideas')}${this
-                .currentPolicyIdeasGeneration
-                ? html` (${this.currentPolicyIdeasGeneration}g)`
-                : nothing}"
+              headline="${this.t('Policy ideas')} (${this.currentPolicyIdeasGeneration} gen)"
               @click="${() => this.changeTabTo(5)}"
               @keydown="${(e: KeyboardEvent) => {
                 if (e.key === 'Enter') {

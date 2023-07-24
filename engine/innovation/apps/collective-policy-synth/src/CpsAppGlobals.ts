@@ -14,7 +14,7 @@ export class CpsAppGlobals extends YpAppGlobals {
   constructor(serverApi: CpsServerApi) {
     super(serverApi, true);
     this.parseQueryString();
-    this.earlName = this.getEarlName();
+    //this.earlName = this.getEarlName();
     this.originalReferrer = document.referrer;
     document.addEventListener('set-ids' as any, this.setIds.bind(this));
   }

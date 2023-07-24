@@ -12,15 +12,6 @@ const maxNumberOfSubProblems = 7;
 
 @customElement('cps-solutions')
 export class CpsSolutions extends CpsStageBase {
-  @property({ type: Number })
-  activeSubProblemIndex: number | undefined;
-
-  @property({ type: Number })
-  activeSolutionIndex: number | undefined;
-
-  @property({ type: Number })
-  activePopulationIndex = 0;
-
   async connectedCallback() {
     super.connectedCallback();
     window.appGlobals.activity(`Solutions - open`);
@@ -157,27 +148,12 @@ export class CpsSolutions extends CpsStageBase {
   renderSubProblemList(subProblems: IEngineSubProblem[]) {
     return html`
       <div class="topContainer layout vertical center-center">
-        <div class="title">${this.t('Problem Statement')}</div>
-        <div class="problemStatement">
-          <div class="problemStatementText">
-            ${this.memory.problemStatement.description}
-          </div>
-        </div>
+        ${this.renderProblemStatement()}
 
         <div class="title">${this.t('Sub Problems')}</div>
         ${subProblems.map((subProblem, index) => {
           const isLessProminent = index >= maxNumberOfSubProblems;
-          return html`
-            <div
-              class="subProblem ${isLessProminent
-                ? 'lessProminent'
-                : 'prominentSubProblem'}"
-              @click="${() => (this.activeSubProblemIndex = index)}"
-            >
-              <div class="subProblemTitle">${subProblem.title}</div>
-              <div class="subProblemStatement">${subProblem.description}</div>
-            </div>
-          `;
+          return this.renderSubProblem(subProblem, isLessProminent, index);
         })}
       </div>
     `;

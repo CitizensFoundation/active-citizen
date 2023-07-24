@@ -10,12 +10,24 @@ import { Checkbox } from '@material/web/checkbox/lib/checkbox.js';
 import '@material/web/button/outlined-button.js';
 import '@material/web/circularprogress/circular-progress.js';
 
+const maxTopSearchQueries = 2;
+const maxUsedSearchResults = 4;
+
 export abstract class CpsStageBase extends YpBaseElement {
   @property({ type: Object })
   memory: IEngineInnovationMemoryData;
 
   @property({ type: Boolean })
   showEloRatings = false;
+
+  @property({ type: Number })
+  activeSubProblemIndex: number | undefined;
+
+  @property({ type: Number })
+  activeSolutionIndex: number | undefined;
+
+  @property({ type: Number })
+  activePopulationIndex = 0;
 
   @state()
   displayStates = new Map();
@@ -37,16 +49,71 @@ export abstract class CpsStageBase extends YpBaseElement {
     return [
       super.styles,
       css`
-        .title {
+        .topContainer {
+          margin-right: 32px;
+        }
+
+        .prominentSubProblem {
+          cursor: pointer;
+        }
+
+        .problemStatement {
           font-size: 22px;
-          letter-spacing: 0.22em;
-          line-height: 1.7;
-          color: var(--md-sys-color-primary);
-          background-color: var(--md-sys-color-on-primary);
           padding: 16px;
-          margin-top: 16px;
+          margin: 16px 0;
           border-radius: 16px;
+          line-height: 1.4;
+          background-color: var(--md-sys-color-tertiary);
+          color: var(--md-sys-color-on-tertiary);
+          max-width: 960px;
+        }
+
+        .problemStatementText {
+          padding: 16px;
+        }
+
+        .subProblemStatement,
+        .subProblemTitle {
+          font-size: 22px;
+          padding: 8px;
+          margin: 8px 0;
+          border-radius: 12px;
+          line-height: 1.4;
+          max-width: 960px;
+        }
+
+        .subProblemTitle {
+          color: var(--md-sys-color-primary);
+          font-weight: bold;
+          letter-spacing: 0.12em;
+          padding-bottom: 0;
+        }
+
+        .subProblem {
+          opacity: 1;
+          border-radius: 12px;
+          padding: 16px;
+          margin: 16px 0;
+          background-color: var(--md-sys-color-on-primary);
+          color: var(--md-sys-color-primary);
+          max-width: 960px;
+        }
+
+        .title {
+          font-size: 28px;
           margin-bottom: 8px;
+          color: var(--md-sys-color-secondary);
+          background-color: var(--md-sys-color-on-secondary);
+          text-align: center;
+          padding: 16px;
+          border-radius: 16px;
+          max-width: 960px;
+          margin-top: 24px;
+          width: 100%;
+        }
+
+        .subProblem.lessProminent {
+          opacity: 0.75;
         }
 
         .subTitle {
@@ -83,6 +150,7 @@ export abstract class CpsStageBase extends YpBaseElement {
 
         .column {
           padding: 8px;
+          padding-bottom: 0;
         }
 
         .index {
@@ -154,22 +222,44 @@ export abstract class CpsStageBase extends YpBaseElement {
 
         .query {
           font-size: 16px;
-          margin-bottom: 4px;
+          margin-bottom: 0px;
+          opacity: 0.7;
+        }
+
+        .queryUsed {
+          font-weight: 500;
+          opacity: 1;
         }
 
         .card {
           padding: 16px;
+          padding-top: 0;
           margin: 8px;
           border-radius: 8px;
-          background-color: var(--md-sys-color-on-primary);
-          color: var(--md-sys-color-primary);
+          width: 100%;
+          max-width: 960px;
         }
 
-        .description,
-        .url,
-        .eloRating {
-          margin-top: 8px;
-          margin-bottom: 4px;
+        .searchItem {
+          opacity: 0.5;
+        }
+
+        a {
+          color: var(--md-sys-color-on-surface);
+        }
+
+        .selectedSearchItem {
+          opacity: 1;
+        }
+
+        .searchTitle {
+          font-weight: 500;
+          margin-top: 16px;
+        }
+
+        .url {
+          margin-bottom: 16px;
+          margin-top: 4px;
         }
 
         @media (min-width: 960px) {
@@ -184,18 +274,7 @@ export abstract class CpsStageBase extends YpBaseElement {
             margin-bottom: 6px;
           }
 
-          .card {
-            padding: 20px;
-            margin: 10px;
-            border-radius: 10px;
-          }
 
-          .description,
-          .url,
-          .eloRating {
-            margin-top: 10px;
-            margin-bottom: 6px;
-          }
         }
 
         @media (max-width: 960px) {
@@ -210,18 +289,6 @@ export abstract class CpsStageBase extends YpBaseElement {
             margin-bottom: 3px;
           }
 
-          .card {
-            padding: 12px;
-            margin: 6px;
-            border-radius: 6px;
-          }
-
-          .description,
-          .url,
-          .eloRating {
-            margin-top: 6px;
-            margin-bottom: 3px;
-          }
         }
 
         @media (min-width: 960px) {
@@ -236,20 +303,52 @@ export abstract class CpsStageBase extends YpBaseElement {
             height: 100vh;
           }
 
-          .title {
-            font-size: 18px;
-            letter-spacing: 0.15em;
-            line-height: 1.5;
-            margin-top: 16px;
-          }
 
-          .row {
-            min-width: 300px;
-            width: 300px;
-          }
         }
       `,
     ];
+  }
+
+  isUsedSearch(result: IEngineSearchResultItem, index: number) {
+    console.error(`position ${result.position} originalPosition index ${index}`)
+    if (index < maxUsedSearchResults
+      || (result.position && result.position <= maxUsedSearchResults)
+      || (result.originalPosition && result.originalPosition <= maxUsedSearchResults)) {
+        console.error("YES")
+      return 'selectedSearchItem';
+    } else {
+      console.error("NO")
+      return ``;
+    }
+  }
+
+  renderProblemStatement() {
+    return html`
+      <div class="title">${this.t('Problem Statement')}</div>
+      <div class="problemStatement">
+        <div class="problemStatementText">
+          ${this.memory.problemStatement.description}
+        </div>
+      </div>
+    `;
+  }
+
+  renderSubProblem(
+    subProblem: IEngineSubProblem,
+    isLessProminent: boolean,
+    index: number
+  ) {
+    return html`
+      <div
+        class="subProblem ${isLessProminent
+          ? 'lessProminent'
+          : 'prominentSubProblem'}"
+        @click="${() => (this.activeSubProblemIndex = index)}"
+      >
+        <div class="subProblemTitle">${subProblem.title}</div>
+        <div class="subProblemStatement">${subProblem.description}</div>
+      </div>
+    `;
   }
 
   renderSearchQueries(title: string, searchQueries: IEngineSearchQueries) {
@@ -259,35 +358,45 @@ export abstract class CpsStageBase extends YpBaseElement {
 
     return html`
       <div
-        class="title"
+        class="title layout horizontal center-center"
         @click="${(e: Event) => {
           e.stopPropagation();
           this.toggleDisplayState(title);
         }}"
       >
-        ${title}
-        <span class="icon">🔽</span>
+        <div class="flex"></div>
+        <div>${title}</div>
+        <div class="flex"></div>
+        <md-standard-icon-button
+          ><md-icon>expand_more</md-icon></md-standard-icon-button
+        >
       </div>
-      ${this.displayStates.get(title)
-        ? Object.entries(searchQueries).map(([type, queries]) => {
-            if (queries.length === 0) {
-              return nothing;
-            }
+      <div class="layout vertical self-start">
+        ${this.displayStates.get(title)
+          ? Object.entries(searchQueries).map(([type, queries]) => {
+              if (queries.length === 0) {
+                return nothing;
+              }
 
-            return html`
-              <div class="queryType">${type}</div>
-              ${queries.map((query: string) => {
-                return html`
-                  <div class="row">
+              return html`
+                <div class="queryType">${type}</div>
+                ${queries.map((query: string, index: number) => {
+                  return html`
                     <div class="column">
-                      <div class="query">${query}</div>
+                      <div
+                        class="query ${index < maxTopSearchQueries
+                          ? `queryUsed`
+                          : ``}"
+                      >
+                        ${query}
+                      </div>
                     </div>
-                  </div>
-                `;
-              })}
-            `;
-          })
-        : nothing}
+                  `;
+                })}
+              `;
+            })
+          : nothing}
+      </div>
     `;
   }
 
@@ -298,14 +407,18 @@ export abstract class CpsStageBase extends YpBaseElement {
 
     return html`
       <div
-        class="title"
+        class="title layout horizontal"
         @click="${(e: Event) => {
           e.stopPropagation();
           this.toggleDisplayState(title);
         }}"
       >
-        ${title}
-        <span class="icon">🔽</span>
+        <div class="flex"></div>
+        <div>${title}</div>
+        <div class="flex"></div>
+        <md-standard-icon-button
+          ><md-icon>expand_more</md-icon></md-standard-icon-button
+        >
       </div>
       ${this.displayStates.get(title)
         ? Object.entries(searchResults.pages).map(([type, results]) => {
@@ -314,17 +427,27 @@ export abstract class CpsStageBase extends YpBaseElement {
             }
 
             return html`
-              <div class="resultType">${type}</div>
-              ${results.map((result: IEngineSearchResultItem) => {
-                return html`
-                  <div class="card">
-                    <div class="title">${result.title}</div>
-                    <div class="description">${result.description}</div>
-                    <div class="url">${result.url}</div>
-                    <div class="eloRating">${result.eloRating ?? 'N/A'}</div>
-                  </div>
-                `;
-              })}
+              <div class="queryType">${type}</div>
+              <div class="card">
+                ${results.map(
+                  (result: IEngineSearchResultItem, index: number) => {
+                    return html`
+                      <div class="searchItem ${this.isUsedSearch(result, index)}">
+                        <div class="searchTitle">${result.title}</div>
+                        <div class="url">
+                          <a
+                            target="blank"
+                            href="${result.url || result.link}"
+                            target="_blank"
+                          >
+                            ${result.url || result.link}
+                          </a>
+                        </div>
+                      </div>
+                    `;
+                  }
+                )}
+              </div>
             `;
           })
         : nothing}

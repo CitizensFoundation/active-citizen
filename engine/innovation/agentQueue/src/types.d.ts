@@ -237,6 +237,10 @@ interface IEngineSearchResultItem {
   url: string;
   date: string;
   eloRating?: number;
+  //TODO: Depricated
+  link?: string;
+  //TODO: Depricated
+  position?: number;
 }
 
 interface IEngineSearchResults {
