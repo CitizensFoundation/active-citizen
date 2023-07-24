@@ -32,7 +32,7 @@ export class CpsSubProblems extends CpsStageBase {
         subProblems[this.activeSubProblemIndex]
       );
     } else {
-      return this.renderSubProblemList(subProblems, this.t('Sub problems and Web Searches'));
+      return this.renderSubProblemList(subProblems, this.t('Sub problems'));
     }
   }
 

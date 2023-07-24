@@ -43,6 +43,7 @@ import './src/cps-problem-statement.js';
 import './src/cps-sub-problems.js';
 import './src/cps-entities.js';
 import './src/cps-solutions.js';
+import { IEngineConstants } from './src/constants.js';
 
 const PagesTypes = {
   ProblemStatement: 1,
@@ -72,6 +73,9 @@ export class CpsApp extends YpBaseElement {
 
   @property({ type: Number })
   totalNumberOfVotes = 0;
+
+  @property({ type: Boolean })
+  showAllCosts = false;
 
   @property({ type: String })
   lastSnackbarText: string | undefined;
@@ -199,7 +203,7 @@ export class CpsApp extends YpBaseElement {
 
     this.themeColor = bootResponse.configuration.theme_color
       ? bootResponse.configuration.theme_color
-      : "#3858ca";
+      : '#3858ca';
     this.themePrimaryColor = bootResponse.configuration.theme_primary_color;
     this.themeSecondaryColor = bootResponse.configuration.theme_secondary_color;
     this.themeTertiaryColor = bootResponse.configuration.theme_tertiary_color;
@@ -401,6 +405,17 @@ export class CpsApp extends YpBaseElement {
         :host {
         }
 
+        .costsContainer {
+          margin-top: 32px;
+          opacity: 0.7;
+          font-size: 13px;
+        }
+
+        a {
+          color: var(--md-sys-color-on-surface);
+          margin-top: 8px;
+        }
+
         body {
           background-color: var(--md-sys-color-background, #fefefe);
         }
@@ -430,6 +445,11 @@ export class CpsApp extends YpBaseElement {
           padding-left: 8px;
           margin-right: 16px;
           padding-bottom: 560px;
+        }
+
+        .costItem {
+          margin-bottom: 8px;
+          margin-left: 8px;
         }
 
         md-list-item {
@@ -607,6 +627,113 @@ export class CpsApp extends YpBaseElement {
     window.location.href = `/admin`;
   }
 
+  stageModelMap = {
+    createSubProblems: IEngineConstants.createSubProblemsModel,
+    createEntities: IEngineConstants.createEntitiesModel,
+    createSearchQueries: IEngineConstants.createSearchQueriesModel,
+    rankSearchResults: IEngineConstants.searchResultsRankingsModel,
+    rankSearchQueries: IEngineConstants.searchQueryRankingsModel,
+    rankSubProblems: IEngineConstants.subProblemsRankingsModel,
+    rankEntities: IEngineConstants.entitiesRankingsModel,
+    rankSolutions: IEngineConstants.solutionsRankingsModel,
+    rankProsCons: IEngineConstants.prosConsRankingsModel,
+    evolveCreatePopulation: IEngineConstants.evolveSolutionsModel,
+    evolveMutatePopulation: IEngineConstants.evolutionMutateModel,
+    evolveRecombinePopulation: IEngineConstants.evolutionRecombineModel,
+    evolveRankPopulation: IEngineConstants.solutionsRankingsModel,
+    webSearch: IEngineConstants.createSearchQueriesModel, // Not sure about this mapping
+    webGetPages: IEngineConstants.getPageAnalysisModel,
+    createSeedSolutions: IEngineConstants.createSolutionsModel,
+    createProsCons: IEngineConstants.createProsConsModel,
+    parse: IEngineConstants.createSubProblemsModel, // Not sure about this mapping
+    save: IEngineConstants.createSubProblemsModel, // Not sure about this mapping
+    done: IEngineConstants.createSubProblemsModel, // Not sure about this mapping
+  };
+
+  toCamelCase(str: string) {
+    return str.replace(/-([a-z])/g, function (g) {
+      return g[1].toUpperCase();
+    });
+  }
+
+  renderCosts() {
+    // Calculate total cost
+    let totalCost = 0;
+    let gpt4Cost = 0;
+    let gpt35Cost = 0;
+    let gpt35_16kCost = 0;
+
+    try {
+      Object.keys(this.currentMemory.stages).forEach(stage => {
+        //@ts-ignore
+        const stageData = this.currentMemory.stages[stage];
+        if (stageData.tokensInCost && stageData.tokensOutCost) {
+          const stageCost = stageData.tokensInCost + stageData.tokensOutCost;
+          totalCost += stageCost;
+          // Calculate costs for each model
+          const camelCaseStage = this.toCamelCase(stage);
+          //@ts-ignore
+          const modelConstants = this.stageModelMap[camelCaseStage];
+          if (modelConstants.name === 'gpt-4') {
+            gpt4Cost += stageCost;
+          } else if (modelConstants.name === 'gpt-3.5-turbo') {
+            gpt35Cost += stageCost;
+          } else if (modelConstants.name === 'gpt-3.5-turbo-16k') {
+            gpt35_16kCost += stageCost;
+          } else {
+            console.error(`Unknown model name: ${modelConstants.name}`);
+          }
+        }
+      });
+    } catch (error: any) {
+      console.error(error);
+      debugger;
+    }
+
+    console.error(`Total cost: ${totalCost}`);
+
+    // Render total and model costs
+    let costTemplates = [
+      html`<div class="costItem">Total cost: $${totalCost.toFixed(0)}</div>`,
+      html`<div class="costItem">GPT-4 cost: $${gpt4Cost.toFixed(0)}</div>`,
+      html`<div class="costItem">GPT3.5 cost: $${gpt35Cost.toFixed(0)}</div>`,
+      html`<div class="costItem">
+        GPT3.5 16k cost: $${gpt35_16kCost.toFixed(0)}
+      </div>`,
+    ];
+
+    // Render costs for each stage
+    if (this.showAllCosts) {
+      Object.keys(this.currentMemory.stages).forEach(stage => {
+        //@ts-ignore
+        const stageData = this.currentMemory.stages[stage];
+        const stageCost = stageData.tokensInCost + stageData.tokensOutCost;
+        if (!isNaN(stageCost)) {
+          costTemplates.push(
+            html`<div class="costItem">
+              ${this.toCamelCase(stage)}: $${stageCost.toFixed(0)}
+            </div>`
+          );
+        }
+      });
+    }
+
+    if (!this.showAllCosts) {
+      costTemplates.push(
+        html`<div class="layout horizontal center-center">
+          <a href="#" @click=${this.handleShowMore}>Show more...</a>
+        </div>`
+      );
+    }
+
+    return html`<div class="layout vertical">${costTemplates}</div>`;
+  }
+
+  handleShowMore(event: CustomEvent) {
+    event.preventDefault();
+    this.showAllCosts = true;
+  }
+
   _renderPage() {
     if (this.currentMemory) {
       switch (this.pageIndex) {
@@ -750,7 +877,8 @@ export class CpsApp extends YpBaseElement {
             <md-list-item
               class="${this.pageIndex == PagesTypes.Solutions &&
               'selectedContainer'}"
-              headline="${this.t('Solutions')} (${this.currentSolutionsGeneration} gen)"
+              headline="${this.t('Solutions')} (${this
+                .currentSolutionsGeneration} gen)"
               @click="${() => this.changeTabTo(3)}"
               @keydown="${(e: KeyboardEvent) => {
                 if (e.key === 'Enter') {
@@ -782,7 +910,8 @@ export class CpsApp extends YpBaseElement {
             <md-list-item
               class="${this.pageIndex == PagesTypes.PolicyCategories &&
               'selectedContainer'}"
-              headline="${this.t('Policy ideas')} (${this.currentPolicyIdeasGeneration} gen)"
+              headline="${this.t('Policy ideas')} (${this
+                .currentPolicyIdeasGeneration} gen)"
               @click="${() => this.changeTabTo(5)}"
               @keydown="${(e: KeyboardEvent) => {
                 if (e.key === 'Enter') {
@@ -831,6 +960,9 @@ export class CpsApp extends YpBaseElement {
               ${this.renderThemeToggle()}
             </div>
           </md-list>
+          <div class="layout vertical costsContainer">
+            ${this.renderCosts()}
+          </div>
         </div>
       `;
     } else {

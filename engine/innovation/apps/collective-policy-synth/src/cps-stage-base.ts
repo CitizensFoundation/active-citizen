@@ -375,9 +375,9 @@ export abstract class CpsStageBase extends YpBaseElement {
           : 'prominentSubProblem'}"
         @click="${() => this.setSubProblem(index)}"
       >
-        <div class="subProblemTitle layout horizontal">
+        <div class="subProblemTitle layout horizontal ${renderCloseButton ? '' : 'center-center'}">
           <div>${subProblem.title}</div>
-          <div class="flex"></div>
+          <div class="${renderCloseButton ? 'flex' : ''}"></div>
           ${renderCloseButton
             ? html`
                 <md-standard-icon-button
