@@ -33,11 +33,14 @@ export class ProjectsController {
 
   getProject = async (req: express.Request, res: express.Response) => {
     let memoryData;
-    try {
-      const data = await redisClient.get(`st_mem:${req.params.id}:id`);
-      memoryData = data ? JSON.parse(data) : null;
-    } catch (err) {
-      console.error(err);
+
+    if (!process.env.FORCE_BACKUP_MEMORY_URL) {
+      try {
+        const data = await redisClient.get(`st_mem:${req.params.id}:id`);
+        memoryData = data ? JSON.parse(data) : null;
+      } catch (err) {
+        console.error(err);
+      }
     }
 
     if (!memoryData && process.env.BACKUP_MEMORY_URL) {
