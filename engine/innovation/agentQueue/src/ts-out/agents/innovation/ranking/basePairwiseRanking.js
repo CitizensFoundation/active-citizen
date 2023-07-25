@@ -57,7 +57,7 @@ export class BasePairwiseRankingsProcessor extends BaseProcessor {
                 else if (["Neither", "None", "Both"].indexOf(winningItemText.trim()) > -1) {
                     wonItemIndex = -1;
                     lostItemIndex = -1;
-                    this.logger.warn(`LLM returned Neither, None or Both in pairwise ranking for prompt ${JSON.stringify(messages)}`);
+                    this.logger.info(`LLM returned Neither, None or Both in pairwise ranking for prompt ${JSON.stringify(messages)}`);
                 }
                 else {
                     this.logger.error(`Invalid winning item text ${winningItemText} for prompt ${JSON.stringify(messages)}`);
@@ -106,7 +106,7 @@ export class BasePairwiseRankingsProcessor extends BaseProcessor {
                 const { wonItemIndex, lostItemIndex } = await this.voteOnPromptPair(subProblemIndex, promptPair, additionalData);
                 //this.logger.debug(`Won item index: ${wonItemIndex} Lost item index: ${lostItemIndex}`)
                 if (wonItemIndex === -1 && lostItemIndex === -1) {
-                    this.logger.debug(`Draw not updating elo score for prompt ${p}`);
+                    this.logger.info(`Neither won not updating elo score for prompt ${p}`);
                 }
                 else if (wonItemIndex !== undefined && lostItemIndex !== undefined) {
                     // Update Elo ratings

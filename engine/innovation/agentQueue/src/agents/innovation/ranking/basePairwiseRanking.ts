@@ -112,7 +112,7 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
         ) {
           wonItemIndex = -1;
           lostItemIndex = -1;
-          this.logger.warn(
+          this.logger.info(
             `LLM returned Neither, None or Both in pairwise ranking for prompt ${JSON.stringify(
               messages
             )}`
@@ -178,7 +178,7 @@ export abstract class BasePairwiseRankingsProcessor extends BaseProcessor {
         );
         //this.logger.debug(`Won item index: ${wonItemIndex} Lost item index: ${lostItemIndex}`)
         if (wonItemIndex === -1 && lostItemIndex === -1) {
-          this.logger.debug(`Draw not updating elo score for prompt ${p}`);
+          this.logger.info(`Neither won not updating elo score for prompt ${p}`);
         } else if (wonItemIndex !== undefined && lostItemIndex !== undefined) {
           // Update Elo ratings
           const winnerRating = this.eloRatings[subProblemIndex][wonItemIndex];

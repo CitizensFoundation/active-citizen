@@ -259,8 +259,8 @@ interface IEngineInnovationMemoryData extends IEngineMemoryData {
   systemInstructions: {
     createSubProblems?: string;
     rankSubProblems?: string;
-    createSolutions: string;
-    rankSolutions: string;
+    createSolutions?: string;
+    rankSolutions?: string;
   }
   subProblems: IEngineSubProblem[];
   currentStageData?:

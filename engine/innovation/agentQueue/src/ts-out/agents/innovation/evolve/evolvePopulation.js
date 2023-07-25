@@ -19,9 +19,9 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
         As an AI genetic algorithm expert, your task is to create a new solution by merging the attributes of two parent solutions (Parent A and Parent B).
 
         Please consider the following guidelines when developing your merged solution:
-        1. The merged solution should contain some attributes from both parents but in a new way - not merely the attributes from parent A followed by those from parent B.
-        2. The title of the merged solution should be approximately the same length as the parent titles.
-        3. The combination should be logical, meaningful and present a standalone solution to the problem at hand - not two solutions in one.
+        1. The merged solution should contain one best aspect from "Parent A" and one best aspect from "Parent B".
+        2. The combination should be logical, meaningful and present a standalone solution to the problem at hand.
+        3. If the combined solution is too complex, comprehensive or complicated, you may choose to simplify it removing some attributes.
         4. Do not refer "the merged solution" in your output, the solution should be presented as a standalone solution.
         5. Output your merged solution in the following JSON format: { title, description, mainBenefitOfSolution, mainObstacleToSolutionAdoption }. Do not add any new JSON properties.
         6. Think step by step.
@@ -61,9 +61,9 @@ export class EvolvePopulationProcessor extends CreateSolutionsProcessor {
 
         Please consider the following guidelines:
         1. Implement mutation at a rate of ${mutateRate} changes.
-        2. The mutation process should introduce new attributes or alter existing ones.
-        3. Ensure that the mutation is logical and meaningful.
-        4. The mutated solution should continue to offer a viable solution to the problem presented.
+        2. The mutation process should introduce new attributes, remove not important atttributes or alter existing ones.
+        3. If the solution is complex already bias towards removing the least important attributes.
+        4. Ensure that the mutation is logical and meaningful and it should continue to offer a viable solution to the problem presented.
         5. Output your mutated solution in the following JSON format: { title, description, mainBenefitOfSolution, mainObstacleToSolutionAdoption }. Do not add any new JSON properties.
         6. Think step by step.
         `),

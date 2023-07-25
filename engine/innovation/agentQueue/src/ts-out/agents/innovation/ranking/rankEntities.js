@@ -21,8 +21,8 @@ export class RankEntitiesProcessor extends BasePairwiseRankingsProcessor {
         2. Two entities affected by the sub-problem will be given, labelled as "Entity One" and "Entity Two".
         3. Analyze and compare the entities, and then decide which one is more significantly impacted.
         4. Consider both positive and negative impacts, if available, while ranking.
-        5. Output your decision as either "One" or "Two", indicating the more affected entity. No need for any explanations.
-        6. Ensure to use a systematic and step-by-step approach. Think step by step.`),
+        5. Output your decision as either "One", "Two" or "Neither". An explanation is not required.
+        6. Think step by step.`),
             new HumanChatMessage(`
          ${this.renderProblemStatement()}
 

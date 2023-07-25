@@ -25,22 +25,21 @@ export class CreateProsConsProcessor extends BaseProcessor {
     const messages = [
       new SystemChatMessage(
         `
-        As an AI expert, it's your responsibility to refine the given ${prosOrCons} pertaining to solutions, sub-problems, and affected entities.
+        As an AI expert, it's your responsibility to refine the given ${prosOrCons} pertaining to solutions to problems.
 
         Keep these guidelines in mind:
 
-        1. Make the ${prosOrCons} concise, consistent, detailed, and succinct.
-        2. Expand on the ${prosOrCons} by considering the problem statement, sub-problems, and affected entities, if needed.
-        3. Contextualize the ${prosOrCons} considering the problem statement, sub-problems, and affected entities.
-        4. Ensure the refined ${prosOrCons} are relevant and directly applicable.
-        5. Output should be in JSON format only, not markdown.
-        6. The ${prosOrCons} should be outputed as an JSON array: [ "...", "..." ].
-        7. Follow a step-by-step approach in your thought process.
+        1. Make the ${prosOrCons} concise, consistent, and succinct.
+        2. Expand on the ${prosOrCons} by considering the problem, if needed.
+        3. Ensure the refined ${prosOrCons} are relevant and directly applicable.
+        4. Output should be in JSON format only, not markdown.
+        5. The ${prosOrCons} should be outputed as an JSON array: [ "...", "..." ].
+        6. Follow a step-by-step approach in your thought process.
         `
       ),
       new HumanChatMessage(
         `
-        ${this.renderProblemStatementSubProblemsAndEntities(subProblemIndex)}
+        ${this.renderSubProblem(subProblemIndex, true)}
 
         ${this.renderCurrentSolution(solution)}
 
@@ -66,9 +65,9 @@ export class CreateProsConsProcessor extends BaseProcessor {
 
         Follow these guidelines:
 
-        1. Generate and output up to ${IEngineConstants.maxNumberGeneratedProsConsForSolution} ${prosOrCons}.
+        1. Generate and output up to ${IEngineConstants.maxNumberGeneratedProsConsForSolution} best ${prosOrCons} for the solution below.
         2. Ensure that each ${prosOrCons} is concise, consistent, detailed, and important.
-        3. The ${prosOrCons} must be in line with the context given by the problem statement, sub-problems, and affected entities.
+        3. The ${prosOrCons} must be in line with the context given by the problem.
         4. Each ${prosOrCons} should be directly applicable to the solution.
         5. Output should be in JSON format only, not markdown format.
         6. The ${prosOrCons} should be outputed as an JSON array: [ "${prosOrCons} 1", "${prosOrCons} 2" ].
@@ -77,7 +76,7 @@ export class CreateProsConsProcessor extends BaseProcessor {
       ),
       new HumanChatMessage(
         `
-         ${this.renderProblemStatementSubProblemsAndEntities(subProblemIndex)}
+         ${this.renderSubProblem(subProblemIndex, true)}
 
          ${this.renderCurrentSolution(solution)}
 

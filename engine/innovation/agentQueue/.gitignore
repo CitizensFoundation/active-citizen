@@ -1,4 +1,5 @@
 .env
 currentMemory.json
 memoryBackups/
+node_modules/
 

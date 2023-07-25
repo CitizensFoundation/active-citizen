@@ -24,11 +24,11 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
         1. You will be presented with a problem and two corresponding solutions. These will be labelled "Solution One" and "Solution Two".
         2. Assess which of the two solutions is more important in relation to the problem.
         3. Consider the pros and cons of each solution while assessing.
-        4. Output your decision as either "One" or "Two". No explanation is necessary.
+        4. Output your decision as "One", "Two" or "Neither. No explanation is necessary.
         5. Think step by step.
         `),
             new HumanChatMessage(`
-        ${this.renderProblemStatementSubProblemsAndEntities(subProblemIndex)}
+        ${this.renderSubProblem(subProblemIndex, true)}
 
         Solutions to assess:
 
@@ -38,9 +38,13 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
         ${solutionOne.description}
 
         Pros of Solution One:
+        ${solutionOne.mainBenefitOfSolution}
+
         ${this.getProCons(solutionOne.pros).slice(0, IEngineConstants.maxTopProsConsUsedForRanking)}
 
         Cons of Solution One:
+        ${solutionOne.mainObstacleToSolutionAdoption}
+
         ${this.getProCons(solutionOne.cons).slice(0, IEngineConstants.maxTopProsConsUsedForRanking)}
 
         Solution Two:
@@ -49,9 +53,13 @@ export class RankSolutionsProcessor extends BasePairwiseRankingsProcessor {
         ${solutionTwo.description}
 
         Pros of Solution Two:
+        ${solutionTwo.mainBenefitOfSolution}
+
         ${this.getProCons(solutionTwo.pros).slice(0, IEngineConstants.maxTopProsConsUsedForRanking)}
 
         Cons of Solution Two:
+        ${solutionTwo.mainObstacleToSolutionAdoption}
+
         ${this.getProCons(solutionTwo.cons).slice(0, IEngineConstants.maxTopProsConsUsedForRanking)}
 
         The more important solution is:

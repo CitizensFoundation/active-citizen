@@ -42,10 +42,10 @@ export abstract class BaseProcessor extends Base {
     return this.memory.subProblems[subProblemIndex].solutions.populations.length - 1;
   }
 
-  renderSubProblem(subProblemIndex: number) {
+  renderSubProblem(subProblemIndex: number, useProblemAsHeader = false) {
     const subProblem = this.memory.subProblems[subProblemIndex];
     return `
-      Sub Problem:
+      ${useProblemAsHeader ? 'Problem' : 'Sub Problem'}:
       ${subProblem.title}
       ${subProblem.description}
       ${subProblem.whyIsSubProblemImportant}

@@ -153,7 +153,7 @@ export class IEngineConstants {
     static maxTopWebPagesToGet = 5;
     static maxWebPagesToGetByTopSearchPosition = 5;
     static maxSearchResults = 10;
-    static maxTopProsConsUsedForRanking = 3;
+    static maxTopProsConsUsedForRanking = 1;
     static maxNumberGeneratedProsConsForSolution = 9;
     static minSleepBeforeBrowserRequest = 1100;
     static maxAdditionalRandomSleepBeforeBrowserRequest = 1100;
@@ -166,14 +166,14 @@ export class IEngineConstants {
                 useSubProblemSearchQueries: 0.5,
                 useRandomEntitySearchQueries: 0.4,
             },
-            notUsingFirstSearchQuery: 0.7,
-            vectorSearchAcrossAllProblems: 0.1,
+            notUsingFirstSearchQuery: 0.8,
+            vectorSearchAcrossAllProblems: 0.2,
         },
     };
     static maxTopSearchQueriesForSolutionCreation = 4;
     static limits = {
         webPageVectorResultsForNewSolutions: 10,
-        useRandomTopFromVectorSearchResults: 3,
+        useRandomTopFromVectorSearchResults: 7,
     };
     static enable = {
         refine: {
@@ -191,11 +191,11 @@ export class IEngineConstants {
         mutationOffspringPercent: 0.3,
         crossoverPercent: 0.3,
         // General mutation rate split
-        lowMutationRate: 0.3,
+        lowMutationRate: 0.4,
         mediumMutationRate: 0.5,
-        highMutationRate: 0.2,
-        selectParentTournamentSize: 7,
-        crossoverMutationPercent: 0.4
+        highMutationRate: 0.1,
+        selectParentTournamentSize: 4,
+        crossoverMutationPercent: 0.2
     };
     static currentUserAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36";
 }

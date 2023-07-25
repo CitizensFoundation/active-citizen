@@ -45,7 +45,7 @@ export class RankSearchResultsProcessor extends BasePairwiseRankingsProcessor {
 
          Guidelines:
          Assess search results "One" and "Two" for problem relevance, especially regarding indicated solutions.
-         Output your decision as either "One" or "Two". No explanation is required.
+         Output your decision as either "One", "Two" or "Neither". No explanation is required.
          Think step by step.`),
             new HumanChatMessage(`${this.renderProblemDetail()}
 

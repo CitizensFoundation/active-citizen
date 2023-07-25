@@ -184,7 +184,7 @@ export class IEngineConstants {
 
   static maxSearchResults = 10;
 
-  static maxTopProsConsUsedForRanking = 3;
+  static maxTopProsConsUsedForRanking = 1;
 
   static maxNumberGeneratedProsConsForSolution = 9;
 
@@ -202,8 +202,8 @@ export class IEngineConstants {
         useSubProblemSearchQueries: 0.5,
         useRandomEntitySearchQueries: 0.4,
       },
-      notUsingFirstSearchQuery: 0.7,
-      vectorSearchAcrossAllProblems: 0.1,
+      notUsingFirstSearchQuery: 0.8,
+      vectorSearchAcrossAllProblems: 0.2,
     },
   };
 
@@ -211,7 +211,7 @@ export class IEngineConstants {
 
   static limits = {
     webPageVectorResultsForNewSolutions: 10,
-    useRandomTopFromVectorSearchResults: 3,
+    useRandomTopFromVectorSearchResults: 7,
   };
 
   static enable = {
@@ -233,12 +233,12 @@ export class IEngineConstants {
     crossoverPercent: 0.3,
 
     // General mutation rate split
-    lowMutationRate: 0.3,
+    lowMutationRate: 0.4,
     mediumMutationRate: 0.5,
-    highMutationRate: 0.2,
+    highMutationRate: 0.1,
 
-    selectParentTournamentSize: 7,
-    crossoverMutationPercent: 0.4
+    selectParentTournamentSize: 4,
+    crossoverMutationPercent: 0.2
  };
 
   static currentUserAgent =

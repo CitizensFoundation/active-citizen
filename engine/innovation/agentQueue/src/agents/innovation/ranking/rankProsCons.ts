@@ -37,30 +37,28 @@ export class RankProsConsProcessor extends BasePairwiseRankingsProcessor {
         `
         As an AI expert, your role involves analyzing ${
           additionalData.prosOrCons
-        } associated with solutions to problem statements and sub-problems to decide on which ${
+        } associated with solutions to problems to decide on which ${
           additionalData!.prosOrCons
         } is more important.
 
         Please adhere to the following guidelines:
 
-        1. You will be presented with a problem statement, a solution, and two ${
+        1. You will be presented with a problem, a solution, and two ${
           additionalData.prosOrCons
         }. These will be labeled as "${proConSingle} One" and "${proConSingle} Two".
         2. Analyze and compare the ${
           additionalData.prosOrCons
-        } based on their relevance and importance to the solution and choose which is more important and output your decision as either "One" or "Two".
+        } based on their relevance and importance to the solution and choose which is more important and output your decision as either "One", "Two" or "Neither".
         3. Never explain your reasoning.
         `
       ),
       new HumanChatMessage(
         `
-        ${this.renderProblemStatement()}
-
-        ${this.renderSubProblem(additionalData.subProblemIndex)}
+        ${this.renderSubProblem(additionalData.subProblemIndex, true)}
 
         ${additionalData.solution}
 
-        Which ${proConSingle} is more important regarding the solution above? Output your decision as either "One" or "Two".
+        Which ${proConSingle} is more important regarding the solution above? Output your decision as either "One", "Two" or "Neither".
 
         ${proConSingle} One: ${prosOrConsOne}
 
