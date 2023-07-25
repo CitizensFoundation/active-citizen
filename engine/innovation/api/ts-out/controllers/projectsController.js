@@ -44,7 +44,7 @@ class ProjectsController {
         }
         if (!memoryData && process.env.BACKUP_MEMORY_URL) {
             try {
-                const response = await axios_1.default.get(`${process.env.BACKUP_MEMORY_URL}/${req.params.id}`);
+                const response = await axios_1.default.get(process.env.BACKUP_MEMORY_URL);
                 memoryData = response.data;
                 await redisClient.set(`st_mem:${req.params.id}:id`, JSON.stringify(memoryData));
             }
