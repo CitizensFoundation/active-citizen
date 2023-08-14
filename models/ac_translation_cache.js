@@ -310,10 +310,9 @@ module.exports = (sequelize, DataTypes) => {
   }
 
   AcTranslationCache.getSurveyTranslationsFromGoogle = async (textsToTranslate, targetLanguage) => {
-    //TODO: Implement a pagination for the max 128 strings limit of google translate
-    return await new Promise(async (resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       if (!process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
-        reject("No google credentials found")
+        reject("No google credentials found");
       } else {
         const translateAPI = new Translate({
           credentials: JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON),
@@ -321,13 +320,23 @@ module.exports = (sequelize, DataTypes) => {
         });
 
         try {
-          resolve(await translateAPI.translate(textsToTranslate, targetLanguage));
+          // Split the texts into chunks of 128 or fewer
+          const chunkSize = 128;
+          const translations = [];
+          for (let i = 0; i < textsToTranslate.length; i += chunkSize) {
+            const chunk = textsToTranslate.slice(i, i + chunkSize);
+            const [translatedChunk] = await translateAPI.translate(chunk, targetLanguage);
+            translations.push(...translatedChunk);
+          }
+
+          resolve([translations]);
         } catch (error) {
           reject(error);
         }
       }
     });
   };
+
 
   AcTranslationCache.getTranslationFromGoogle = (textType, indexKey, contentToTranslate, targetLanguage, modelInstance, callback) => {
     const translateAPI = new Translate({
