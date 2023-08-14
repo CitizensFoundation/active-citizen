@@ -278,10 +278,11 @@ module.exports = (sequelize, DataTypes) => {
           const translatedStrings = results[0];
           const languageInfo = results[1];
           if (translatedStrings && translatedStrings.length>0) {
+            const content = JSON.stringify(translatedStrings);
             sequelize.models.AcTranslationCache.create({
               index_key: indexKey,
-              content: JSON.stringify(translatedStrings)
-            }).then(() => {
+              content: content
+            }).then((model) => {
               if (saveLanguageToModel && languageInfo.data && languageInfo.data.translations && languageInfo.data.translations.length>0) {
                 saveLanguageToModel.update({
                   language: languageInfo.data.translations[0].detectedSourceLanguage
@@ -322,14 +323,18 @@ module.exports = (sequelize, DataTypes) => {
         try {
           // Split the texts into chunks of 128 or fewer
           const chunkSize = 128;
-          const translations = [];
+          const translatedStrings = [];
+          let languageInfo = {};
           for (let i = 0; i < textsToTranslate.length; i += chunkSize) {
             const chunk = textsToTranslate.slice(i, i + chunkSize);
-            const [translatedChunk] = await translateAPI.translate(chunk, targetLanguage);
-            translations.push(...translatedChunk);
+            const [translatedChunk, info] = await translateAPI.translate(chunk, targetLanguage);
+            translatedStrings.push(...translatedChunk);
+            if (i === 0) { // Keep the language info from the first chunk
+              languageInfo = info;
+            }
           }
 
-          resolve([translations]);
+          resolve([translatedStrings, languageInfo]);
         } catch (error) {
           reject(error);
         }
