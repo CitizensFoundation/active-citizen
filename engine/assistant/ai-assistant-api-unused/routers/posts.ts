@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { upsertPostInVectorStore } from './engine/vector_store';
-import { Post } from './models/post';
+import { upsertPostInVectorStore } from './engine/vector_store.js';
+import { Post } from './models/post.js';
 import weaviate from 'weaviate';
 import { json } from 'body-parser';
 

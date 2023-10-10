@@ -1,32 +1,32 @@
-import { get_question_analysis } from "./chains/question_analysis";
-import { DynamicChatMemory } from "./memory/dynamic_chat_memory";
-import { get_about_project_prompt } from "./prompts/about_project_prompt";
-import { get_follow_up_questions_prompt } from "./prompts/follow_up_questions_prompt";
-import { get_community_from_store } from "./routers/communities";
-import { post_router } from "./routers/posts";
-import { ChatResponse } from "./schemas";
-import { get_qa_chain } from "./chains/vector_db_chain_chain";
-import { FollowupQuestionGenCallbackHandler, StreamingLLMCallbackHandler } from "./callback";
-import { VectorStore } from "./langchain/vectorstores";
+import { get_question_analysis } from "./chains/question_analysis.js";
+import { DynamicChatMemory } from "./memory/dynamic_chat_memory.js";
+import { get_about_project_prompt } from "./prompts/about_project_prompt.js";
+import { get_follow_up_questions_prompt } from "./prompts/follow_up_questions_prompt.js";
+import { get_community_from_store } from "./routers/communities.js";
+import { post_router } from "./routers/posts.js";
+import { ChatResponse } from "./schemas.js";
+import { get_qa_chain } from "./chains/vector_db_chain_chain.js";
+import { FollowupQuestionGenCallbackHandler, StreamingLLMCallbackHandler } from "./callback.js";
+import { VectorStore } from "./langchain/vectorstores.js";
 import { FastAPI, Request, WebSocket, WebSocketDisconnect } from "fastapi";
 import * as logging from "logging";
 import * as pickle from "pickle";
 import { Path } from "path";
 import { Optional } from "typing";
-import { AcWeaviate } from "./vectorstores/ac_weaviate";
+import { AcWeaviate } from "./vectorstores/ac_weaviate.js";
 import * as weaviate from "weaviate";
 import * as traceback from "traceback";
 import * as json from "json";
 import * as os from "os";
-import { AsyncCallbackManager } from "./langchain/callbacks/base";
+import { AsyncCallbackManager } from "./langchain/callbacks/base.js";
 import * as openai from "openai";
-import { PromptTemplate } from "./langchain";
-import { ConditionalPromptSelector, is_chat_model } from "./langchain/chains/prompt_selector";
-import { LLMChain } from "./langchain/chains";
-import { ChatOpenAI } from "./langchain/chat_models";
-import { ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate, AIMessagePromptTemplate } from "./langchain/prompts/chat";
+import { PromptTemplate } from "./langchain.js";
+import { ConditionalPromptSelector, is_chat_model } from "./langchain/chains/prompt_selector.js";
+import { LLMChain } from "./langchain/chains.js";
+import { ChatOpenAI } from "./langchain/chat_models.js";
+import { ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate, AIMessagePromptTemplate } from "./langchain/prompts/chat.js";
 import * as asyncio from "asyncio";
-import { HumanMessage } from "./langchain/schema";
+import { HumanMessage } from "./langchain/schema.js";
 
 let vectorstore: VectorStore | null = null;
 let client: weaviate.Client | null = null;
@@ -60,6 +60,21 @@ const states = {
 };
 
 class ChatManager {
+    private websocket: WebSocket;
+    private cluster_id: string;
+    private community_id: string;
+    private language: string;
+    private community: any;
+    private configuration: any;
+    private followup_question_handler: FollowupQuestionGenCallbackHandler;
+    private main_stream_handler: StreamingLLMCallbackHandler;
+    private qa_chain: any;
+    private followup_question_gen_llm: ChatOpenAI;
+    private chat_history: any[];
+    private last_concepts: any[];
+    private last_group_name: string | null;
+    private dynamic_chat_memory: DynamicChatMemory;
+
     constructor(websocket, cluster_id, community_id, language) {
         this.websocket = websocket;
         this.cluster_id = cluster_id;

@@ -1,10 +1,10 @@
-import { Post } from "./models/post";
+import { Post } from "./models/post.js";
 import * as openai from "openai";
 import * as string from "string";
 import * as time from "time";
 import * as openai_async from "openai_async";
 import * as os from "os";
-import { PromptTemplate } from "./langchain";
+import { PromptTemplate } from "./langchain.js";
 
 const TEMP_LANGUAGE_LOCALE = "is";
 

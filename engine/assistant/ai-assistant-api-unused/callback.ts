@@ -1,4 +1,4 @@
-import { BaseCallbackHandler } from './base';
+import { BaseCallbackHandler } from './base.js';
 import { AgentAction, AgentFinish, LLMResult } from '../schema';
 import { ChatResponse } from '../schemas';
 

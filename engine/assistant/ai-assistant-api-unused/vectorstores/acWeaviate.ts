@@ -1,7 +1,7 @@
-import { Document } from "./document";
-import { Embeddings } from "./embeddings";
-import { VectorStore } from "./vectorstore";
-import { Weaviate } from "./weaviate";
+import { Document } from "./document.js";
+import { Embeddings } from "./embeddings.js";
+import { VectorStore } from "./vectorstore.js";
+import { Weaviate } from "./weaviate.js";
 
 export class AcWeaviate extends Weaviate {
   public similarity_search_concepts(

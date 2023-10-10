@@ -1,28 +1,71 @@
----
-version: '3.4'
+version: '3.9'
+
+x-ai-assistant-common: &ai-assistant-common
+  env_file: .env
+  restart: always
+  build:
+    context: ../../.
+    dockerfile: api/docker/ai-assistant/Dockerfile
+  image: ai-assistant:current
+  volumes:
+    - client-app-dist:/usr/src/apps/ai-assistant/dist
+  command: node ts-out/api/server.js
+  healthcheck:
+    test: ["CMD", "curl", "-f", "http://localhost:9080/api/project/healthcheck"]
+    interval: 30s
+    timeout: 20s
+    retries: 3
+  network_mode: host
+  logging:
+    driver: "json-file"
+    options:
+      max-file: "2000"
+      max-size: "25m"
+
 services:
-  weaviate:
-    command:
-    - --host
-    - 0.0.0.0
-    - --port
-    - '8080'
-    - --scheme
-    - http
-    image: semitechnologies/weaviate:1.18.1
+  redis_db:
+    image: redis:6.2.13-alpine
+    restart: always
     ports:
-    - 8080:8080
-    restart: on-failure:0
+      - '6379:6379'
+    network_mode: host
     volumes:
-      - /var/weaviate:/var/lib/weaviate
+      - redis-db-data:/data
+
+  webserver:
+    container_name: webserver
+    restart: always
+    env_file: .env
+    build:
+      context: ./webserver/
+      dockerfile: Dockerfile
+    #ports:
+    #  - "80:80"
+    #  - "443:443"
+    volumes:
+      - webserver:/home
+      - client-app-dist:/usr/src/apps/ai-assistant/dist
+    healthcheck:
+      test: ["CMD", "curl", "-f", "https://${FULL_HOSTNAME}/api/project/healthcheck"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    network_mode: host
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "2000"
+        max-size: "25m"
+
+  ai-assistant-1:
+    <<: *ai-assistant-common
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9080/api/project/healthcheck"]
     environment:
-      LOG_LEVEL: 'debug'
-      QUERY_DEFAULTS_LIMIT: 20
-      BACKUP_FILESYSTEM_PATH: "/var/weaviate_backups"
-      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
-      PERSISTENCE_DATA_PATH: "/var/lib/weaviate"
-      DEFAULT_VECTORIZER_MODULE: text2vec-openai
-      ENABLE_MODULES: backup-filesystem,text2vec-openai,text2vec-cohere
-      OPENAI_APIKEY: ${OPENAI_API_KEY}
-      COHERE_APIKEY: ${COHERE_APIKEY}
-      CLUSTER_HOSTNAME: 'node1'
+      - PORT=9080
+
+volumes:
+  webserver:
+  client-app-dist:
+  redis-db-data:
+    driver: local

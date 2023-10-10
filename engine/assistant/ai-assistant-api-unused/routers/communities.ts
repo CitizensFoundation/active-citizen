@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import { upsertCommunityInVectorStore, upsertPostInVectorStore } from './engine/vector_store';
-import { Community } from './models/community';
-import { Post } from './models/post';
+import { upsertCommunityInVectorStore, upsertPostInVectorStore } from './engine/vector_store.js';
+import { Community } from './models/community.js';
+import { Post } from './models/post.js';
 import weaviate from 'weaviate';
 import * as json from 'json';
 
