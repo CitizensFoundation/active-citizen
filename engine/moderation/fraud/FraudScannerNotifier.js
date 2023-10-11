@@ -29,6 +29,8 @@ class FraudScannerNotifier {
       hostname = "engage";
     } else if (domainName==="multicitychallenge.org" && process.env.US_CLUSTER !=null) {
       hostname = "ideas";
+    } else if (domainName==="engage-southampton.ac.uk") {
+      hostname = "scca-online";
     } else if (domainName==="multicitychallenge.org") {
       hostname = "yp";
     } else if (domainName==="mycitychallenge.org") {

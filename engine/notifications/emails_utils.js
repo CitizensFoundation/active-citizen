@@ -429,6 +429,10 @@ var sendOneEmail = function (emailLocals, callback) {
             ) {
               fromEmail = "admin@yrpr.e-dem.nl";
             } else if (
+              emailLocals.domain.domain_name.indexOf("engage-southampton.ac.uk") > -1
+            ) {
+              fromEmail = "SCCA Online Platform <scca@engage-southampton.ac.uk>";
+            } else if (
               emailLocals.domain.domain_name.indexOf("parliament.scot") > -1
             ) {
               fromEmail =
