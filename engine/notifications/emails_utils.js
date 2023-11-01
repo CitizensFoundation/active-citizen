@@ -432,6 +432,9 @@ var sendOneEmail = function (emailLocals, callback) {
               emailLocals.domain.domain_name.indexOf("engage-southampton.ac.uk") > -1
             ) {
               fromEmail = "SCCA Online Platform <scca@engage-southampton.ac.uk>";
+              emailLocals["community"] = {
+                hostname: "scca-online",
+              };
             } else if (
               emailLocals.domain.domain_name.indexOf("parliament.scot") > -1
             ) {
