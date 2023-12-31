@@ -17,6 +17,7 @@ const similarities = require('./similarities');
 const reports = require('./reports');
 const marketing = require('./marketing');
 const fraudManagement = require('./fraud_management');
+const generativeAi = require('./generativeAi');
 
 log.info("Dirname", {dirname: __dirname});
 
@@ -98,6 +99,10 @@ i18n
 
     queue.process('process-marketing', 20, function(job, done) {
       marketing.process(job.data, done);
+    });
+
+    queue.process('process-generative-ai', 1, function(job, done) {
+      generativeAi.process(job.data, done);
     });
   });
 

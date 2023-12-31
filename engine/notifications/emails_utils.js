@@ -207,7 +207,7 @@ const processNotification = (
             "medium"
           );
           const redisKey = `${SUPPRESSION_KEYBASE}${user.id}`;
-          redisConnection.setex(
+          redisConnection.setEx(
             redisKey,
             LIMIT_EMAILS_FOR_SECONDS,
             JSON.stringify({})

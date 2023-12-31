@@ -92,17 +92,10 @@ const getGroupIncludes = (id) => {
 
 const countModelRowsByTimePeriod = (req, cacheKey, model, whereOptions, includeOptions, done) => {
   const redisKey = "cachev4:"+cacheKey;
-  req.redisClient.get(redisKey, (error, results) => {
-    if (!error && results) {
+  req.redisClient.get(redisKey).then(results => {
+    if (results) {
       done(null, results);
     } else {
-      if (error) {
-        log.error('Could not get stats from redis', {
-          err: error,
-          context: 'countModelRowsByTimePeriod',
-          userId: req.user ? req.user.id : null
-        });
-      }
       model.findAll({
         where: whereOptions,
         include: includeOptions,
@@ -164,7 +157,7 @@ const countModelRowsByTimePeriod = (req, cacheKey, model, whereOptions, includeO
           }
 
           const finalResults = {finalDays, finalMonths, finalYears};
-          req.redisClient.setex(redisKey, process.env.STATS_CACHE_TTL ? parseInt(process.env.STATS_CACHE_TTL) : 5 * 60, JSON.stringify(finalResults));
+          req.redisClient.setEx(redisKey, process.env.STATS_CACHE_TTL ? parseInt(process.env.STATS_CACHE_TTL) : 5 * 60, JSON.stringify(finalResults));
           done(null, finalResults);
         } else {
           done(null, {});
@@ -173,6 +166,15 @@ const countModelRowsByTimePeriod = (req, cacheKey, model, whereOptions, includeO
         done(error);
       });
     }
+  }).catch((error) => {
+    if (error) {
+      log.error('Could not get stats from redis', {
+        err: error,
+        context: 'countModelRowsByTimePeriod',
+        userId: req.user ? req.user.id : null
+      });
+    }
+    done(error);
   });
 };
 

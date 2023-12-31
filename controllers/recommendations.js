@@ -183,7 +183,7 @@ var processRecommendationsLight = function (groupId, req, res, recommendedItemId
 
       const recommendationsInfo = {recommendations: posts, groupId: groupId };
       if (redisCacheKey) {
-        req.redisClient.setex(redisCacheKey, process.env.RECOMMENDATIONS_CACHE_TTL ? parseInt(process.env.RECOMMENDATIONS_CACHE_TTL) : 5, JSON.stringify(recommendationsInfo));
+        req.redisClient.setEx(redisCacheKey, process.env.RECOMMENDATIONS_CACHE_TTL ? parseInt(process.env.RECOMMENDATIONS_CACHE_TTL) : 5, JSON.stringify(recommendationsInfo));
       }
       res.send(recommendationsInfo);
     }).catch(function(error) {
@@ -243,11 +243,8 @@ router.get('/groups/:id', auth.can('view group'), function(req, res) {
 
 router.put('/groups/:id/getPostRecommendations', auth.can('view group'), function(req, res) {
   const redisCacheKey = "cache:getPostRecommendations:"+req.params.id+":userId:"+(req.user ? req.user.id : "notLoggedIn");
-  req.redisClient.get(redisCacheKey, (error, recommendations) => {
-    if (error) {
-      log.error(error);
-      res.send({recommendations: [], groupId: req.params.id});
-    } else if (recommendations) {
+  req.redisClient.get(redisCacheKey).then(recommendations => {
+    if (recommendations) {
       res.send(JSON.parse(recommendations));
     } else {
       var options = setupOptions(req);
@@ -289,6 +286,9 @@ router.put('/groups/:id/getPostRecommendations', auth.can('view group'), functio
         res.send({recommendations: [], groupId: req.params.id});
       });
     }
+  }).catch(error => {
+    log.error(error);
+    res.send({recommendations: [], groupId: req.params.id});
   });
 });
 

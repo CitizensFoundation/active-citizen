@@ -43,7 +43,7 @@ var getCommonWhereDateOptions = function(options) {
     _.merge(where, dateAtBase)
   } else if (JSON.stringify(dateAtBase) == JSON.stringify({})) {
     if (options.beforeDate) {
-      var beforeDate = {};
+      const beforeDate = {};
 
       beforeDate[options.dateColumn] = {
         $lt: options.beforeDate
@@ -61,7 +61,7 @@ var getCommonWhereDateOptions = function(options) {
     }
   } else {
     if (options.beforeDate) {
-      var beforeDate = {};
+      const beforeDate = {};
 
       beforeDate[options.dateColumn] = {
         $lt: options.beforeDate

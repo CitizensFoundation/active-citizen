@@ -284,18 +284,10 @@ const updateCollection = (workPackage, done) => {
 
 const getFromAnalyticsApi = (req, featureType, collectionType, collectionId, done) => {
   const redisKey = "cachev5:getAnalytics:"+featureType+":"+collectionType+":"+collectionId;
-  req.redisClient.get(redisKey, (error, content) => {
-    if (!error && content) {
+  req.redisClient.get(redisKey).then(content => {
+    if (content) {
       done(null, JSON.parse(content));
     } else {
-      if (error) {
-        log.error('Could not get pages for group from redis', {
-          err: error,
-          context: 'redis',
-          userId: req.user ? req.user.id : null
-        });
-      }
-
       const options = {
         url: process.env["AC_ANALYTICS_BASE_URL"]+featureType+"/"+collectionType+"/"+process.env.AC_ANALYTICS_CLUSTER_ID+"/"+collectionId,
         headers: {
@@ -307,11 +299,20 @@ const getFromAnalyticsApi = (req, featureType, collectionType, collectionId, don
         if (content && content.statusCode!=200) {
           error = content.statusCode;
         } else if (content) {
-          req.redisClient.setex(redisKey, process.env.SIMILARITIES_CACHE_TTL ? parseInt(process.env.SIMILARITIES_CACHE_TTL) : 15*60, JSON.stringify(content));
+          req.redisClient.setEx(redisKey, process.env.SIMILARITIES_CACHE_TTL ? parseInt(process.env.SIMILARITIES_CACHE_TTL) : 15*60, JSON.stringify(content));
         }
-        done(error, content);
+        done(null, content);
       });
     }
+  }).catch(error => {
+    if (error) {
+      log.error('Could not get pages for group from redis', {
+        err: error,
+        context: 'redis',
+        userId: req.user ? req.user.id : null
+      });
+    }
+    done(error);
   });
 };
 
