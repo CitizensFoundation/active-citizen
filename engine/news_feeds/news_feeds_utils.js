@@ -43,7 +43,7 @@ var getCommonWhereDateOptions = function(options) {
     _.merge(where, dateAtBase)
   } else if (JSON.stringify(dateAtBase) == JSON.stringify({})) {
     if (options.beforeDate) {
-      beforeDate = {};
+      var beforeDate = {};
 
       beforeDate[options.dateColumn] = {
         $lt: options.beforeDate
@@ -61,7 +61,7 @@ var getCommonWhereDateOptions = function(options) {
     }
   } else {
     if (options.beforeDate) {
-      beforeDate = {};
+      var beforeDate = {};
 
       beforeDate[options.dateColumn] = {
         $lt: options.beforeDate
@@ -453,10 +453,10 @@ var activitiesDefaultIncludes = function (options) {
 //  'activity.point.new','activity.post.new','activity.post.officialStatus.failed',
 //  'activity.post.officialStatus.inProgress'];
 
-defaultKeyActivities = ['activity.post.status.change','activity.point.new','activity.post.new',
+var defaultKeyActivities = ['activity.post.status.change','activity.point.new','activity.post.new',
                         'activity.point.newsStory.new' ]; // TODO: Add back user images
 
-excludeActivitiesFromFilter = ['activity.point.newsStory.new','activity.post.status.change'];
+var excludeActivitiesFromFilter = ['activity.point.newsStory.new','activity.post.status.change'];
 
 module.exports = {
   activitiesDefaultIncludes: activitiesDefaultIncludes,

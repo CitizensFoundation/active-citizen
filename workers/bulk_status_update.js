@@ -306,7 +306,7 @@ var moveNeededPosts = function (config, callback) {
   });
 };
 
-createBulkStatusUpdates = function (statusUpdateJson, users, callback) {
+const createBulkStatusUpdates = function (statusUpdateJson, users, callback) {
   models.BulkStatusUpdate.findOne({
     where: {
       id: statusUpdateJson.id
