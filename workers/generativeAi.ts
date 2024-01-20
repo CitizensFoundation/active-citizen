@@ -5,6 +5,7 @@ import fs from "fs";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
 import models from "../../models/index.js";
+import { OpenAIClient, AzureKeyCredential } from "@azure/openai";
 
 const dbModels: Models = models;
 const Image = dbModels.Image as ImageClass;
@@ -56,11 +57,21 @@ class GenerativeAiWorker {
   }
 
   async getImageUrlFromPrompt(prompt: string) {
-    const configuration = {
-      apiKey: process.env.OPENAI_API_KEY,
-    };
+    const azureOpenaAiBase = process.env["AZURE_OPENAI_API_BASE"];
+    const azureOpenAiApiKey = process.env["AZURE_OPENAI_API_KEY"];
 
-    const client = new OpenAI(configuration);
+    let client;
+
+    if (azureOpenAiApiKey && azureOpenaAiBase) {
+      client = new OpenAIClient(
+        azureOpenaAiBase!,
+        new AzureKeyCredential(azureOpenAiApiKey!)
+      );
+    } else {
+      client = new OpenAI({
+        apiKey: process.env["OPENAI_API_KEY"],
+      });
+    }
 
     let retryCount = 0;
     let retrying = true; // Initialize as true
@@ -68,13 +79,21 @@ class GenerativeAiWorker {
 
     while (retrying && retryCount < maxDalleRetryCount) {
       try {
-        result = await client.images.generate({
-          model: "dall-e-3",
-          prompt,
-          n: 1,
-          quality: "hd",
-          size: "1792x1024",
-        });
+        if (azureOpenAiApiKey && azureOpenaAiBase) {
+          result = await (client as OpenAIClient).getImages(
+            process.env.AZURE_OPENAI_API_DALLE_DEPLOYMENT_NAME!,
+            prompt,
+            { n: 1, size: "1792x1024", quality: "hd" }
+          );
+        } else {
+          result = await (client as OpenAI).images.generate({
+            model: "dall-e-3",
+            prompt,
+            n: 1,
+            quality: "hd",
+            size: "1792x1024",
+          });
+        }
         if (result) {
           retrying = false; // Only change retrying to false if there is a result.
         } else {
@@ -166,7 +185,10 @@ class GenerativeAiWorker {
           );
           console.info(`Created imageId: ${imageId} imageUrl: ${imageUrl}`);
           if (imageId) {
-            await AcBackgroundJob.updateDataAsync(workPackage.jobId, { imageId, imageUrl });
+            await AcBackgroundJob.updateDataAsync(workPackage.jobId, {
+              imageId,
+              imageUrl,
+            });
             console.debug(
               `Updated job ${workPackage.jobId} with imageId: ${imageId} imageUrl: ${imageUrl}`
             );
