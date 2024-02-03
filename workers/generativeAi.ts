@@ -5,7 +5,13 @@ import fs from "fs";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
 import models from "../../models/index.js";
-import { OpenAIClient, AzureKeyCredential } from "@azure/openai";
+import {
+  OpenAIClient,
+  AzureKeyCredential,
+  ImageSize,
+  ImageGenerationQuality,
+} from "@azure/openai";
+import image from "models/image.js";
 
 const dbModels: Models = models;
 const Image = dbModels.Image as ImageClass;
@@ -56,7 +62,10 @@ class GenerativeAiWorker {
     });
   }
 
-  async getImageUrlFromPrompt(prompt: string) {
+  async getImageUrlFromPrompt(
+    prompt: string,
+    type: YpAiGenerateImageTypes = "logo"
+  ) {
     const azureOpenaAiBase = process.env["AZURE_OPENAI_API_BASE"];
     const azureOpenAiApiKey = process.env["AZURE_OPENAI_API_KEY"];
 
@@ -77,21 +86,43 @@ class GenerativeAiWorker {
     let retrying = true; // Initialize as true
     let result: any;
 
+    let imageOptions;
+
+    if (type === "logo") {
+      imageOptions = {
+        n: 1,
+        size: "1792x1024" as ImageSize,
+        quality: "hd" as ImageGenerationQuality,
+      };
+    } else if (type === "icon") {
+      imageOptions = {
+        n: 1,
+        size: "1024x1024" as ImageSize,
+        quality: "hd" as ImageGenerationQuality,
+      };
+    } else {
+      imageOptions = {
+        n: 1,
+        size: "1792x1024" as ImageSize,
+        quality: "hd" as ImageGenerationQuality,
+      };
+    }
+
     while (retrying && retryCount < maxDalleRetryCount) {
       try {
         if (azureOpenAiApiKey && azureOpenaAiBase) {
           result = await (client as OpenAIClient).getImages(
             process.env.AZURE_OPENAI_API_DALLE_DEPLOYMENT_NAME!,
             prompt,
-            { n: 1, size: "1792x1024", quality: "hd" }
+            imageOptions
           );
         } else {
           result = await (client as OpenAI).images.generate({
             model: "dall-e-3",
             prompt,
-            n: 1,
-            quality: "hd",
-            size: "1792x1024",
+            n: imageOptions.n,
+            quality: imageOptions.quality,
+            size: imageOptions.size,
           });
         }
         if (result) {
@@ -133,7 +164,10 @@ class GenerativeAiWorker {
       }/${uuidv4()}.png`;
 
       try {
-        const imageUrl = await this.getImageUrlFromPrompt(workPackage.prompt);
+        const imageUrl = await this.getImageUrlFromPrompt(
+          workPackage.prompt,
+          workPackage.imageType
+        );
         if (imageUrl) {
           await this.downloadImage(imageUrl, imageFilePath);
           console.debug(
