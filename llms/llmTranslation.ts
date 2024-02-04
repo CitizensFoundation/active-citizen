@@ -79,7 +79,7 @@ Your ${language} JSON output:`;
         ISO6391.getName(languageIsoCode.toLowerCase()) ||
         ISO6391.getName(languageIsoCode.substring(0, 2)) ||
         ISO6391.getName(languageIsoCode.substring(0, 2).toLowerCase()) ||
-        "en";
+        languageIsoCode;
       const moderationResponse = await this.openaiClient.moderations.create({
         input: answerContent,
       });
