@@ -73,10 +73,15 @@ Your ${language} JSON output:`;
     maxCharactersInTranslation = 140
   ): Promise<string | null | undefined> {
     try {
-      console.log(`getChoiceTranslation: ${answerContent}`)
-      const languageName = ISO6391.getName(languageIsoCode) || "en";
+      console.log(`getChoiceTranslation: ${answerContent}`);
+      const languageName =
+        ISO6391.getName(languageIsoCode) ||
+        ISO6391.getName(languageIsoCode.toLowerCase()) ||
+        ISO6391.getName(languageIsoCode.substring(0, 2)) ||
+        ISO6391.getName(languageIsoCode.substring(0, 2).toLowerCase()) ||
+        "en";
       const moderationResponse = await this.openaiClient.moderations.create({
-        input:answerContent
+        input: answerContent,
       });
       console.log("Moderation response:", moderationResponse);
       const flagged = moderationResponse.results[0].flagged;
@@ -87,7 +92,7 @@ Your ${language} JSON output:`;
         return null;
       } else {
         const inAnswer = {
-          originalAnswer:answerContent
+          originalAnswer: answerContent,
         } as AoiTranslationAnswerInData;
 
         const jsonInSchema = `{ originalAnswer: string}`;
@@ -117,7 +122,7 @@ Your ${language} JSON output:`;
     maxCharactersInTranslation = 300
   ): Promise<string | null | undefined> {
     try {
-      console.log(`getQuestionTranslation: ${question} ${languageIsoCode}`)
+      console.log(`getQuestionTranslation: ${question} ${languageIsoCode}`);
       const languageName = ISO6391.getName(languageIsoCode) || "en";
       const moderationResponse = await this.openaiClient.moderations.create({
         input: question,
@@ -131,7 +136,7 @@ Your ${language} JSON output:`;
         return null;
       } else {
         const inQuestion = {
-          originalQuestion: question
+          originalQuestion: question,
         } as AoiTranslationQuestionInData;
 
         const jsonInSchema = `{ originalAnswer: string}`;
@@ -176,11 +181,7 @@ Your ${language} JSON output:`;
       },
       {
         role: "user",
-        content: userRenderer(
-          languageName,
-          question,
-          inObject
-        ),
+        content: userRenderer(languageName, question, inObject),
       },
     ] as any;
 
@@ -230,4 +231,4 @@ Your ${language} JSON output:`;
       }
     }
   }
- }
+}
