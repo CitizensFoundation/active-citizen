@@ -4,12 +4,12 @@ import { WebSocket } from "ws";
 
 export class AiHelper {
   openaiClient: OpenAI;
-  wsClientSocket: WebSocket;
+  wsClientSocket: WebSocket | undefined;
   modelName = "gpt-4-0125-preview";
   maxTokens = 2048;
   temperature = 0.7;
 
-  constructor(wsClientSocket: WebSocket) {
+  constructor(wsClientSocket: WebSocket | undefined = undefined) {
     this.openaiClient = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
@@ -30,7 +30,7 @@ export class AiHelper {
   }
 
   sendToClient(sender: string, message: string, type = "stream") {
-    this.wsClientSocket.send(
+    this.wsClientSocket?.send(
       JSON.stringify({
         sender,
         type: type,
@@ -128,10 +128,12 @@ export class AiHelper {
   }
 
   async getAiAnalysis(
-    questionId: string,
+    questionId: number,
     contextPrompt: string,
-    answers: Array<{ data: string; wins: number; losses: number }>
-  ): Promise<void> {
+    answers: Array<{ data: {
+      content: string;
+    }; wins: number; losses: number }>
+  ): Promise<string |null|undefined> {
     const basePrePrompt = `
         You are a highly competent text and ideas analysis AI.
         If an answer sounds implausible as an answer to the question, then include a short observation about it in your analysis.
@@ -147,7 +149,7 @@ export class AiHelper {
     const answersText = answers
       .map(
         (answer) =>
-          `${answer.data} (Won: ${answer.wins}, Lost: ${answer.losses})`
+          `${answer.data.content} (Won: ${answer.wins}, Lost: ${answer.losses})`
       )
       .join("\n");
 
@@ -171,11 +173,19 @@ export class AiHelper {
             role: "user",
             content: `The question: ${questionId}\n\nAnswers to analyse:\n${answersText}`,
           },
-        ];
+        ] as any;
 
-        await this.streamChatCompletions(messages);
+        //await this.streamChatCompletions(messages);
 
-        return;
+        const response = await this.openaiClient.chat.completions.create({
+          model: this.modelName,
+          messages,
+          max_tokens: this.maxTokens,
+          temperature: this.temperature,
+          stream: false,
+        });
+
+        return response.choices[0].message.content;
       }
     } catch (error) {
       console.error("Error in getAiAnalysis:", error);
