@@ -11,7 +11,13 @@
       "statusChangeSubject": "Status of post changed"
     },
     "email": {
+      "possibleFraudFooter": "Click on the community link below, login as admin and select Fraud management from the menu.",
+      "possibleFraudSubHeader": "Number of possible fraudulent activities with estimated 75% chance of fraud",
+      "possibleFraudInformation": "Our automated system have identified possible fraudulent activity. You can take a closer look through the Community admin interface. Some of this activity might have non fraudulent reasons so be careful to investigate thoroughly before deleting content.",
+      "possibleFraudHeader": "Possible fraudulent activity",
+      "settings": "Email Settings",
       "automaticToxicityDetection": "This content has been automatically flagged as toxic using AI algorithms that estimate the toxicity of the content. You can delete the content if needed.",
+      "automaticToxicityDetectionVision": "An AI algorithm automatically has flagged visual imagery connected to this content. This algorithm reviews images for possible adult, violent, medical, and racy imagery. You can delete the content if needed.",
       "automaticToxicityDetectionDisclaimer": "Sometimes the AI algorithm calculates a wrong score, in that case do not worry, you need to take no further action and can ignore this email.",
       "automaticToxicityHowLikely": "How likely (%) to be toxic",
       "automaticToxicityEnglishText": "English text used for score",

@@ -1,20 +1,6 @@
 {
-  "yourPosts": "Your posts",
-  "yourPoints": "Your points",
-  "yourGroupPoints": "Your group points",
-  "yourCommunityPoints": "Your community points",
   "notification": {
-    "contentToBeAnonymized": "Your content will be anonymized in 7 days for",
-    "communityContentToBeAnonymized": "All your content in this community will be anonymized and archived in 7 days, after that you will not be able to delete it or change it. See your content below.",
-    "groupContentToBeAnonymized": "All your content in this group will be anonymized and archived in 7 days, after that you will not be able to delete it or change it. See your content below.",
-    "post": {
-      "statusChangeSubject": "Status of post changed"
-    },
     "email": {
-      "automaticToxicityDetection": "This content has been automatically flagged as toxic using AI algorithms that estimate the toxicity of the content. You can delete the content if needed.",
-      "automaticToxicityDetectionDisclaimer": "Sometimes the AI algorithm calculates a wrong score, in that case do not worry, you need to take no further action and can ignore this email.",
-      "automaticToxicityHowLikely": "How likely (%) to be toxic",
-      "automaticToxicityEnglishText": "English text used for score",
       "newPointedAddedToThisIdea": "Novo mišljenje je dodato ovoj ideji",
       "newPointedAddedToIdea": "Novo mišljenje je dodato Vašoj ideji",
       "thisNewIdea": "Nova ideja",

@@ -1,6 +1,7 @@
 import { jsonrepair } from "jsonrepair";
 import { OpenAI } from "openai";
 import ISO6391 from "iso-639-1";
+import { YpLanguages } from "utils/ypLanguages";
 
 export class YpLlmTranslation {
   openaiClient: OpenAI;
@@ -74,12 +75,8 @@ Your ${language} JSON output:`;
   ): Promise<string | null | undefined> {
     try {
       console.log(`getChoiceTranslation: ${answerContent}`);
-      const languageName =
-        ISO6391.getName(languageIsoCode) ||
-        ISO6391.getName(languageIsoCode.toLowerCase()) ||
-        ISO6391.getName(languageIsoCode.substring(0, 2)) ||
-        ISO6391.getName(languageIsoCode.substring(0, 2).toLowerCase()) ||
-        languageIsoCode;
+      const languageName = YpLanguages.getEnglishName(languageIsoCode) ||
+      languageIsoCode;
       const moderationResponse = await this.openaiClient.moderations.create({
         input: answerContent,
       });
@@ -123,7 +120,12 @@ Your ${language} JSON output:`;
   ): Promise<string | null | undefined> {
     try {
       console.log(`getQuestionTranslation: ${question} ${languageIsoCode}`);
-      const languageName = ISO6391.getName(languageIsoCode) || "en";
+      const languageName =
+        ISO6391.getName(languageIsoCode) ||
+        ISO6391.getName(languageIsoCode.toLowerCase()) ||
+        ISO6391.getName(languageIsoCode.substring(0, 2)) ||
+        ISO6391.getName(languageIsoCode.substring(0, 2).toLowerCase()) ||
+        languageIsoCode;
       const moderationResponse = await this.openaiClient.moderations.create({
         input: question,
       });
