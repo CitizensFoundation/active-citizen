@@ -4,7 +4,7 @@ import { OpenAI } from "openai";
 import * as fs from "fs";
 import * as path from "path";
 import { promisify } from "util";
-import { YpLanguages } from "./ypLanguages";
+import { YpLanguages } from "../../utils/ypLanguages.js";
 
 const readFilePromise = promisify(fs.readFile);
 const writeFilePromise = promisify(fs.writeFile);
@@ -29,7 +29,7 @@ export class YpLocaleTranslation {
   }
 
   async loadAndCompareTranslations() {
-    const localesDir = "../locales";
+    const localesDir = "./locales";
     const baseTranslationPath = path.join(localesDir, "en/translation.json");
     const baseTranslation: Translation = await this.loadJsonFile<Translation>(
       baseTranslationPath

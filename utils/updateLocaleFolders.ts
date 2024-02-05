@@ -17,8 +17,8 @@ const ensureAllLocaleFoldersAreCreated = async () => {
         .catch(() => false);
       if (!pathExists) {
         console.log("Creating ---->:", localePath);
-        //await fs.mkdir(localePath, { recursive: true });
-        //await fs.writeFile(path.join(localePath, "translation.json"), "{}");
+        await fs.mkdir(localePath, { recursive: true });
+        await fs.writeFile(path.join(localePath, "translation.json"), "{}");
       } else {
         console.log("Path exists:", localePath);
       }
