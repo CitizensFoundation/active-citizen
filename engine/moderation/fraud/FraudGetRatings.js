@@ -1,7 +1,7 @@
 const _ = require("lodash");
 
 const FraudGetEndorsements = require('./FraudGetEndorsements.js');
-const models = require("../../../../models");
+const models = require("../../../../models/index.cjs");
 
 class FraudGetRatings extends FraudGetEndorsements {
   constructor(workPackage){

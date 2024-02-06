@@ -1,15 +1,15 @@
-var models = require("../../../models");
+var models = require("../../../models/index.cjs");
 var async = require('async');
-var log = require('../../utils/logger');
+var log = require('../../utils/logger.cjs');
 var _ = require('lodash');
 
-var getRecommendationFor = require('../recommendations/events_manager').getRecommendationFor;
+var getRecommendationFor = require('../recommendations/events_manager.cjs').getRecommendationFor;
 
-var getProcessedRange = require('./news_feeds_utils').getProcessedRange;
-var activitiesDefaultIncludes = require('./news_feeds_utils').activitiesDefaultIncludes;
-var getCommonWhereOptions = require('./news_feeds_utils').getCommonWhereOptions;
-var defaultKeyActivities = require('./news_feeds_utils').defaultKeyActivities;
-var getActivityDate = require('./news_feeds_utils').getActivityDate;
+var getProcessedRange = require('./news_feeds_utils.cjs').getProcessedRange;
+var activitiesDefaultIncludes = require('./news_feeds_utils.cjs').activitiesDefaultIncludes;
+var getCommonWhereOptions = require('./news_feeds_utils.cjs').getCommonWhereOptions;
+var defaultKeyActivities = require('./news_feeds_utils.cjs').defaultKeyActivities;
+var getActivityDate = require('./news_feeds_utils.cjs').getActivityDate;
 
 var airbrake = null;
 if(process.env.AIRBRAKE_PROJECT_ID) {

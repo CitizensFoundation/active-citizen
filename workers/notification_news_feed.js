@@ -1,17 +1,17 @@
 // https://gist.github.com/mojodna/1251812
 var async = require("async");
-var models = require("../../models");
-var log = require('../utils/logger');
-var queue = require('./queue');
-var i18n = require('../utils/i18n');
-var toJson = require('../utils/to_json');
+var models = require("../../models/index.cjs");
+var log = require('../utils/logger.cjs');
+var queue = require('./queue.cjs');
+var i18n = require('../utils/i18n.cjs');
+var toJson = require('../utils/to_json.cjs');
 
 var airbrake = null;
 if(process.env.AIRBRAKE_PROJECT_ID) {
   airbrake = require('../utils/airbrake');
 }
 
-var GenerateNewsFeedFromNotifications = require('../engine/news_feeds/generate_from_notifications.js');
+var GenerateNewsFeedFromNotifications = require('../engine/news_feeds/generate_from_notifications.cjs');
 var NotificationNewsFeedWorker = function () {};
 
 NotificationNewsFeedWorker.prototype.process = function (notificationJson, callback) {

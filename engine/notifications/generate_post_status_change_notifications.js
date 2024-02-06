@@ -1,4 +1,4 @@
-var models = require("../../../models");
+var models = require("../../../models/index.cjs");
 var async = require('async');
 var addNotificationsForUsers = require('./notifications_utils').addNotificationsForUsers;
 var _ = require('lodash');

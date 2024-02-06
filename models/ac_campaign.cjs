@@ -1,6 +1,6 @@
 "use strict";
 
-const queue = require('../workers/queue');
+const queue = require('../workers/queue.cjs');
 
 module.exports = (sequelize, DataTypes) => {
   const AcCampaign = sequelize.define("AcCampaign", {

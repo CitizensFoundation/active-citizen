@@ -2,7 +2,7 @@
 
 const { Translate } = require("@google-cloud/translate").v2;
 const farmhash = require("farmhash");
-const log = require("../utils/logger");
+const log = require("../utils/logger.cjs");
 
 const PAIRWISE_API_HOST = process.env.PAIRWISE_API_HOST;
 const PAIRWISE_USERNAME = process.env.PAIRWISE_USERNAME;

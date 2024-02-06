@@ -1,5 +1,5 @@
 const ImageLabelingBase = require("./ImageLabelingBase");
-const models = require("../../../../models");
+const models = require("../../../../models/index.cjs");
 
 class PointLabeling extends ImageLabelingBase {
   async getCollection() {

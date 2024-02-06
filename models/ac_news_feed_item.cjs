@@ -1,6 +1,6 @@
 "use strict";
 
-const commonIndexForActivitiesAndNewsFeeds = require('../engine/news_feeds/activity_and_item_index_definitions').commonIndexForActivitiesAndNewsFeeds;
+const commonIndexForActivitiesAndNewsFeeds = require('../engine/news_feeds/activity_and_item_index_definitions.cjs').commonIndexForActivitiesAndNewsFeeds;
 const _ = require('lodash');
 
 module.exports = (sequelize, DataTypes) => {

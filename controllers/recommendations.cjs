@@ -1,13 +1,13 @@
 var express = require('express');
 var router = express.Router();
-var models = require("../../models");
-var auth = require('../../authorization');
-var log = require('../utils/logger');
+var models = require("../../models/index.cjs");
+var auth = require('../../authorization.cjs');
+var log = require('../utils/logger.cjs');
 var _ = require('lodash');
 
 var moment = require('moment');
 
-var getRecommendationFor = require('../engine/recommendations/events_manager').getRecommendationFor;
+var getRecommendationFor = require('../engine/recommendations/events_manager.cjs').getRecommendationFor;
 var airbrake = null;
 if(process.env.AIRBRAKE_PROJECT_ID) {
   airbrake = require('../utils/airbrake');

@@ -1,10 +1,10 @@
-const models = require('../../../models');
-const log = require('../../../utils/logger');
-const importDomain = require('./utils').importDomain;
-const importCommunity = require('./utils').importCommunity;
-const importGroup = require('./utils').importGroup;
-const importPost = require('./utils').importPost;
-const importPoint = require('./utils').importPoint;
+const models = require('../../../models/index.cjs');
+const log = require('../../../utils/logger.cjs');
+const importDomain = require('./utils.cjs').importDomain;
+const importCommunity = require('./utils.cjs').importCommunity;
+const importGroup = require('./utils.cjs').importGroup;
+const importPost = require('./utils.cjs').importPost;
+const importPoint = require('./utils.cjs').importPoint;
 const request = require('request');
 
 const updateDomain = (domainId, done) => {

@@ -1,12 +1,12 @@
 var express = require('express');
 var router = express.Router();
-var models = require("../../models");
-var auth = require('../../authorization');
-var log = require('../utils/logger');
+var models = require("../../models/index.cjs");
+var auth = require('../../authorization.cjs');
+var log = require('../utils/logger.cjs');
 var _ = require('lodash');
 var async = require('async');
 
-var getCommonWhereDateOptions = require('../engine/news_feeds/news_feeds_utils').getCommonWhereDateOptions;
+var getCommonWhereDateOptions = require('../engine/news_feeds/news_feeds_utils.cjs').getCommonWhereDateOptions;
 
 var getNotifications = function (req, options, callback) {
   options = _.merge(options, {

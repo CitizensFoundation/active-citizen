@@ -1,14 +1,14 @@
 var express = require('express');
 var router = express.Router();
-var models = require("../../models");
-var auth = require('../../authorization');
-var log = require('../utils/logger');
+var models = require("../../models/index.cjs");
+var auth = require('../../authorization.cjs');
+var log = require('../utils/logger.cjs');
 var async = require('async');
 var _ = require('lodash');
 
-var getCommonWhereOptions = require('../engine/news_feeds/news_feeds_utils').getCommonWhereOptions;
-var defaultKeyActivities = require('../engine/news_feeds/news_feeds_utils').defaultKeyActivities;
-var activitiesDefaultIncludes = require('../engine/news_feeds/news_feeds_utils').activitiesDefaultIncludes;
+var getCommonWhereOptions = require('../engine/news_feeds/news_feeds_utils.cjs').getCommonWhereOptions;
+var defaultKeyActivities = require('../engine/news_feeds/news_feeds_utils.cjs').defaultKeyActivities;
+var activitiesDefaultIncludes = require('../engine/news_feeds/news_feeds_utils.cjs').activitiesDefaultIncludes;
 
 var getActivities = function (req, res, options, callback) {
   options = _.merge(options, {

@@ -1,7 +1,7 @@
 var kue = require('kue')
   , url = require('url')
-var log = require('../utils/logger');
-var toJson = require('../utils/to_json');
+var log = require('../utils/logger.cjs');
+var toJson = require('../utils/to_json.cjs');
 
 var airbrake = null;
 if(process.env.AIRBRAKE_PROJECT_ID) {

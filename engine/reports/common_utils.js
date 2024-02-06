@@ -4,7 +4,7 @@ var _ = require('lodash');
 const moment = require('moment');
 const skipEmail = false;
 const aws = require('aws-sdk');
-const log = require('../../utils/logger');
+const log = require('../../utils/logger.cjs');
 const request = require('request');
 const fs = require('fs');
 

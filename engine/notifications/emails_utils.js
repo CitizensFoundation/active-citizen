@@ -1,12 +1,12 @@
 var DEBUG_EMAILS_TO_TEMP_FIlE = false;
 
-var log = require("../../utils/logger");
+var log = require("../../utils/logger.cjs");
 var async = require("async");
 var path = require("path");
 var nodemailer = require("nodemailer");
 const nodemailerSendgrid = require("nodemailer-sendgrid");
 var ejs = require("ejs");
-var i18n = require("../../utils/i18n");
+var i18n = require("../../utils/i18n.cjs");
 var airbrake = null;
 
 const redisConnection = require("../../utils/redisConnection");
@@ -25,8 +25,8 @@ var templatesDir = path.resolve(
   "notifications"
 );
 
-var queue = require("../../workers/queue");
-var models = require("../../../models");
+var queue = require("../../workers/queue.cjs");
+var models = require("../../../models/index.cjs");
 
 var i18nFilter = function (text) {
   return i18n.t(text);

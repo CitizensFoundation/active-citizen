@@ -1,10 +1,10 @@
 "use strict";
 
 const async = require("async");
-const log = require('../utils/logger');
-const toJson = require('../utils/to_json');
+const log = require('../utils/logger.cjs');
+const toJson = require('../utils/to_json.cjs');
 const _ = require('lodash');
-const queue = require('../workers/queue');
+const queue = require('../workers/queue.cjs');
 
 module.exports = (sequelize, DataTypes) => {
   const AcNotification = sequelize.define("AcNotification", {

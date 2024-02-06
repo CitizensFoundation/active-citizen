@@ -1,11 +1,11 @@
-const models = require('../../models');
+const models = require('../../models/index.cjs');
 const async = require('async');
 const ip = require('ip');
 const _ = require('lodash');
 const fs = require('fs');
 const request = require('request');
 const farmhash = require('farmhash');
-const fixTargetLocale = require('./translation_helpers').fixTargetLocale;
+const fixTargetLocale = require('./translation_helpers.cjs').fixTargetLocale;
 
 // For post get translations in all locales (that exists)
 // select * from translation_cache where index_key LIKE 'communityContent-728-%-3536451109';

@@ -1,6 +1,6 @@
 const _ = require('lodash');
 const request = require('request');
-const models = require('../../../models');
+const models = require('../../../models/index.cjs');
 
 const convertToString = (integer, type) => {
   if (integer) {

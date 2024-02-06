@@ -1,11 +1,11 @@
 const _ = require("lodash");
 const moment = require("moment");
-const models = require("../../../../models");
+const models = require("../../../../models/index.cjs");
 const FraudBase = require('./FraudBase');
 
-const recountCommunity = require('../../../../utils/recount_utils').recountCommunity;
-const recountPosts = require('../../../../utils/recount_utils').recountPosts;
-const recountPoints = require('../../../../utils/recount_utils').recountPoints;
+const recountCommunity = require('../../../../utils/recount_utils.cjs').recountCommunity;
+const recountPosts = require('../../../../utils/recount_utils.cjs').recountPosts;
+const recountPoints = require('../../../../utils/recount_utils.cjs').recountPoints;
 
 class FraudDeleteBase extends FraudBase {
   constructor(workPackage){

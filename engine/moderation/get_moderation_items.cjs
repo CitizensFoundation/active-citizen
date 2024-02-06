@@ -1,9 +1,9 @@
-const queue = require('../../workers/queue');
-const models = require("../../../models");
-const i18n = require('../../utils/i18n');
+const queue = require('../../workers/queue.cjs');
+const models = require("../../../models/index.cjs");
+const i18n = require('../../utils/i18n.cjs');
 const async = require('async');
 const moment = require('moment');
-const log = require('../../utils/logger');
+const log = require('../../utils/logger.cjs');
 const _ = require('lodash');
 
 const domainIncludes = (domainId) => {

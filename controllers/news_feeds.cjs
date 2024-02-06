@@ -1,10 +1,10 @@
 var express = require('express');
 var router = express.Router();
-var auth = require('../../authorization');
-var log = require('../utils/logger');
+var auth = require('../../authorization.cjs');
+var log = require('../utils/logger.cjs');
 var _ = require('lodash');
 
-var getCuratedNewsItems = require('../engine/news_feeds/generate_dynamically').getCuratedNewsItems;
+var getCuratedNewsItems = require('../engine/news_feeds/generate_dynamically.cjs').getCuratedNewsItems;
 
 var setupOptions = function (req) {
   var options = {

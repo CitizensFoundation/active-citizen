@@ -1,9 +1,9 @@
 var kue = require('kue')
   , url = require('url')
-var log = require('../utils/logger');
+var log = require('../utils/logger.cjs');
 var email = require('./email');
 var activity = require('./activity');
-var toJson = require('../utils/to_json');
+var toJson = require('../utils/to_json.cjs');
 
 var airbrake = null;
 if(process.env.AIRBRAKE_PROJECT_ID) {

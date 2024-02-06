@@ -1,15 +1,15 @@
-const queue = require('../../workers/queue');
-const models = require("../../../models");
+const queue = require('../../workers/queue.cjs');
+const models = require("../../../models/index.cjs");
 const async = require('async');
-const log = require('../../utils/logger');
+const log = require('../../utils/logger.cjs');
 const _ = require('lodash');
-const getAnonymousUser = require('../../utils/get_anonymous_system_user');
-const domainIncludes = require('./get_moderation_items').domainIncludes;
-const communityIncludes = require('./get_moderation_items').communityIncludes;
-const groupIncludes = require('./get_moderation_items').groupIncludes;
-const userIncludes = require('./get_moderation_items').userIncludes;
+const getAnonymousUser = require('../../utils/get_anonymous_system_user.cjs');
+const domainIncludes = require('./get_moderation_items.cjs').domainIncludes;
+const communityIncludes = require('./get_moderation_items.cjs').communityIncludes;
+const groupIncludes = require('./get_moderation_items.cjs').groupIncludes;
+const userIncludes = require('./get_moderation_items.cjs').userIncludes;
 
-const recountCommunity = require('../../../utils/recount_utils.js').recountCommunity;
+const recountCommunity = require('../../../utils/recount_utils.cjs').recountCommunity;
 
 const moderationItemActionMaster = (req, res, options) => {
   getAnonymousUser((error, anonymousUser) => {

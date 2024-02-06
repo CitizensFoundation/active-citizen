@@ -1,6 +1,6 @@
 // https://gist.github.com/mojodna/1251812
 
-var log = require('../utils/logger');
+var log = require('../utils/logger.cjs');
 
 var EmailWorker = function () {};
 

@@ -4,14 +4,16 @@ import AWS from "aws-sdk";
 import fs from "fs";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
-import models from "../../models/index.js";
+const models = require("../../models/index.js");
+
 import {
   OpenAIClient,
   AzureKeyCredential,
   ImageSize,
   ImageGenerationQuality,
 } from "@azure/openai";
-import image from "models/image.js";
+
+const image = require("../../models/image.js");
 
 const dbModels: Models = models;
 const Image = dbModels.Image as ImageClass;

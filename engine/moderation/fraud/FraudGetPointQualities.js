@@ -1,7 +1,7 @@
 const _ = require("lodash");
 
 const FraudGetBase = require('./FraudGetBase.js');
-const models = require("../../../../models");
+const models = require("../../../../models/index.cjs");
 
 //TODO: Change to native JS instead of lodash
 class FraudGetPointQualities extends FraudGetBase {
