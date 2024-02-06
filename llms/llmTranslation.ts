@@ -38,6 +38,29 @@ Translate the tone of the original language also.
 Always output only JSON.`;
   }
 
+  renderGeneralSystemPrompt() {
+    return `You are a helpful answer translation assistant that knows all the world languages.
+
+INPUTS:
+The user will tell us the Language to translate to.
+The user will give you a string to be translated.
+
+OUTPUT:
+You will output only the translated string.
+
+INSTRUCTIONS:
+Keep it similar length as the original text.
+Translate the tone of the original language also.
+NEVER output anything else than the translated string.`;
+  }
+
+  renderGeneralUserPrompt(stringToTranslate: string, language: string) {
+    return `Language to translate to: {language}
+String to translate:
+${stringToTranslate}
+Your translated string:`;
+  }
+
   renderAnswersUserMessage(
     language: string,
     question: string,
@@ -67,6 +90,47 @@ ${JSON.stringify(questionData, null, 2)}
 Your ${language} JSON output:`;
   }
 
+  async getGeneralTranslation(
+    stringToTranslate: string,
+    languageIsoCode: string
+  ): Promise<string | null | undefined> {
+    try {
+      console.log(`getGeneralTranslation: ${stringToTranslate}`);
+      const languageName =
+        YpLanguages.getEnglishName(languageIsoCode) || languageIsoCode;
+      const moderationResponse = await this.openaiClient.moderations.create({
+        input: stringToTranslate,
+      });
+      console.log("Moderation response:", moderationResponse);
+      const flagged = moderationResponse.results[0].flagged;
+      console.log("Flagged:", flagged);
+
+      if (flagged) {
+        console.error("Flagged:", stringToTranslate);
+        return null;
+      } else {
+        const inAnswer = {
+          originalAnswer: stringToTranslate,
+        } as AoiTranslationAnswerInData;
+
+        return await this.callLlm(
+          "",
+          "",
+          "",
+          languageName,
+          "",
+          inAnswer,
+          undefined,
+          this.renderGeneralUserPrompt,
+          this.renderGeneralSystemPrompt
+        );
+      }
+    } catch (error) {
+      console.error("Error in getAnswerIdeas:", error);
+      return undefined;
+    }
+  }
+
   async getChoiceTranslation(
     answerContent: string,
     languageIsoCode: string,
@@ -74,8 +138,8 @@ Your ${language} JSON output:`;
   ): Promise<string | null | undefined> {
     try {
       console.log(`getChoiceTranslation: ${answerContent}`);
-      const languageName = YpLanguages.getEnglishName(languageIsoCode) ||
-      languageIsoCode;
+      const languageName =
+        YpLanguages.getEnglishName(languageIsoCode) || languageIsoCode;
       const moderationResponse = await this.openaiClient.moderations.create({
         input: answerContent,
       });
@@ -120,8 +184,7 @@ Your ${language} JSON output:`;
     try {
       console.log(`getQuestionTranslation: ${question} ${languageIsoCode}`);
       const languageName =
-        YpLanguages.getEnglishName(languageIsoCode) ||
-        languageIsoCode;
+        YpLanguages.getEnglishName(languageIsoCode) || languageIsoCode;
       const moderationResponse = await this.openaiClient.moderations.create({
         input: question,
       });
@@ -165,17 +228,16 @@ Your ${language} JSON output:`;
     languageName: string,
     question: string,
     inObject: AoiTranslationAnswerInData | AoiTranslationQuestionInData,
-    maxCharactersInTranslation: number,
-    userRenderer: Function
+    maxCharactersInTranslation: number | undefined,
+    userRenderer: Function,
+    systemRenderer?: Function
   ): Promise<string | null | undefined> {
     const messages = [
       {
         role: "system",
-        content: this.renderSystemPrompt(
-          jsonInSchema,
-          jsonOutSchema,
-          lengthInfo
-        ),
+        content: systemRenderer
+          ? systemRenderer()
+          : this.renderSystemPrompt(jsonInSchema, jsonOutSchema, lengthInfo),
       },
       {
         role: "user",
@@ -208,8 +270,9 @@ Your ${language} JSON output:`;
           ) as AoiTranslationAnswerOutData;
           if (translationData && translationData.translatedContent) {
             if (
+              maxCharactersInTranslation &&
               translationData.translatedContent.length >
-              maxCharactersInTranslation
+                maxCharactersInTranslation
             ) {
               throw new Error("Translation too long");
             }
