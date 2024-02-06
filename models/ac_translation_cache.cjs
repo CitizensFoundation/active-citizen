@@ -8,6 +8,8 @@ const PAIRWISE_API_HOST = process.env.PAIRWISE_API_HOST;
 const PAIRWISE_USERNAME = process.env.PAIRWISE_USERNAME;
 const PAIRWISE_PASSWORD = process.env.PAIRWISE_PASSWORD;
 
+const HAS_LLM = process.env.OPENAI_API_KEY;
+
 const defaultAuthHeader = {
   "Content-Type": "application/json",
   Authorization: `Basic ${Buffer.from(
@@ -516,45 +518,53 @@ module.exports = (sequelize, DataTypes) => {
     targetLanguage
   ) => {
     return new Promise(async (resolve, reject) => {
-      if (!process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
-        reject("No google credentials found");
+      if (AcTranslationCache.ypLanguages) {
+        const { YpLanguages } = await import("../../utils/ypLanguages.js");
+        AcTranslationCache.ypLanguages = YpLanguages;
+      }
+      if (HAS_LLM && ypLanguages.isoCodesNotInGoogleTranslate.includes(targetLanguage)) {
+        return await AcTranslationCache.getSurveyTranslationsFromLlmFallback(textsToTranslate, targetLanguage);
       } else {
-        const translateAPI = new Translate({
-          credentials: JSON.parse(
-            process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON
-          ),
-          projectId: process.env.GOOGLE_TRANSLATE_PROJECT_ID
-            ? process.env.GOOGLE_TRANSLATE_PROJECT_ID
-            : undefined,
-        });
+        if (!process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
+          reject("No google credentials found");
+        } else {
+          const translateAPI = new Translate({
+            credentials: JSON.parse(
+              process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON
+            ),
+            projectId: process.env.GOOGLE_TRANSLATE_PROJECT_ID
+              ? process.env.GOOGLE_TRANSLATE_PROJECT_ID
+              : undefined,
+          });
 
-        try {
-          // Split the texts into chunks of 128 or fewer
-          const chunkSize = 128;
-          const translatedStrings = [];
-          let languageInfo = {};
-          for (let i = 0; i < textsToTranslate.length; i += chunkSize) {
-            const chunk = textsToTranslate.slice(i, i + chunkSize);
-            const [translatedChunk, info] = await translateAPI.translate(
-              chunk,
-              targetLanguage
-            );
-            translatedStrings.push(...translatedChunk);
-            if (i === 0) {
-              // Keep the language info from the first chunk
-              languageInfo = info;
+          try {
+            // Split the texts into chunks of 128 or fewer
+            const chunkSize = 128;
+            const translatedStrings = [];
+            let languageInfo = {};
+            for (let i = 0; i < textsToTranslate.length; i += chunkSize) {
+              const chunk = textsToTranslate.slice(i, i + chunkSize);
+              const [translatedChunk, info] = await translateAPI.translate(
+                chunk,
+                targetLanguage
+              );
+              translatedStrings.push(...translatedChunk);
+              if (i === 0) {
+                // Keep the language info from the first chunk
+                languageInfo = info;
+              }
             }
-          }
 
-          resolve([translatedStrings, languageInfo]);
-        } catch (error) {
-          reject(error);
+            resolve([translatedStrings, languageInfo]);
+          } catch (error) {
+            reject(error);
+          }
         }
       }
     });
   };
 
-  AcTranslationCache.getTranslationFromGoogle = (
+  AcTranslationCache.getTranslationFromGoogle = async (
     textType,
     indexKey,
     contentToTranslate,
@@ -562,74 +572,64 @@ module.exports = (sequelize, DataTypes) => {
     modelInstance,
     callback
   ) => {
-
-    let translateAPI;
-
-    try {
-      translateAPI = new Translate({
-        credentials: JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON),
-        projectId: process.env.GOOGLE_TRANSLATE_PROJECT_ID
-          ? process.env.GOOGLE_TRANSLATE_PROJECT_ID
-          : undefined,
-      });
-    } catch(error) {
-      console.error("Failed to get translation from Google", error);
+    if (AcTranslationCache.ypLanguages) {
+      const { YpLanguages } = await import("../../utils/ypLanguages.js");
+      AcTranslationCache.ypLanguages = YpLanguages;
     }
+    if (HAS_LLM && AcTranslationCache.ypLanguages.isoCodesNotInGoogleTranslate.includes(targetLanguage)) {
+      AcTranslationCache.llmGoogleTranslateFallback(textType, indexKey, contentToTranslate, targetLanguage, modelInstance, callback);
+    } else {
+      let translateAPI;
 
-    if (!translateAPI) {
-      callback("No translation API");
-      return;
-    }
+      try {
+        translateAPI = new Translate({
+          credentials: JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON),
+          projectId: process.env.GOOGLE_TRANSLATE_PROJECT_ID
+            ? process.env.GOOGLE_TRANSLATE_PROJECT_ID
+            : undefined,
+        });
+      } catch(error) {
+        console.error("Failed to get translation from Google", error);
+      }
 
-    translateAPI
-      .translate(contentToTranslate, targetLanguage)
-      .then((results) => {
-        const translationResults = results[1];
-        if (
-          translationResults &&
-          translationResults.data &&
-          translationResults.data.translations &&
-          translationResults.data.translations.length > 0
-        ) {
-          const translation = translationResults.data.translations[0];
-          sequelize.models.AcTranslationCache.create({
-            index_key: indexKey,
-            content: translation.translatedText,
-          })
-            .then(() => {
-              if (
-                textType === "postTranscriptContent" ||
-                textType === "pointAdminCommentContent"
-              ) {
-                if (textType === "postTranscriptContent") {
-                  modelInstance.set(
-                    "public_data.transcript.language",
-                    translation.detectedSourceLanguage
-                  );
-                } else {
-                  modelInstance.set(
-                    "public_data.admin_comment.language",
-                    translation.detectedSourceLanguage
-                  );
-                }
-                modelInstance
-                  .save()
-                  .then(() => {
-                    callback(null, { content: translation.translatedText });
-                  })
-                  .catch((error) => {
-                    callback(error);
-                  });
-              } else {
+      if (!translateAPI) {
+        callback("No translation API");
+        return;
+      }
+
+      translateAPI
+        .translate(contentToTranslate, targetLanguage)
+        .then((results) => {
+          const translationResults = results[1];
+          if (
+            translationResults &&
+            translationResults.data &&
+            translationResults.data.translations &&
+            translationResults.data.translations.length > 0
+          ) {
+            const translation = translationResults.data.translations[0];
+            sequelize.models.AcTranslationCache.create({
+              index_key: indexKey,
+              content: translation.translatedText,
+            })
+              .then(() => {
                 if (
-                  AcTranslationCache.allowedTextTypesForSettingLanguage.indexOf(
-                    textType
-                  ) > -1
+                  textType === "postTranscriptContent" ||
+                  textType === "pointAdminCommentContent"
                 ) {
+                  if (textType === "postTranscriptContent") {
+                    modelInstance.set(
+                      "public_data.transcript.language",
+                      translation.detectedSourceLanguage
+                    );
+                  } else {
+                    modelInstance.set(
+                      "public_data.admin_comment.language",
+                      translation.detectedSourceLanguage
+                    );
+                  }
                   modelInstance
-                    .update({
-                      language: translation.detectedSourceLanguage,
-                    })
+                    .save()
                     .then(() => {
                       callback(null, { content: translation.translatedText });
                     })
@@ -637,21 +637,152 @@ module.exports = (sequelize, DataTypes) => {
                       callback(error);
                     });
                 } else {
-                  callback(null, { content: translation.translatedText });
+                  if (
+                    AcTranslationCache.allowedTextTypesForSettingLanguage.indexOf(
+                      textType
+                    ) > -1
+                  ) {
+                    modelInstance
+                      .update({
+                        language: translation.detectedSourceLanguage,
+                      })
+                      .then(() => {
+                        callback(null, { content: translation.translatedText });
+                      })
+                      .catch((error) => {
+                        callback(error);
+                      });
+                  } else {
+                    callback(null, { content: translation.translatedText });
+                  }
                 }
-              }
-            })
-            .catch((error) => {
-              callback(error);
-            });
-        } else {
-          callback("No translations");
-        }
-      })
-      .catch((error) => {
-        callback(error);
-      });
+              })
+              .catch((error) => {
+                callback(error);
+              });
+          } else {
+            callback("No translations");
+          }
+        })
+        .catch((error) => {
+          callback(error);
+        });
+
+    }
   };
+
+  AcTranslationCache.getSurveyTranslationsFromLlmFallback = async (
+    textsToTranslate,
+    targetLanguage
+  ) => {
+    return new Promise(async (resolve, reject) => {
+      if (AcTranslationCache.llmTranslation) {
+        const { YpLlmTranslation } = await import("../llms/llmTranslation.js");
+        AcTranslationCache.llmTranslation = new YpLlmTranslation();
+      }
+
+      try {
+        const translatedStrings = [];
+        for (let i = 0; i < textsToTranslate.length; i++) {
+          const textToTranslate = textsToTranslate[i];
+          // Use getGeneralQuestion for each text
+          const translatedText = await  AcTranslationCache.llmTranslation.getGeneralTranslation(
+            targetLanguage,
+            textToTranslate
+          );
+          translatedStrings.push(translatedText);
+        }
+
+        // Since getGeneralQuestion might not provide language detection, we omit that part
+        // If needed, a dummy or estimated language info can be returned based on the targetLanguage
+        const languageInfo = { detectedSourceLanguage: targetLanguage }; // This is a placeholder
+
+        resolve([translatedStrings, languageInfo]);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  };
+
+  AcTranslationCache.llmGoogleTranslateFallback = async (
+    textType,
+    indexKey,
+    contentToTranslate,
+    targetLanguage,
+    modelInstance,
+    callback
+  ) => {
+    if (AcTranslationCache.llmTranslation) {
+      const { YpLlmTranslation } = await import("../llms/llmTranslation.js");
+      AcTranslationCache.llmTranslation = new YpLlmTranslation();
+    }
+
+    try {
+      // Adjusted to use getGeneralQuestion for translation
+      const translatedTextData = await AcTranslationCache.llmTranslation.getGeneralTranslation(
+        targetLanguage,
+        contentToTranslate
+      );
+
+      // Assuming sequelize is available in this scope for database interaction
+      sequelize.models.AcTranslationCache.create({
+        index_key: indexKey,
+        content: translatedTextData,
+      })
+        .then(() => {
+          // Handling textType-specific logic similar to other methods
+          if (
+            textType === "postTranscriptContent" ||
+            textType === "pointAdminCommentContent"
+          ) {
+            // Presuming a need to set language details based on detected language
+            // Since getGeneralQuestion might not return detectedSourceLanguage,
+            // you might need to adjust this logic accordingly
+            modelInstance.set(
+              textType === "postTranscriptContent"
+                ? "public_data.transcript.language"
+                : "public_data.admin_comment.language",
+              targetLanguage // As a fallback, using targetLanguage directly
+            );
+
+            modelInstance
+              .save()
+              .then(() => {
+                callback(null, { content: translatedTextData });
+              })
+              .catch((error) => {
+                callback(error);
+              });
+          } else {
+            if (
+              AcTranslationCache.allowedTextTypesForSettingLanguage.indexOf(
+                textType
+              ) > -1
+            ) {
+              modelInstance
+                .update({
+                  language: targetLanguage, // Again, using targetLanguage as a fallback
+                })
+                .then(() => {
+                  callback(null, { content: translatedTextData });
+                })
+                .catch((error) => {
+                  callback(error);
+                });
+            } else {
+              callback(null, { content: translatedTextData });
+            }
+          }
+        })
+        .catch((error) => {
+          callback(error);
+        });
+    } catch (error) {
+      console.error("Failed to translate with LLM", error);
+      callback(error);
+    }
+  };
+
 
   AcTranslationCache.getTranslationFromLlm = async (
     textType,
@@ -662,12 +793,13 @@ module.exports = (sequelize, DataTypes) => {
     callback
   ) => {
     console.log(`contentToTranslate contentToTranslate contentToTranslate ${contentToTranslate}`)
-    const { YpLlmTranslation } = await import("../llms/llmTranslation.js");
-
-    const translation = new YpLlmTranslation();
+    if (AcTranslationCache.llmTranslation) {
+      const { YpLlmTranslation } = await import("../llms/llmTranslation.js");
+      AcTranslationCache.llmTranslation = new YpLlmTranslation();
+    }
 
     if (textType === "aoiChoiceContent") {
-      const translatedTextData = await translation.getChoiceTranslation(
+      const translatedTextData = await AcTranslationCache.llmTranslation.getChoiceTranslation(
         contentToTranslate,
         targetLanguage
       );
@@ -683,7 +815,7 @@ module.exports = (sequelize, DataTypes) => {
           callback(error);
         });
     } else if (textType === "aoiQuestionName") {
-      const translatedTextData = await translation.getQuestionTranslation(
+      const translatedTextData = await AcTranslationCache.llmTranslation.getQuestionTranslation(
         contentToTranslate,
         targetLanguage
       );
