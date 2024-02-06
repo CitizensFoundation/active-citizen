@@ -676,7 +676,7 @@ module.exports = (sequelize, DataTypes) => {
     targetLanguage
   ) => {
     return new Promise(async (resolve, reject) => {
-      if (AcTranslationCache.llmTranslation) {
+      if (!AcTranslationCache.llmTranslation) {
         const { YpLlmTranslation } = await import("../llms/llmTranslation.js");
         AcTranslationCache.llmTranslation = new YpLlmTranslation();
       }
@@ -712,7 +712,7 @@ module.exports = (sequelize, DataTypes) => {
     modelInstance,
     callback
   ) => {
-    if (AcTranslationCache.llmTranslation) {
+    if (!AcTranslationCache.llmTranslation) {
       const { YpLlmTranslation } = await import("../llms/llmTranslation.js");
       AcTranslationCache.llmTranslation = new YpLlmTranslation();
     }
@@ -793,7 +793,7 @@ module.exports = (sequelize, DataTypes) => {
     callback
   ) => {
     console.log(`contentToTranslate contentToTranslate contentToTranslate ${contentToTranslate}`)
-    if (AcTranslationCache.llmTranslation) {
+    if (!AcTranslationCache.llmTranslation) {
       const { YpLlmTranslation } = await import("../llms/llmTranslation.js");
       AcTranslationCache.llmTranslation = new YpLlmTranslation();
     }
