@@ -1,23 +1,23 @@
 {
-  "yourPosts": "Your posts",
-  "yourPoints": "Your points",
-  "yourGroupPoints": "Your group points",
-  "yourCommunityPoints": "Your community points",
+  "yourPosts": "ཁྱེད་ཀྱི་བསྐྱར་བཟོ།",
+  "yourPoints": "ཁྱེད་ཀྱི་སྐོར།",
+  "yourGroupPoints": "ཁྱེད་ཀྱི་ཚོགས་པའི་སྐོར།",
+  "yourCommunityPoints": "ཁྱེད་ཀྱི་སྡེ་ཚན་གྱི་སྐོར།",
   "notification": {
-    "contentToBeAnonymized": "Your content will be anonymized in 7 days for",
-    "communityContentToBeAnonymized": "All your content in this community will be anonymized and archived in 7 days, after that you will not be able to delete it or change it. See your content below.",
-    "groupContentToBeAnonymized": "All your content in this group will be anonymized and archived in 7 days, after that you will not be able to delete it or change it. See your content below.",
+    "contentToBeAnonymized": "ཁྱེད་ཀྱི་ནང་དོན་འདི་བཞག་པའི་ཉིནམ་ལས་བདུན་ཚེ་རང་བཞིན་མི་གྲངས་པ་དང་སྤྲོད་པ་བཞག་པ་འགོ་བཙུགས།",
+    "communityContentToBeAnonymized": "ཁྱེད་ཀྱི་ནང་དོན་འདི་སྡེ་ཚན་ནང་བཞག་པ་དང་སྤྲོད་པ་བཞག་པ་འགོ་བཙུགས་ནས་བདུན་ཚེ་རང་བཞིན་མི་གྲངས་པ་དང་སྤྲོད་པ་བཞག་པ་འགོ་བཙུགས་འདི་བཏོན་བར་མི་ཆོག་པ་དང་བསྐྱར་བཟོ་བར་མི་ཆོག་པ། ཁྱེད་ཀྱི་ནང་དོན་འདི་ལྟ་བུ།",
+    "groupContentToBeAnonymized": "ཁྱེད་ཀྱི་ནང་དོན་འདི་ཚོགས་པ་ནང་བཞག་པ་དང་སྤྲོད་པ་བཞག་པ་འགོ་བཙུགས་ནས་བདུན་ཚེ་རང་བཞིན་མི་གྲངས་པ་དང་སྤྲོད་པ་བཞག་པ་འགོ་བཙུགས་འདི་བཏོན་བར་མི་ཆོག་པ་དང་བསྐྱར་བཟོ་བར་མི་ཆོག་པ། ཁྱེད་ཀྱི་ནང་དོན་འདི་ལྟ་བུ།",
     "post": {
-      "statusChangeSubject": "Status of post changed"
+      "statusChangeSubject": "བསྐྱར་བཟོ་གྱི་གནས་ཚད་བསྒྱུར།"
     },
     "email": {
-      "possibleFraudFooter": "Click on the community link below, login as admin and select Fraud management from the menu.",
-      "possibleFraudSubHeader": "Number of possible fraudulent activities with estimated 75% chance of fraud",
-      "possibleFraudInformation": "Our automated system have identified possible fraudulent activity. You can take a closer look through the Community admin interface. Some of this activity might have non fraudulent reasons so be careful to investigate thoroughly before deleting content.",
-      "possibleFraudHeader": "Possible fraudulent activity",
-      "settings": "Email Settings",
-      "automaticToxicityDetection": "This content has been automatically flagged as toxic using AI algorithms that estimate the toxicity of the content. You can delete the content if needed.",
-      "automaticToxicityDetectionVision": "An AI algorithm automatically has flagged visual imagery connected to this content. This algorithm reviews images for possible adult, violent, medical, and racy imagery. You can delete the content if needed.",
+      "possibleFraudFooter": "འོག་གི་སྡེ་ཚན་ལིང་འདི་ལ་གནོན་པ་དང་བཙུགས་པ་ལས་ཚོགས་པ་ལས་འགན་ཁུར་བསྐྱར་བཟོ་ནི་འདི་གདམ།",
+      "possibleFraudSubHeader": "སྤྱི་བོད་ཀྱི་འཛུགས་པ་གྲོགས་པའི་ལས་འགན་ཁུར་བསྐྱར་བཟོ་བར་མི་ཆོག་པ་དང་བསྐྱར་བཟོ་བར་མི་ཆོག་པ།",
+      "possibleFraudInformation": "ཁྱེད་ཀྱི་སྒྲིག་བཀོལ་རང་བཞིན་མི་གྲངས་པ་དང་སྤྲོད་པ་བཞག་པ་འགོ་བཙུགས་འདི་བཏོན་བར་མི་ཆོག་པ་དང་བསྐྱར་བཟོ་བར་མི་ཆོག་པ།",
+      "possibleFraudHeader": "འཛུགས་པ་གྲོགས་པའི་ལས་འགན་ཁུར་བསྐྱར་བཟོ་བར་མི་ཆོག་པ།",
+      "settings": "ཁྱེད་ཀྱི་བརྡ་འཕྲིན་སྒྲིག་བཀོལ།",
+      "automaticToxicityDetection": "འདི་ནི་ནང་དོན་འདི་གི་དུག་བར་གྱི་སྐོར་བསྡུར་བར་མི་ཆོག་པ་དང་བསྐྱར་བཟོ་བར་མི་ཆོག་པ།",
+      "automaticToxicityDetectionVision": "འདི་ནི་ནང་དོན་འདི་གི་དཔར་རིས་གཞི་བསྡུར་བར་མི་ཆོག་པ་དང་བསྐྱར་བཟོ་བར་མི་ཆོག་པ།",
       "automaticToxicityDetectionDisclaimer": "ཨའི་ཨེལ་གི་བསྒྲིག་བཀོལ་བ་གིས་ནོར་བའི་སྐོར་བཅས་བསྐྱར་བཀོལ་བ་འདུག་པའི་སྐབས་སུ་མི་འདུག་བར་དགོས་པ་མེད། འདི་གི་ཡི་གེ་ལ་མི་འདུག་བར་དགོས་པ་མེད་པས།",
       "automaticToxicityHowLikely": "དག་བསལ་འདུག་པའི་ཆེ་ཤོས་ (%)",
       "automaticToxicityEnglishText": "སྐོར་བཅས་ལུ་བཀོལ་བའི་ཨིང་ལིཤ་ཡི་གེ",

@@ -1,23 +1,23 @@
 {
-  "yourPosts": "Your posts",
-  "yourPoints": "Your points",
-  "yourGroupPoints": "Your group points",
-  "yourCommunityPoints": "Your community points",
+  "yourPosts": "N’gafɛw la",
+  "yourPoints": "N’gɛnɛkan",
+  "yourGroupPoints": "N’gɛnɛkan jɔgɔ",
+  "yourCommunityPoints": "N’gɛnɛkan dɔgɔkun",
   "notification": {
-    "contentToBeAnonymized": "Your content will be anonymized in 7 days for",
-    "communityContentToBeAnonymized": "All your content in this community will be anonymized and archived in 7 days, after that you will not be able to delete it or change it. See your content below.",
-    "groupContentToBeAnonymized": "All your content in this group will be anonymized and archived in 7 days, after that you will not be able to delete it or change it. See your content below.",
+    "contentToBeAnonymized": "N’gafɛw kan na kɔnɔ bɛɛ sɔrɔ sɔrɔ la 7 tile mɔgɔw ka",
+    "communityContentToBeAnonymized": "N’gafɛw dɔgɔkun na ni kɔnɔ bɛɛ sɔrɔ sɔrɔ la 7 tile mɔgɔw ka, minɛw bɛɛ ka a fɔlɔ fɔlɔ ka a bɛɛ ka a bɛɛ ka a yɛlɛma. N’gafɛw kan na kɛnɛ.",
+    "groupContentToBeAnonymized": "N’gafɛw jɔgɔ na ni kɔnɔ bɛɛ sɔrɔ sɔrɔ la 7 tile mɔgɔw ka, minɛw bɛɛ ka a fɔlɔ fɔlɔ ka a bɛɛ ka a bɛɛ ka a yɛlɛma. N’gafɛw kan na kɛnɛ.",
     "post": {
-      "statusChangeSubject": "Status of post changed"
+      "statusChangeSubject": "N’gafɛw bɛɛ ka tɛmɛ bɛɛ"
     },
     "email": {
-      "possibleFraudFooter": "Click on the community link below, login as admin and select Fraud management from the menu.",
-      "possibleFraudSubHeader": "Number of possible fraudulent activities with estimated 75% chance of fraud",
-      "possibleFraudInformation": "Our automated system have identified possible fraudulent activity. You can take a closer look through the Community admin interface. Some of this activity might have non fraudulent reasons so be careful to investigate thoroughly before deleting content.",
-      "possibleFraudHeader": "Possible fraudulent activity",
-      "settings": "Email Settings",
-      "automaticToxicityDetection": "This content has been automatically flagged as toxic using AI algorithms that estimate the toxicity of the content. You can delete the content if needed.",
-      "automaticToxicityDetectionVision": "An AI algorithm automatically has flagged visual imagery connected to this content. This algorithm reviews images for possible adult, violent, medical, and racy imagery. You can delete the content if needed.",
+      "possibleFraudFooter": "Dɔgɔkun kan na kɛnɛ, admin ka kɛnɛ na, na kɛnɛ Fraud management na menu na.",
+      "possibleFraudSubHeader": "Kɛmɛ bɛɛ ka jɛnɛw ka kelenya ka kɛmɛ bɛɛ ka 75% kɛmɛ bɛɛ",
+      "possibleFraudInformation": "N’gafɛw kɛnɛw kan na kɛmɛ bɛɛ ka jɛnɛw ka kelenya ka kɛmɛ bɛɛ. I ka kɛnɛw ka kɛnɛ na Community admin interface na. Kɛmɛ bɛɛw kan na ni kɛmɛ bɛɛ ka jɛnɛw ka kelenya ka kɛmɛ bɛɛ ka tɛ, n'i bɛɛ ka i kɛnɛw ka kɛnɛ na n'i bɛɛ ka n’gafɛw ka fɔlɔ fɔlɔ ka a bɛɛ ka a yɛlɛma.",
+      "possibleFraudHeader": "Kɛmɛ bɛɛ ka jɛnɛw ka kelenya ka kɛmɛ bɛɛ",
+      "settings": "Email Tɛmɛ",
+      "automaticToxicityDetection": "N’gafɛw kan na AI algorithms na kɛnɛw ka kɛnɛ na, n’gafɛw kan na kɛnɛw ka kɛnɛ na. I ka n’gafɛw ka fɔlɔ fɔlɔ ka a bɛɛ ka a yɛlɛma.",
+      "automaticToxicityDetectionVision": "AI algorithm kan na n’gafɛw kan na kɛnɛw ka kɛnɛ na. N’gafɛw kan na kɛnɛw ka kɛnɛ na adult, violent, medical, na racy imagery na. I ka n’gafɛw ka fɔlɔ fɔlɔ ka a bɛɛ ka a yɛlɛma.",
       "automaticToxicityDetectionDisclaimer": "AI aligoridimi bɛɛ ka diya kelen ye, bɛɛ sɛbɛn tɛ, i ye taa kelen ye, i ka kɛnɛya email kan na.",
       "automaticToxicityHowLikely": "Toxique dɔgɔkun (%) bɛɛ ye",
       "automaticToxicityEnglishText": "Angilɛkan ka diya ye",
