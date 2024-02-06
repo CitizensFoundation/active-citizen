@@ -204,7 +204,7 @@ export class YpLocaleTranslation {
   }
 
   renderSystemPrompt() {
-    return `You are a helpful mobile app translation assistant that knows all the world languages.
+    return `You are a helpful website backend translation assistant that knows all the world languages.
 
 INPUTS:
 The user will tell us the Language to translate to.
@@ -224,7 +224,6 @@ You will output JSON string array in the same order as the input array.
 
 
 INSTRUCTIONS:
-You must keep the translated text short, if there is one word in English, it should be one word in the other language. This is UI text for a mobile web app.
 Do not translate brand names including ours: All Our Ideas and Your Priorities.
 Always output only a JSON string array.`;
   }
@@ -232,10 +231,10 @@ Always output only a JSON string array.`;
   renderUserMessage(language: string, textsToTranslate: Array<string>) {
     return `Language to translate to: ${language}
 
-UI texts to translate in JSON Input:
+Website backend texts to translate in JSON Input:
 ${JSON.stringify(textsToTranslate, null, 2)}
 
-Your ${language} UI texts JSON output:`;
+Your ${language} website backend texts JSON output:`;
   }
 
   async translateUITexts(
