@@ -3,9 +3,9 @@ const _ = require('lodash');
 const async = require('async');
 const log = require('../../../utils/logger.cjs');
 
-const createAction = require('./events_manager').createAction;
+const createAction = require('./events_manager.cjs').createAction;
 
-const createManyActions = require('./events_manager').createManyActions;
+const createManyActions = require('./events_manager.cjs').createManyActions;
 
 let postUpdateAsyncLimit = 42;
 

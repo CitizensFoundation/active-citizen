@@ -13,7 +13,7 @@ var getActivityDate = require('./news_feeds_utils.cjs').getActivityDate;
 
 var airbrake = null;
 if(process.env.AIRBRAKE_PROJECT_ID) {
-  airbrake = require('../../utils/airbrake');
+  airbrake = require('../../utils/airbrake.cjs');
 }
 
 // Load current news feed generated from notifications by modified_at

@@ -3,7 +3,7 @@ const url = require('url');
 
 var airbrake = null;
 if(process.env.AIRBRAKE_PROJECT_ID) {
-  airbrake = require('../utils/airbrake');
+  airbrake = require('../utils/airbrake.cjs');
 }
 
 const BullQueue = require('bull');

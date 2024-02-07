@@ -5,7 +5,7 @@ var toJson = require('../utils/to_json.cjs');
 
 var airbrake = null;
 if(process.env.AIRBRAKE_PROJECT_ID) {
-  airbrake = require('../utils/airbrake');
+  airbrake = require('../utils/airbrake.cjs');
 }
 
 // make sure we use the Heroku Redis To Go URL
