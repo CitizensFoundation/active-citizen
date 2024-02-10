@@ -8,6 +8,10 @@ export class AiHelper {
   modelName = "gpt-4-0125-preview";
   maxTokens = 2048;
   temperature = 0.7;
+  cacheExpireTime = 60 * 60;
+
+  redisClient?: any;
+  cacheKeyForFullResponse?: string;
 
   constructor(wsClientSocket: WebSocket | undefined = undefined) {
     this.openaiClient = new OpenAI({
@@ -49,6 +53,15 @@ export class AiHelper {
         for await (const part of stream) {
           this.sendToClient("bot", part.choices[0].delta.content!);
           botMessage += part.choices[0].delta.content!;
+        }
+
+        if (this.redisClient && this.cacheKeyForFullResponse) {
+          this.redisClient.set(
+            this.cacheKeyForFullResponse,
+            botMessage,
+            "EX",
+            this.cacheExpireTime
+          );
         }
       } catch (error) {
         console.error(error);
@@ -130,10 +143,13 @@ export class AiHelper {
   async getAiAnalysis(
     questionId: number,
     contextPrompt: string,
-    answers: Array<{ data: {
-      content: string;
-    }; wins: number; losses: number }>
+    answers: AoiChoiceData[],
+    cacheKeyForFullResponse: string,
+    redisClient: any
   ): Promise<string |null|undefined> {
+    this.redisClient = redisClient;
+    this.cacheKeyForFullResponse = cacheKeyForFullResponse;
+
     const basePrePrompt = `
         You are a highly competent text and ideas analysis AI.
         If an answer sounds implausible as an answer to the question, then include a short observation about it in your analysis.
@@ -175,17 +191,7 @@ export class AiHelper {
           },
         ] as any;
 
-        //await this.streamChatCompletions(messages);
-
-        const response = await this.openaiClient.chat.completions.create({
-          model: this.modelName,
-          messages,
-          max_tokens: this.maxTokens,
-          temperature: this.temperature,
-          stream: false,
-        });
-
-        return response.choices[0].message.content;
+        this.streamChatCompletions(messages);
       }
     } catch (error) {
       console.error("Error in getAiAnalysis:", error);
