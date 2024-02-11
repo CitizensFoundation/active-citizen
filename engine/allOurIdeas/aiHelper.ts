@@ -145,13 +145,16 @@ export class AiHelper {
     contextPrompt: string,
     answers: AoiChoiceData[],
     cacheKeyForFullResponse: string,
-    redisClient: any
+    redisClient: any,
+    locale: string,
+    topOrBottomIdeasText: string,
+    typeOfAnalysisText: string
   ): Promise<string |null|undefined> {
     this.redisClient = redisClient;
     this.cacheKeyForFullResponse = cacheKeyForFullResponse;
 
-    const basePrePrompt = `
-        You are a highly competent text and ideas analysis AI.
+    const basePrePrompt = `You are a highly competent text and ideas analysis AI.
+        Instructions:
         If an answer sounds implausible as an answer to the question, then include a short observation about it in your analysis.
         Keep your output short, under 300 words.
         The answers have been rated by the public using a pairwise voting method, so the user is always selecting one to win or one to lose.
@@ -159,8 +162,19 @@ export class AiHelper {
         If there are very few wins or losses, under 10 for most of the ideas, then always output a disclaimer to that end, in a separate second paragraph.
         Don't output Idea 1, Idea 2 in your answer.
         Be creative and think step by step.
-        Always output in a clear markdown format.
+
+        Output:
         If the prompt asks for a table always output a markdown table.
+        Always output in a clear markdown format.
+        Always start with the type of analysis and if those are top or bottom ideas.
+
+        Example output:
+
+        ## Points for the most popular answers
+
+        <Your dynamic markdown output>
+
+
     `;
 
     const answersText = answers
@@ -188,7 +202,11 @@ export class AiHelper {
           },
           {
             role: "user",
-            content: `The question: ${questionId}\n\nAnswers to analyse:\n${answersText}`,
+            content: `The question: ${questionId}
+              ${topOrBottomIdeasText}
+              Type of analysis: ${typeOfAnalysisText}
+              Language to output: ${locale}
+              Answers to analyse:\n${answersText}`,
           },
         ] as any;
 

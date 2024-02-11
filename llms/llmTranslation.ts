@@ -193,7 +193,7 @@ export class YpLlmTranslation {
     maxCharactersInTranslation = 140
   ): Promise<string | null | undefined> {
     try {
-      console.log(`getChoiceTranslation: ${answerContent}`);
+      console.log(`async getChoiceTranslation: ${answerContent}`);
       const languageName =
         YpLanguages.getEnglishName(languageIsoCode) || languageIsoCode;
       if (await this.getModerationFlag(answerContent)) {
@@ -328,12 +328,11 @@ export class YpLlmTranslation {
     systemRenderer: Function,
     userRenderer: Function
   ): Promise<string | null | undefined> {
+    console.log("Call schema LLM:", jsonInSchema, jsonOutSchema, lengthInfo, languageName, question, toTranslate, maxCharactersInTranslation);
     const messages = [
       {
         role: "system",
-        content: systemRenderer
-          ? systemRenderer()
-          : this.renderSchemaSystemMessage(jsonInSchema, jsonOutSchema, lengthInfo),
+        content: this.renderSchemaSystemMessage(jsonInSchema, jsonOutSchema, lengthInfo),
       },
       {
         role: "user",
@@ -376,6 +375,7 @@ export class YpLlmTranslation {
               throw new Error("Translation too long");
             }
             running = false;
+            console.log("Return text "+translationData.translatedContent);
             return translationData.translatedContent;
           }
         } else {

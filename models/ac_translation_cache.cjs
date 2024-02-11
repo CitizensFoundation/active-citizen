@@ -833,6 +833,7 @@ module.exports = (sequelize, DataTypes) => {
       }
 
       if (textType === "aoiChoiceContent") {
+        console.log(`contentToTranslate ${contentToTranslate}`);
         const translatedTextData =
           await AcTranslationCache.llmTranslation.getChoiceTranslation(
             targetLanguage,
