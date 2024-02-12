@@ -370,7 +370,7 @@ export class YpLlmTranslation {
       },
     ] as any;
 
-    const maxRetries = 3;
+    const maxRetries = 5;
     let retries = 0;
 
     let running = true;

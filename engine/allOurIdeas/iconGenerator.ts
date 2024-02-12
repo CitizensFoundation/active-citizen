@@ -1,166 +1,14 @@
-import { OpenAI } from "openai";
-import axios from "axios";
-import AWS from "aws-sdk";
 import fs from "fs";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
 import models from "../../../models/index.cjs";
-import sharp from "sharp";
 
-import {
-  OpenAIClient,
-  AzureKeyCredential,
-  ImageSize,
-  ImageGenerationQuality,
-} from "@azure/openai";
+import { CollectionImageGenerator } from "../../llms/collectionImageGenerator.js";
 
 const dbModels: Models = models;
 const Image = dbModels.Image as ImageClass;
-const AcBackgroundJob = dbModels.AcBackgroundJob as AcBackgroundJobClass;
 
-const maxDalleRetryCount = 3;
-
-export class AoiIconGenerator {
-
-  async resizeImage(imagePath: string, width: number, height: number) {
-    const resizedImageFilePath = path.join("/tmp", `${uuidv4()}.png`);
-    await sharp(imagePath).resize({width, height}).toFile(resizedImageFilePath);
-    fs.unlinkSync(imagePath);
-    return resizedImageFilePath;
-  }
-
-  async downloadImage(imageUrl: string, imageFilePath: string) {
-    const response = await axios({
-      method: "GET",
-      url: imageUrl,
-      responseType: "stream",
-    });
-
-    const writer = fs.createWriteStream(imageFilePath);
-
-    response.data.pipe(writer);
-
-    return new Promise((resolve, reject) => {
-      writer.on("finish", resolve);
-      writer.on("error", reject);
-    });
-  }
-
-  async uploadImageToS3(bucket: string, filePath: string, key: string) {
-    const s3 = new AWS.S3();
-    const fileContent = fs.readFileSync(filePath);
-
-    const params = {
-      Bucket: bucket,
-      Key: key,
-      Body: fileContent,
-      ACL: "public-read", // Makes sure the uploaded files are publicly accessible
-      ContentType: "image/png",
-      ContentDisposition: "inline",
-    };
-
-    return new Promise((resolve, reject) => {
-      s3.upload(params, (err: any, data: any) => {
-        if (err) {
-          reject(err);
-        }
-        fs.unlinkSync(filePath); // Deleting file from local storage
-        //console.log(`Upload response: ${JSON.stringify(data)}`);
-        resolve(data);
-      });
-    });
-  }
-
-  async getImageUrlFromPrompt(
-    prompt: string,
-    type: YpAiGenerateImageTypes = "logo"
-  ) {
-    const azureOpenaAiBase = process.env["AZURE_OPENAI_API_BASE"];
-    const azureOpenAiApiKey = process.env["AZURE_OPENAI_API_KEY"];
-
-    let client;
-
-    if (azureOpenAiApiKey && azureOpenaAiBase) {
-      client = new OpenAIClient(
-        azureOpenaAiBase!,
-        new AzureKeyCredential(azureOpenAiApiKey!)
-      );
-    } else {
-      client = new OpenAI({
-        apiKey: process.env["OPENAI_API_KEY"],
-      });
-    }
-
-    let retryCount = 0;
-    let retrying = true; // Initialize as true
-    let result: any;
-
-    let imageOptions;
-
-    if (type === "logo") {
-      imageOptions = {
-        n: 1,
-        size: "1792x1024" as ImageSize,
-        quality: "hd" as ImageGenerationQuality,
-      };
-    } else if (type === "icon") {
-      imageOptions = {
-        n: 1,
-        size: "1024x1024" as ImageSize,
-        quality: "hd" as ImageGenerationQuality,
-      };
-    } else {
-      imageOptions = {
-        n: 1,
-        size: "1792x1024" as ImageSize,
-        quality: "hd" as ImageGenerationQuality,
-      };
-    }
-
-    while (retrying && retryCount < maxDalleRetryCount) {
-      try {
-        if (azureOpenAiApiKey && azureOpenaAiBase) {
-          result = await (client as OpenAIClient).getImages(
-            process.env.AZURE_OPENAI_API_DALLE_DEPLOYMENT_NAME!,
-            prompt,
-            imageOptions
-          );
-        } else {
-          result = await (client as OpenAI).images.generate({
-            model: "dall-e-3",
-            prompt,
-            n: imageOptions.n,
-            quality: imageOptions.quality,
-            size: imageOptions.size,
-          });
-        }
-        if (result) {
-          retrying = false; // Only change retrying to false if there is a result.
-        } else {
-          console.debug(`Result: NONE`);
-        }
-      } catch (error: any) {
-        console.warn("Error generating image, retrying...");
-        console.warn(error.stack);
-        retryCount++;
-        console.warn(error);
-        const sleepingFor = 5000 + retryCount * 10000;
-        console.debug(`Sleeping for ${sleepingFor} milliseconds`);
-        await new Promise((resolve) => setTimeout(resolve, sleepingFor));
-      }
-    }
-
-    if (result) {
-      console.debug(`Result: ${JSON.stringify(result)}`);
-      const imageURL = result.data[0].url;
-      if (!imageURL) throw new Error("Error getting generated image");
-      return imageURL;
-    } else {
-      console.error(`Error generating image after ${retryCount} retries`);
-      return undefined;
-    }
-  }
-
+export class AoiIconGenerator extends CollectionImageGenerator {
   async createCollectionImage(
     workPackage: YpGenerativeAiWorkPackageData
   ): Promise<{ imageId: number; imageUrl: string }> {
@@ -185,7 +33,11 @@ export class AoiIconGenerator {
               : "File download failed."
           );
 
-          const resizedImageFilePath = await this.resizeImage(imageFilePath, 400, 400);
+          const resizedImageFilePath = await this.resizeImage(
+            imageFilePath,
+            400,
+            400
+          );
 
           await this.uploadImageToS3(
             process.env.S3_BUCKET!,
