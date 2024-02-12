@@ -9,13 +9,16 @@ export class ExplainAnswersAssistant extends YpBaseChatBot {
   modelName = "gpt-4-0125-preview";
   maxTokens = 4000;
   temperature = 0.8;
+  languageName: string;
 
-  constructor( wsClientId: string, wsClients: Map<string, WebSocket>
+  constructor( wsClientId: string, wsClients: Map<string, WebSocket>, languageName: string
     ) {
     super(
       wsClientId,
       wsClients,
-      undefined)
+      undefined);
+
+    this.languageName = languageName;
     this.openaiClient = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
@@ -38,6 +41,7 @@ Output:
 -- The top pro and con
 -- If this is likely to be a root cause of the problem set out in the question
 * Short summary in the end of which answer is better and why
+* Always output in this language: ${this.languageName}
 `;
   }
 

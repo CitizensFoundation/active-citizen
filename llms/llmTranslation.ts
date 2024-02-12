@@ -17,6 +17,18 @@ export class YpLlmTranslation {
 
   // System messages
 
+  renderHtmlSystemMessage() {
+    return `You are a helpful HTML translation assistant that knows all the world languages.
+      INPUTS:
+      The user will tell us the Language to translate to.
+      The user will provide you with a simple HTML document
+
+      OUTPUT:
+      You will output the full translated HTML document, do no leave anything out, this text will be displayed directly on a website after your translation.
+      Only output the fully translated HTML with no explainations.
+      `;
+  }
+
   renderSchemaSystemMessage(
     jsonInSchema: string,
     jsonOutSchema: string,
@@ -112,6 +124,13 @@ export class YpLlmTranslation {
 
   // User messages
 
+  renderHtmlTranslationUserMessage(language: string, htmlToTranslate: string) {
+    return `Language to translate to: ${language}
+      HTML to translate:
+      ${htmlToTranslate}
+      Your translated HTML in full:`;
+  }
+
   renderOneTranslationUserMessage(language: string, stringToTranslate: string) {
     return `Language to translate to: ${language}
       String to translate:
@@ -163,6 +182,32 @@ export class YpLlmTranslation {
     console.log("Moderation response:", moderationResponse);
     const flagged = moderationResponse.results[0].flagged;
     return flagged;
+  }
+
+  async getHtmlTranslation(
+    languageIsoCode: string,
+    htmlToTranslate: string,
+  ): Promise<string | null | undefined> {
+    try {
+      console.log(`getHtmlTranslation: ${htmlToTranslate}`);
+      const languageName =
+        YpLanguages.getEnglishName(languageIsoCode) || languageIsoCode;
+      if (await this.getModerationFlag(htmlToTranslate)) {
+        console.error("Flagged:", htmlToTranslate);
+        return null;
+      } else {
+        return await this.callSimpleLlm(
+          languageName,
+          htmlToTranslate,
+          false,
+          this.renderHtmlSystemMessage,
+          this.renderHtmlTranslationUserMessage
+        ) as string | null;
+      }
+    } catch (error) {
+      console.error("Error in getAnswerIdeas:", error);
+      return undefined;
+    }
   }
 
   async getOneTranslation(
@@ -231,10 +276,10 @@ export class YpLlmTranslation {
         return null;
       } else {
         const inAnswer = {
-          originalAnswer: answerContent,
+          answerToTranslate: answerContent,
         } as AoiTranslationAnswerInData;
 
-        const jsonInSchema = `{ originalAnswer: string}`;
+        const jsonInSchema = `{ answerToTranslate: string}`;
         const jsonOutSchema = `{ translatedContent: string}`;
         const lengthInfo = `26 words long or 140 characters`;
 
@@ -270,10 +315,10 @@ export class YpLlmTranslation {
         return null;
       } else {
         const inQuestion = {
-          originalQuestion: question,
+          questionToTranslate: question,
         } as AoiTranslationQuestionInData;
 
-        const jsonInSchema = `{ originalAnswer: string}`;
+        const jsonInSchema = `{ questionToTranslate: string}`;
         const jsonOutSchema = `{ translatedContent: string}`;
         const lengthInfo = `40 words long or 250 characters`;
 
@@ -402,6 +447,7 @@ export class YpLlmTranslation {
               translationData.translatedContent.length >
                 maxCharactersInTranslation
             ) {
+              console.log("Translation too long retrying:", translationData.translatedContent);
               messages[0].content = this.renderSchemaTryAgainSystemMessage(
                 jsonInSchema,
                 jsonOutSchema,
@@ -413,12 +459,18 @@ export class YpLlmTranslation {
             running = false;
             console.log("Return text "+translationData.translatedContent);
             return translationData.translatedContent;
+          } else {
+            this.temperature = Math.random() * 0.99;
+            console.log("No content in response. Temperature set to: "+this.temperature);
+            throw new Error("No content in response");
           }
         } else {
+          this.temperature = Math.random() * 0.99;;
+          console.log("No content in response. Temperature set to:" +this.temperature);
           throw new Error("No content in response");
         }
       } catch (error) {
-        console.error("Error in getChoiceTranslation:", error);
+        console.error("Error in callSchemaLlm:", error);
         retries++;
         if (retries > maxRetries) {
           running = false;

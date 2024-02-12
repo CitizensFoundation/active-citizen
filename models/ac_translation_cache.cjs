@@ -68,10 +68,6 @@ module.exports = (sequelize, DataTypes) => {
 
   AcTranslationCache.getContentToTranslate = async (req, modelInstance) => {
     if (req.query.textType == "aoiChoiceContent") {
-      console.log(
-        `>>>>>>>>>>>>>>>>>>>> CHOICES req.params.extraId ${req.query.textType} ${req.params.questionId}`,
-        req.params.extraId
-      );
       const choiceResponse = await fetch(
         `${PAIRWISE_API_HOST}/choices/${req.params.extraId}.json?question_id=${req.params.questionId}`,
         {
@@ -87,12 +83,9 @@ module.exports = (sequelize, DataTypes) => {
 
       const choice = await choiceResponse.json();
 
-      console.log(`>>>>>>>>>>>>>>>>>>>> CHOICES ${JSON.stringify(choice)}`);
-
       if (choice) {
         try {
           const data = JSON.parse(choice.data);
-          console.log(`MMMMMMMM CHOICES ${JSON.stringify(data)}`);
           return data["content"];
         } catch (error) {
           console.error("Failed to parse choice data", error);
@@ -102,10 +95,6 @@ module.exports = (sequelize, DataTypes) => {
         return "No translation";
       }
     } else if (req.query.textType == "aoiQuestionName") {
-      console.log(
-        `=========================>   QUESTIONS req.params.extraId ${req.query.textType}`,
-        req.params.extraId
-      );
       const questionResponse = await fetch(
         `${PAIRWISE_API_HOST}/questions/${req.params.extraId}.json`,
         {
@@ -120,14 +109,8 @@ module.exports = (sequelize, DataTypes) => {
       }
 
       const question = await questionResponse.json();
-      console.log(
-        `FFFFFFFFFFFFFFFFFFFFFFFF>   QUESTIONS ${JSON.stringify(question)}`
-      );
 
       if (question) {
-        console.log(
-          `XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX>   QUESTIONS ${question.name}`
-        );
         return question.name;
       } else {
         return null;
@@ -180,6 +163,10 @@ module.exports = (sequelize, DataTypes) => {
           } else {
             return "No translation";
           }
+        case "aoiWelcomeText":
+          return modelInstance.configuration.earl.configuration.welcome_text;
+        case "aoiWelcomeHtml":
+          return modelInstance.configuration.earl.configuration.welcome_html;
         case "alternativeTextForNewIdeaButton":
           return modelInstance.configuration.alternativeTextForNewIdeaButton;
         case "alternativeTextForNewIdeaButtonClosed":
@@ -825,62 +812,59 @@ module.exports = (sequelize, DataTypes) => {
   ) => {
     if (!HAS_LLM) {
       callback("No LLM to translate with");
-    } else {
-      console.log(`contentToTranslate ${contentToTranslate}`);
-      if (!AcTranslationCache.llmTranslation) {
-        const { YpLlmTranslation } = await import("../llms/llmTranslation.js");
-        AcTranslationCache.llmTranslation = new YpLlmTranslation();
-      }
-
-      if (textType === "aoiChoiceContent") {
-        console.log(`contentToTranslate ${contentToTranslate}`);
-        const translatedTextData =
-          await AcTranslationCache.llmTranslation.getChoiceTranslation(
-            targetLanguage,
-            contentToTranslate
-          );
-
-        if (!translatedTextData) {
-          callback("No translations");
-          return;
-        } else {
-          sequelize.models.AcTranslationCache.create({
-            index_key: indexKey,
-            content: translatedTextData,
-          })
-            .then(() => {
-              callback(null, { content: translatedTextData });
-            })
-            .catch((error) => {
-              callback(error);
-            });
-        }
-      } else if (textType === "aoiQuestionName") {
-        const translatedTextData =
-          await AcTranslationCache.llmTranslation.getQuestionTranslation(
-            targetLanguage,
-            contentToTranslate
-          );
-
-        if (!translatedTextData) {
-          callback("No translations");
-          return;
-        } else {
-          sequelize.models.AcTranslationCache.create({
-            index_key: indexKey,
-            content: translatedTextData,
-          })
-            .then(() => {
-              callback(null, { content: translatedTextData });
-            })
-            .catch((error) => {
-              callback(error);
-            });
-        }
-      } else {
-        callback("No translations");
-      }
+      return;
     }
+
+    console.log(`contentToTranslate ${contentToTranslate}`);
+    if (!AcTranslationCache.llmTranslation) {
+      const { YpLlmTranslation } = await import("../llms/llmTranslation.js");
+      AcTranslationCache.llmTranslation = new YpLlmTranslation();
+    }
+
+    const getTranslationData = async () => {
+      switch (textType) {
+        case "aoiChoiceContent":
+          return await AcTranslationCache.llmTranslation.getChoiceTranslation(
+            targetLanguage,
+            contentToTranslate
+          );
+        case "aoiQuestionName":
+          return await AcTranslationCache.llmTranslation.getQuestionTranslation(
+            targetLanguage,
+            contentToTranslate
+          );
+        case "aoiWelcomeHtml":
+          return await AcTranslationCache.llmTranslation.getHtmlTranslation(
+            targetLanguage,
+            contentToTranslate
+          );
+        case "aoiWelcomeText":
+          return await AcTranslationCache.llmTranslation.getOneTranslation(
+            targetLanguage,
+            contentToTranslate
+          );
+        default:
+          return null;
+      }
+    };
+
+    const translatedTextData = await getTranslationData();
+
+    if (!translatedTextData) {
+      callback("No translations");
+      return;
+    }
+
+    sequelize.models.AcTranslationCache.create({
+      index_key: indexKey,
+      content: translatedTextData,
+    })
+      .then(() => {
+        callback(null, { content: translatedTextData });
+      })
+      .catch((error) => {
+        callback(error);
+      });
   };
 
   AcTranslationCache.fixUpLanguage = (targetLanguage) => {
@@ -932,7 +916,14 @@ module.exports = (sequelize, DataTypes) => {
           if (translationModel) {
             callback(null, { content: translationModel.content });
           } else {
-            if (["aoiChoiceContent", "aoiQuestionName"].includes(textType)) {
+            if (
+              [
+                "aoiChoiceContent",
+                "aoiQuestionName",
+                "aoiWelcomeHtml",
+                "aoiWelcomeText",
+              ].includes(textType)
+            ) {
               sequelize.models.AcTranslationCache.getAoiTranslationFromLlm(
                 textType,
                 indexKey,
