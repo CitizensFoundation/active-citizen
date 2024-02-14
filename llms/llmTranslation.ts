@@ -72,36 +72,58 @@ export class YpLlmTranslation {
     return [...new Set(strings)];
   }
 
-  replaceHtmlStrings(
-    html: string,
-    originalStrings: string[],
-    translatedStrings: string[]
-  ): string {
+  replaceHtmlStrings(html: string, originalStrings: string[], translatedStrings: string[]): string {
     const $ = cheerio.load(html);
+
+    // Function to replace attribute values safely
+    function replaceAttributeValues(container: any) {
+      $(container).find('input, textarea, select').each(function() {
+        const element = $(this);
+        // Replace placeholder attribute
+        const placeholder = element.attr('placeholder');
+        if (placeholder) {
+          const index = originalStrings.indexOf(placeholder.trim());
+          if (index > -1 && translatedStrings[index]) {
+            element.attr('placeholder', translatedStrings[index]);
+          }
+        }
+        // Replace value attribute for inputs that are not of type text, email, etc.
+        if (element.is('input[type="button"], input[type="submit"]')) {
+          const value = element.val();
+          if (typeof value === 'string') {
+            const index = originalStrings.indexOf(value.trim());
+            if (index > -1 && translatedStrings[index]) {
+              element.val(translatedStrings[index]);
+            }
+          }
+        }
+      });
+    }
 
     // Function to safely replace text without disrupting child elements
     function safelyReplaceText(container: any) {
-      $(container)
-        .contents()
-        .each(function () {
-          // If the node is a text node
-          if (this.type === "text") {
-            let text = $(this).text();
-            originalStrings.forEach((str, index) => {
-              // Replace text if it exactly matches the original string (considering whitespace)
-              if (text.trim() === str.trim() && translatedStrings[index]) {
-                text = text.replace(str, translatedStrings[index]);
-                $(this).replaceWith(text);
-              }
-            });
-          } else if (this.type === "tag") {
-            // Recursively handle nested elements
-            safelyReplaceText(this);
-          }
-        });
+      $(container).contents().each(function() {
+        // If the node is a text node
+        if (this.type === "text") {
+          let text = $(this).text();
+          originalStrings.forEach((str, index) => {
+            // Replace text if it exactly matches the original string (considering whitespace)
+            if (text.trim() === str.trim() && translatedStrings[index]) {
+              text = text.replace(str, translatedStrings[index]);
+              $(this).replaceWith(text);
+            }
+          });
+        } else if (this.type === "tag") {
+          // Recursively handle nested elements
+          safelyReplaceText(this);
+        }
+      });
     }
 
-    // Initiate replacement from the root element
+    // Replace attribute values before replacing text
+    replaceAttributeValues($.root());
+
+    // Initiate replacement from the root element for text nodes
     safelyReplaceText($.root());
 
     return $.html();
