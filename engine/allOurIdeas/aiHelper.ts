@@ -1,4 +1,5 @@
 import { OpenAI } from "openai";
+import { ChatCompletionMessageParam } from "openai/resources/index.mjs";
 import { Stream } from "openai/streaming";
 import { WebSocket } from "ws";
 
@@ -19,6 +20,60 @@ export class AiHelper {
     });
     this.wsClientSocket = wsClientSocket;
   }
+
+  moderationSystemPrompt = (
+    instructions: string
+  ) => `The user will provide you with a question and an answer.
+Your job is to moderate the answer if it passes automated moderation or not.
+Moderation instructions:
+${instructions}
+
+Only output: PASSES or FAILS`;
+
+  moderationUserPrompt = (question: string, instructions: string) => `
+  ${question}
+  ${instructions}
+  `;
+
+  getModerationResponse = async (
+    instructions: string,
+    question: string,
+    answerToModerate: string
+  ) => {
+    const messages = [
+      {
+        role: "system",
+        content: this.moderationSystemPrompt(instructions),
+      },
+      {
+        role: "user",
+        content: this.moderationUserPrompt(question, answerToModerate),
+      },
+    ] as ChatCompletionMessageParam[];
+
+    const response = await this.openaiClient.chat.completions.create({
+      model: this.modelName,
+      messages,
+      max_tokens: 5,
+      temperature: 0,
+    });
+
+    if (
+      response &&
+      response.choices &&
+      response.choices[0] &&
+      response.choices[0].message &&
+      response.choices[0].message.content
+    ) {
+      return ["PASSES", "PASS"].includes(
+        response.choices[0].message.content.toUpperCase()
+      )
+        ? true
+        : false;
+    } else {
+      return false;
+    }
+  };
 
   async streamChatCompletions(messages: any[]): Promise<void> {
     const stream: Stream<OpenAI.Chat.Completions.ChatCompletionChunk> =
@@ -150,7 +205,7 @@ export class AiHelper {
     locale: string,
     topOrBottomIdeasText: string,
     typeOfAnalysisText: string
-  ): Promise<string |null|undefined> {
+  ): Promise<string | null | undefined> {
     this.redisClient = redisClient;
     this.cacheKeyForFullResponse = cacheKeyForFullResponse;
 
