@@ -30,9 +30,9 @@ ${instructions}
 
 Only output: PASSES or FAILS`;
 
-  moderationUserPrompt = (question: string, instructions: string) => `
-  ${question}
-  ${instructions}
+  moderationUserPrompt = (question: string, answer: string) => `
+  Question: ${question}
+  Answer: ${answer}
   `;
 
   getModerationResponse = async (
@@ -51,6 +51,8 @@ Only output: PASSES or FAILS`;
       },
     ] as ChatCompletionMessageParam[];
 
+    console.log(JSON.stringify(messages, null, 2));
+
     const response = await this.openaiClient.chat.completions.create({
       model: this.modelName,
       messages,
@@ -65,6 +67,7 @@ Only output: PASSES or FAILS`;
       response.choices[0].message &&
       response.choices[0].message.content
     ) {
+      console.log("Moderation response:", response.choices[0].message.content);
       return ["PASSES", "PASS"].includes(
         response.choices[0].message.content.toUpperCase()
       )
