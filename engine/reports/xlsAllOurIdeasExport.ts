@@ -28,15 +28,18 @@ async function fetchChoices(
   utmSource?: string
 ): Promise<AoiChoiceData[]> {
   try {
+    const url = `${PAIRWISE_API_HOST}/questions/${questionId}/choices.json${
+      utmSource ? `?utm_source=${utmSource}` : ""
+    }`;
     const response = await fetch(
-      `${PAIRWISE_API_HOST}/questions/${questionId}/choices${
-        utmSource ? `?utm_source=${utmSource}` : ""
-      }`,
+      url,
       {
         method: "GET",
         headers: defaultAuthHeader,
       }
     );
+
+    console.log(url);
 
     if (!response.ok) {
       console.error(response.statusText);
@@ -56,7 +59,7 @@ async function fetchVotes(
   utmSource?: string
 ): Promise<{ winning_votes: AoiVoteData[]; losing_votes: AoiVoteData[] }> {
   try {
-    let url = `${PAIRWISE_API_HOST}/choices/${choiceId}/votes?valid_record=true`;
+    let url = `${PAIRWISE_API_HOST}/choices/${choiceId}/votes.json?valid_record=true`;
     if (utmSource) {
       url += `&utm_source=${utmSource}`;
     }
@@ -201,6 +204,8 @@ export async function exportChoiceVotes(
     const buffer = await workbook.xlsx.writeBuffer();
     const filename = `choice_votes_${uuidv4()}.xlsx`;
 
+    console.log(`Uploading choice votes to S3: ${filename}`)
+
     uploadToS3(
       workPackage.jobId,
       `${workPackage.userId}`,
@@ -209,8 +214,10 @@ export async function exportChoiceVotes(
       buffer,
       async (error, url) => {
         if (error) {
-          throw error;
+          console.error("Error uploading choice votes to S3:", error);
+          done(error, url);
         } else {
+          console.log(`Uploaded choice votes to S3: ${url}`)
           await updateUploadJobStatus(workPackage.jobId, 100, {
             reportUrl: url,
           });
@@ -224,7 +231,7 @@ export async function exportChoiceVotes(
     );
   } catch (error: any) {
     console.error("Error exporting choice votes:", error);
-    await setJobError(workPackage.jobId, error, error);
+    await setJobError(workPackage.jobId, "Error exporting choice votes");
     done(error);
   }
 }

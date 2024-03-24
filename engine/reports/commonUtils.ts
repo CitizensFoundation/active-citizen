@@ -17,11 +17,11 @@ export const updateUploadJobStatus = async (
   data: object | undefined = undefined
 ): Promise<void> => {
   try {
-    const progress = Math.min(Math.round(50 + uploadProgress / 2), 95);
+    const progress = uploadProgress==100 ? 100 : Math.min(Math.round(50 + uploadProgress / 2), 95);
     if (data) {
-      await AcBackgroundJob.update({ progress }, { where: { id: jobId } });
-    } else {
       await AcBackgroundJob.update({ progress, data }, { where: { id: jobId } });
+    } else {
+      await AcBackgroundJob.update({ progress }, { where: { id: jobId } });
     }
   } catch (error) {
     console.error("updateUploadJobStatus", { error: error });
@@ -31,7 +31,7 @@ export const updateUploadJobStatus = async (
 export const setJobError = async (
   jobId: number,
   errorToUser: string,
-  errorDetail: Error
+  errorDetail: Error | undefined = undefined
 ): Promise<void> => {
   console.error("Error in background job", { error: errorDetail });
   try {
