@@ -21,10 +21,11 @@ const AcBackgroundJob = dbModels.AcBackgroundJob as AcBackgroundJobClass;
 const maxDalleRetryCount = 3;
 
 export class CollectionImageGenerator {
-
   async resizeImage(imagePath: string, width: number, height: number) {
     const resizedImageFilePath = path.join("/tmp", `${uuidv4()}.png`);
-    await sharp(imagePath).resize({width, height}).toFile(resizedImageFilePath);
+    await sharp(imagePath)
+      .resize({ width, height })
+      .toFile(resizedImageFilePath);
     fs.unlinkSync(imagePath);
     return resizedImageFilePath;
   }
@@ -43,6 +44,65 @@ export class CollectionImageGenerator {
     return new Promise((resolve, reject) => {
       writer.on("finish", resolve);
       writer.on("error", reject);
+    });
+  }
+
+  async deleteS3Url(imageUrl: string) {
+    // Parse the S3 bucket and key from the URL
+    const { bucket, key } = this.parseImageUrl(imageUrl);
+
+    if (!bucket || !key) {
+      throw new Error("Could not parse bucket or key from URL");
+    }
+
+    const s3 = new AWS.S3();
+
+    const params = {
+      Bucket: bucket,
+      Key: key,
+      ACL: 'private', // Changing the ACL to private
+    };
+
+    console.log(`=========================____________________>>>>>>>>>>>>>>>>> Disabling/Deleting Key from S3: ${JSON.stringify(params)}`);
+
+    return new Promise((resolve, reject) => {
+      s3.putObjectAcl(params, (err: any, data: any) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(data);
+        }
+      });
+    });
+  }
+
+  parseImageUrl(imageUrl: string) {
+    let bucket, key;
+    if (
+      process.env.CLOUDFLARE_IMAGE_PROXY_DOMAIN &&
+      imageUrl.includes(process.env.CLOUDFLARE_IMAGE_PROXY_DOMAIN)
+    ) {
+      // Parse URL for Cloudflare proxied images
+      const path = new URL(imageUrl).pathname;
+      const [, ...pathParts] = path.split("/");
+      bucket = process.env.S3_BUCKET;
+      key = pathParts.join("/");
+    } else {
+      // Parse URL for direct S3 images
+      const match = imageUrl.match(/https:\/\/(.+?)\.s3\.amazonaws\.com\/(.+)/);
+      if (match) {
+        bucket = match[1];
+        key = match[2];
+      }
+    }
+
+    return { bucket, key };
+  }
+
+  async deleteMediaFormatsUrls(formats: string[]) {
+    formats.forEach(async (url) => {
+      await this.deleteS3Url(url);
+      console.log(`Have deleted image from S3: ${url}`);
     });
   }
 
