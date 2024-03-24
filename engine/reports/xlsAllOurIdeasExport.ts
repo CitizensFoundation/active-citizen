@@ -28,16 +28,13 @@ async function fetchChoices(
   utmSource?: string
 ): Promise<AoiChoiceData[]> {
   try {
-    const url = `${PAIRWISE_API_HOST}/questions/${questionId}/choices.json${
+    const url = `${PAIRWISE_API_HOST}/questions/${questionId}/choices.json?include_inactive=true&show_all=true${
       utmSource ? `?utm_source=${utmSource}` : ""
     }`;
-    const response = await fetch(
-      url,
-      {
-        method: "GET",
-        headers: defaultAuthHeader,
-      }
-    );
+    const response = await fetch(url, {
+      method: "GET",
+      headers: defaultAuthHeader,
+    });
 
     console.log(url);
 
@@ -55,11 +52,12 @@ async function fetchChoices(
 }
 
 async function fetchVotes(
+  questionId: number,
   choiceId: number,
   utmSource?: string
 ): Promise<{ winning_votes: AoiVoteData[]; losing_votes: AoiVoteData[] }> {
   try {
-    let url = `${PAIRWISE_API_HOST}/choices/${choiceId}/votes.json?valid_record=true`;
+    let url = `${PAIRWISE_API_HOST}/questions/${questionId}/choices/${choiceId}/show_votes.json`;
     if (utmSource) {
       url += `&utm_source=${utmSource}`;
     }
@@ -141,7 +139,11 @@ export async function exportChoiceVotes(
 
     for (let i = 0; i < choices.length; i++) {
       const choice = choices[i];
-      const votes = (await fetchVotes(choice.id, workPackage.utmSource)) as {
+      const votes = (await fetchVotes(
+        workPackage.questionId,
+        choice.id,
+        workPackage.utmSource
+      )) as {
         winning_votes: AoiVoteData[];
         losing_votes: AoiVoteData[];
       };
@@ -204,7 +206,7 @@ export async function exportChoiceVotes(
     const buffer = await workbook.xlsx.writeBuffer();
     const filename = `choice_votes_${uuidv4()}.xlsx`;
 
-    console.log(`Uploading choice votes to S3: ${filename}`)
+    console.log(`Uploading choice votes to S3: ${filename}`);
 
     uploadToS3(
       workPackage.jobId,
@@ -217,7 +219,7 @@ export async function exportChoiceVotes(
           console.error("Error uploading choice votes to S3:", error);
           done(error, url);
         } else {
-          console.log(`Uploaded choice votes to S3: ${url}`)
+          console.log(`Uploaded choice votes to S3: ${url}`);
           await updateUploadJobStatus(workPackage.jobId, 100, {
             reportUrl: url,
           });
