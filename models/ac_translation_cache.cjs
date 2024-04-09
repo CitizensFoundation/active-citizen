@@ -47,7 +47,7 @@ module.exports = (sequelize, DataTypes) => {
     }
   );
 
-  AcTranslationCache.translationModelName = "gpt-4-0125-preview";
+  AcTranslationCache.translationModelName = "gpt-4-turbo-2024-04-09";
   AcTranslationCache.translationMaxTokens = 2048;
   AcTranslationCache.translationTemperature = 0.7;
 

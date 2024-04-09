@@ -27,7 +27,7 @@ export class YpBaseChatBot {
   static redisMemoryKeyPrefix = "yp-chatbot-memory";
   tempeture = 0.7;
   maxTokens = 4000;
-  llmModel = "gpt-4-0125-preview";
+  llmModel = "gpt-4-turbo-2024-04-09";
   persistMemory = false;
   memoryId: string | undefined = undefined;
 
