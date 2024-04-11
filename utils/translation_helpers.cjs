@@ -777,6 +777,8 @@ const updateTranslationForCommunity = (communityId, item, done) => {
   );
 };
 
+
+//TODO: Add translations for domain with domainWelcomeHtml
 module.exports = {
   getTranslatedTextsForCommunity,
   getTranslatedTextsForGroup,

@@ -61,6 +61,7 @@ module.exports = (sequelize, DataTypes) => {
     "communityContent",
     "domainName",
     "domainContent",
+    "domainWelcomeHtml",
     "statusChangeContent",
     "aoiChoiceContent",
     "aoiQuestionName",
@@ -168,6 +169,8 @@ module.exports = (sequelize, DataTypes) => {
             return modelInstance.configuration.allOurIdeas.earl.configuration.welcome_message;
           case "aoiWelcomeHtml":
             return modelInstance.configuration.allOurIdeas.earl.configuration.welcome_html;
+          case "domainWelcomeHtml":
+            return modelInstance.configuration.welcomeHtmlInsteadOfCommunitiesList.replace("<AOI_SITE_STATS>","");
           case "alternativeTextForNewIdeaButton":
             return modelInstance.configuration.alternativeTextForNewIdeaButton;
           case "alternativeTextForNewIdeaButtonClosed":
@@ -839,7 +842,8 @@ module.exports = (sequelize, DataTypes) => {
             contentToTranslate
           );
         case "aoiWelcomeHtml":
-          return await AcTranslationCache.llmTranslation.getHtmlTranslation(
+        case "domainWelcomeHtml":
+            return await AcTranslationCache.llmTranslation.getHtmlTranslation(
             targetLanguage,
             contentToTranslate
           );
@@ -926,6 +930,7 @@ module.exports = (sequelize, DataTypes) => {
                 "aoiChoiceContent",
                 "aoiQuestionName",
                 "aoiWelcomeHtml",
+                "domainWelcomeHtml",
                 "aoiWelcomeMessage",
               ].includes(textType)
             ) {
@@ -963,6 +968,7 @@ module.exports = (sequelize, DataTypes) => {
           "aoiChoiceContent",
           "aoiQuestionName",
           "aoiWelcomeHtml",
+          "domainWelcomeHtml",
           "aoiWelcomeMessage",
         ].includes(req.query.textType)
       ) {
