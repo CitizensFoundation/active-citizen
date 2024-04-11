@@ -71,6 +71,13 @@ export class YpLlmTranslation {
       }
     });
 
+    $('[label]').each((index, element) => {
+      const label = $(element).attr('label')?.trim();
+      if (label && label.length > 0) {
+        strings.push(label);
+      }
+    });
+
     // Return unique non-empty strings
     return [...new Set(strings)];
   }
@@ -85,10 +92,10 @@ export class YpLlmTranslation {
     // Function to replace attribute values safely
     function replaceAttributeValues(container: any) {
       $(container)
-        .find("input, textarea, select")
+        .find("input, textarea, select, [label]")
         .each(function () {
           const element = $(this);
-          // Replace placeholder attribute
+          // Replace placeholder attribute for input, textarea, and select
           const placeholder = element.attr("placeholder");
           if (placeholder) {
             const index = originalStrings.indexOf(placeholder.trim());
@@ -103,6 +110,16 @@ export class YpLlmTranslation {
               const index = originalStrings.indexOf(value.trim());
               if (index > -1 && translatedStrings[index]) {
                 element.val(translatedStrings[index]);
+              }
+            }
+          }
+          // Replace label attribute for any element with a label
+          if (element.is('[label]')) {
+            const label = element.attr('label');
+            if (label) {
+              const index = originalStrings.indexOf(label.trim());
+              if (index > -1 && translatedStrings[index]) {
+                element.attr('label', translatedStrings[index]);
               }
             }
           }
