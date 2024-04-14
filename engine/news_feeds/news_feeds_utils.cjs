@@ -3,7 +3,7 @@ var _ = require('lodash');
 
 var getCommonWhereDateOptions = function(options) {
   var where = {};
-  var dateBefore, dateAfter;
+  var dateBefore, dateAfter, afterDate, beforeData;
 
   var dateAtBase = {};
 
