@@ -529,7 +529,7 @@ module.exports = (sequelize, DataTypes) => {
       }
       if (
         HAS_LLM &&
-        ypLanguages.isoCodesNotInGoogleTranslate.includes(targetLanguage)
+        AcTranslationCache.ypLanguages.isoCodesNotInGoogleTranslate.includes(targetLanguage)
       ) {
         return await AcTranslationCache.getSurveyTranslationsFromLlmFallback(
           textsToTranslate,
