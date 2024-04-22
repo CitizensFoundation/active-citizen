@@ -11,7 +11,7 @@ const processGeneralNotification = require('../engine/notifications/process_gene
 
 var airbrake = null;
 if(process.env.AIRBRAKE_PROJECT_ID) {
-  airbrake = require('../utils/airbrake.js');
+  airbrake = require('../utils/airbrake.cjs');
 }
 
 var NotificationDeliveryWorker = function () {};
