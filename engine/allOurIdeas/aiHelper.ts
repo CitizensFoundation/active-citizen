@@ -6,7 +6,7 @@ import { WebSocket } from "ws";
 export class AiHelper {
   openaiClient: OpenAI;
   wsClientSocket: WebSocket | undefined;
-  modelName = "gpt-4-turbo-2024-04-09";//"gpt-4-turbo-2024-04-09";
+  modelName = "gpt-4-turbo-2024-04-09";
   maxTokens = 2048;
   temperature = 0.7;
   cacheExpireTime = 60 * 60;

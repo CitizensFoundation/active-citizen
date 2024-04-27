@@ -13,7 +13,14 @@ const WORDS_TO_TOKENS_MAGIC_CONSTANT = 1.3;
 
 //@ts-ignore
 const redis = new ioredis.default(
-  process.env.REDIS_MEMORY_URL || process.env.REDIS_URL || "redis://localhost:6379"
+  process.env.REDIS_MEMORY_URL ||
+    process.env.REDIS_URL ||
+    "redis://localhost:6379",
+  {
+    tls: {
+      rejectUnauthorized: false,
+    },
+  }
 );
 
 export class YpBaseChatBot {
@@ -272,7 +279,7 @@ export class YpBaseChatBot {
       redisKey: this.redisKey,
       currentStage: "chatbot-conversation",
       stages: {
-      //  ...PolicySynthAgentBase.emptyDefaultStages,
+        //  ...PolicySynthAgentBase.emptyDefaultStages,
         ...this.emptyChatBotStagesData,
       },
       timeStart: Date.now(),

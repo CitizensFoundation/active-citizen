@@ -17,7 +17,7 @@ const sendSmsToUser = (twilioClient, listUser, campaign, configuration, done) =>
 
 const updateListUserSent = (listUser, campaign, done) => {
   listUser.set('data.sentCount', listUser.data.sentCount+1);
-  liseUser.save().then(()=>{
+  listUser.save().then(()=>{
     done();
   }).catch(error=>{
     done(error);
@@ -57,6 +57,9 @@ const sendCampaign = (workPackage, callback) => {
     const groupConfiguration = campaign.Group.configuration;
 
     const twilioClient = null; //require('twilio')(groupConfiguration.twilioAccountSid, groupConfiguration.twilioAuthToken, {});
+
+    if (!twilioClient)
+      return callback('Twilio client not initialized');
 
     models.AcListUser.find({
       where: {

@@ -1,4 +1,6 @@
 module.exports = (input, length, killwords, end) => {
+  if (!input) return '';
+
   var orig = input;
   length = length || 255;
 
