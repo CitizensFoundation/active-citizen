@@ -11,19 +11,24 @@ if (process.env.REDIS_URL) {
     redisClient = redis.createClient({
       legacyMode: false,
       url: redisUrl,
+      pingInterval: 10000,
       socket: { tls: true, rejectUnauthorized: false },
     });
   } else {
-    redisClient = redis.createClient({ legacyMode: true, url: redisUrl});
+    redisClient = redis.createClient({ legacyMode: true, url: redisUrl });
   }
 } else {
   redisClient = redis.createClient({ legacyMode: true });
 }
 
-redisClient.on('error', err => console.error('Backend Redis client error', err));
-redisClient.on('connect', () => console.log('Backend Redis client is connect'));
-redisClient.on('reconnecting', () => console.log('Backend  Redis client is reconnecting'));
-redisClient.on('ready', () => console.log('Backend Redis client is ready'));
+redisClient.on("error", (err) =>
+  console.error("Backend Redis client error", err)
+);
+redisClient.on("connect", () => console.log("Backend Redis client is connect"));
+redisClient.on("reconnecting", () =>
+  console.log("Backend  Redis client is reconnecting")
+);
+redisClient.on("ready", () => console.log("Backend Redis client is ready"));
 
 redisClient.connect().catch(console.error);
 
