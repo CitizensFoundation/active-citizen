@@ -38,6 +38,8 @@ class FraudScannerNotifier {
         hostname = "ideas";
       } else if (domainName==="engagebritain.org") {
         hostname = "socialcare";
+      } else if (domainName==="boliden.com") {
+        hostname = "sidtjarn";
       }
 
       if (hostname) {
