@@ -15,7 +15,7 @@ interface Translation {
 
 export class YpLocaleTranslation {
   openaiClient: OpenAI;
-  modelName = "gpt-4-turbo-2024-04-09";
+  modelName = "gpt-4o";
   maxTokens = 4000;
   temperature = 0.0;
 

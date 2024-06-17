@@ -6,7 +6,7 @@ import { WebSocket } from "ws";
 export class AiHelper {
   openaiClient: OpenAI;
   wsClientSocket: WebSocket | undefined;
-  modelName = "gpt-4-turbo-2024-04-09";
+  modelName = "gpt-4o";
   maxTokens = 2048;
   temperature = 0.7;
   cacheExpireTime = 60 * 60;
@@ -173,7 +173,7 @@ Only output: PASSES or FAILS`;
         const messages = [
           {
             role: "system",
-            content: `You are a highly competent AI that is able to generate short answer ideas for questions.
+            content: `You are a highly competent AI that is able to generate clear answer ideas for questions.
                       Genereate up to 10 high quality answer ideas.
                       Never use numbers at the start of each line.
                       Always output the ideas in the same language the user is asking the question.
