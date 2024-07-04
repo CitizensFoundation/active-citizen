@@ -237,8 +237,8 @@ export class CollectionImageGenerator {
             model: "dall-e-3",
             prompt,
             n: imageOptions.n,
-            quality: imageOptions.quality,
-            size: imageOptions.size,
+            quality: imageOptions.quality as "hd" | "standard",
+            size: imageOptions.size as "1792x1024" | "1024x1024" | "256x256" | "512x512" | "1024x1792",
           });
         }
         if (result) {

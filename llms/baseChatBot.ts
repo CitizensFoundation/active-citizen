@@ -279,8 +279,8 @@ export class YpBaseChatBot {
         tokensOutCost: 0,
         tokensIn: 0,
         tokensOut: 0,
-      } as IEngineInnovationStagesData,
-    } as Record<YpChatBotMemoryStageTypes, IEngineInnovationStagesData>;
+      } as any,
+    } as Record<YpChatBotMemoryStageTypes, any>;
   }
 
   getEmptyMemory() {
