@@ -6,6 +6,7 @@ import path from "path";
 import { v4 as uuidv4 } from "uuid";
 import models from "../../models/index.cjs";
 import sharp from "sharp";
+import Replicate from "replicate";
 
 import {
   OpenAIClient,
@@ -18,7 +19,19 @@ const dbModels: Models = models;
 const Image = dbModels.Image as ImageClass;
 const AcBackgroundJob = dbModels.AcBackgroundJob as AcBackgroundJobClass;
 
-const maxDalleRetryCount = 3;
+const maxRetryCount = 3;
+
+const disableFlux = false;
+
+interface PsFluxProSchema {
+  prompt: string;
+  seed?: number;
+  steps?: number;
+  guidance?: number;
+  interval?: number;
+  aspect_ratio?: string;
+  safety_tolerance?: number;
+}
 
 export class CollectionImageGenerator {
   async resizeImage(imagePath: string, width: number, height: number) {
@@ -178,7 +191,61 @@ export class CollectionImageGenerator {
     });
   }
 
-  async getImageUrlFromPrompt(
+  async getImageUrlFromFlux(
+    prompt: string,
+    type: YpAiGenerateImageTypes = "logo"
+  ) {
+    const replicate = new Replicate({
+      auth: process.env.REPLICATE_API_TOKEN,
+    });
+
+    let retryCount = 0;
+    let retrying = true;
+    let result: any;
+
+    let input: PsFluxProSchema = {
+      prompt: prompt,
+    };
+
+    if (type === "logo") {
+      input.aspect_ratio = "16:9";
+    } else if (type === "icon") {
+      input.aspect_ratio = "1:1";
+    } else {
+      input.aspect_ratio = "16:9";
+    }
+
+    while (retrying && retryCount < maxRetryCount) {
+      try {
+        result = await replicate.run(
+          process.env.FLUX_PRO_MODEL_NAME! as `${string}/${string}`,
+          { input }
+        );
+
+        if (result) {
+          retrying = false;
+          return result;
+        } else {
+          console.debug(`Result: NONE`);
+        }
+      } catch (error: any) {
+        console.warn("Error generating image with Flux, retrying...");
+        console.warn(error.stack);
+        retryCount++;
+        console.warn(error);
+        const sleepingFor = 5000 + retryCount * 10000;
+        console.debug(`Sleeping for ${sleepingFor} milliseconds`);
+        await new Promise((resolve) => setTimeout(resolve, sleepingFor));
+      }
+    }
+
+    if (!result) {
+      console.error(`Error generating image after ${retryCount} retries`);
+      return undefined;
+    }
+  }
+
+  async getImageUrlFromDalle(
     prompt: string,
     type: YpAiGenerateImageTypes = "logo"
   ) {
@@ -224,7 +291,7 @@ export class CollectionImageGenerator {
       };
     }
 
-    while (retrying && retryCount < maxDalleRetryCount) {
+    while (retrying && retryCount < maxRetryCount) {
       try {
         if (azureOpenAiApiKey && azureOpenaAiBase) {
           result = await (client as OpenAIClient).getImages(
@@ -238,7 +305,12 @@ export class CollectionImageGenerator {
             prompt,
             n: imageOptions.n,
             quality: imageOptions.quality as "hd" | "standard",
-            size: imageOptions.size as "1792x1024" | "1024x1024" | "256x256" | "512x512" | "1024x1792",
+            size: imageOptions.size as
+              | "1792x1024"
+              | "1024x1024"
+              | "256x256"
+              | "512x512"
+              | "1024x1792",
           });
         }
         if (result) {
@@ -280,10 +352,22 @@ export class CollectionImageGenerator {
       }/${uuidv4()}.png`;
 
       try {
-        const imageUrl = await this.getImageUrlFromPrompt(
-          workPackage.prompt,
-          workPackage.imageType
-        );
+        let imageUrl;
+        if (!disableFlux &&
+          process.env.REPLICATE_API_TOKEN &&
+          process.env.FLUX_PRO_MODEL_NAME
+        ) {
+          imageUrl = await this.getImageUrlFromFlux(
+            workPackage.prompt,
+            workPackage.imageType
+          );
+        } else {
+          imageUrl = await this.getImageUrlFromDalle(
+            workPackage.prompt,
+            workPackage.imageType
+          );
+        }
+
         if (imageUrl) {
           await this.downloadImage(imageUrl, imageFilePath);
           console.debug(

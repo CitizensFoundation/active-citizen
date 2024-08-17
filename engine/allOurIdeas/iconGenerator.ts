@@ -21,7 +21,7 @@ export class AoiIconGenerator extends CollectionImageGenerator {
       }/${uuidv4()}.png`;
 
       try {
-        const imageUrl = await this.getImageUrlFromPrompt(
+        const imageUrl = await this.getImageUrlFromDalle(
           workPackage.prompt,
           workPackage.imageType
         );
