@@ -98,6 +98,10 @@ const generateNotificationsForEndorsements = (activity, callback) => {
   // Notifications for endorsement on posts I've created
   let mutePost = false;
 
+  if (!activity) {
+    return callback("Activity is null or undefined");
+  }
+
   if (
     activity.Community &&
     activity.Community.configuration &&
