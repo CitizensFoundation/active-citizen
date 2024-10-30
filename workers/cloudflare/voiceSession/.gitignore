@@ -5,3 +5,4 @@ wrangler.toml
 node_modules/
  .wrangler/
 node_modules/
+.wrangler
