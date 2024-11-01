@@ -120,7 +120,7 @@ export class YpBaseChatBot {
       sender: "bot",
       type: "memoryIdCreated",
       data: this.memoryId,
-    } as PsAiChatWsMessage;
+    } as YpAssistantMessage;
 
     this.wsClientSocket.send(JSON.stringify(botMessage));
   }
@@ -150,7 +150,7 @@ export class YpBaseChatBot {
         name: name,
         noStreaming: hasNoStreaming,
       } as PsAgentStartWsOptions,
-    } as PsAiChatWsMessage;
+    } as YpAssistantMessage;
     this.wsClientSocket.send(JSON.stringify(botMessage));
   }
 
@@ -170,7 +170,7 @@ export class YpBaseChatBot {
           lastAgent: lastAgent,
         } as PsValidationAgentResult,
       } as PsAgentCompletedWsOptions,
-    } as PsAiChatWsMessage;
+    } as YpAssistantMessage;
 
     this.wsClientSocket.send(JSON.stringify(botMessage));
   }
@@ -180,7 +180,7 @@ export class YpBaseChatBot {
       sender: "bot",
       type: "agentUpdated",
       message: message,
-    } as PsAiChatWsMessage;
+    } as YpAssistantMessage;
 
     this.wsClientSocket.send(JSON.stringify(botMessage));
   }
