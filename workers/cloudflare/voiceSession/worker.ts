@@ -61,7 +61,7 @@ function base64ToWav(base64Audio: string, sampleRate = 16000): ArrayBuffer {
 
 async function handleGetConfig(request: Request, env: Env): Promise<Response> {
   try {
-    const config: SessionConfig = await request.json();
+    const config: SessionConfig = await request.json() as any;
 
     // Get HeyGen token
     const response = await fetch(
@@ -79,7 +79,7 @@ async function handleGetConfig(request: Request, env: Env): Promise<Response> {
       throw new Error(`Failed to get HeyGen token: ${response.statusText}`);
     }
 
-    const { data } = await response.json();
+    const { data } = await response.json() as any;
     const token = data.token; // Extract token from nested data object
 
     console.log(`token: ${token}`);
@@ -116,7 +116,7 @@ async function handleConversationBackup(
   env: Env
 ): Promise<Response> {
   try {
-    const { sessionId, messages } = await request.json();
+    const { sessionId, messages } = await request.json() as any;
     const messageText = (messages as ConversationMessage[])
       .map((msg) => msg.message)
       .join("\n");
@@ -159,7 +159,7 @@ async function handleAudioBackup(
   env: Env
 ): Promise<Response> {
   try {
-    const { sessionId, audioData } = await request.json();
+    const { sessionId, audioData } = await request.json() as any;
 
     // Use batch operation for atomic transaction
     const statements = [
@@ -196,7 +196,7 @@ async function handleAudioBackup(
 
 async function handleEndSession(request: Request, env: Env): Promise<Response> {
   try {
-    const { sessionId } = await request.json();
+    const { sessionId } = await request.json() as any;
 
     // Use batch operation for atomic transaction
     const statements = [
