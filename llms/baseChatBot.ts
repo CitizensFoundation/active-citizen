@@ -9,7 +9,7 @@ let tlsConfig: any = {
 };
 
 if (!process.env.REDIS_URL || process.env.REDIS_URL.indexOf("localhost") > -1) {
-  tlsConfig = undefined
+  tlsConfig = undefined;
 }
 
 const DEBUG = false;
@@ -29,12 +29,12 @@ export class YpBaseChatBot {
   wsClientSocket: WebSocket;
   openaiClient: OpenAI;
   memory!: YpBaseChatBotMemoryData;
-  static redisMemoryKeyPrefix = "yp-chatbot-memory";
+  static redisMemoryKeyPrefix = "yp-chatbot-memory-v4";
   temperature = 0.7;
   maxTokens = 16000;
   llmModel = "gpt-4o";
   persistMemory = false;
-  memoryId: string | undefined = undefined;
+  memoryId: string;
   lastSentToUserAt?: Date;
 
   get redisKey() {
@@ -62,6 +62,9 @@ export class YpBaseChatBot {
     );
   }
 
+  static getRedisKey(memoryId: string) {
+    return `${YpBaseChatBot.redisMemoryKeyPrefix}-${memoryId}`;
+  }
 
   loadMemory() {
     return new Promise<PsAgentBaseMemoryData>(async (resolve, reject) => {
@@ -83,7 +86,7 @@ export class YpBaseChatBot {
   constructor(
     wsClientId: string,
     wsClients: Map<string, WebSocket>,
-    memoryId: string | undefined = undefined
+    memoryId: string
   ) {
     this.wsClientId = wsClientId;
     this.wsClientSocket = wsClients.get(this.wsClientId)!;
@@ -95,12 +98,12 @@ export class YpBaseChatBot {
         `WS Client ${this.wsClientId} not found in streamWebSocketResponses`
       );
     }
+    this.memoryId = memoryId;
     this.setupMemory(memoryId);
   }
 
   async setupMemory(memoryId: string | undefined = undefined) {
-    if (memoryId) {
-      this.memoryId = memoryId;
+    if (!this.memory) {
       this.memory = await this.loadMemory();
     } else {
       this.memoryId = uuidv4();
@@ -119,7 +122,7 @@ export class YpBaseChatBot {
 
   sendMemoryId() {
     const botMessage = {
-      sender: "bot",
+      sender: "assistant",
       type: "memoryIdCreated",
       data: this.memoryId,
     } as YpAssistantMessage;
@@ -146,7 +149,7 @@ export class YpBaseChatBot {
 
   sendAgentStart(name: string, hasNoStreaming = true) {
     const botMessage = {
-      sender: "bot",
+      sender: "assistant",
       type: "agentStart",
       data: {
         name: name,
@@ -162,7 +165,7 @@ export class YpBaseChatBot {
     error: string | undefined = undefined
   ) {
     const botMessage = {
-      sender: "bot",
+      sender: "assistant",
       type: "agentCompleted",
       data: {
         name: name,
@@ -179,7 +182,7 @@ export class YpBaseChatBot {
 
   sendAgentUpdate(message: string) {
     const botMessage = {
-      sender: "bot",
+      sender: "assistant",
       type: "agentUpdated",
       message: message,
     } as YpAssistantMessage;
@@ -193,18 +196,31 @@ export class YpBaseChatBot {
     } as PsAgentBaseMemoryData;
   }
 
-  sendToClient(sender: string, message: string, type = "stream", hiddenContextMessage = false) {
+  sendToClient(
+    sender: YpSenderType,
+    message: string,
+    type: YpAssistantMessageType = "stream",
+    hiddenContextMessage = false
+  ) {
     try {
       if (DEBUG) {
-        console.log(`sendToClient: ${JSON.stringify({sender, type, message, hiddenContextMessage}, null, 2)}`);
+        console.log(
+          `sendToClient: ${JSON.stringify(
+            { sender, type, message, hiddenContextMessage },
+            null,
+            2
+          )}`
+        );
       }
+
       this.wsClientSocket.send(
         JSON.stringify({
           sender,
           type: type,
-          message,
+          message: type === "html" ? undefined : message,
+          html: type === "html" ? message : undefined,
           hiddenContextMessage,
-        })
+        } as YpAssistantMessage)
       );
       this.lastSentToUserAt = new Date();
     } catch (error) {
@@ -213,21 +229,21 @@ export class YpBaseChatBot {
   }
 
   async streamWebSocketResponses(
-    //@ts-ignore
     stream: Stream<OpenAI.Chat.Completions.ChatCompletionChunk>
   ) {
     return new Promise<void>(async (resolve, reject) => {
-      this.sendToClient("bot", "", "start");
+      this.sendToClient("assistant", "", "start");
       try {
         let botMessage = "";
         for await (const part of stream) {
-          this.sendToClient("bot", part.choices[0].delta.content!);
+          this.sendToClient("assistant", part.choices[0].delta.content!);
           botMessage += part.choices[0].delta.content!;
 
           if (part.choices[0].finish_reason == "stop") {
             this.memory.chatLog!.push({
-              sender: "bot",
+              sender: "assistant",
               message: botMessage,
+              type: "message",
             } as PsSimpleChatLog);
 
             await this.saveMemoryIfNeeded();
@@ -236,13 +252,13 @@ export class YpBaseChatBot {
       } catch (error) {
         console.error(error);
         this.sendToClient(
-          "bot",
+          "assistant",
           "There has been an error, please retry",
           "error"
         );
         reject();
       } finally {
-        this.sendToClient("bot", "", "end");
+        this.sendToClient("assistant", "", "end");
       }
       resolve();
     });
@@ -286,5 +302,5 @@ export class YpBaseChatBot {
     });
 
     this.streamWebSocketResponses(stream);
-  };
+  }
 }

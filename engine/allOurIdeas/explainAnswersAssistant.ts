@@ -16,7 +16,7 @@ export class ExplainAnswersAssistant extends YpBaseChatBot {
     super(
       wsClientId,
       wsClients,
-      undefined);
+      "undefined");
 
     this.languageName = languageName;
     this.openaiClient = new OpenAI({
