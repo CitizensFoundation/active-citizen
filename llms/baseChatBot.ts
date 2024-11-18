@@ -200,6 +200,7 @@ export class YpBaseChatBot {
     sender: YpSenderType,
     message: string,
     type: YpAssistantMessageType = "stream",
+    uniqueToken: string | undefined = undefined,
     hiddenContextMessage = false
   ) {
     try {
@@ -220,6 +221,7 @@ export class YpBaseChatBot {
           message: type === "html" ? undefined : message,
           html: type === "html" ? message : undefined,
           hiddenContextMessage,
+          uniqueToken,
         } as YpAssistantMessage)
       );
       this.lastSentToUserAt = new Date();
