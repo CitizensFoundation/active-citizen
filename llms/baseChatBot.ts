@@ -37,6 +37,8 @@ export class YpBaseChatBot {
   memoryId: string;
   lastSentToUserAt?: Date;
 
+  currentAssistantAvatarUrl?: string;
+
   get redisKey() {
     return `${YpBaseChatBot.redisMemoryKeyPrefix}-${this.memoryId}`;
   }
@@ -222,6 +224,7 @@ export class YpBaseChatBot {
           html: type === "html" ? message : undefined,
           hiddenContextMessage,
           uniqueToken,
+          avatarUrl: sender === "assistant" ? this.currentAssistantAvatarUrl : undefined,
         } as YpAssistantMessage)
       );
       this.lastSentToUserAt = new Date();
@@ -234,7 +237,7 @@ export class YpBaseChatBot {
     stream: Stream<OpenAI.Chat.Completions.ChatCompletionChunk>
   ) {
     return new Promise<void>(async (resolve, reject) => {
-      this.sendToClient("assistant", "", "start");
+      this.sendToClient("assistant", "", "start", this.currentAssistantAvatarUrl);
       try {
         let botMessage = "";
         for await (const part of stream) {
