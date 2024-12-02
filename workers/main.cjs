@@ -29,6 +29,7 @@ i18n
               'ro_md','pt_br', 'hu', 'tr', 'is', 'nl','no', 'pl', 'zh_tw','ky'],
 
     fallbackLng:'en',
+    lowerCaseLng: true,
 
     // this is the defaults
     backend: {
