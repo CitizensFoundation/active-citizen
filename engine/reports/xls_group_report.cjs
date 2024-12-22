@@ -21,8 +21,8 @@ const {getAnswerFor} = require("./xls_community_users_report.cjs");
 const {addPostPointsToSheet} = require("./add_points_to_sheet.cjs");
 
 const getSubCodeFromDropdown = (dropdowns, answer) => {
-  let subCode = answer.value.trim();
-  if (dropdowns) {
+  if (dropdowns && answer.value) {
+    let subCode = answer.value.trim();
     for (let i = 0; i < dropdowns.length; i++) {
       if (dropdowns[i].text.trim() === answer.value.trim()) {
         subCode = dropdowns[i].subCode;
@@ -35,8 +35,8 @@ const getSubCodeFromDropdown = (dropdowns, answer) => {
 };
 
 const getSubCodeFromRadio = (radios, answer) => {
-  let subCode = answer.value.trim();
-  if (radios) {
+  if (radios && answer.value) {
+    let subCode = answer.value.trim();
     for (let i = 0; i < radios.length; i++) {
       if (radios[i].text.trim() === answer.value.trim()) {
         subCode = radios[i].subCode;
@@ -79,7 +79,7 @@ const getCheckboxDescription = (useSubCodes, answers, questionsById, i) => {
       questionsById[answers[i].uniqueId],
       answers[i].value
     );
-  } else {
+  } else if (answers[i].value && answers[i].value.trim()) {
     return answers[i].value.trim();
   }
 };
@@ -87,7 +87,7 @@ const getCheckboxDescription = (useSubCodes, answers, questionsById, i) => {
 const getRadioDescription = (useSubCodes, answers, questionsById, i) => {
   if (useSubCodes) {
     return getSubCodeFromRadio(questionsById[answers[i].uniqueId].radioButtons, answers[i]);
-  } else {
+  } else if (answers[i].value && answers[i].value.trim()) {
     return answers[i].value.trim();
   }
 };
@@ -95,7 +95,7 @@ const getRadioDescription = (useSubCodes, answers, questionsById, i) => {
 const getDropdownDescription = (useSubCodes, answers, questionsById, i) => {
   if (useSubCodes) {
     return getSubCodeFromDropdown(questionsById[answers[i].uniqueId].dropdownOptions, answers[i]);
-  } else {
+  } else if (answers[i].value && answers[i].value.trim()) {
     return answers[i].value.trim();
   }
 };
@@ -149,7 +149,7 @@ const setDescriptionsNewStyle = (group, post, buildPost) => {
           questionsById,
           i
         );
-      } else if (answers[i].value) {
+      } else if (answers[i].value && typeof answers[i].value === "string") {
         structuredAnswers[answers[i].uniqueId] = answers[i].value.trim();
       } else {
         structuredAnswers[answers[i].uniqueId] = null;

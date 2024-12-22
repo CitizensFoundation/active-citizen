@@ -82,6 +82,7 @@ const updateJobStatusIfNeeded = (jobId, totalPosts, processedCount, lastReported
       { where: { id: jobId } }).then(()=>{
       done(null, true);
     }).catch((error)=>{
+      console.log("Error updating job status", {error: error});
       done(error)
     });
   } else {
