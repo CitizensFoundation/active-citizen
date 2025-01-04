@@ -132,6 +132,10 @@ const renderTemplateWithLocals = (templatePath, locals, done) => {
 };
 
 const translateSubject = function (subjectHash) {
+  if (typeof subjectHash === 'string') {
+    return i18n.t(subjectHash);
+  }
+
   var subject = i18n.t(subjectHash.translateToken);
   if (subjectHash.contentName) {
     subject += ": " + subjectHash.contentName;
