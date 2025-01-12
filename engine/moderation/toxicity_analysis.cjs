@@ -332,7 +332,11 @@ const getTranslatedTextForPost = (post, callback) => {
               if (error) {
                 parallelCallback(error);
               } else if (translations) {
-                postStructuredAnswers = translations.join(". ");
+                const safeTranslations = translations.map((val) => {
+                  return typeof val === "string" ? val : String(val);
+                });
+
+                postStructuredAnswers = safeTranslations.join(". ");
                 parallelCallback();
               } else {
                 log.warn("No translations for survey answers");

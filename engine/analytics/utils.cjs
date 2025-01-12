@@ -128,7 +128,7 @@ const importPost = (post, done) => {
             description += " ";
             description += answers[i].value.trim();
           } catch (error) {
-            description += answers[i].value;
+            description += `${answers[i].value}`;
             console.warn(`Error trimming answer to description: ${answers[i].value}`);
           }
         } else {
