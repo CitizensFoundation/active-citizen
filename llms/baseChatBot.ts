@@ -4,25 +4,16 @@ import WebSocket from "ws";
 import { v4 as uuidv4 } from "uuid";
 import ioredis from "ioredis";
 
-let tlsConfig: any = {
-  rejectUnauthorized: false,
-};
-
-if (!process.env.REDIS_URL || process.env.REDIS_URL.indexOf("localhost") > -1) {
-  tlsConfig = undefined;
-}
-
 const DEBUG = false;
+const url =
+process.env.REDIS_MEMORY_URL ||
+process.env.REDIS_URL ||
+"redis://localhost:6379";
 
-//@ts-ignore
-const redis = new ioredis.default(
-  process.env.REDIS_MEMORY_URL ||
-    process.env.REDIS_URL ||
-    "redis://localhost:6379",
-  {
-    tls: tlsConfig,
-  }
-);
+const tlsOptions = url.startsWith("rediss://")
+? { rejectUnauthorized: false }
+: undefined;
+
 
 export class YpBaseChatBot {
   wsClientId: string;
@@ -47,6 +38,16 @@ export class YpBaseChatBot {
     return new Promise<PsAgentBaseMemoryData | undefined>(
       async (resolve, reject) => {
         try {
+
+          //@ts-ignore
+          const redis = new ioredis.default(
+            process.env.REDIS_MEMORY_URL ||
+              process.env.REDIS_URL ||
+              "redis://localhost:6379",
+            {
+              tls: tlsOptions,
+            }
+          );
           const memoryString = await redis.get(
             `${YpBaseChatBot.redisMemoryKeyPrefix}-${memoryId}`
           );
@@ -71,7 +72,7 @@ export class YpBaseChatBot {
   loadMemory() {
     return new Promise<PsAgentBaseMemoryData>(async (resolve, reject) => {
       try {
-        const memoryString = await redis.get(this.redisKey);
+        const memoryString = await this.redis.get(this.redisKey);
         if (memoryString) {
           const memory = JSON.parse(memoryString);
           resolve(memory);
@@ -85,11 +86,23 @@ export class YpBaseChatBot {
     });
   }
 
+  redis: ioredis.default;
+
   constructor(
     wsClientId: string,
     wsClients: Map<string, WebSocket>,
     memoryId: string
   ) {
+    //@ts-ignore
+    this.redis = new ioredis.default(
+      process.env.REDIS_MEMORY_URL ||
+        process.env.REDIS_URL ||
+        "redis://localhost:6379",
+      {
+        tls: tlsOptions,
+      }
+    );
+
     this.wsClientId = wsClientId;
     this.wsClientSocket = wsClients.get(this.wsClientId)!;
     this.openaiClient = new OpenAI({
@@ -224,7 +237,8 @@ export class YpBaseChatBot {
           html: type === "html" ? message : undefined,
           hiddenContextMessage,
           uniqueToken,
-          avatarUrl: sender === "assistant" ? this.currentAssistantAvatarUrl : undefined,
+          avatarUrl:
+            sender === "assistant" ? this.currentAssistantAvatarUrl : undefined,
         } as YpAssistantMessage)
       );
       this.lastSentToUserAt = new Date();
@@ -237,7 +251,12 @@ export class YpBaseChatBot {
     stream: Stream<OpenAI.Chat.Completions.ChatCompletionChunk>
   ) {
     return new Promise<void>(async (resolve, reject) => {
-      this.sendToClient("assistant", "", "start", this.currentAssistantAvatarUrl);
+      this.sendToClient(
+        "assistant",
+        "",
+        "start",
+        this.currentAssistantAvatarUrl
+      );
       try {
         let botMessage = "";
         for await (const part of stream) {
