@@ -14,7 +14,6 @@ const tlsOptions = url.startsWith("rediss://")
 ? { rejectUnauthorized: false }
 : undefined;
 
-
 export class YpBaseChatBot {
   wsClientId: string;
   wsClientSocket: WebSocket;
@@ -148,7 +147,7 @@ export class YpBaseChatBot {
   async saveMemory() {
     if (this.memory) {
       try {
-        await redis.set(this.redisKey, JSON.stringify(this.memory));
+        await this.redis.set(this.redisKey, JSON.stringify(this.memory));
         console.log(`Saved memory to redis: ${this.redisKey}`);
       } catch (error) {
         console.log("Can't save memory to redis", error);
