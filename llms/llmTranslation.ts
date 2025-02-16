@@ -4,7 +4,7 @@ import { YpLanguages } from "../../utils/ypLanguages.js";
 import { parse } from "path";
 import { Translate } from "aws-sdk";
 import * as cheerio from "cheerio";
-import { Cheerio, Element } from "cheerio";
+import { Cheerio } from "cheerio";
 
 export class YpLlmTranslation {
   openaiClient: OpenAI;
@@ -23,7 +23,7 @@ export class YpLlmTranslation {
     const strings: string[] = [];
 
     // Function to recursively extract text from all elements
-    function recursivelyExtractText(elements: Cheerio<Element>): void {
+    function recursivelyExtractText(elements: Cheerio<any>): void {
       elements.each((index, element) => {
         if (
           element.tagName.toLowerCase() === "script" ||
