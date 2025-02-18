@@ -17,6 +17,8 @@ const tlsOptions = url.startsWith("rediss://")
 export class YpBaseChatBot {
   wsClientId: string;
   wsClientSocket: WebSocket;
+  wsClients: Map<string, WebSocket>;
+
   openaiClient: OpenAI;
   memory!: YpBaseChatBotMemoryData;
   static redisMemoryKeyPrefix = "yp-chatbot-memory-v4";
@@ -104,14 +106,20 @@ export class YpBaseChatBot {
 
     this.wsClientId = wsClientId;
     this.wsClientSocket = wsClients.get(this.wsClientId)!;
+    this.wsClients = wsClients;
+
+    console.log(`WebSockets: BaseChatBot constructor for ${this.wsClientId}`);
+
+    if (!this.wsClientSocket) {
+      console.error(
+        `WebSockets: WS Client ${this.wsClientId} not found in streamWebSocketResponses`
+      );
+    }
+
     this.openaiClient = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
-    if (!this.wsClientSocket) {
-      console.error(
-        `WS Client ${this.wsClientId} not found in streamWebSocketResponses`
-      );
-    }
+
     this.memoryId = memoryId;
     this.setupMemory(memoryId);
   }
@@ -218,7 +226,7 @@ export class YpBaseChatBot {
     hiddenContextMessage = false
   ) {
     try {
-      if (DEBUG) {
+      if (process.env.WS_DEBUG) {
         console.log(
           `sendToClient: ${JSON.stringify(
             { sender, type, message, hiddenContextMessage },
