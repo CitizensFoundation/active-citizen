@@ -1,6 +1,6 @@
 import { AoiIconGenerator } from "../engine/allOurIdeas/iconGenerator.js";
 import models from "../../models/index.cjs";
-import { CollectionImageGenerator } from "../llms/collectionImageGenerator.js";
+import { CollectionImageGenerator } from "../llms/imageGeneration/collectionImageGenerator.js";
 
 const dbModels: Models = models;
 const Image = dbModels.Image as ImageClass;
