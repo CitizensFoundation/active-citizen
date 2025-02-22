@@ -45,10 +45,10 @@ Output:
 `;
   }
 
-  explainConversation = async (chatLog: PsSimpleChatLog[]) => {
+  explainConversation = async (chatLog: YpSimpleChatLog[]) => {
     this.setChatLog(chatLog);
 
-    let messages: any[] = chatLog.map((message: PsSimpleChatLog) => {
+    let messages: any[] = chatLog.map((message: YpSimpleChatLog) => {
       return {
         role: message.sender,
         content: message.message,

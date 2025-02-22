@@ -279,7 +279,7 @@ export class YpBaseChatBot {
               sender: "assistant",
               message: botMessage,
               type: "message",
-            } as PsSimpleChatLog);
+            } as YpSimpleChatLog);
 
             await this.saveMemoryIfNeeded();
           }
@@ -305,16 +305,16 @@ export class YpBaseChatBot {
     }
   }
 
-  async setChatLog(chatLog: PsSimpleChatLog[]) {
+  async setChatLog(chatLog: YpSimpleChatLog[]) {
     this.memory.chatLog = chatLog;
 
     await this.saveMemoryIfNeeded();
   }
 
-  async conversation(chatLog: PsSimpleChatLog[]) {
+  async conversation(chatLog: YpSimpleChatLog[]) {
     this.setChatLog(chatLog);
 
-    let messages: any[] = chatLog.map((message: PsSimpleChatLog) => {
+    let messages: any[] = chatLog.map((message: YpSimpleChatLog) => {
       return {
         role: message.sender,
         content: message.message,
