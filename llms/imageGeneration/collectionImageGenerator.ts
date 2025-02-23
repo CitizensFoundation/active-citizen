@@ -18,7 +18,7 @@ const Image = dbModels.Image as ImageClass;
 const AcBackgroundJob = dbModels.AcBackgroundJob as AcBackgroundJobClass;
 
 const disableFlux = false;
-const useImagen = true;
+const useImagen = false;
 
 export class CollectionImageGenerator {
   protected s3Service: S3Service;

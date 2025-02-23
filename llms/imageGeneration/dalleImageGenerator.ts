@@ -52,6 +52,8 @@ export class DalleImageGenerator implements IImageGenerator {
       size = "1024x1024";
     }
 
+    const modelQuality: "hd" | "standard" = "standard";
+
     while (retrying && retryCount < this.maxRetryCount) {
       try {
         // If using Azure OpenAI
@@ -60,7 +62,7 @@ export class DalleImageGenerator implements IImageGenerator {
             prompt,
             n: 1,
             size,
-            quality: "hd",
+            quality: modelQuality,
           });
         } else {
           // Standard OpenAI
@@ -69,7 +71,7 @@ export class DalleImageGenerator implements IImageGenerator {
             prompt,
             n: 1,
             size,
-            quality: "hd",
+            quality: modelQuality,
           });
         }
 
