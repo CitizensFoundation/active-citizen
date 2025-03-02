@@ -26,67 +26,30 @@ export class YpBaseChatBot {
   maxTokens = 16000;
   llmModel = "gpt-4o";
   persistMemory = false;
-  memoryId: string;
+  redisKey: string;
   lastSentToUserAt?: Date;
 
   currentAssistantAvatarUrl?: string;
-
-  get redisKey() {
-    return `${YpBaseChatBot.redisMemoryKeyPrefix}-${this.memoryId}`;
-  }
 
   destroy() {
     this.wsClientSocket = undefined as unknown as WebSocket;
   }
 
-  static loadMemoryFromRedis(memoryId: string) {
-    return new Promise<PsAgentBaseMemoryData | undefined>(
-      async (resolve, reject) => {
-        try {
-
-          //@ts-ignore
-          const redis = new ioredis.default(
-            process.env.REDIS_MEMORY_URL ||
-              process.env.REDIS_URL ||
-              "redis://localhost:6379",
-            {
-              tls: tlsOptions,
-            }
-          );
-          const memoryString = await redis.get(
-            `${YpBaseChatBot.redisMemoryKeyPrefix}-${memoryId}`
-          );
-          if (memoryString) {
-            const memory = JSON.parse(memoryString);
-            resolve(memory);
-          } else {
-            resolve(undefined);
-          }
-        } catch (error) {
-          console.error("Can't load memory from redis", error);
-          resolve(undefined);
-        }
-      }
-    );
-  }
-
-  static getRedisKey(memoryId: string) {
-    return `${YpBaseChatBot.redisMemoryKeyPrefix}-${memoryId}`;
-  }
-
   loadMemory() {
-    return new Promise<PsAgentBaseMemoryData>(async (resolve, reject) => {
+    return new Promise<PsAgentBaseMemoryData | undefined>(async (resolve, reject) => {
       try {
+        console.log("loadMemoryWithOwnership loadMemory: redisKey: ", this.redisKey);
         const memoryString = await this.redis.get(this.redisKey);
         if (memoryString) {
           const memory = JSON.parse(memoryString);
           resolve(memory);
         } else {
-          resolve(this.getEmptyMemory());
+          console.error("loadMemoryWithOwnership loadMemory: no memory found");
+          resolve(undefined);
         }
       } catch (error) {
-        console.error("Can't load memory from redis", error);
-        resolve(this.getEmptyMemory());
+        console.error("loadMemoryWithOwnership loadMemory: Can't load memory from redis", error);
+        resolve(undefined);
       }
     });
   }
@@ -96,18 +59,11 @@ export class YpBaseChatBot {
   constructor(
     wsClientId: string,
     wsClients: Map<string, WebSocket>,
-    memoryId: string
+    redisConnection: ioredis.default,
+    redisKey: string
   ) {
-    //@ts-ignore
-    this.redis = new ioredis.default(
-      process.env.REDIS_MEMORY_URL ||
-        process.env.REDIS_URL ||
-        "redis://localhost:6379",
-      {
-        tls: tlsOptions,
-      }
-    );
-
+    this.redis = redisConnection;
+    this.redisKey = redisKey;
     this.wsClientId = wsClientId;
     this.wsClientSocket = wsClients.get(this.wsClientId)!;
     this.wsClients = wsClients;
@@ -123,38 +79,8 @@ export class YpBaseChatBot {
     this.openaiClient = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
-
-    this.memoryId = memoryId;
-    this.setupMemory(memoryId);
   }
 
-  async setupMemory(memoryId: string | undefined = undefined) {
-    if (!this.memory) {
-      this.memory = await this.loadMemory();
-    } else {
-      this.memoryId = uuidv4();
-      this.memory = this.getEmptyMemory();
-      if (this.wsClientSocket) {
-        this.sendMemoryId();
-      } else {
-        console.error("No wsClientSocket found");
-      }
-    }
-  }
-
-  async getLoadedMemory() {
-    return await this.loadMemory();
-  }
-
-  sendMemoryId() {
-    const botMessage = {
-      sender: "assistant",
-      type: "memoryIdCreated",
-      data: this.memoryId,
-    } as YpAssistantMessage;
-
-    this.wsClientSocket.send(JSON.stringify(botMessage));
-  }
 
   async saveMemory() {
     if (this.memory) {
@@ -214,12 +140,6 @@ export class YpBaseChatBot {
     } as YpAssistantMessage;
 
     this.wsClientSocket.send(JSON.stringify(botMessage));
-  }
-
-  getEmptyMemory() {
-    return {
-      redisKey: this.redisKey,
-    } as PsAgentBaseMemoryData;
   }
 
   sendToClient(

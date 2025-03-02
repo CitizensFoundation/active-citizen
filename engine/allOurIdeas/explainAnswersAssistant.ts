@@ -3,6 +3,12 @@ import { Stream } from "openai/streaming";
 import { WebSocket } from "ws";
 
 import { YpBaseChatBot } from "../../llms/baseChatBot.js";
+import { url } from "inspector";
+import ioredis from "ioredis";
+import { v4 as uuidv4 } from "uuid";
+const tlsOptions = process.env.REDIS_MEMORY_URL?.startsWith("rediss://")
+  ? { rejectUnauthorized: false }
+  : undefined;
 
 export class ExplainAnswersAssistant extends YpBaseChatBot {
   openaiClient: OpenAI;
@@ -11,12 +17,27 @@ export class ExplainAnswersAssistant extends YpBaseChatBot {
   temperature = 0.8;
   languageName: string;
 
-  constructor( wsClientId: string, wsClients: Map<string, WebSocket>, languageName: string
-    ) {
+  constructor(
+    wsClientId: string,
+    wsClients: Map<string, WebSocket>,
+    languageName: string
+  ) {
+    const redisConnection = new ioredis.default(
+      process.env.REDIS_MEMORY_URL ||
+        process.env.REDIS_URL ||
+        "redis://localhost:6379",
+      {
+        tls: tlsOptions,
+      }
+    );
     super(
       wsClientId,
       wsClients,
-      "undefined");
+      redisConnection,
+      `${
+        YpBaseChatBot.redisMemoryKeyPrefix
+      }-${uuidv4()}-explain-answers-assistant`
+    );
 
     this.languageName = languageName;
     this.openaiClient = new OpenAI({
