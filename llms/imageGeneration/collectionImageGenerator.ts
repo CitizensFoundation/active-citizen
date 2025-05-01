@@ -11,7 +11,7 @@ import { S3Service } from "./s3Service.js";
 // Suppose these come from your codebase
 import models from "../../../models/index.cjs";
 import { ImagenImageGenerator } from "./imagenImageGenerator.js";
-
+import { ChatGptImageGenerator } from "./chatGptImageGenerator.js";
 // For reference, in your code:
 const dbModels: any = models;
 const Image = dbModels.Image as ImageClass;
@@ -26,6 +26,7 @@ export class CollectionImageGenerator {
   protected fluxImageGenerator?: FluxImageGenerator;
   protected dalleImageGenerator: DalleImageGenerator;
   protected imagenImageGenerator?: ImagenImageGenerator;
+  protected chatGptImageGenerator: ChatGptImageGenerator;
 
   constructor() {
     this.s3Service = new S3Service(
@@ -50,6 +51,10 @@ export class CollectionImageGenerator {
       process.env.AZURE_OPENAI_API_BASE,
       process.env.AZURE_OPENAI_API_KEY,
       process.env.AZURE_OPENAI_API_DALLE_DEPLOYMENT_NAME,
+      process.env.OPENAI_API_KEY
+    );
+
+    this.chatGptImageGenerator = new ChatGptImageGenerator(
       process.env.OPENAI_API_KEY
     );
 
@@ -82,6 +87,9 @@ export class CollectionImageGenerator {
         } else if (this.fluxImageGenerator) {
           imageGenerator = this.fluxImageGenerator;
           console.info("Using FluxImageGenerator");
+        } else if (process.env.USE_CHATGPT_IMAGE_GENERATOR) {
+          imageGenerator = this.chatGptImageGenerator;
+          console.info("Using ChatGptImageGenerator");
         } else {
           imageGenerator = this.dalleImageGenerator;
           console.info("Using DalleImageGenerator");
