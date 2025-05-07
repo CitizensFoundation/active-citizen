@@ -12,7 +12,11 @@ if(process.env.AIRBRAKE_PROJECT_ID) {
   airbrake = require('../utils/airbrake.cjs');
 }
 
-let AnonymizationWorker = function () {};
+/**
+ * Defines the AnonymizationWorker class.
+ * @class AnonymizationWorker
+ */
+function AnonymizationWorker() {}
 
 const anonymizePointActivities = (workPackage, callback) => {
   const pointId = workPackage.pointId;
@@ -759,7 +763,13 @@ const notifyCommunityUsers = (workPackage, callback) => {
   (error) => { callback(error) });
 };
 
-AnonymizationWorker.prototype.process = (workPackage, callback) => {
+/**
+ * Processes an anonymization work package.
+ * @param {object} workPackage - The work package containing details for anonymization.
+ * @param {(error?: any) => void} callback - The callback function.
+ * @memberof AnonymizationWorker
+ */
+AnonymizationWorker.prototype.process = function(workPackage, callback) {
   getAnonymousUser((error, anonymousUser) => {
     if (error) {
       callback(error);
@@ -800,4 +810,5 @@ AnonymizationWorker.prototype.process = (workPackage, callback) => {
   });
 };
 
+/** @type {AnonymizationWorker} */
 module.exports = new AnonymizationWorker();

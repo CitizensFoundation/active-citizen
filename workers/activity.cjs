@@ -16,9 +16,19 @@ const generatePointNotification = require('../engine/notifications/generate_poin
 const generateRecommendationEvent = require('../engine/recommendations/events_manager.cjs').generateRecommendationEvent;
 const generatePostStatusChangeNotification = require('../engine/notifications/generate_post_status_change_notifications.cjs');
 
-const ActivityWorker = function () {};
+/**
+ * Defines the ActivityWorker class.
+ * @class ActivityWorker
+ */
+function ActivityWorker() {}
 
-ActivityWorker.prototype.process = (activityJson, callback) => {
+/**
+ * Processes an activity.
+ * @param {object} activityJson - The activity JSON object.
+ * @param {(error?: any) => void} callback - The callback function.
+ * @memberof ActivityWorker
+ */
+ActivityWorker.prototype.process = function(activityJson, callback) {
   let activity;
   log.info('Processing activity Started');
   async.series([
@@ -185,4 +195,5 @@ ActivityWorker.prototype.process = (activityJson, callback) => {
   });
 };
 
+/** @type {ActivityWorker} */
 module.exports = new ActivityWorker();
