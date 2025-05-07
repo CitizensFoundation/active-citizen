@@ -12,7 +12,11 @@ if(process.env.AIRBRAKE_PROJECT_ID) {
   airbrake = require('../utils/airbrake.cjs');
 }
 
-let DeletionWorker = function () {};
+/**
+ * @class DeletionWorker
+ * @constructor
+ */
+function DeletionWorker() {}
 
 const getGroupAndUser = (groupId, userId, userEmail, callback) => {
   var user, group;
@@ -396,9 +400,9 @@ const recountCommunity = (workPackage, callback) => {
             community.save().then(() => {
               log.info("Community recounted", { context: 'ac-delete', communityId: workPackage.communityId });
               innerCallback();
-            }).catch((error) => {
-              innerCallback(error)
-            });
+            }).catch((error)=>{
+              innerCallback()
+            })
           }).catch((error)=>{
             innerCallback()
           })
@@ -1869,7 +1873,13 @@ const removeManyDomainUsersAndDeleteContent = (workPackage, callback) => {
   }
 };
 
-DeletionWorker.prototype.process = (workPackage, callback) => {
+/**
+ * Processes a deletion work package.
+ * @param {object} workPackage - The work package containing details for the deletion.
+ * @param {(error?: any) => void} callback - The callback function.
+ * @memberof DeletionWorker
+ */
+DeletionWorker.prototype.process = function(workPackage, callback) {
   getAnonymousUser((error, anonymousUser) => {
     if (error) {
       callback(error);
@@ -1952,4 +1962,5 @@ DeletionWorker.prototype.process = (workPackage, callback) => {
   });
 };
 
+/** @type {DeletionWorker} */
 module.exports = new DeletionWorker();

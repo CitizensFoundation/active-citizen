@@ -23,7 +23,11 @@ if(process.env.AIRBRAKE_PROJECT_ID) {
   airbrake = require('../utils/airbrake.cjs');
 }
 
-let FraudManagementWorker = function () {};
+/**
+ * @class FraudManagementWorker
+ * @constructor
+ */
+function FraudManagementWorker() {}
 
 const ProcessFraudGet = async (workPackage, done) => {
   let fraudGetEngine;
@@ -96,7 +100,13 @@ const ProcessFraudDelete = async (workPackage, done) => {
   }
 }
 
-FraudManagementWorker.prototype.process = async (workPackage, callback) => {
+/**
+ * Processes a fraud management work package.
+ * @param {object} workPackage - The work package for fraud management.
+ * @param {(error?: any) => void} callback - The callback function.
+ * @memberof FraudManagementWorker
+ */
+FraudManagementWorker.prototype.process = async function(workPackage, callback) {
   switch (workPackage.type) {
     case 'delete-one-item':
     case 'delete-items':
@@ -114,4 +124,5 @@ FraudManagementWorker.prototype.process = async (workPackage, callback) => {
   }
 };
 
+/** @type {FraudManagementWorker} */
 module.exports = new FraudManagementWorker();

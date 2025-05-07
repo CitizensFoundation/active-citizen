@@ -12,8 +12,18 @@ if(process.env.AIRBRAKE_PROJECT_ID) {
 }
 
 var GenerateNewsFeedFromNotifications = require('../engine/news_feeds/generate_from_notifications.cjs');
-var NotificationNewsFeedWorker = function () {};
+/**
+ * @class NotificationNewsFeedWorker
+ * @constructor
+ */
+function NotificationNewsFeedWorker() {}
 
+/**
+ * Processes a notification to generate a news feed item.
+ * @param {object} notificationJson - The notification JSON object.
+ * @param {(error?: any) => void} callback - The callback function.
+ * @memberof NotificationNewsFeedWorker
+ */
 NotificationNewsFeedWorker.prototype.process = function (notificationJson, callback) {
   var user;
   var notification;
@@ -139,4 +149,5 @@ NotificationNewsFeedWorker.prototype.process = function (notificationJson, callb
   });
 };
 
+/** @type {NotificationNewsFeedWorker} */
 module.exports = new NotificationNewsFeedWorker();

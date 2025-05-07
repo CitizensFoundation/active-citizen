@@ -20,9 +20,19 @@ if(process.env.AIRBRAKE_PROJECT_ID) {
   airbrake = require('../utils/airbrake.cjs');
 }
 
-let ModerationWorker = function () {};
+/**
+ * @class ModerationWorker
+ * @constructor
+ */
+function ModerationWorker() {}
 
-ModerationWorker.prototype.process = async (workPackage, callback) => {
+/**
+ * Processes a moderation work package.
+ * @param {object} workPackage - The work package for moderation.
+ * @param {(error?: any) => void} callback - The callback function.
+ * @memberof ModerationWorker
+ */
+ModerationWorker.prototype.process = async function(workPackage, callback) {
   switch (workPackage.type) {
     case 'estimate-post-toxicity':
       estimateToxicityScoreForPost(workPackage, callback);
@@ -69,4 +79,5 @@ ModerationWorker.prototype.process = async (workPackage, callback) => {
   }
 };
 
+/** @type {ModerationWorker} */
 module.exports = new ModerationWorker();

@@ -14,8 +14,18 @@ if(process.env.AIRBRAKE_PROJECT_ID) {
   airbrake = require('../utils/airbrake.cjs');
 }
 
-var NotificationDeliveryWorker = function () {};
+/**
+ * @class NotificationDeliveryWorker
+ * @constructor
+ */
+function NotificationDeliveryWorker() {}
 
+/**
+ * Processes a notification for delivery.
+ * @param {object} notificationJson - The notification JSON object.
+ * @param {(error?: any) => void} callback - The callback function.
+ * @memberof NotificationDeliveryWorker
+ */
 NotificationDeliveryWorker.prototype.process = function (notificationJson, callback) {
   var user;
   var notification;
@@ -358,4 +368,5 @@ NotificationDeliveryWorker.prototype.process = function (notificationJson, callb
     });
 };
 
+/** @type {NotificationDeliveryWorker} */
 module.exports = new NotificationDeliveryWorker();

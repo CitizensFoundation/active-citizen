@@ -16,7 +16,11 @@ if (process.env.AIRBRAKE_PROJECT_ID) {
   airbrake = require("../utils/airbrake.cjs");
 }
 
-let DelayedJobWorker = function () {};
+/**
+ * @class DelayedJobWorker
+ * @constructor
+ */
+function DelayedJobWorker() {}
 
 const delayedCreatePriorityActivity = (workPackage, callback) => {
   const options = workPackage.workData;
@@ -234,7 +238,13 @@ const delayedCreateActivityFromApp = (workPackage, callback) => {
     });
 };
 
-DelayedJobWorker.prototype.process = (workPackage, callback) => {
+/**
+ * Processes a delayed job.
+ * @param {object} workPackage - The work package for the delayed job.
+ * @param {(error?: any) => void} callback - The callback function.
+ * @memberof DelayedJobWorker
+ */
+DelayedJobWorker.prototype.process = function(workPackage, callback) {
   switch (workPackage.type) {
     case "create-activity-from-app":
       delayedCreateActivityFromApp(workPackage, callback);
@@ -250,4 +260,5 @@ DelayedJobWorker.prototype.process = (workPackage, callback) => {
   }
 };
 
+/** @type {DelayedJobWorker} */
 module.exports = new DelayedJobWorker();

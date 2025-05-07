@@ -26,7 +26,11 @@ if(process.env.AIRBRAKE_PROJECT_ID) {
   airbrake = require('../utils/airbrake.cjs');
 }
 
-let VoiceToTextWorker = function () {};
+/**
+ * @class VoiceToTextWorker
+ * @constructor
+ */
+function VoiceToTextWorker() {}
 
 const supportedGoogleLanguges = [
   ['af-ZA',true,false],
@@ -483,7 +487,13 @@ const createTranscriptForAudio = (workPackage, callback) => {
   })
 };
 
-VoiceToTextWorker.prototype.process = (workPackage, callback) => {
+/**
+ * Processes a speech-to-text work package.
+ * @param {object} workPackage - The work package for speech-to-text.
+ * @param {(error?: any) => void} callback - The callback function.
+ * @memberof VoiceToTextWorker
+ */
+VoiceToTextWorker.prototype.process = function(workPackage, callback) {
   switch (workPackage.type) {
     case 'create-video-transcript':
       createTranscriptForVideo(workPackage, callback);
@@ -496,4 +506,5 @@ VoiceToTextWorker.prototype.process = (workPackage, callback) => {
   }
 };
 
+/** @type {VoiceToTextWorker} */
 module.exports = new VoiceToTextWorker();

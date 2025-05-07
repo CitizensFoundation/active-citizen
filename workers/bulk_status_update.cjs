@@ -13,7 +13,11 @@ if(process.env.AIRBRAKE_PROJECT_ID) {
 
 var _ = require('lodash');
 
-var BulkStatusUpdateWorker = function () {};
+/**
+ * @class BulkStatusUpdateWorker
+ * @constructor
+ */
+function BulkStatusUpdateWorker() {}
 var verifyMode = true;
 var verifiedMovedPostCount, verifiedStatusChangedPostsCount;
 
@@ -372,6 +376,12 @@ const createBulkStatusUpdates = function (statusUpdateJson, users, callback) {
   })
 };
 
+/**
+ * Processes a bulk status update.
+ * @param {object} bulkStatusUpdateInfo - Information for the bulk status update.
+ * @param {(error?: any) => void} callback - The callback function.
+ * @memberof BulkStatusUpdateWorker
+ */
 BulkStatusUpdateWorker.prototype.process = function (bulkStatusUpdateInfo, callback) {
   var statusUpdate;
   var allUsersWithEndorsements;
@@ -451,4 +461,5 @@ BulkStatusUpdateWorker.prototype.process = function (bulkStatusUpdateInfo, callb
   });
 };
 
+/** @type {BulkStatusUpdateWorker} */
 module.exports = new BulkStatusUpdateWorker();

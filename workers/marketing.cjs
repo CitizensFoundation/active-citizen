@@ -13,9 +13,19 @@ if(process.env.AIRBRAKE_PROJECT_ID) {
   airbrake = require('../utils/airbrake.cjs');
 }
 
-let MarketingWorker = function () {};
+/**
+ * @class MarketingWorker
+ * @constructor
+ */
+function MarketingWorker() {}
 
-MarketingWorker.prototype.process = (workPackage, callback) => {
+/**
+ * Processes a marketing work package.
+ * @param {object} workPackage - The work package for marketing.
+ * @param {(error?: any) => void} callback - The callback function.
+ * @memberof MarketingWorker
+ */
+MarketingWorker.prototype.process = function(workPackage, callback) {
   switch (workPackage.type) {
     case 'send-campaign':
       sendCampaign(workPackage, callback);
@@ -25,4 +35,5 @@ MarketingWorker.prototype.process = (workPackage, callback) => {
   }
 };
 
+/** @type {MarketingWorker} */
 module.exports = new MarketingWorker();

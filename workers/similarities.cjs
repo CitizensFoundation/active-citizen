@@ -8,9 +8,19 @@ const _ = require('lodash');
 const fs = require('fs');
 const updateSimilaritiesCollection = require('../engine/analytics/manager.cjs').updateCollection;
 
-let SimilaritiesWorker = function () {};
+/**
+ * @class SimilaritiesWorker
+ * @constructor
+ */
+function SimilaritiesWorker() {}
 
-SimilaritiesWorker.prototype.process = (workPackage, callback) => {
+/**
+ * Processes a similarities work package.
+ * @param {object} workPackage - The work package for similarities.
+ * @param {(error?: any) => void} callback - The callback function.
+ * @memberof SimilaritiesWorker
+ */
+SimilaritiesWorker.prototype.process = function(workPackage, callback) {
   switch (workPackage.type) {
     case 'update-collection':
       updateSimilaritiesCollection(workPackage, callback);
@@ -20,4 +30,5 @@ SimilaritiesWorker.prototype.process = (workPackage, callback) => {
   }
 };
 
+/** @type {SimilaritiesWorker} */
 module.exports = new SimilaritiesWorker();
