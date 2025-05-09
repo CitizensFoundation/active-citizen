@@ -1,3 +1,5 @@
+# IMPORTANT: This library now is now a part of Your Priorities here: https://github.com/CitizensFoundation/your-priorities-app/tree/master/server_api/services
+
 ![Active Citizen Logo](https://s3.amazonaws.com/yrpri-direct-asset/ac_yp_flyer_2.png)
 
 # Active Citizen 1.2
